@@ -1,36 +1,50 @@
-from re import S
 import tkinter as tk
-from tkinter import ttk
 
+class Mouser(tk.Tk):
 
-class App(tk.Tk):
   def __init__(self):
-    super().__init__()
+        
+    tk.Tk.__init__(self)
+    container = tk.Frame(self)
 
-    # configure the root window to use the full screen width and height
-    screen_width = self.winfo_screenwidth()
-    screen_height = self.winfo_screenheight()
+    container.pack(side="top", fill="both", expand = True)
 
-    self.title('Mouser')
-    self.geometry('{}x{}'.format(screen_width, screen_height))
+    container.grid_rowconfigure(0, weight=1)
+    container.grid_columnconfigure(0, weight=1)
 
-    # set up buttons 
-    
-    self.animalSetup = ttk.Button(self, text='Animal Setup')
-    self.animalSetup.pack()
-    
-    self.dataCollection = ttk.Button(self, text='Data Collection')
-    self.dataCollection.pack()
+    self.frames = {}
 
-    self.analysis = ttk.Button(self, text='Analysis')
-    self.analysis.pack()
+    for F in (HomePage, Page):
+      frame = F(container, self)
+      self.frames[F] = frame
+      frame.grid(row=0, column=0, sticky="nsew")
 
-    self.accounts = ttk.Button(self, text='Accounts')
-    self.accounts.pack()
+    self.show_frame(HomePage)
 
-    self.exit = ttk.Button(self, text='exit')
-    self.exit.pack()
+  def show_frame(self, cont):
+    frame = self.frames[cont]
+    frame.tkraise()
 
-if __name__ == "__main__":
-  app = App()
-  app.mainloop()
+class HomePage(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self,parent)
+        label = tk.Label(self, text="Home Page")
+        label.pack()
+
+        button = tk.Button(self, text="Page",
+                            command=lambda: controller.show_frame(Page))
+        button.pack()
+
+class Page(tk.Frame):
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self,parent)
+        label = tk.Label(self, text="Page")
+        label.pack()
+
+        button = tk.Button(self, text="HomePage",
+                            command=lambda: controller.show_frame(HomePage))
+        button.pack()
+
+
+app = Mouser()
+app.mainloop()
