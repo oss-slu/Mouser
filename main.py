@@ -1,41 +1,53 @@
 from tkinter import *
 from tkinter.ttk import *
+from turtle import onclick
 
 root = Tk()
 root.title("Mouser")
 root.geometry('600x600')
 
-main = Frame(root)
+animalSetupFrame = Frame(root)
+dataCollectionFrame = Frame(root)
+analysisFrame = Frame(root)
+accountsFrame = Frame(root)
+mainFrame = Frame(root)
 
-title = Label(main, text="Mouser", font=("Arial", 25))
-title.grid(row=0, column=0, columnspan=4, sticky=N)
 
-mouse = PhotoImage(file="./images/mouse_small.png")
-graph = PhotoImage(file="./images/graph_small.png")
-magnify = PhotoImage(file="./images/magnifier_small.png")
-user = PhotoImage(file="./images/user_small.png")
+def raiseFrame(frame: Frame):
+    frame.tkraise()
 
-buttonDim = 25
 
-animal_setup = Button(main, text="Animal Setup", image=mouse,
-                      compound=TOP, width=buttonDim)
-animal_setup.place(relx=0.33, rely=0.33, anchor=CENTER)
+def setupFrame(name: str, buttonImage: PhotoImage, frame: Frame, relx: float, rely: float):
+    button = Button(mainFrame, text=name, image=buttonImage,
+                    compound=TOP, width=25, command=lambda: raiseFrame(frame))
+    button.place(relx=relx, rely=rely, anchor=CENTER)
 
-data_collection = Button(main, text="Data Collection",
-                         image=graph, compound=TOP, width=buttonDim)
-data_collection.place(relx=0.67, rely=0.33, anchor=CENTER)
 
-analysis = Button(main, text="Analysis", image=magnify,
-                  compound=TOP, width=buttonDim)
-analysis.place(relx=0.33, rely=0.67, anchor=CENTER)
+titleLabel = Label(mainFrame, text="Mouser", font=("Arial", 25))
+titleLabel.grid(row=0, column=0, columnspan=4, sticky=N)
 
-accounts = Button(main, text="Accounts", image=user,
-                  compound=TOP, width=buttonDim)
-accounts.place(relx=0.67, rely=0.67, anchor=CENTER)
+mouseImage = PhotoImage(file="./images/mouse_small.png")
+graphImage = PhotoImage(file="./images/graph_small.png")
+magnifyImage = PhotoImage(file="./images/magnifier_small.png")
+userImage = PhotoImage(file="./images/user_small.png")
 
-main.grid(row=0, column=0, sticky="NESW")
-main.grid_rowconfigure(0, weight=1)
-main.grid_columnconfigure(0, weight=1)
+setupFrame("Animal Setup", mouseImage, animalSetupFrame, 0.33, 0.33)
+setupFrame("Data Collection", graphImage, dataCollectionFrame, 0.67, 0.33)
+setupFrame("Analysis", magnifyImage, analysisFrame, 0.33, 0.67)
+setupFrame("Accounts", userImage, accountsFrame, 0.67, 0.67)
+
+frames = [mainFrame, animalSetupFrame,
+          dataCollectionFrame, analysisFrame, accountsFrame]
+
+for i, frame in enumerate(frames):
+    if i != 0:
+        back_button = Button(frame, text="Back", compound=TOP,
+                             width=15, command=lambda: raiseFrame(mainFrame))
+        back_button.place(relx=0.15, rely=0.05, anchor=CENTER)
+    frame.grid(row=0, column=0, sticky="NESW")
+    frame.grid_rowconfigure(0, weight=1)
+    frame.grid_columnconfigure(0, weight=1)
+
 root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)
 
