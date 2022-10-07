@@ -6,14 +6,12 @@ win.title('Mouser 2.0');
 win.geometry('800x400');
 win.configure(bg='white');
 
-# window label
-# label = Label(win, text='Experiment Setup', bg='teal', width='80');
 
 # text box labels
-nameLabel = Label(win, text='Experiment Name', bg='white', fg='black', width='15', height='2');
-investLabel = Label(win, text='Investigators', bg='white', fg='black', width='15', height='2');
-specLabel = Label(win, text='Species', bg='white', fg='black', width='25', height='2');
-measItemLabel = Label(win, text='Measurement Items', bg='white', fg='black', width='15', height='2');
+nameLabel = Label(win, text='Experiment Name', bg='white', fg='black', width='15', height='1', anchor='w');
+investLabel = Label(win, text='Investigators', bg='white', fg='black', width='15', height='1', anchor='w');
+specLabel = Label(win, text='Species', bg='white', fg='black', width='25', height='1', anchor='w');
+measItemLabel = Label(win, text='Measurement Items', bg='white', fg='black', width='15', height='1', anchor='w');
 
 # text boxes
 nameText = Text(win, bg='white', fg='black', height='1', width='50');
@@ -35,9 +33,7 @@ investButton = Button(win, text='Add');
 measItemButton = Button(win, text='Add');
 nextButton = Button(win, text='Next');
 
-
-# label.place(relx=0, rely=0);
-
+# placement
 nameLabel.place(x=0, y=100);
 nameText.place(x=200, y=100);
 
