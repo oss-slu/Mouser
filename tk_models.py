@@ -2,6 +2,16 @@ from tkinter import *
 from tkinter.ttk import *
 
 
+def raise_frame(frame: Frame):
+    frame.tkraise()
+
+
+def create_nav_button(parent: Frame, name: str, buttonImage: PhotoImage, frame: Frame, relx: float, rely: float):
+    button = Button(parent, text=name, image=buttonImage,
+                    compound=TOP, width=25, command=lambda: raise_frame(frame))
+    button.place(relx=relx, rely=rely, anchor=CENTER)
+
+
 class BackButton(Button):
     def __init__(self, page: Frame, previousPage: Frame):
         super().__init__(page, text="Back", compound=TOP,
