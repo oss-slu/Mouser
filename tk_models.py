@@ -10,13 +10,14 @@ def create_nav_button(parent: Frame, name: str, buttonImage: PhotoImage, frame: 
     button = Button(parent, text=name, image=buttonImage,
                     compound=TOP, width=25, command=lambda: raise_frame(frame))
     button.place(relx=relx, rely=rely, anchor=CENTER)
+    button.image = buttonImage
 
 
 class BackButton(Button):
     def __init__(self, page: Frame, previousPage: Frame):
         super().__init__(page, text="Back", compound=TOP,
                          width=15, command=lambda: self.navigate())
-        self.place(relx=0.15, rely=0.05, anchor=CENTER)
+        self.place(relx=0.15, rely=0.10, anchor=CENTER)
         self.previousPage = previousPage
 
     def navigate(self):
