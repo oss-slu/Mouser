@@ -9,4 +9,3 @@ class NavigateButton(Button):
 
     def navigate(self):
         self.nextPage.tkraise()
-        
