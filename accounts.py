@@ -41,6 +41,8 @@ class ConfigureUsersFrame(MouserPage):
         self.name_label = Label(self)
         self.access_header = Label(self)
         self.access_select = Combobox(self)
+        self.discard_changes_button = Button(self)
+        self.save_changes_button = Button(self)
 
     def display_information(self, event):
 
@@ -58,7 +60,7 @@ class ConfigureUsersFrame(MouserPage):
         self.access_select['state'] = 'readonly'
         self.access_select.set(users[selected]["role"])
         self.access_select.place(relx=0.25, rely=0.50)
-        self.access_select.bind('<<ComboboxSelected>>', self.detect_changes)
+        self.access_select.bind('<<ComboboxSelected>>', self.set_data)
 
         self.name_header.destroy()
         self.name_header = Label(self, text="Name:")
@@ -69,8 +71,23 @@ class ConfigureUsersFrame(MouserPage):
         self.name_label = Label(self, text=name_text)
         self.name_label.place(relx=0.25, rely=0.40)
 
-    def detect_changes(self, event):
+        self.discard_changes_button.destroy()
+        self.discard_changes_button = Button(
+            self, text="Discard", compound=TOP, width=15, command=lambda: self.discard_changes())
+        self.discard_changes_button.place(relx=0.20, rely=0.70)
+        self.discard_changes_button["state"] = "disabled"
+
+        self.save_changes_button.destroy()
+        self.save_changes_button = Button(
+            self, text="Save", compound=TOP, width=15, command=lambda: self.save_changes())
+        self.save_changes_button.place(relx=0.50, rely=0.70)
+        self.save_changes_button["state"] = "disabled"
+
+    def set_data(self, event):
         self.changed_data[self.selected]["role"] = self.access_select.get()
+        self.detect_changes(None)
+
+    def detect_changes(self, event):
         user = users[self.selected]
         changed = False
         for key in user.keys():
@@ -78,8 +95,22 @@ class ConfigureUsersFrame(MouserPage):
                 changed = True
         if (changed):
             self.user_select['state'] = "disabled"
+            self.discard_changes_button["state"] = "normal"
+            self.save_changes_button["state"] = "normal"
         else:
             self.user_select['state'] = "readonly"
+            self.discard_changes_button["state"] = "disabled"
+            self.save_changes_button["state"] = "disabled"
+
+    def save_changes(self):
+        global users
+        users = self.changed_data
+        self.detect_changes(None)
+
+    def discard_changes(self):
+        self.changed_data = copy.deepcopy(users)
+        self.access_select.set(self.changed_data[self.selected]["role"])
+        self.detect_changes(None)
 
 
 class ChangePasswordFrame(MouserPage):
