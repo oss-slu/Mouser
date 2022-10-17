@@ -6,15 +6,15 @@ class Id_Database:
         self._c = self._conn.cursor()
         try:
             self._c.execute('''CREATE TABLE conversion (
-                                rfid INTEGER,
-                                animalid INTEGER
+                                rfid TEXT UNIQUE,
+                                animal_id TEXT UNIQUE
                                 );''')
             self._conn.commit()
         except:
             pass
  
     def add_animal(self, rf, an):          #problem - can add animals with same rfid and/or animalid
-        self._c.execute("INSERT INTO conversion VALUES (?, ?)", (rf, an))
+        self._c.execute("INSERT INTO conversion VALUES (?, ?)", (rf, an)) #automatically generate animals id 1001+
         self._conn.commit()
 
     def get_all_animals(self):
@@ -22,7 +22,7 @@ class Id_Database:
         return self._c.fetchall()
 
     def get_animal_id(self, rf):
-        self._c.execute("SELECT animalid FROM conversion WHERE rfid=?", (rf,))
+        self._c.execute("SELECT animal_id FROM conversion WHERE rfid=?", (rf,))
         return self._c.fetchone()[0]
 
     def close(self):
