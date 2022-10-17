@@ -3,24 +3,23 @@ import sqlite3
 class idDatabase:
     def __init__(self):
         self._conn = sqlite3.connect('conversion.db')
+        self._c = self._conn.cursor()
         try:
-            self._conn.execute('''CREATE TABLE conversion (
-                      rfid INTEGER,
-                      animalid INTEGER);''')
+            self._c.execute('''CREATE TABLE conversion (
+                                rfid INTEGER,
+                                animalid INTEGER
+                                );''')
             self._conn.commit()
         except:
             pass
  
-    def addAnimal(self, rf, id):
-        self._conn.execute("INSERT INTO conversion (rfid, animalid)\
-                VALUES ('{}', '{}')".format(rf, id));
+    def addAnimal(self, rf, an):          #problem - can add animals with same rfid and/or animalid
+        self._c.execute("INSERT INTO conversion VALUES (?, ?)", (rf, an))
+        self._conn.commit()
 
     def getAnimals(self):
-        cursor = self._conn.execute("SELECT rfid, animalid from conversion")
-        animals = []
-        for row in cursor:
-            animals.append((row[0], row[1]))
-        return animals
+        self._c.execute("SELECT * FROM conversion")
+        return self._c.fetchall()
 
     def close(self):
         self._conn.close()
