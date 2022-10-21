@@ -24,6 +24,22 @@ class BackButton(Button):
         self.previous_page.tkraise()
 
 
+class ChangePageButton(Button):
+    def __init__(self, page: Frame, next_page: Frame, previous: bool = True):
+        text = "Next"
+        x = 0.85
+        if previous:
+            text = "Previous"
+            x = 0.15
+        super().__init__(page, text=text, compound=TOP,
+                         width=15, command=lambda: self.navigate())
+        self.place(relx=x, rely=0.05, anchor=CENTER)
+        self.next_page = next_page
+
+    def navigate(self):
+        self.next_page.tkraise()
+
+
 class MouserPage(Frame):
     def __init__(self, parent: Tk, title: str, back_button: bool = False, previous_page: Frame = None, font=("Arial", 25)):
         super().__init__(parent)
