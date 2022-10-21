@@ -41,7 +41,7 @@ class ChangePageButton(Button):
 
 
 class MouserPage(Frame):
-    def __init__(self, parent: Tk, title: str, menu_button: bool = False, menu_page: Frame = None):
+    def __init__(self, parent: Tk, title: str, menu_page: Frame = None):
         super().__init__(parent)
         self.title = title
         titleLabel = Label(self, text=title, font=("Arial", 25))
@@ -49,7 +49,7 @@ class MouserPage(Frame):
         self.grid(row=0, column=0, sticky="NESW")
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
-        self.menu_button = MenuButton(self, menu_page) if menu_button else None
+        self.menu_button = MenuButton(self, menu_page) if menu_page else None
         self.next_button = None
         self.previous_button = None
 
