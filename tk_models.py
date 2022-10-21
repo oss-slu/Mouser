@@ -15,7 +15,7 @@ def create_nav_button(parent: Frame, name: str, button_image: PhotoImage, frame:
 
 class BackButton(Button):
     def __init__(self, page: Frame, previous_page: Frame):
-        super().__init__(page, text="Back", compound=TOP,
+        super().__init__(page, text="Back to Menu", compound=TOP,
                          width=15, command=lambda: self.navigate())
         self.place(relx=0.15, rely=0.10, anchor=CENTER)
         self.previous_page = previous_page
@@ -27,13 +27,13 @@ class BackButton(Button):
 class ChangePageButton(Button):
     def __init__(self, page: Frame, next_page: Frame, previous: bool = True):
         text = "Next"
-        x = 0.85
+        x = 0.75
         if previous:
             text = "Previous"
-            x = 0.15
+            x = 0.25
         super().__init__(page, text=text, compound=TOP,
                          width=15, command=lambda: self.navigate())
-        self.place(relx=x, rely=0.05, anchor=CENTER)
+        self.place(relx=x, rely=0.85, anchor=CENTER)
         self.next_page = next_page
 
     def navigate(self):
@@ -41,11 +41,11 @@ class ChangePageButton(Button):
 
 
 class MouserPage(Frame):
-    def __init__(self, parent: Tk, title: str, back_button: bool = False, previous_page: Frame = None, font=("Arial", 25)):
+    def __init__(self, parent: Tk, title: str, back_button: bool = False, previous_page: Frame = None):
         super().__init__(parent)
         self.title = title
-        title_label = Label(self, text=title, font=font)
-        title_label.grid(row=0, column=0, columnspan=4, sticky=N)
+        titleLabel = Label(self, text=title, font=("Arial", 25))
+        titleLabel.grid(row=0, column=0, columnspan=4, sticky=N)
         self.grid(row=0, column=0, sticky="NESW")
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
@@ -66,6 +66,8 @@ if __name__ == '__main__':
     main_frame = MouserPage(root, "Main")
     frame = MouserPage(root, "Template", True, main_frame)
     frame.raiseFrame()
+
+    prev = ChangePageButton(main_frame, frame, False)
 
     root.grid_rowconfigure(0, weight=1)
     root.grid_columnconfigure(0, weight=1)
