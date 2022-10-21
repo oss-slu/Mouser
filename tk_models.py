@@ -13,7 +13,7 @@ def create_nav_button(parent: Frame, name: str, button_image: PhotoImage, frame:
     button.image = button_image
 
 
-class BackButton(Button):
+class MenuButton(Button):
     def __init__(self, page: Frame, previous_page: Frame):
         super().__init__(page, text="Back to Menu", compound=TOP,
                          width=15, command=lambda: self.navigate())
@@ -41,7 +41,7 @@ class ChangePageButton(Button):
 
 
 class MouserPage(Frame):
-    def __init__(self, parent: Tk, title: str, back_button: bool = False, previous_page: Frame = None):
+    def __init__(self, parent: Tk, title: str, menu_button: bool = False, menu_page: Frame = None):
         super().__init__(parent)
         self.title = title
         titleLabel = Label(self, text=title, font=("Arial", 25))
@@ -49,13 +49,27 @@ class MouserPage(Frame):
         self.grid(row=0, column=0, sticky="NESW")
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
-        if (back_button):
-            self.back_button = BackButton(self, previous_page)
-        else:
-            self.back_button = None
+        self.menu_button = MenuButton(self, menu_page) if menu_button else None
+        self.next_button = None
+        self.previous_button = None
 
-    def raiseFrame(self):
+    def raise_frame(self):
         self.tkraise()
+
+    def set_next_button(self, next_page):
+        if self.next_button:
+            self.next_button.destroy()
+        self.next_button = ChangePageButton(self, next_page, False)
+
+    def set_previous_button(self, previous_page):
+        if self.previous_button:
+            self.previous_button.destroy()
+        self.previous_button = ChangePageButton(self, previous_page)
+
+    def set_menu_button(self, menu_page):
+        if self.menu_button:
+            self.menu_button.destroy()
+        self.menu_button = MenuButton(self, menu_page, False)
 
 
 if __name__ == '__main__':
@@ -64,10 +78,12 @@ if __name__ == '__main__':
     root.geometry('600x600')
 
     main_frame = MouserPage(root, "Main")
-    frame = MouserPage(root, "Template", True, main_frame)
-    frame.raiseFrame()
+    frame = MouserPage(root, "Template")
 
-    prev = ChangePageButton(main_frame, frame, False)
+    main_frame.set_next_button(frame)
+    frame.set_previous_button(main_frame)
+
+    main_frame.raise_frame()
 
     root.grid_rowconfigure(0, weight=1)
     root.grid_columnconfigure(0, weight=1)
