@@ -1,14 +1,14 @@
 from tkinter import *
 from tkinter.ttk import *
-
 from NavigateButton import NavigateButton
+from GroupSetupFrame import *
 
 class IdSetupFrame(Frame):
-    def __init__(self, parent: Tk, prev_page: Frame = None, next_page: Frame = None):
+    def __init__(self, parent: Tk, prev_page: Frame = None):
         super().__init__(parent)
-        self.prev_page = prev_page
-        self.next_page = next_page
 
+        self.root = parent
+        
         # vars for input
         self.rfid = 0
         self.id = 0
@@ -54,8 +54,11 @@ class IdSetupFrame(Frame):
         # buttons
         add_button = Button(self, text='Add', width=15, command=lambda: self.add_id()).grid(row=2, column=3, padx=self.pad_x, pady=self.pad_y)
         sort_buton = Button(self, text='Sort by Weight', width=15, command=lambda: self.sort_table()).grid(row=4, column=3, padx=self.pad_x, pady=self.pad_y)
-        prev_button = NavigateButton(self, 'Previous', self.prev_page).grid(row=5, column=0, columnspan=2, padx=self.pad_x, pady=self.pad_y)
-        next_button = NavigateButton(self, 'Next', self.next_page).grid(row=5, column=3, columnspan=2, padx=self.pad_x, pady=self.pad_y)
+        
+        prev_button = NavigateButton(self, 'Previous', prev_page)
+        next_button = Button(self, text='Next', width=15, command=lambda: self.create_next(self))
+        prev_button.grid(row=5, column=0, columnspan=2, padx=self.pad_x, pady=self.pad_y)
+        next_button.grid(row=5, column=3, columnspan=2, padx=self.pad_x, pady=self.pad_y)
 
 
         for i in range (0,5):
@@ -70,14 +73,16 @@ class IdSetupFrame(Frame):
     def raise_frame(frame: Frame):
         frame.tkraise()
 
+    def create_next(self, frame: Frame):
+        next = GroupSetupFrame(self.root, frame)
+        next.grid(row=0, column=0)
 
-    # TO-DO : connect to data & add
     def add_id():
+        # TO-DO : connect to data & add
         return
 
-
-    # TO-DO : connect to data
     def create_table(self, ids):
+        # TO-DO : connect to data
         table = LabelFrame(self, height=200, width=(600 - self.pad_x*2), relief=RIDGE)
         table.grid(row=len(ids)+1, column=4)
 
@@ -95,26 +100,7 @@ class IdSetupFrame(Frame):
 
         return table
 
-
-    # TO-DO : connect to data and sort
     def sort_table(self, data):
+        # TO-DO : connect to data and sort
         # call create_table again with new sorted array of data
         return 
-
-
-
-
-###############################################################
-# for demo purposes - remove once everything is all connected #
-
-if __name__ == '__main__':
-    root = Tk()
-    root.title("Mouser")
-    root.geometry('600x600')
-
-    main_frame = IdSetupFrame(root, "Main").grid(sticky=E)
-    frame = IdSetupFrame(root, main_frame)
-    frame.raise_frame()
-
-    root.mainloop()
-###############################################################
