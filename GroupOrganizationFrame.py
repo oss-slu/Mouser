@@ -84,11 +84,11 @@ class GroupOrganizationFrame(Frame):
         table = LabelFrame(self, height=200, width=(600 - self.pad_x), relief=FLAT)
         table.grid(row=2, column=len(groups)+1, padx=30)
         col = 0
-        for i in groups:
-            Label(table, text=i, font=self.label_font).grid(
+        for group_name in groups:
+            Label(table, text=group_name, font=self.label_font).grid(
                 row=0, column=col, padx=50)
             for animal in self.animals:
-                if i in animal:
+                if group_name in animal:
                     draggable = self.drag_group(table)
                     draggable.grid(row=1, column=col, padx=30)
             col += 1
@@ -119,14 +119,3 @@ class GroupOrganizationFrame(Frame):
             Label(table, text=animal[2], font=self.label_font, padding=15).grid(row=1, column=2)
         return table
 
-
-if __name__ == '__main__':
-    root = Tk()
-    root.title("Mouser")
-    root.geometry('600x600')
-
-    main_frame = GroupOrganizationFrame(root, "Main").grid(sticky=E)
-    frame = GroupOrganizationFrame(root, main_frame)
-    frame.raise_frame()
-
-    root.mainloop()
