@@ -26,7 +26,7 @@ roles = ["generic", "admin"]
 
 class ConfigureUsersFrame(MouserPage):
     def __init__(self, parent: Tk, previous_page: Frame):
-        super().__init__(parent, "User Configuration", True, previous_page)
+        super().__init__(parent, "User Configuration", previous_page)
 
         Label(self, text="Email:").place(
             relx=0.12, rely=0.30)
@@ -115,17 +115,17 @@ class ConfigureUsersFrame(MouserPage):
 
 class ChangePasswordFrame(MouserPage):
     def __init__(self, parent: Tk, previous_page: Frame):
-        super().__init__(parent, "Change Password", True, previous_page)
+        super().__init__(parent, "Change Password", previous_page)
 
 
 class ConfigureOrganizationFrame(MouserPage):
     def __init__(self, parent: Tk, previous_page: Frame):
-        super().__init__(parent, "Organization Configuration", True, previous_page)
+        super().__init__(parent, "Organization Configuration", previous_page)
 
 
 class AccountsFrame(MouserPage):
     def __init__(self, parent: Tk, previous_page: Frame):
-        super().__init__(parent, "Accounts", True, previous_page)
+        super().__init__(parent, "Accounts", previous_page)
 
         gears_image = PhotoImage(file="./images/gears.png")
         user_settings_frame = ConfigureUsersFrame(parent, self)

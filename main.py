@@ -2,16 +2,22 @@ from tkinter import *
 from tkinter.ttk import *
 from turtle import onclick
 from tk_models import *
+
 from accounts import AccountsFrame
 from ExperimentSetupFrame import *
+
+from ExperimentSetupFrame import *
+from IdSetupFrame import *
+from GroupSetupFrame import *
 
 root = Tk()
 root.title("Mouser")
 root.geometry('600x600')
 
-data_collection_frame = Frame(root)
-analysis_frame = Frame(root)
 main_frame = MouserPage(root, "Mouser")
+
+data_collection_frame = MouserPage(root, "Data Collection")
+analysis_frame = MouserPage(root, "Analysis")
 accounts_frame = AccountsFrame(root, main_frame)
 animal_setup_frame = ExperimentSetupFrame(root, main_frame)
 
@@ -33,8 +39,7 @@ frames = [animal_setup_frame,
           data_collection_frame, analysis_frame]
 
 for i, frame in enumerate(frames):
-    if frame != animal_setup_frame:
-        back = BackButton(frame, main_frame)
+    back = MenuButton(frame, main_frame)
     frame.grid(row=0, column=0, sticky="NESW")
     frame.grid_rowconfigure(0, weight=1)
     frame.grid_columnconfigure(0, weight=1)
@@ -44,4 +49,3 @@ root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)
 
 root.mainloop()
-
