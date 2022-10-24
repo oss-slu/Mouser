@@ -16,7 +16,6 @@ root.geometry('600x600')
 
 main_frame = MouserPage(root, "Mouser")
 
-animal_setup_frame = ExperimentSetupFrame(root)
 data_collection_frame = MouserPage(root, "Data Collection")
 analysis_frame = MouserPage(root, "Analysis")
 accounts_frame = AccountsFrame(root, main_frame)
