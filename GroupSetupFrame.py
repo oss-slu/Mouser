@@ -1,18 +1,15 @@
-from operator import ne
 from tkinter import *
 from tkinter.ttk import *
+from NavigateButton import *
+from ScrollableFrame import *
+from GroupOrganizationFrame import *
 
-from NavigateButton import NavigateButton
-from ScrollableFrame import ScrollableFrame
-
-class GroupSetupPage(Frame):
-    def __init__(self, parent: Tk, prev_page: Frame = None, next_page: Frame = None):
+class GroupSetupFrame(Frame):
+    def __init__(self, parent: Tk, prev_page: Frame = None):
         super().__init__(parent)
-        self.prev_page = prev_page
-        self.next_page = next_page
 
+        self.root = parent
         self.group_names = []
-
         self.pad_x = 10
         self.pad_y = 20
         self.label_font = ("Arial", 13)
@@ -38,17 +35,18 @@ class GroupSetupPage(Frame):
         set_button = Button(self, text='Set', width=15, command=lambda: self.create_groups(int(group_num.get())))
         set_button.grid(row=1, column=4, padx=self.pad_x, pady=self.pad_y)
 
-        prev_button = NavigateButton(self, 'Previous', self.prev_page)
-        next_button = NavigateButton(self, 'Next', self.next_page)
+        prev_button = NavigateButton(self, 'Previous', prev_page)
+        next_button = Button(self, text='Next', width=15, command=lambda: self.create_next(self))
         prev_button.grid(row=4, column=0, columnspan=2, padx=self.pad_x, pady=self.pad_y, sticky=W)
         next_button.grid(row=4, column=3, columnspan=2, padx=self.pad_x, pady=self.pad_y)
-
-
 
 
     def raise_frame(frame: Frame):
         frame.tkraise()
 
+    def create_next(self, frame: Frame):
+        next = GroupOrganizationFrame(self.root, frame)
+        next.grid(row=0, column=0)
 
     def create_groups(self, num: int):
         scroll_frame = ScrollableFrame(self, num)
@@ -82,20 +80,3 @@ class GroupSetupPage(Frame):
         #   disable text fields, set button, save button
         return
 
-
-
-
-###############################################################
-# for demo purposes - remove once everything is all connected #
-
-if __name__ == '__main__':
-    root = Tk()
-    root.title("Mouser")
-    root.geometry('600x600')
-
-    main_frame = GroupSetupPage(root, "Main").grid(sticky=E)
-    frame = GroupSetupPage(root, main_frame)
-    frame.raise_frame()
-
-    root.mainloop()
-###############################################################
