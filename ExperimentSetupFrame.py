@@ -1,11 +1,13 @@
 from tkinter import *
 from tkinter.ttk import *
-
 from NavigateButton import *
+from IdSetupFrame import IdSetupFrame
 
 class ExperimentSetupFrame(Frame):
     def __init__(self, parent: Tk, prev_page: Frame = None):
         super().__init__(parent)
+       
+        self.root = parent
 
         # vars for user input
         self.exper_name = ''
@@ -14,41 +16,43 @@ class ExperimentSetupFrame(Frame):
         self.measurement_items = []
         self.species = ''
 
-        padX = 10
-        padY = 20
+        pad_x = 10
+        pad_y = 20
         label_font = ("Arial", 13)
-
         
         self.grid(row=5, column=4, sticky='NESW')
 
         title_label = Label(self, text='Experiment Setup', font=("Arial", 25))
-        title_label.grid(row=0, column=1, columnspan=2, padx=padX, pady=padY, sticky=N)
+        title_label.grid(row=0, column=1, columnspan=2, padx=pad_x, pady=pad_y)
 
-        name_label = Label(self, text='Experiment Name', font=label_font).grid(row=1, column=0, padx=padX, pady=padY, sticky=W)
-        invest_label = Label(self, text='Investigators', font=label_font).grid(row=2, column=0, padx=padX, pady=padY, sticky=W)
-        spec_label = Label(self, text='Species', font=label_font).grid(row=3, column=0, padx=padX, pady=padY, sticky=W)
-        meas_item_label = Label(self, text='Measurement Items', font=label_font).grid(row=4, column=0, padx=padX, pady=padY, sticky=W)
+        Label(self, text='Experiment Name', font=label_font).grid(row=1, column=0, padx=pad_x, pady=pad_y, sticky=W)
+        Label(self, text='Investigators', font=label_font).grid(row=2, column=0, padx=pad_x, pady=pad_y, sticky=W)
+        Label(self, text='Species', font=label_font).grid(row=3, column=0, padx=pad_x, pady=pad_y, sticky=W)
+        Label(self, text='Measurement Items', font=label_font).grid(row=4, column=0, padx=pad_x, pady=pad_y, sticky=W)
 
-        self.name_text = Text(self, height=1, width=30, font=label_font).grid(row=1, column=1, columnspan=2, padx=padX, pady=padY)
-        self.spec_text = Text(self, height=1, width=30, font=label_font).grid(row=3, column=1, columnspan=2, padx=padX, pady=padY)
-        self.meas_item_text = Text(self, height=1, width=30, font=label_font).grid(row=4, column=1, columnspan=2, padx=padX, pady=padY)
+        self.name_text = Text(self, height=1, width=30, font=label_font).grid(row=1, column=1, columnspan=2, padx=pad_x, pady=pad_y)
+        self.spec_text = Text(self, height=1, width=30, font=label_font).grid(row=3, column=1, columnspan=2, padx=pad_x, pady=pad_y)
+        self.meas_item_text = Text(self, height=1, width=30, font=label_font).grid(row=4, column=1, columnspan=2, padx=pad_x, pady=pad_y)
 
         self.options = StringVar()
         invest_drop = OptionMenu(self, self.options, self.investigators[0], *self.investigators, command=self.callback)
         invest_drop.config(width=40) 
         invest_drop['menu'].config(font=label_font)
-        invest_drop.grid(row=2, column=1, columnspan=2, padx=padX, pady=padY)
+        invest_drop.grid(row=2, column=1, columnspan=2, padx=pad_x, pady=pad_y)
         self.options.set(self.investigators[0])
         self.selected = ''
 
         invest_button = Button(self, text='Add', width=15, command=lambda: self.get_investigators())
-        invest_button.grid(row=2, column=3, padx=padX, pady=padY,sticky=E)
+        invest_button.grid(row=2, column=3, padx=pad_x, pady=pad_y,sticky=E)
         
         measure_button = Button(self, text='Add', width=15, command=lambda: self.add_items())
-        measure_button.grid(row=4, column=3, padx=padX, pady=padY,sticky=E)
+        measure_button.grid(row=4, column=3, padx=pad_x, pady=pad_y,sticky=E)
 
-        # TO-DO connect next page when made
-        next_button = NavigateButton(self, 'Next', self).grid(row=5, column=3, padx=padX, pady=padY,sticky=E)
+
+        back_button = NavigateButton(self, 'Back', prev_page)
+        next_button = Button(self, text='Next', width=15, command=lambda: self.create_next(self))
+        back_button.grid(row=5, column=0, padx=pad_x, pady=pad_y, sticky=W)
+        next_button.grid(row=5, column=3, padx=pad_x, pady=pad_y, sticky=E)
 
         for i in range (0, 5):
             if i < 5:
@@ -60,6 +64,11 @@ class ExperimentSetupFrame(Frame):
 
 
 
+    def create_next(self, frame: Frame):
+        next = IdSetupFrame(self.root, frame)
+        next.grid(row=0, column=0)
+
+
     def raise_frame(frame: Frame):
         frame.tkraise()
 
@@ -67,45 +76,3 @@ class ExperimentSetupFrame(Frame):
     def callback(self, selection):
         self.selected = selection
         return self.selected
-
-
-    def get_experiment_name(self):
-        return self.name_text.get('1.0', 'end')
-
-
-    def get_investigators(self):
-        if (self.selected != '' and self.selected not in self.invest_added):
-            self.invest_added.append(self.selected)
-        # TO-DO : add GUI to show who they've added
-        #         give option to remove added name?
-        return self.invest_added
-
-
-    def get_species(self):
-        return self.spec_text.get('1.0', 'end')
-
-
-    def add_items(self):
-        return
-        # TO-DO : add items list 
-        #         comma seperated or type one and hit add
-        #         display on gui?
-
-
-
-
-
-###############################################################
-# for demo purposes - remove once everything is all connected #
-
-if __name__ == '__main__':
-    root = Tk()
-    root.title("Mouser")
-    root.geometry('600x600')
-
-    main_frame = ExperimentSetupFrame(root, "Main")
-    frame = ExperimentSetupFrame(root, main_frame)
-    frame.raise_frame()
-
-    root.mainloop()
-###############################################################
