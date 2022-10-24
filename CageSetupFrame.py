@@ -120,16 +120,3 @@ class CageSetupFrame(Frame):
     def get_num_animals(self):
         return self.num_animals
 
-
-
-if __name__ == '__main__':
-    root = Tk()
-    root.title("Mouser")
-    root.geometry('600x600')
-
-    main_frame = CageSetupFrame(root, "Main").grid(sticky=E)
-    frame = CageSetupFrame(root, main_frame)
-    frame.raise_frame()
-
-    root.mainloop()
-###############################################################
