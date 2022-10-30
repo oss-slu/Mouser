@@ -1,8 +1,8 @@
 import sqlite3
 
 class Id_Database:
-    def __init__(self):
-        self._conn = sqlite3.connect(':memory:') #can input file name instead of memory, need to add that functionality later.
+    def __init__(self, file=":memory:"):
+        self._conn = sqlite3.connect(file) #can input file name instead of memory, need to add that functionality later.
         self._c = self._conn.cursor()
         try:
             self._c.execute('''CREATE TABLE conversion (
@@ -42,7 +42,7 @@ class Id_Database:
 
 
 if __name__ == "__main__":
-    db = Id_Database()
+    db = Id_Database("convert.db")
     db.add_animal('1234')
     db.add_animal('4562')
     db.add_animal('4682')
