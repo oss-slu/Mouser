@@ -1,8 +1,8 @@
 import sqlite3
 
 class Id_Database:
-    def __init__(self, file=":memory:"):
-        self._conn = sqlite3.connect(file) #can input file name instead of memory, need to add that functionality later.
+    def __init__(self, file=":memory:"):  #call with file name as argument or no args to use memory
+        self._conn = sqlite3.connect(file)
         self._c = self._conn.cursor()
         try:
             self._c.execute('''CREATE TABLE conversion (
@@ -13,7 +13,7 @@ class Id_Database:
         except:
             pass
  
-    def add_animal(self, rf):          #problem - can add animals with same rfid and/or animalid
+    def add_animal(self, rf):
         an = self.get_next_animal_id()
         self._c.execute("INSERT INTO conversion VALUES (?, ?)", (rf, an))
         self._conn.commit()
