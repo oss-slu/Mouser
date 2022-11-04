@@ -44,8 +44,13 @@ class MouserPage(Frame):
     def __init__(self, parent: Tk, title: str, menu_page: Frame = None):
         super().__init__(parent)
         self.title = title
-        titleLabel = Label(self, text=title, font=("Arial", 25))
-        titleLabel.grid(row=0, column=0, columnspan=4, sticky=N)
+
+        canvas = Canvas(self, width=600, height=600)
+        canvas.grid(row=0, column=0, columnspan=4)
+        rectangle = canvas.create_rectangle(0, 0, 600, 50, fill='#0097A7')
+        titleLabel = canvas.create_text(300, 13, anchor="n")
+        canvas.itemconfig(titleLabel, text=title, font=("Arial", 18))
+
         self.grid(row=0, column=0, sticky="NESW")
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
