@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter.ttk import *
 from turtle import onclick
+from login import LoginFrame
 from tk_models import *
 
 from accounts import AccountsFrame
@@ -16,6 +17,7 @@ root.geometry('600x600')
 root.resizable(False, False)
 
 main_frame = MouserPage(root, "Mouser")
+login_frame = LoginFrame(root, main_frame)
 
 accounts_frame = AccountsFrame(root, main_frame)
 animal_setup_frame = ExperimentSetupFrame(root, main_frame)
@@ -36,7 +38,7 @@ for i, frame in enumerate(frames):
     frame.grid_rowconfigure(0, weight=1)
     frame.grid_columnconfigure(0, weight=1)
 
-raise_frame(main_frame)
+raise_frame(login_frame)
 root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)
 

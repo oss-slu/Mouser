@@ -17,7 +17,7 @@ class MenuButton(Button):
     def __init__(self, page: Frame, previous_page: Frame):
         super().__init__(page, text="Back to Menu", compound=TOP,
                          width=15, command=lambda: self.navigate())
-        self.place(relx=0.15, rely=0.10, anchor=CENTER)
+        self.place(relx=0.15, rely=0.15, anchor=CENTER)
         self.previous_page = previous_page
 
     def navigate(self):
