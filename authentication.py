@@ -1,6 +1,7 @@
 logins = {
     "test@gmail.com": "password",
-    "foo@bar.com": "foobar"
+    "foo@bar.com": "foobar",
+    "":""
 }
 
 current_user = None

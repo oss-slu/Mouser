@@ -1,12 +1,14 @@
 from tkinter import *
-from tkinter.ttk import *
+import tkinter
+from tkinter.ttk import * 
 from NavigateButton import *
-from IdSetupFrame import IdSetupFrame
+from IdSetupFrame import IdSetupFrame 
 
 class ExperimentSetupFrame(Frame):
     def __init__(self, parent: Tk, prev_page: Frame = None):
         super().__init__(parent)
-       
+
+        self.grid(row=5, column=4, sticky='NESW')
         self.root = parent
 
         # vars for user input
@@ -20,10 +22,17 @@ class ExperimentSetupFrame(Frame):
         pad_y = 20
         label_font = ("Arial", 13)
         
-        self.grid(row=5, column=4, sticky='NESW')
 
-        title_label = Label(self, text='Experiment Setup', font=("Arial", 25))
-        title_label.grid(row=0, column=1, columnspan=2, padx=pad_x, pady=pad_y)
+        # title_label = Label(self, text='Experiment Setup', font=("Arial", 25))
+        # title_label.grid(row=0, column=1, columnspan=2, padx=pad_x, pady=pad_y)
+
+        # canvas = tkinter.Canvas(self, width=600, height=600)
+        # canvas.create_rectangle(0, 0, 600, 50, fill='#0097A7')
+        # titleLabel = canvas.create_text(300, 13, anchor="n")
+        # canvas.itemconfig(titleLabel, text='New Experiment', font=("Arial", 18))
+        # canvas.grid(row=0, column=0, columnspan=4)
+
+
 
         Label(self, text='Experiment Name', font=label_font).grid(row=1, column=0, padx=pad_x, pady=pad_y, sticky=W)
         Label(self, text='Investigators', font=label_font).grid(row=2, column=0, padx=pad_x, pady=pad_y, sticky=W)

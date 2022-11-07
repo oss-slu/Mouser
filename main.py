@@ -14,7 +14,7 @@ from GroupSetupFrame import *
 root = Tk()
 root.title("Mouser")
 root.geometry('600x600')
-root.resizable(False, False)
+# root.resizable(False, False)
 
 main_frame = MouserPage(root, "Mouser")
 login_frame = LoginFrame(root, main_frame)
