@@ -5,12 +5,6 @@ from login import LoginFrame
 from tk_models import *
 
 from accounts import AccountsFrame
-# from ExperimentSetupFrame import *
-
-# from ExperimentSetupFrame import *
-# from IdSetupFrame import *
-# from GroupSetupFrame import *
-
 from new_exper_ui import NewExperimentUI
 
 root = Tk()
