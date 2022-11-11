@@ -40,6 +40,18 @@ class MapRFIDPage(MouserPage):
 
         self.table.bind('<<TreeviewSelect>>', self.item_selected)
 
+        self.right_click = Menu(self, tearoff=0)
+        self.right_click.add_command(
+            label="Remove Selection(s)", command=self.remove_selected_items)
+        self.table.bind("<Button-3>", self.right_click_menu)
+
+    def right_click_menu(self, event):
+        if len(self.table.selection()) != 0:
+            try:
+                self.right_click.tk_popup(event.x_root, event.y_root)
+            finally:
+                self.right_click.grab_release()
+
     def add_random_rfid(self):
         rfid = random.randint(1000000, 9999999)
         self.add_value(rfid)
@@ -52,11 +64,13 @@ class MapRFIDPage(MouserPage):
         self.animal_id_entry_text.set(str(self.animal_id))
 
     def item_selected(self, event):
-        self.selected = []
         for selected_item in self.table.selection():
             item = self.table.item(selected_item)
             record = item['values']
-            self.selected.append(record)
+
+    def remove_selected_items(self):
+        for item in self.table.selection():
+            self.table.delete(item)
 
 
 if __name__ == '__main__':
