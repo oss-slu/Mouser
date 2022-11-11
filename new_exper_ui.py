@@ -84,8 +84,10 @@ class NewExperimentUI(MouserPage):
 
 
     def update_invest_frame(self, action, person):
-        # fix frame reset
-        # fix only display 1 invest
+        # fix: remove button removes last index always
+        for widget in self.invest_frame.winfo_children():
+            widget.destroy()
+
         if person == None:
             person = self.investigators.get()
         else:
@@ -94,6 +96,7 @@ class NewExperimentUI(MouserPage):
             self.added_invest.append(person)
         elif action == 'remove' and person in self.added_invest:
             self.added_invest.remove(person)
+
         for investigator in self.added_invest:
             Label(self.invest_frame, text=investigator).grid(row=self.added_invest.index(investigator), 
                     column=1, sticky=W, padx=10)
@@ -103,31 +106,63 @@ class NewExperimentUI(MouserPage):
 
 
     def update_items_frame(self, action, item):
-        # fix default text dimensions
-        # fix item removal -> make labels/buttons identifiable
-        # add text boxes for each dimension
+        # fix: remove button removes last index always
         for widget in self.item_frame.winfo_children():
             widget.destroy()
+
+        item_labels = [] 
+        remove_buttons = []
+
         if item == None:
             item = self.measure_items.get()
         else:
             item = item
+
         if action == 'add' and item not in self.items and item != '':
             self.items.append(item)
+            print(self.items)
         elif action == 'remove' and item in self.items:
             self.items.remove(item)
-            print(self.items)
+
         for meas_item in self.items:
             Label(self.item_frame, text=meas_item).grid(
-                row=self.items.index(meas_item), column=0, sticky=W, padx=10, pady=10)
-            Entry(self.item_frame, textvariable='# of dimensions').grid(row=self.items.index(meas_item), 
-                column=1, sticky=W, padx=10, pady=10)
-            Button(self.item_frame, text='-', width=3, 
-                command= lambda: self.update_items_frame('remove', meas_item)).grid(row=self.items.index(meas_item), 
-                column=2, sticky=W, padx=10, pady=10)
+                        row=self.items.index(meas_item)+1, column=0, sticky=W, padx=10)
+            rem_button = Button(self.item_frame, text='-', width=3)
+            rem_button.grid(row=self.items.index(meas_item)+1, column=2, sticky=W, padx=10)
+            remove_buttons.append(rem_button)
 
+        for button in remove_buttons:
+            index = remove_buttons.index(button)
+            button.configure(command= lambda: self.update_items_frame('remove', self.items[index]))
+
+        
+
+
+    def get_name(self):
+        return self.exper_name.get()
+
+    def get_investigators(self):
+        return self.added_invest
+
+    def get_species(self):
+        return self.species.get()
+
+    def get_measurement_items(self):
+        # to-do : get everything
+        return self.measure_items
+
+    def uses_rfid(self):
+        return self.rfid.get()
+
+    def get_num_animals(self):
+        return self.animal_num.get()
+
+    def get_num_groups(self):
+        return self.group_num.get()
+
+    def get_max_animals(self):
+        return self.num_per_cage.get()
 
     def save_input(self):
-        print(self.exper_name.get())
-        print(self.measure_items)
         print('saved')
+
