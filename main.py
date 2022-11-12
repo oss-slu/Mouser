@@ -5,7 +5,7 @@ from login import LoginFrame
 from tk_models import *
 
 from accounts import AccountsFrame
-from new_exper_ui import NewExperimentUI
+from experiment_pages.new_experiment_ui import NewExperimentUI
 
 root = Tk()
 root.title("Mouser")
