@@ -6,33 +6,45 @@ class Database:
         self._c = self._conn.cursor()
         try:
             self._c.execute('''CREATE TABLE experiment (
-                                experiment_id INTEGER
-                                name TEXT
-                                species TEXT
-                                uses_rfid INTEGER
-                                num_animals INTEGER
-                                num_groups INTEGER
-                                max_per_cage INTEGER
+                                name TEXT,
+                                species TEXT,
+                                uses_rfid INTEGER,
+                                num_animals INTEGER,
+                                num_groups INTEGER,
+                                cage_max INTEGER
                                 );''')
             self._c.execute('''CREATE TABLE animals (
-                                animal_id INTEGER
-                                group_id INTEGER
-                                cage_id INTEGER
+                                animal_id INTEGER,
+                                group_id INTEGER,
+                                cage_id INTEGER,
                                 remarks TEXT
                                 );''')
             self._c.execute('''CREATE TABLE groups (
-                                group_id INTEGER
-                                name TEXT
+                                group_id INTEGER,
+                                name TEXT,
                                 num_animals INTEGER
+                                );''')
+            self._c.execute('''CREATE TABLE cages (
+                                cage_id INTEGER,
+                                group_id INTEGER,
+                                num_animals INTEGER
+                                );''')
+            self._c.execute('''CREATE TABLE measurement_items (
+                                measurement_id INTEGER,
+                                item TEXT,
+                                auto INTEGER
                                 );''')
             self._c.execute('''CREATE TABLE conversion (
                                 rfid TEXT NOT NULL UNIQUE,
-                                animal_id INTEGER NOT NULL UNIQUE
+                                animal_id INTEGER NOT NULL PRIMARY KEY
                                 );''')
             self._conn.commit()
         except:
             pass
  
+    def create_experiment(self, name, species, uses_rfid, num_animals, group_names, cage_max):
+        
+
     def add_animal(self, rf):
         an = self.get_next_animal_id()
         self._c.execute("INSERT INTO conversion VALUES (?, ?)", (rf, an))
