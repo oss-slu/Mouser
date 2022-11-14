@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
-from group_config_ui import GroupConfigUI
+from experiment_pages.group_config_ui import GroupConfigUI
 
 investigators = ['investigator a', 'investigator b', 'investigator c']
 
@@ -61,11 +61,11 @@ class NewExperimentUI(MouserPage):
                     padx=pad_x, pady=pad_y)
 
         add_invest_button = Button(self.main_frame, text='+', width=3, 
-                            command= lambda: self.update_invest_frame('add', None))
+                            command= lambda: self.add_investigator())
         add_invest_button.grid(row=1, column=2, padx=pad_x, pady=pad_y)
 
         add_item_button = Button(self.main_frame, text='+', width=3, 
-                            command= lambda: [self.update_items_frame('add', None), self.measure_items.delete(0, END)])
+                            command= lambda: [self.add_measuremnt_item(), self.measure_items.delete(0, END)])
         add_item_button.grid(row=4, column=2, padx=pad_x, pady=pad_y)
         
         
@@ -83,85 +83,101 @@ class NewExperimentUI(MouserPage):
         self.next_button.place(relx=0.85, rely=0.15)
 
 
-    def update_invest_frame(self, action, person):
-        # fix: remove button removes last index always
+    def update_invest_frame(self):
         for widget in self.invest_frame.winfo_children():
             widget.destroy()
 
-        if person == None:
-            person = self.investigators.get()
-        else:
-            person = person
-        if action == 'add' and person not in self.added_invest:
-            self.added_invest.append(person)
-        elif action == 'remove' and person in self.added_invest:
-            self.added_invest.remove(person)
-
+        funcs = []
+        buttons = []
         for investigator in self.added_invest:
             Label(self.invest_frame, text=investigator).grid(row=self.added_invest.index(investigator), 
                     column=1, sticky=W, padx=10)
-            Button(self.invest_frame, text='-', width=3, 
-                    command= lambda: self.update_invest_frame('remove', investigator)).grid(
-                    row=self.added_invest.index(investigator), column=2, padx=10)
+            rem_button = Button(self.invest_frame, text='-', width=3)
+            rem_button.grid(row=self.added_invest.index(investigator), column=2, padx=10)
+            buttons.append(rem_button)
+            funcs.append(lambda x=investigator: self.remove_investigator(x))
+
+        index = 0
+        for f in funcs:
+            buttons[index].configure(command=f)
+            index += 1
 
 
-    def update_items_frame(self, action, item):
-        # fix: remove button removes last index always
+    def update_items_frame(self):
         for widget in self.item_frame.winfo_children():
             widget.destroy()
 
-        item_labels = [] 
-        remove_buttons = []
-
-        if item == None:
-            item = self.measure_items.get()
-        else:
-            item = item
-
-        if action == 'add' and item not in self.items and item != '':
-            self.items.append(item)
-            print(self.items)
-        elif action == 'remove' and item in self.items:
-            self.items.remove(item)
-
+        funcs = []
+        buttons = []
         for meas_item in self.items:
             Label(self.item_frame, text=meas_item).grid(
-                        row=self.items.index(meas_item)+1, column=0, sticky=W, padx=10)
+                            row=self.items.index(meas_item), column=0, sticky=W, padx=10)
             rem_button = Button(self.item_frame, text='-', width=3)
-            rem_button.grid(row=self.items.index(meas_item)+1, column=2, sticky=W, padx=10)
-            remove_buttons.append(rem_button)
+            rem_button.grid(row=self.items.index(meas_item), column=2, sticky=W, padx=10)
+            buttons.append(rem_button)
+            funcs.append(lambda meas_item=meas_item: self.remove_measurment_item(meas_item))
 
-        for button in remove_buttons:
-            index = remove_buttons.index(button)
-            button.configure(command= lambda: self.update_items_frame('remove', self.items[index]))
+        index = 0
+        for f in funcs:
+            buttons[index].configure(command=f)
+            index += 1
 
-        
+
+    def add_investigator(self):
+        if self.investigators.get() not in self.added_invest:
+            self.added_invest.append(self.investigators.get())
+            self.update_invest_frame()
+
+
+    def remove_investigator(self, person):
+        if person in self.added_invest:
+            self.added_invest.remove(person)
+            self.update_invest_frame()
+
+
+    def add_measuremnt_item(self):
+        if self.measure_items.get() not in self.items and self.measure_items.get() != '':
+            self.items.append(self.measure_items.get())
+            self.update_items_frame()
+
+
+    def remove_measurment_item(self, item):
+        if item in self.items:
+            self.items.remove(item)
+            self.update_items_frame()
 
 
     def get_name(self):
         return self.exper_name.get()
 
+
     def get_investigators(self):
         return self.added_invest
+
 
     def get_species(self):
         return self.species.get()
 
+
     def get_measurement_items(self):
-        # to-do : get everything
-        return self.measure_items
+        return self.items
+
 
     def uses_rfid(self):
         return self.rfid.get()
 
+
     def get_num_animals(self):
         return self.animal_num.get()
+
 
     def get_num_groups(self):
         return self.group_num.get()
 
+
     def get_max_animals(self):
         return self.num_per_cage.get()
+
 
     def save_input(self):
         print('saved')
