@@ -5,7 +5,9 @@ from login import LoginFrame
 from tk_models import *
 
 from accounts import AccountsFrame
-from experiment_pages.new_experiment_ui import NewExperimentUI
+# from experiment_pages.new_experiment_ui import NewExperimentUI
+from experiment_pages.experiments_ui import ExperimentsUI
+
 
 root = Tk()
 root.title("Mouser")
@@ -16,13 +18,13 @@ main_frame = MouserPage(root, "Mouser")
 login_frame = LoginFrame(root, main_frame)
 
 accounts_frame = AccountsFrame(root, main_frame)
-animal_setup_frame = NewExperimentUI(root, main_frame)
+experiments_frame = ExperimentsUI(root, main_frame)
 
 mouse_image = PhotoImage(file="./images/flask.png")
 user_image = PhotoImage(file="./images/user_small.png")
 
 create_nav_button(main_frame, "Experiments", mouse_image,
-                  animal_setup_frame, 0.5, 0.33)
+                  experiments_frame, 0.5, 0.33)
 create_nav_button(main_frame, "Accounts", user_image,
                   accounts_frame, 0.5, 0.67)
 
