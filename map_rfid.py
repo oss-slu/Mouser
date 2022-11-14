@@ -4,6 +4,10 @@ from tk_models import *
 import random
 
 
+def get_random_rfid():
+    return random.randint(1000000, 9999999)
+
+
 class MapRFIDPage(MouserPage):
     def __init__(self, parent: Tk, previous_page: Frame = None):
         super().__init__(parent, "Map RFID", previous_page)
@@ -45,6 +49,17 @@ class MapRFIDPage(MouserPage):
             label="Remove Selection(s)", command=self.remove_selected_items)
         self.table.bind("<Button-3>", self.right_click_menu)
 
+        self.changer = ChangeRFIDDialog(parent, self)
+        self.change_rfid_button = Button(self, text="Change RFID", compound=TOP,
+                                         width=15, command=self.open_change_rfid)
+        self.change_rfid_button.place(relx=0.40, rely=0.85, anchor=CENTER)
+
+        self.delete_button = Button(self, text="Remove Selection(s)", compound=TOP,
+                                    width=20, command=self.remove_selected_items)
+        self.delete_button.place(relx=0.70, rely=0.85, anchor=CENTER)
+
+        self.item_selected(None)
+
     def right_click_menu(self, event):
         if len(self.table.selection()) != 0:
             try:
@@ -53,7 +68,7 @@ class MapRFIDPage(MouserPage):
                 self.right_click.grab_release()
 
     def add_random_rfid(self):
-        rfid = random.randint(1000000, 9999999)
+        rfid = get_random_rfid()
         self.add_value(rfid)
 
     def add_value(self, rfid):
@@ -64,13 +79,47 @@ class MapRFIDPage(MouserPage):
         self.animal_id_entry_text.set(str(self.animal_id))
 
     def item_selected(self, event):
-        for selected_item in self.table.selection():
-            item = self.table.item(selected_item)
-            record = item['values']
+        selected = self.table.selection()
+
+        if len(selected) != 1:
+            self.change_rfid_button["state"] = "disabled"
+        else:
+            self.change_rfid_button["state"] = "normal"
+
+        if len(selected) == 0:
+            self.delete_button["state"] = "disabled"
+        else:
+            self.delete_button["state"] = "normal"
 
     def remove_selected_items(self):
         for item in self.table.selection():
             self.table.delete(item)
+
+    def open_change_rfid(self):
+        self.changing_value = self.table.selection()[0]
+        self.change_rfid_button["state"] = "disabled"
+        self.changer.open()
+
+    def close_change_rfid(self):
+        print("Closed")
+
+
+class ChangeRFIDDialog():
+    def __init__(self, parent: Tk, map_rfid: MapRFIDPage):
+        self.parent = parent
+        self.map_rfid = map_rfid
+
+    def open(self):
+        self.root = root = Toplevel(self.parent)
+        root.title("Change RFID")
+        root.geometry('300x300')
+        root.resizable(False, False)
+        root.grid_rowconfigure(0, weight=1)
+        root.grid_columnconfigure(0, weight=1)
+        self.root.mainloop()
+
+    def close(self):
+        self.root.destroy()
 
 
 if __name__ == '__main__':
