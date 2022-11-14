@@ -1,6 +1,6 @@
 import sqlite3
 
-class Database:
+class ExperimentDatabase:
     def __init__(self, file=":memory:"):  #call with file name as argument or no args to use memory
         self._conn = sqlite3.connect(file)
         self._c = self._conn.cursor()
@@ -15,32 +15,32 @@ class Database:
                                 cage_max INTEGER
                                 );''')
             self._c.execute('''CREATE TABLE animals (
-                                experiment_id INTEGER
+                                experiment_id INTEGER,
                                 animal_id INTEGER PRIMARY KEY,
                                 group_id INTEGER,
                                 cage_id INTEGER,
                                 remarks TEXT
                                 );''')
             self._c.execute('''CREATE TABLE groups (
-                                experiment_id INTEGER
+                                experiment_id INTEGER,
                                 group_id INTEGER PRIMARY KEY,
                                 name TEXT,
                                 num_animals INTEGER
                                 );''')
             self._c.execute('''CREATE TABLE cages (
-                                experiment_id INTEGER
+                                experiment_id INTEGER,
                                 cage_id INTEGER PRIMARY KEY,
                                 group_id INTEGER,
                                 num_animals INTEGER
                                 );''')
             self._c.execute('''CREATE TABLE measurement_items (
-                                experiment_id INTEGER
+                                experiment_id INTEGER,
                                 measurement_id INTEGER PRIMARY KEY,
                                 item TEXT,
                                 auto INTEGER
                                 );''')
-            self._c.execute('''CREATE TABLE conversion (
-                                experiment_id INTEGER
+            self._c.execute('''CREATE TABLE animal_rfid (
+                                experiment_id INTEGER,
                                 animal_id INTEGER PRIMARY KEY,
                                 rfid TEXT UNIQUE
                                 );''')
@@ -71,19 +71,19 @@ class Database:
 
     def add_animals(self, rfid_list):
         for rfid in rfid_list:
-            self._c.execute("INSERT INTO conversion (rfid) VALUES (?)", (rfid, ))
+            self._c.execute("INSERT INTO animal_rfid (rfid) VALUES (?)", (rfid, ))
             self._conn.commit()
 
     def add_animal(self, rfid):
-        self._c.execute("INSERT INTO conversion (rfid) VALUES (?)", (rfid, ))
+        self._c.execute("INSERT INTO animal_rfid (rfid) VALUES (?)", (rfid, ))
         self._conn.commit()
 
     def get_all_animals(self):
-        self._c.execute("SELECT * FROM conversion")
+        self._c.execute("SELECT * FROM animal_rfid")
         return self._c.fetchall()
 
-    def get_animal_id(self, rf):
-        self._c.execute("SELECT animal_id FROM conversion WHERE rfid=?", (rf,))
+    def get_animal_id(self, rfid):
+        self._c.execute("SELECT animal_id FROM animal_rfid WHERE rfid=?", (rfid,))
         return self._c.fetchone()[0]
 
     def close(self):
@@ -91,8 +91,9 @@ class Database:
 
 
 if __name__ == "__main__":
-    db = Database()
-    db.create_experiment('CancerDrug', 'Hamster', 1, 90, ('Control', 'Drug A', 'Drug B'), 5)
+    db = ExperimentDatabase()
+    db.setup_experiment('CancerDrug', 'hampster', True, 60, 3, 5)
+    db.setup_groups(('Control', 'Drug A', 'Drug B'), 20)
 
     db.add_animal(1234)
     db.add_animal(4562)
