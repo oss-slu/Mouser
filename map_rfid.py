@@ -2,10 +2,16 @@ from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
 import random
+from playsound import playsound
+import threading
 
 
 def get_random_rfid():
     return random.randint(1000000, 9999999)
+
+
+def play_sound_async(filename):
+    threading.Thread(target=playsound, args=(filename,), daemon=True).start()
 
 
 class MapRFIDPage(MouserPage):
@@ -77,6 +83,14 @@ class MapRFIDPage(MouserPage):
         self.animals.append(value)
         self.animal_id += 1
         self.animal_id_entry_text.set(str(self.animal_id))
+        play_sound_async('./sounds/rfid_success.mp3')
+
+    def change_selected_value(self, rfid):
+        item = self.table.item(self.changing_value)
+        self.table.item(self.changing_value, values=(
+            item['values'][0], rfid))
+        self.change_rfid_button["state"] = "normal"
+        play_sound_async('./sounds/rfid_success.mp3')
 
     def item_selected(self, event):
         selected = self.table.selection()
@@ -100,9 +114,6 @@ class MapRFIDPage(MouserPage):
         self.change_rfid_button["state"] = "disabled"
         self.changer.open()
 
-    def close_change_rfid(self):
-        print("Closed")
-
 
 class ChangeRFIDDialog():
     def __init__(self, parent: Tk, map_rfid: MapRFIDPage):
@@ -112,11 +123,21 @@ class ChangeRFIDDialog():
     def open(self):
         self.root = root = Toplevel(self.parent)
         root.title("Change RFID")
-        root.geometry('300x300')
+        root.geometry('400x400')
         root.resizable(False, False)
         root.grid_rowconfigure(0, weight=1)
         root.grid_columnconfigure(0, weight=1)
+
+        simulate_rfid_button = Button(root, text="Simulate RFID", compound=TOP,
+                                      width=15, command=lambda: self.add_random_rfid())
+        simulate_rfid_button.place(relx=0.50, rely=0.20, anchor=CENTER)
+
         self.root.mainloop()
+
+    def add_random_rfid(self):
+        rfid = get_random_rfid()
+        self.map_rfid.change_selected_value(rfid)
+        self.close()
 
     def close(self):
         self.root.destroy()
