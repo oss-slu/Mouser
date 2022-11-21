@@ -80,14 +80,18 @@ class ExperimentDatabase:
         self._conn.commit()
 
 
-
-    def get_all_animals(self):
-        self._c.execute("SELECT * FROM animal_rfid")
+    def get_animals(self):
+        self._c.execute("SELECT animal_id, group_id, cage_id FROM animals")
         return self._c.fetchall()
 
     def get_animal_id(self, rfid):
         self._c.execute("SELECT animal_id FROM animal_rfid WHERE rfid=?", (rfid,))
         return self._c.fetchone()[0]
+
+
+    def update_group_and_cage(self, animal_id, new_group, new_cage):
+        self._c.execute("UPDATE animals SET group_id=?, cage_id=? WHERE animal_id=?", (new_group, new_cage, animal_id))
+        self._conn.commit()
 
     def close(self):
         self._conn.close()
@@ -103,4 +107,6 @@ if __name__ == "__main__":
     db.add_animal(4682, 1, 2)
     db.add_animal(5782, 1, 2, 'missing left front leg')
     print(db.get_animal_id(1234))
-    print(db.get_all_animals())
+    print(db.get_animals())
+    db.update_group_and_cage(1, 3, 3)
+    print(db.get_animals())
