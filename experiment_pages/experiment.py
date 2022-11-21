@@ -6,12 +6,13 @@ class Experiment():
         self.species = ''
         self.items = []
         self.rfid = False
-        self.num_animals = ''
-        self.num_groups = '0'
-        self.max_per_cage = ''
+        self.num_animals = '0'
+        self.num_groups = '1'
+        self.max_per_cage = '0'
 
         self.group_names = []
-        self.animals_per_group = ''
+        self.item_collect_type = []
+
 
     def get_name(self):
         return self.name
@@ -43,6 +44,10 @@ class Experiment():
 
     def get_max_animals(self):
         return self.max_per_cage
+
+
+    def get_group_names(self):
+        return self.group_names
 
 
     def save_to_database(self):

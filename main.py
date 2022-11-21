@@ -5,7 +5,6 @@ from login import LoginFrame
 from tk_models import *
 
 from accounts import AccountsFrame
-# from experiment_pages.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiments_ui import ExperimentsUI
 
 

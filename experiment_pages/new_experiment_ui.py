@@ -11,7 +11,9 @@ class NewExperimentUI(MouserPage):
         super().__init__(parent, "New Experiment", prev_page)
 
         self.input = Experiment()
-        self.set_next_button(GroupConfigUI(self.input, parent, self))
+
+        self.next_page = GroupConfigUI(self.input, parent, self)
+        self.set_next_button(self.next_page)
 
         self.main_frame = Frame(self)
         self.main_frame.grid(row=10, column=3, sticky='NESW')
@@ -160,12 +162,6 @@ class NewExperimentUI(MouserPage):
         self.input.num_groups = self.group_num.get()
         self.input.max_per_cage = self.num_per_cage.get()
 
-        print(self.input.name)
-        print(self.input.investigators)
-        print(self.input.species)
-        print(self.input.items)
-        print(self.input.rfid)
-        print(self.input.num_animals)
-        print(self.input.num_groups)
-        print(self.input.max_per_cage)
+        self.next_page.update_page()
 
+      

@@ -9,3 +9,9 @@ class SummaryUI(MouserPage):
         super().__init__(parent, "New Experiment - Summary", prev_page)
         
         self.input = input
+
+        self.main_frame = Frame(self)
+
+    
+    def update_page(self):
+        pass
