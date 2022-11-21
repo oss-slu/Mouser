@@ -10,7 +10,7 @@ import threading
 def get_random_rfid():
     return random.randint(1000000, 9999999)
 
-
+# TODO: Error, doesn't play sound after first attempt
 def play_sound_async(filename):
     threading.Thread(target=playsound, args=(filename,), daemon=True).start()
 
