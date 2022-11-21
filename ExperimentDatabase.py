@@ -19,7 +19,8 @@ class ExperimentDatabase:
                                 animal_id INTEGER PRIMARY KEY,
                                 group_id INTEGER,
                                 cage_id INTEGER,
-                                remarks TEXT
+                                remarks TEXT,
+                                active INTEGER
                                 );''')
             self._c.execute('''CREATE TABLE groups (
                                 experiment_id INTEGER,
@@ -76,12 +77,12 @@ class ExperimentDatabase:
         self._c.execute("INSERT INTO animal_rfid (rfid) VALUES (?)", (rfid, ))
         self._conn.commit()
         animal_id = self.get_animal_id(rfid)
-        self._c.execute("INSERT INTO animals (animal_id, group_id, cage_id, remarks) VALUES (?, ?, ?, ?)", (animal_id, group_id, cage_id, remarks))
+        self._c.execute("INSERT INTO animals (animal_id, group_id, cage_id, remarks, active) VALUES (?, ?, ?, ?, True)", (animal_id, group_id, cage_id, remarks))
         self._conn.commit()
 
 
     def get_animals(self):
-        self._c.execute("SELECT animal_id, group_id, cage_id FROM animals")
+        self._c.execute("SELECT animal_id, group_id, cage_id, active FROM animals")
         return self._c.fetchall()
 
     def get_animal_id(self, rfid):
@@ -91,6 +92,10 @@ class ExperimentDatabase:
 
     def update_group_and_cage(self, animal_id, new_group, new_cage):
         self._c.execute("UPDATE animals SET group_id=?, cage_id=? WHERE animal_id=?", (new_group, new_cage, animal_id))
+        self._conn.commit()
+
+    def deactivate_animal(self, animal_id):
+        self._c.execute("UPDATE animals SET active=0 WHERE animal_id=?", (animal_id,))
         self._conn.commit()
 
     def close(self):
@@ -109,4 +114,5 @@ if __name__ == "__main__":
     print(db.get_animal_id(1234))
     print(db.get_animals())
     db.update_group_and_cage(1, 3, 3)
+    db.deactivate_animal(2)
     print(db.get_animals())
