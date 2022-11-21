@@ -163,5 +163,4 @@ class NewExperimentUI(MouserPage):
         self.input.max_per_cage = self.num_per_cage.get()
 
         self.next_page.update_page()
-
-      
+        
