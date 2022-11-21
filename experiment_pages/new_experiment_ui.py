@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
 from experiment_pages.group_config_ui import GroupConfigUI
+from experiment_pages.experiment import Experiment
 
 investigators = ['investigator a', 'investigator b', 'investigator c']
 
@@ -9,7 +10,8 @@ class NewExperimentUI(MouserPage):
     def __init__(self, parent:Tk, prev_page: Frame = None):
         super().__init__(parent, "New Experiment", prev_page)
 
-        self.set_next_button(GroupConfigUI(parent, self))
+        self.input = Experiment()
+        self.set_next_button(GroupConfigUI(self.input, parent, self))
 
         self.main_frame = Frame(self)
         self.main_frame.grid(row=10, column=3, sticky='NESW')
@@ -147,38 +149,23 @@ class NewExperimentUI(MouserPage):
             self.update_items_frame()
 
 
-    def get_name(self):
-        return self.exper_name.get()
-
-
-    def get_investigators(self):
-        return self.added_invest
-
-
-    def get_species(self):
-        return self.species.get()
-
-
-    def get_measurement_items(self):
-        return self.items
-
-
-    def uses_rfid(self):
-        return self.rfid.get()
-
-
-    def get_num_animals(self):
-        return self.animal_num.get()
-
-
-    def get_num_groups(self):
-        return self.group_num.get()
-
-
-    def get_max_animals(self):
-        return self.num_per_cage.get()
-
 
     def save_input(self):
-        print('saved')
+        self.input.name = self.exper_name.get()
+        self.input.investigators = self.added_invest
+        self.input.species = self.species.get()
+        self.input.items = self.items
+        self.input.rfid = self.rfid.get()
+        self.input.num_animals = self.animal_num.get()
+        self.input.num_groups = self.group_num.get()
+        self.input.max_per_cage = self.num_per_cage.get()
+
+        print(self.input.name)
+        print(self.input.investigators)
+        print(self.input.species)
+        print(self.input.items)
+        print(self.input.rfid)
+        print(self.input.num_animals)
+        print(self.input.num_groups)
+        print(self.input.max_per_cage)
 
