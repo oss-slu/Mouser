@@ -57,13 +57,24 @@ class ExperimentDatabase:
         self._conn.commit()
 
     def setup_groups(self, group_names, animals_per_group):
+        '''Adds the groups to the database.
+
+            arg1 (list): a list of all the group names
+            arg2 (int): a number representing the number of animals per group
+        '''
         for group in group_names:
             self._c.execute(''' INSERT INTO groups (name, num_animals) 
                                 VALUES (?, ?)''',
                                 (group, animals_per_group))
             self._conn.commit()
 
-    def setup_measurement_items(self, items): #items is a list of tuples where each tuple contains the measurement item and true (1) for automatic input or false (0) for manual
+    def setup_measurement_items(self, items):
+        '''Adds the measurement items to the database.
+        
+        arg1 (list of tuples):  First item in the tuple is the name of the measurement item
+                                Second item in the tuple is a true or false indicating whether or not the item will be input automatically or manually
+                                    (True or 1 for automatic and False or 0 for manual)
+        '''
         for item in items:
             self._c.execute(''' INSERT INTO measurement_items (item, auto) 
                                 VALUES (?, ?)''',
