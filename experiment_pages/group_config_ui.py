@@ -41,5 +41,4 @@ class GroupConfigUI(MouserPage):
         for entry in self.group_input:
             self.group_names.append(entry.get())
             self.input.group_names = self.group_names
-
-        print(self.input.group_names)
+            

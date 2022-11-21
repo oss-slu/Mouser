@@ -160,12 +160,3 @@ class NewExperimentUI(MouserPage):
         self.input.num_groups = self.group_num.get()
         self.input.max_per_cage = self.num_per_cage.get()
 
-        print(self.input.name)
-        print(self.input.investigators)
-        print(self.input.species)
-        print(self.input.items)
-        print(self.input.rfid)
-        print(self.input.num_animals)
-        print(self.input.num_groups)
-        print(self.input.max_per_cage)
-
