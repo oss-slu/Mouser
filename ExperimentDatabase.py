@@ -72,15 +72,14 @@ class ExperimentDatabase:
     def setup_cages(self):
         pass
         
-
-    def add_animals(self, rfid_list):
-        for rfid in rfid_list:
-            self._c.execute("INSERT INTO animal_rfid (rfid) VALUES (?)", (rfid, ))
-            self._conn.commit()
-
-    def add_animal(self, rfid):
+    def add_animal(self, rfid, group_id, cage_id, remarks=''):
         self._c.execute("INSERT INTO animal_rfid (rfid) VALUES (?)", (rfid, ))
         self._conn.commit()
+        animal_id = self.get_animal_id(rfid)
+        self._c.execute("INSERT INTO animals (animal_id, group_id, cage_id, remarks) VALUES (?, ?, ?, ?)", (animal_id, group_id, cage_id, remarks))
+        self._conn.commit()
+
+
 
     def get_all_animals(self):
         self._c.execute("SELECT * FROM animal_rfid")
@@ -99,9 +98,9 @@ if __name__ == "__main__":
     db.setup_experiment('CancerDrug', 'hampster', True, 60, 3, 5)
     db.setup_groups(('Control', 'Drug A', 'Drug B'), 20)
     db.setup_measurement_items([('Weight', True), ('Length', True)])
-    db.add_animal(1234)
-    db.add_animal(4562)
-    db.add_animal(4682)
-    db.add_animal(5782)
+    db.add_animal(1234, 1, 1)
+    db.add_animal(4562, 1, 1)
+    db.add_animal(4682, 1, 2)
+    db.add_animal(5782, 1, 2, 'missing left front leg')
     print(db.get_animal_id(1234))
     print(db.get_all_animals())
