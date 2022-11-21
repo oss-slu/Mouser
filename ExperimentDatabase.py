@@ -12,44 +12,38 @@ class ExperimentDatabase:
                                 uses_rfid INTEGER,
                                 num_animals INTEGER,
                                 num_groups INTEGER,
-                                cage_max INTEGER
-                                );''')
+                                cage_max INTEGER);''')
             self._c.execute('''CREATE TABLE animals (
                                 experiment_id INTEGER,
                                 animal_id INTEGER PRIMARY KEY,
                                 group_id INTEGER,
                                 cage_id INTEGER,
                                 remarks TEXT,
-                                active INTEGER
-                                );''')
+                                active INTEGER);''')
             self._c.execute('''CREATE TABLE groups (
                                 experiment_id INTEGER,
                                 group_id INTEGER PRIMARY KEY,
                                 name TEXT,
-                                num_animals INTEGER
-                                );''')
+                                num_animals INTEGER);''')
             self._c.execute('''CREATE TABLE cages (
                                 experiment_id INTEGER,
                                 cage_id INTEGER PRIMARY KEY,
                                 group_id INTEGER,
-                                num_animals INTEGER
-                                );''')
+                                num_animals INTEGER);''')
             self._c.execute('''CREATE TABLE measurement_items (
                                 experiment_id INTEGER,
                                 measurement_id INTEGER PRIMARY KEY,
                                 item TEXT,
-                                auto INTEGER
-                                );''')
+                                auto INTEGER);''')
             self._c.execute('''CREATE TABLE animal_rfid (
                                 experiment_id INTEGER,
                                 animal_id INTEGER PRIMARY KEY,
-                                rfid TEXT UNIQUE
-                                );''')
+                                rfid TEXT UNIQUE);''')
             self._conn.commit()
         except sqlite3.OperationalError:
             print('Tables already exist')
 
- 
+
     def setup_experiment(self, name, species, uses_rfid, num_animals, num_groups, cage_max):
         self._c.execute(''' INSERT INTO experiment (name, species, uses_rfid, num_animals, num_groups, cage_max) 
                             VALUES (?, ?, ?, ?, ?, ?)''',
@@ -80,16 +74,30 @@ class ExperimentDatabase:
                                 VALUES (?, ?)''',
                                 (item[0], item[1]))
             self._conn.commit()   
-    
+
     def setup_cages(self):
         pass
-        
+
+
+
     def add_animal(self, rfid, group_id, cage_id, remarks=''):
         self._c.execute("INSERT INTO animal_rfid (rfid) VALUES (?)", (rfid, ))
         self._conn.commit()
         animal_id = self.get_animal_id(rfid)
-        self._c.execute("INSERT INTO animals (animal_id, group_id, cage_id, remarks, active) VALUES (?, ?, ?, ?, True)", (animal_id, group_id, cage_id, remarks))
+        self._c.execute("INSERT INTO animals (animal_id, group_id, cage_id, remarks, active) VALUES (?, ?, ?, ?, True)",
+                        (animal_id, group_id, cage_id, remarks))
         self._conn.commit()
+
+
+
+    def update_group_and_cage(self, animal_id, new_group, new_cage):
+        self._c.execute("UPDATE animals SET group_id=?, cage_id=? WHERE animal_id=?", (new_group, new_cage, animal_id))
+        self._conn.commit()
+
+    def deactivate_animal(self, animal_id):
+        self._c.execute("UPDATE animals SET active=0 WHERE animal_id=?", (animal_id,))
+        self._conn.commit()
+    
 
 
     def get_animals(self):
@@ -100,14 +108,16 @@ class ExperimentDatabase:
         self._c.execute("SELECT animal_id FROM animal_rfid WHERE rfid=?", (rfid,))
         return self._c.fetchone()[0]
 
-
-    def update_group_and_cage(self, animal_id, new_group, new_cage):
-        self._c.execute("UPDATE animals SET group_id=?, cage_id=? WHERE animal_id=?", (new_group, new_cage, animal_id))
-        self._conn.commit()
-
-    def deactivate_animal(self, animal_id):
-        self._c.execute("UPDATE animals SET active=0 WHERE animal_id=?", (animal_id,))
-        self._conn.commit()
+    def get_all_experiment_info(self):
+        self._c.execute("SELECT name, species, uses_rfid, num_animals, num_groups, cage_max FROM experiment")
+        print('Experiment: name, species, uses_rfid, num_animals, num_groups, cage_max')
+        print(self._c.fetchall())
+        self._c.execute("SELECT name, num_animals  FROM groups")
+        print('Groups: name, num_animals')
+        print(self._c.fetchall())
+        self._c.execute("SELECT item, auto FROM measurement_items")
+        print('Measurement Items: item, auto')
+        print(self._c.fetchall())
 
     def close(self):
         self._conn.close()
@@ -127,3 +137,4 @@ if __name__ == "__main__":
     db.update_group_and_cage(1, 3, 3)
     db.deactivate_animal(2)
     print(db.get_animals())
+    db.get_all_experiment_info()
