@@ -61,11 +61,15 @@ class ExperimentDatabase:
                                 VALUES (?, ?)''',
                                 (group, animals_per_group))
             self._conn.commit()
+
+    def setup_measurement_items(self, items): #items is a list of tuples where each tuple contains the measurement item and true (1) for automatic input or false (0) for manual
+        for item in items:
+            self._c.execute(''' INSERT INTO measurement_items (item, auto) 
+                                VALUES (?, ?)''',
+                                (item[0], item[1]))
+            self._conn.commit()   
     
     def setup_cages(self):
-        pass
-
-    def setup_measurement_items(self):
         pass
         
 
@@ -94,7 +98,7 @@ if __name__ == "__main__":
     db = ExperimentDatabase()
     db.setup_experiment('CancerDrug', 'hampster', True, 60, 3, 5)
     db.setup_groups(('Control', 'Drug A', 'Drug B'), 20)
-
+    db.setup_measurement_items([('Weight', True), ('Length', True)])
     db.add_animal(1234)
     db.add_animal(4562)
     db.add_animal(4682)
