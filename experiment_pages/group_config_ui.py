@@ -5,13 +5,13 @@ from experiment_pages.summary_ui import SummaryUI
 from experiment_pages.experiment import Experiment
 
 class GroupConfigUI(MouserPage):
-    def __init__(self, input: Experiment, parent:Tk, prev_page: Frame = None):
+    def __init__(self, input: Experiment, parent:Tk, prev_page: Frame, menu_page: Frame):
         super().__init__(parent, "New Experiment - Group Configuration", prev_page)
 
         self.input = input
-        self.group_names = []
 
-        self.set_next_button(SummaryUI(self.input, parent, self))
+        self.next_page = SummaryUI(self.input, parent, self, menu_page)
+        self.set_next_button(self.next_page)
         self.main_frame = Frame(self)
         self.main_frame.grid(row=2, column=1, sticky='NESW')
         self.main_frame.place(relx=0.27, rely=0.20)
@@ -52,12 +52,12 @@ class GroupConfigUI(MouserPage):
         self.item_auto_buttons = []
         self.item_man_buttons = []
         for i in range(0, len(items)):
-            self.type = StringVar()
+            self.type = BooleanVar()
             self.button_vars.append(self.type)
             
             Label(self.item_frame, text=items[i]).grid(row=i, column=0, padx=10, pady=10, sticky=W)
-            auto = Radiobutton(self.item_frame, text='Automatic', variable=self.type, val='automatic')
-            man = Radiobutton(self.item_frame, text='Manual', variable=self.type, val='manual')
+            auto = Radiobutton(self.item_frame, text='Automatic', variable=self.type, val=True)
+            man = Radiobutton(self.item_frame, text='Manual', variable=self.type, val=False)
             
             auto.grid(row=i, column=1, padx=10, pady=10)
             man.grid(row=i, column=2, padx=10, pady=10)
@@ -77,10 +77,17 @@ class GroupConfigUI(MouserPage):
 
 
     def save_input(self):
+        group_names = []
         for entry in self.group_input:
-            self.group_names.append(entry.get())
-            self.input.group_names = self.group_names
+            group_names.append(entry.get())
+            self.input.group_names = group_names
             
-        for var in self.button_vars:
-            self.input.item_collect_type.append(var)
-            
+        items = self.input.get_measurement_items()
+        measurment_collect_type = []
+        for i in range(0, len(items)):
+            measurment_collect_type.append((items[i], self.button_vars[i].get()))
+
+        self.input.data_collect_type = measurment_collect_type
+        self.next_page.update_page()
+
+        

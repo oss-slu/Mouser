@@ -1,3 +1,5 @@
+from ExperimentDatabase import ExperimentDatabase
+
 class Experiment():
     def __init__(self):
 
@@ -6,12 +8,12 @@ class Experiment():
         self.species = ''
         self.items = []
         self.rfid = False
-        self.num_animals = '0'
-        self.num_groups = '1'
-        self.max_per_cage = '0'
-
+        self.num_animals = ''
+        self.num_groups = '0'
+        self.max_per_cage = ''
+        self.animals_per_group = ''
         self.group_names = []
-        self.item_collect_type = []
+        self.data_collect_type = []
 
 
     def get_name(self):
@@ -45,12 +47,20 @@ class Experiment():
     def get_max_animals(self):
         return self.max_per_cage
 
-
+    
     def get_group_names(self):
         return self.group_names
 
 
+    def get_collection_types(self):
+        return self.data_collect_type
+
+
     def save_to_database(self):
-        # to-do : add db function calls
-        return
-    
+        db = ExperimentDatabase()
+        db.setup_experiment(self.name, self.species, self.rfid, self.num_animals, 
+                            self.num_groups, self.max_per_cage)
+        db.setup_groups(self.group_names, self.animals_per_group)
+        db.setup_measurement_items(self.data_collect_type)
+
+        
