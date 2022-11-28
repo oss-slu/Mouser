@@ -11,6 +11,7 @@ class UsersDatabase:
     def __init__(self):
         self.connection = None
         self.db = None
+        self.user = None
         try:
             self.connection = sqlite3.connect("./databases/users.db")
             self.db = self.connection.cursor()
@@ -18,7 +19,8 @@ class UsersDatabase:
                             CREATE TABLE users (
                                 user_id INTEGER PRIMARY KEY AUTOINCREMENT,
                                 email TEXT,
-                                role TEXT CHECK( role IN ('admin', 'general', 'investigator') ) NOT NULL DEFAULT 'general'
+                                role TEXT CHECK( role IN ('admin', 'general', 'investigator') ) NOT NULL DEFAULT 'general',
+                                password TEXT
                             );
                             ''')
             self.connection.commit()
@@ -29,9 +31,9 @@ class UsersDatabase:
             
     def add_user(self, email: str, role: str = None):
         if role:
-            self.db.execute( "INSERT INTO users (email, role) VALUES (?, ?);", (email, role) )
+            self.db.execute( "INSERT INTO users (email, role, password) VALUES (?, ?, ?);", (email, role, "password") )
         else:
-            self.db.execute( "INSERT INTO users (email) VALUES (?);", (email,) )
+            self.db.execute( "INSERT INTO users (email, password) VALUES (?, ?);", (email, "password") )
         self.connection.commit()
         
     def get_all_users(self):
@@ -53,6 +55,23 @@ class UsersDatabase:
     def change_user_email(self, id: int, email: str):
         self.db.execute("UPDATE users SET email = ? WHERE user_id = ?", (email, id) )
         self.connection.commit()
+        
+    def login(self, email: str, password: str):
+        if (self.user):
+            print("Already logged in")
+        else:
+            self.db.execute("SELECT * FROM users WHERE email = ?", (email,) )
+            user = self.db.fetchall()[0]
+            if (user and user[3] == password):
+                self.user = user
+            else:
+                print("Cannot login with these credentials")
+    
+    def logout(self):
+        self.user = None
+        
+    def get_current_user(self):
+        return self.user
             
 if __name__ == '__main__':
     database = UsersDatabase()
@@ -68,10 +87,9 @@ if __name__ == '__main__':
         print("User with id", user_id, "has role:", database.get_role_from_id(user_id))
         
     print("\nChange random user's email:")
-    user = random.choice(users)
+    user = random.choice(users[1:])
     user_id = user[0]
     database.change_user_email(user_id, get_random_email())
     print("Old user:", user)
     print("New user:", database.get_user_from_id(user_id))
-    
     
