@@ -7,12 +7,12 @@ from experiment_pages.experiment import Experiment
 investigators = ['investigator a', 'investigator b', 'investigator c']
 
 class NewExperimentUI(MouserPage):
-    def __init__(self, parent:Tk, prev_page: Frame = None):
-        super().__init__(parent, "New Experiment", prev_page)
+    def __init__(self, parent:Tk, menu_page: Frame = None):
+        super().__init__(parent, "New Experiment", menu_page)
 
         self.input = Experiment()
 
-        self.next_page = GroupConfigUI(self.input, parent, self)
+        self.next_page = GroupConfigUI(self.input, parent, self, menu_page)
         self.set_next_button(self.next_page)
 
         self.main_frame = Frame(self)
@@ -151,6 +151,16 @@ class NewExperimentUI(MouserPage):
             self.update_items_frame()
 
 
+    def raise_warning(self):
+        pass
+
+
+    def check_animals_divisible(self):
+        if int(self.animal_num.get()) % int(self.group_num.get()) == 0:
+            self.save_input()
+        else: 
+            self.raise_warning()
+
 
     def save_input(self):
         self.input.name = self.exper_name.get()
@@ -161,6 +171,8 @@ class NewExperimentUI(MouserPage):
         self.input.num_animals = self.animal_num.get()
         self.input.num_groups = self.group_num.get()
         self.input.max_per_cage = self.num_per_cage.get()
+        self.input.animals_per_group = int(self.animal_num.get()) / int(self.group_num.get())
 
         self.next_page.update_page()
+
         
