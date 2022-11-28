@@ -2,7 +2,6 @@ from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
 from experiment_pages.experiment import Experiment
-# from experiment_pages.select_experiment_ui import ExperimentsUI
 
 
 class CreateExperimentButton(Button):
@@ -62,8 +61,6 @@ class SummaryUI(MouserPage):
         Label(self.main_frame, text=cage).grid(row=4, column=0, padx=10, pady=10)
 
         groups = self.input.get_group_names()
-        # for i in range(0, len(groups)):
-        #     Label(self.group_frame, text=groups[i]).grid(row=i, column=0, padx=10, pady=10)
         index = 0
         for group in groups:
             Label(self.group_frame, text=group).grid(row=index, column=0, padx=10, pady=10)
