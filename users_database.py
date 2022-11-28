@@ -42,15 +42,24 @@ class UsersDatabase:
         
     def get_user_from_id(self, id: int):
         self.db.execute("SELECT * FROM users WHERE user_id = ?", (id,) )
-        return self.db.fetchall()[0]
+        users = self.db.fetchall()
+        if len(users) == 0:
+            print("User with this ID is not found.")
+            return None
+        else:
+            return users[0]
     
     def get_email_from_id(self, id: int):
         user = self.get_user_from_id(id)
-        return user[1]
+        if user:
+            return user[1]
+        return None
         
     def get_role_from_id(self, id: int):
         user = self.get_user_from_id(id)
-        return user[2]
+        if user:
+            return user[2]
+        return None
     
     def change_user_email(self, id: int, email: str):
         self.db.execute("UPDATE users SET email = ? WHERE user_id = ?", (email, id) )
