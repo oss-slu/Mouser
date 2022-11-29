@@ -13,7 +13,7 @@ class ExperimentMenuUI(MouserPage):
         
         main_frame = Frame(self)
         main_frame.grid(row=5, column=1, sticky='NESW')
-        main_frame.place(relx=0.27, rely=0.20)
+        main_frame.place(relx=0.3, rely=0.20)
 
         data_page = DataCollectionUI(parent, self)
         analysis_page = DataAnalysisUI(parent, self)
@@ -21,20 +21,20 @@ class ExperimentMenuUI(MouserPage):
         rfid_page = MapRFIDPage(parent, self)
         invest_page = InvestigatorsUI(parent, self)
 
-        collection_button = Button(main_frame, text='Data Collection', 
+        collection_button = Button(main_frame, text='Data Collection', width=30, 
                                 command= lambda: data_page.raise_frame())
-        analysis_button = Button(main_frame, text='Data Analyis', 
+        analysis_button = Button(main_frame, text='Data Analyis', width=30,
                                 command= lambda: analysis_page.raise_frame())
-        group_button = Button(main_frame, text='Group Configuration', 
+        group_button = Button(main_frame, text='Group Configuration', width=30,
                                 command= lambda: cage_page.raise_frame())
-        rfid_button = Button(main_frame, text='Map RFID', 
+        rfid_button = Button(main_frame, text='Map RFID', width=30,
                                 command= lambda: rfid_page.raise_frame())
-        invest_button = Button(main_frame, text='Investigators', 
+        invest_button = Button(main_frame, text='Investigators', width=30,
                                 command= lambda: invest_page.raise_frame())
 
-        collection_button.grid(row=0, column=0, padx=10, pady=10)
-        analysis_button.grid(row=1, column=0, padx=10, pady=10)
-        group_button.grid(row=2, column=0, padx=10, pady=10)
-        rfid_button.grid(row=3, column=0, padx=10, pady=10)
-        invest_button.grid(row=4, column=0, padx=10, pady=10)
+        collection_button.grid(row=0, column=0, ipady=10, ipadx=10, pady=10, padx=10)
+        analysis_button.grid(row=1, column=0, ipady=10, ipadx=10, pady=10, padx=10)
+        group_button.grid(row=2, column=0, ipady=10, ipadx=10, pady=10, padx=10)
+        rfid_button.grid(row=3, column=0, ipady=10, ipadx=10, pady=10, padx=10)
+        invest_button.grid(row=4, column=0, ipadx=10, ipady=10, pady=10, padx=10)
 
