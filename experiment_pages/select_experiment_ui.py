@@ -31,14 +31,20 @@ class ExperimentsUI(MouserPage):
         new_exp_frame = NewExperimentUI(parent, self)
         NewExperimentButton(self, new_exp_frame)
 
-        Label(self, text='Name').place(relx=0.14, rely=0.2)
-        Label(self, text='Date Created').place(relx=0.7, rely=0.2)
-
         self.main_frame = Frame(self, width=500)
         self.main_frame.grid(row=1, column=1, sticky='NESW')
         self.main_frame.place(relx=0.12, rely=0.25)
 
         self.selectable_frames = []
+        self.update_frame()
+
+
+    def update_frame(self):
+        for widget in self.main_frame.winfo_children():
+            widget.destroy()
+
+        Label(self, text='Name').place(relx=0.14, rely=0.2)
+        Label(self, text='Date Created').place(relx=0.7, rely=0.2)
 
         index = 0
         for exp in experiment_list:
@@ -73,3 +79,4 @@ class ExperimentsUI(MouserPage):
     def frame_click(self, event, experiment):
         page = ExperimentMenuUI(self.parent, experiment, self)
         page.tkraise()
+
