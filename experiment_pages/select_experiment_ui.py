@@ -13,11 +13,15 @@ experiment_list = {
 
 
 class NewExperimentButton(Button):
-    def __init__(self, page: Frame, next_page: Frame):
+    def __init__(self, parent: Tk, page: Frame):
         super().__init__(page, text="Create New Experiment", compound=TOP,
-                         width=22, command=lambda: self.navigate())
+                         width=22, command=lambda: [self.create_next_page(), self.navigate()])
         self.place(relx=0.85, rely=0.15, anchor=CENTER)
-        self.next_page = next_page
+        self.parent = parent
+        self.page = page
+
+    def create_next_page(self):
+        self.next_page = NewExperimentUI(self.parent, self.page)
 
     def navigate(self):
         self.next_page.tkraise()
@@ -28,8 +32,7 @@ class ExperimentsUI(MouserPage):
         super().__init__(parent, "Experiments", prev_page)
         self.parent = parent
 
-        new_exp_frame = NewExperimentUI(parent, self)
-        NewExperimentButton(self, new_exp_frame)
+        NewExperimentButton(parent, self)
 
         self.main_frame = Frame(self, width=500)
         self.main_frame.grid(row=1, column=1, sticky='NESW')

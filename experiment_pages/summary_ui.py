@@ -20,6 +20,7 @@ class SummaryUI(MouserPage):
         super().__init__(parent, "New Experiment - Summary", prev_page)
         
         self.input = input
+        self.prev_page = prev_page
 
         CreateExperimentButton(input, self, menu_page)
 
@@ -74,4 +75,5 @@ class SummaryUI(MouserPage):
 
     def create_experiment(self):
         self.input.save_to_database()
+        self.prev_page.destroy()
 
