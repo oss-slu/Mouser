@@ -57,10 +57,6 @@ class Experiment():
         return self.data_collect_type
 
 
-    def get_date_created(self):
-        return self.date_created
-
-
     def save_to_database(self):
         db = ExperimentDatabase()
         db.setup_experiment(self.name, self.species, self.rfid, self.num_animals, 

@@ -75,5 +75,4 @@ class SummaryUI(MouserPage):
 
     def create_experiment(self):
         self.input.save_to_database()
-        self.prev_page.destroy()
 

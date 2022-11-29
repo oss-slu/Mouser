@@ -9,7 +9,6 @@ class GroupConfigUI(MouserPage):
         super().__init__(parent, "New Experiment - Group Configuration", prev_page)
 
         self.input = input
-        self.prev_page = prev_page
 
         self.next_page = SummaryUI(self.input, parent, self, menu_page)
         self.set_next_button(self.next_page)
@@ -67,7 +66,6 @@ class GroupConfigUI(MouserPage):
             self.item_man_buttons.append(man)
 
 
-
     def update_page(self):
         for widget in self.group_frame.winfo_children():
             widget.destroy()
@@ -75,11 +73,6 @@ class GroupConfigUI(MouserPage):
             widget.destroy()
         self.create_group_entries(int(self.input.get_num_groups()))
         self.create_item_frame(self.input.get_measurement_items())
-
-
-    def destroy(self) -> None:
-        self.prev_page.destroy()
-        return super().destroy()
 
 
     def save_input(self):
