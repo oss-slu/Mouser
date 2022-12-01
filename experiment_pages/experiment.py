@@ -57,7 +57,8 @@ class Experiment():
 
 
     def save_to_database(self):
-        db = ExperimentDatabase()
+        file = self.name + '.db'
+        db = ExperimentDatabase(file)
         db.setup_experiment(self.name, self.species, self.rfid, self.num_animals, 
                             self.num_groups, self.max_per_cage)
         db.setup_groups(self.group_names, self.animals_per_group)
