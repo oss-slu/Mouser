@@ -82,4 +82,3 @@ class ExperimentsUI(MouserPage):
     def frame_click(self, event, experiment):
         page = ExperimentMenuUI(self.parent, experiment, self)
         page.tkraise()
-
