@@ -7,7 +7,7 @@ from experiment_pages.experiment import Experiment
 class CreateExperimentButton(Button):
     def __init__(self, experiment: Experiment, page: Frame, menu_page: Frame):
         super().__init__(page, text="Create", compound=TOP,
-                         width=15, command=lambda: [experiment.save_to_database(), self.navigate()])
+                         width=15, command=lambda: [menu_page.update_frame(), experiment.save_to_database(), self.navigate()])
         self.place(relx=0.85, rely=0.15, anchor=CENTER)
         self.next_page = menu_page
 
@@ -20,6 +20,7 @@ class SummaryUI(MouserPage):
         super().__init__(parent, "New Experiment - Summary", prev_page)
         
         self.input = input
+        self.prev_page = prev_page
 
         CreateExperimentButton(input, self, menu_page)
 
@@ -35,7 +36,6 @@ class SummaryUI(MouserPage):
         for widget in self.group_frame.winfo_children():
             widget.destroy()
         self.create_summary_frame() 
-        
 
 
     def create_summary_frame(self):

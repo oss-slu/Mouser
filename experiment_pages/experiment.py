@@ -1,4 +1,5 @@
 from ExperimentDatabase import ExperimentDatabase
+from datetime import date
 
 class Experiment():
     def __init__(self):
@@ -14,7 +15,7 @@ class Experiment():
         self.animals_per_group = ''
         self.group_names = []
         self.data_collect_type = []
-
+        self.date_created = str(date.today())
 
     def get_name(self):
         return self.name
@@ -62,5 +63,7 @@ class Experiment():
                             self.num_groups, self.max_per_cage)
         db.setup_groups(self.group_names, self.animals_per_group)
         db.setup_measurement_items(self.data_collect_type)
+        
+        # TO:DO save date created to db
 
         

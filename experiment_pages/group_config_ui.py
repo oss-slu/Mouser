@@ -66,7 +66,6 @@ class GroupConfigUI(MouserPage):
             self.item_man_buttons.append(man)
 
 
-
     def update_page(self):
         for widget in self.group_frame.winfo_children():
             widget.destroy()
