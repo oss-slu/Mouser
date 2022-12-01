@@ -1,11 +1,17 @@
 from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
+import sqlite3
 
 
 class CageConfigurationUI(MouserPage):
-    def __init__(self, parent:Tk, prev_page: Frame = None):
+    def __init__(self, database, parent:Tk, prev_page: Frame = None):
         super().__init__(parent, "Group Configuration", prev_page)
+
+        # open database
+        self.connection = sqlite3.connect(database + ".db")
+
+
 
         self.main_frame = Frame(self)
         self.main_frame.grid(row=2, column=3, sticky='NESW')
@@ -39,6 +45,7 @@ class CageConfigurationUI(MouserPage):
 
         self.group_frame = Frame(self.main_frame)
         self.group_frame.grid(row=1, column=0, columnspan=3)
+
 
 
     def create_group_frame(self):
@@ -131,5 +138,7 @@ class CageConfigurationUI(MouserPage):
     def save_to_database(self):
         # TO-DO : save to database
         # TO-DO : return to menu
+        
+        self.connection.close()
         pass
 
