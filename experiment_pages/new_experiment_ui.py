@@ -83,7 +83,7 @@ class NewExperimentUI(MouserPage):
         if self.next_button:
             self.next_button.destroy()
         self.next_button = ChangePageButton(self, next_page, False)
-        self.next_button.configure(command= lambda: [self.save_input(), self.next_button.navigate()])
+        self.next_button.configure(command= lambda: [self.check_animals_divisible(), self.next_button.navigate()])
         self.next_button.place(relx=0.85, rely=0.15)
 
 
@@ -151,15 +151,38 @@ class NewExperimentUI(MouserPage):
             self.update_items_frame()
 
 
-    def raise_warning(self):
-        pass
+    def raise_warning(self, option: int):
+        message = Tk()
+        message.title("WARNING")
+        message.geometry('320x100')
+        message.resizable(False, False)
+
+        if option == 1:
+            label = Label(message, text='Number of animals must be divisible by number groups.')
+            label.grid(row=0, column=0, padx=10, pady=10)
+        else:
+            label1 = Label(message, text='Number of animals, groups, or maximum')
+            label2 = Label(message, text='animals per cage must be greater than 0.')
+            label1.grid(row=0, column=0, padx=10)
+            label2.grid(row=1, column=0, padx=10)
+
+        ok_button = Button(message, text="OK", width=10, 
+                        command= lambda: [message.destroy()])
+        ok_button.grid(row=2, column=0, padx=10, pady=10)
+
+        message.mainloop()
 
 
     def check_animals_divisible(self):
-        if int(self.animal_num.get()) % int(self.group_num.get()) == 0:
+        if self.animal_num.get() == '' or self.group_num.get() == '' or self.animal_num.get() == '': 
+            self.raise_warning(2)
+        elif int(self.animal_num.get()) % int(self.group_num.get()) != 0:
+            self.raise_warning(1)
+        elif int(self.animal_num.get()) == 0 or int(self.group_num.get()) == 0 or int(self.animal_num.get()) == 0:
+            self.raise_warning(2)
+        elif int(self.animal_num.get()) % int(self.group_num.get()) == 0 and int(self.animal_num.get()) != 0:
             self.save_input()
-        else: 
-            self.raise_warning()
+        
 
 
     def save_input(self):
