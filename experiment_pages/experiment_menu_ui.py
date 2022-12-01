@@ -73,5 +73,6 @@ class ExperimentMenuUI(MouserPage):
     def delete_experiment(self):
         # TO-DO delete database
         # TO-DO delete from experiment selection file
+        # TO-DO return to experiment selection page
         pass
 
