@@ -19,7 +19,8 @@ class ExperimentDatabase:
                                 group_id INTEGER,
                                 cage_id INTEGER,
                                 remarks TEXT,
-                                active INTEGER);''')
+                                active INTEGER
+                                weight INTEGER);''')
             self._c.execute('''CREATE TABLE groups (
                                 experiment_id INTEGER,
                                 group_id INTEGER PRIMARY KEY,
@@ -99,9 +100,28 @@ class ExperimentDatabase:
         self._conn.commit()
     
 
+    def update_animals(self, animals):
+        ''' Updates animal ids, groups, and cages
+
+        arg1 list of tuples: each tuple contains 4 items (old animal id, new animal id, new group, new cage)
+            the tuple should contain all the animals even if one animal does not change
+        '''
+        offset=10000
+        i=1
+        while i <= len(animals):
+            self._c.execute("UPDATE animals SET animal_id=? WHERE animal_id=?", (i+offset, i))
+            self._c.execute("UPDATE animal_rfid SET animal_id=? WHERE animal_id=?", (i+offset, i))
+            self._conn.commit()
+            i+=1
+
+        for animal in animals:
+            self._c.execute("UPDATE animals SET animal_id=?, group_id=?, cage_id=? WHERE animal_id=?", (animal[1], animal[2], animal[3], animal[0]+offset))
+            self._c.execute("UPDATE animal_rfid SET animal_id=? WHERE animal_id=?", (i+offset, i))
+            self._conn.commit()
+
 
     def get_animals(self):
-        self._c.execute("SELECT animal_id, group_id, cage_id, active FROM animals")
+        self._c.execute("SELECT animal_id, group_id, cage_id, weight, active FROM animals")
         return self._c.fetchall()
 
     def get_animal_id(self, rfid):
@@ -123,18 +143,22 @@ class ExperimentDatabase:
         self._conn.close()
 
 
+
 if __name__ == "__main__":
     db = ExperimentDatabase()
     db.setup_experiment('CancerDrug', 'hampster', True, 60, 3, 5)
     db.setup_groups(('Control', 'Drug A', 'Drug B'), 20)
     db.setup_measurement_items([('Weight', True), ('Length', True)])
+    
     db.add_animal(1234, 1, 1)
     db.add_animal(4562, 1, 1)
     db.add_animal(4682, 1, 2)
     db.add_animal(5782, 1, 2, 'missing left front leg')
-    print(db.get_animal_id(1234))
+    
+    #print(db.get_animal_id(1234))
     print(db.get_animals())
-    db.update_group_and_cage(1, 3, 3)
-    db.deactivate_animal(2)
+    #db.update_group_and_cage(1, 3, 3)
+    #db.deactivate_animal(2)
+    db.update_animals( [ (3, 1, 1, 1), (2, 2, 1, 1), (4, 3, 2, 2), (1, 4, 2, 2) ] )
     print(db.get_animals())
-    db.get_all_experiment_info()
+    #db.get_all_experiment_info()
