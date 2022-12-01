@@ -1,17 +1,18 @@
 from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
-import sqlite3
+from ExperimentDatabase import ExperimentDatabase
 
 
 class CageConfigurationUI(MouserPage):
     def __init__(self, database, parent:Tk, prev_page: Frame = None):
         super().__init__(parent, "Group Configuration", prev_page)
 
-        # open database
-        self.connection = sqlite3.connect(database + ".db")
+        file = str(database) + '.db'
+        self.db = ExperimentDatabase(file)
 
-
+        # unchanging data for stuff:
+        self.groups = self.db.get_all_groups()
 
         self.main_frame = Frame(self)
         self.main_frame.grid(row=2, column=3, sticky='NESW')
@@ -43,30 +44,62 @@ class CageConfigurationUI(MouserPage):
         self.id_input.grid(row=0, column=0, padx=5, pady=10)
         self.cage_input.grid(row=0, column=1, padx=5, pady=10)
 
-        self.group_frame = Frame(self.main_frame)
-        self.group_frame.grid(row=1, column=0, columnspan=3)
+        self.config_frame = Frame(self.main_frame)
+        self.config_frame.grid(row=1, column=0, columnspan=3)
+
+        self.update_frame()
 
 
 
     def create_group_frame(self):
-        # TO-DO : for each group call:
-        self.create_cage_frame()
+        # use group frame (is on main)
+        
+        index = 0
+        for group in self.groups:
+            frame = Frame(self.config_frame, relief='ridge')
+            frame.grid(row=index, column=0, padx=10, pady=10)
+            Label(frame, text=group).grid(row=0, column=0, padx=10, pady=10)
+            index += 1
 
 
-    def create_cage_frame(self):
-        # TO-DO : for each cage call:
-        self.create_animal_frame()
+
+        animals = self.db.get_animals()
+        for anim in animals:
+
+            # make list of groups
+
+            # call create cage frame
+            anim_frame = self.create_cage_frame(anim)
+
+            # anim_frame.grid()
+            # place cage frame on group frame
+
+
+
+    def create_cage_frame(self, animal):
+        # use cage frame (is on group)
+
+        # cage_frame = Frame(self.group_frame)
+        # self.create_animal_frame(animal)
+        # place animal frame on cage frame
+        # return cage frame
+
         pass
 
 
-    def create_animal_frame(self):
-        # TO-DO : for each animal create frame
+    def create_animal_frame(self, animal, frame):
+        # use anim frame (is on cage)
+        
+        # anim_frame = Frame()
+        # return an animal frame  
         pass
 
 
     def update_frame(self):
-        for widget in self.group_frame.winfo_children():
+        for widget in self.config_frame.winfo_children():
             widget.destroy()
+        self.cage_frames = []
+        self.anim_frames = []
         self.create_group_frame()
 
 
@@ -138,7 +171,7 @@ class CageConfigurationUI(MouserPage):
     def save_to_database(self):
         # TO-DO : save to database
         # TO-DO : return to menu
-        
-        self.connection.close()
+
+        self.db.close()
         pass
 
