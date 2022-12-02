@@ -19,7 +19,7 @@ class ExperimentDatabase:
                                 group_id INTEGER,
                                 cage_id INTEGER,
                                 remarks TEXT,
-                                active INTEGER
+                                active INTEGER,
                                 weight INTEGER);''')
             self._c.execute('''CREATE TABLE groups (
                                 experiment_id INTEGER,
