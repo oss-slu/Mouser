@@ -53,7 +53,6 @@ class ExperimentDatabase:
 
     def setup_groups(self, group_names, animals_per_group):
         '''Adds the groups to the database.
-
             arg1 (list): a list of all the group names
             arg2 (int): a number representing the number of animals per group
         '''
@@ -102,7 +101,6 @@ class ExperimentDatabase:
 
     def update_animals(self, animals):
         ''' Updates animal ids, groups, and cages
-
         arg1 list of tuples: each tuple contains 4 items (old animal id, new animal id, new group, new cage)
             the tuple should contain all the animals even if one animal does not change
         '''
@@ -119,26 +117,29 @@ class ExperimentDatabase:
             self._c.execute("UPDATE animal_rfid SET animal_id=? WHERE animal_id=?", (i+offset, i))
             self._conn.commit()
 
+    def get_all_groups(self):
+        self._c.execute("SELECT name FROM groups")
+        return self._c.fetchall()
+
+    def get_cages(self):
+        self._c.execute("SELECT cage_id, group_id FROM cages")
+        return self._c.fetchall()
+
+    def get_animals_in_cage(self, cage_id):
+        self._c.execute("SELECT animal_id FROM animals WHERE cage_id=?", (cage_id, ))
+        return self._c.fetchall()
+    
+    def get_animals_in_group(self, group_id):
+        self._c.execute("SELECT animal_id FROM animals WHERE group_id=?", (group_id, ))
+        return self._c.fetchall()
 
     def get_animals(self):
         self._c.execute("SELECT animal_id, group_id, cage_id, weight, active FROM animals")
         return self._c.fetchall()
 
-
     def get_animal_id(self, rfid):
         self._c.execute("SELECT animal_id FROM animal_rfid WHERE rfid=?", (rfid,))
         return self._c.fetchone()[0]
-
-    
-    def get_all_groups(self):
-        self._c.execute("SELECT name FROM groups")
-        return self._c.fetchall()
-
-    
-    def get_cages(self):
-        self._c.execute("SELECT cage_id, group_id FROM cages")
-        return self._c.fetchall()
-
 
     def get_all_experiment_info(self):
         self._c.execute("SELECT name, species, uses_rfid, num_animals, num_groups, cage_max FROM experiment")
@@ -174,7 +175,3 @@ if __name__ == "__main__":
     db.update_animals( [ (3, 1, 1, 1), (2, 2, 1, 1), (4, 3, 2, 2), (1, 4, 2, 2) ] )
     print(db.get_animals())
     #db.get_all_experiment_info()
-
-
-    print('TESTING::::: ')
-    print(db.get_cages())
