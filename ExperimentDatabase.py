@@ -120,6 +120,14 @@ class ExperimentDatabase:
             self._conn.commit()
 
 
+    def get_animals_in_cage(self, cage_id):
+        self._c.execute("SELECT animal_id FROM animals WHERE cage_id=?", (cage_id, ))
+        return self._c.fetchall()
+    
+    def get_animals_in_group(self, group_id):
+        self._c.execute("SELECT animal_id FROM animals WHERE group_id=?", (group_id, ))
+        return self._c.fetchall()
+
     def get_animals(self):
         self._c.execute("SELECT animal_id, group_id, cage_id, weight, active FROM animals")
         return self._c.fetchall()
