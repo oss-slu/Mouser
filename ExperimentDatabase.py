@@ -53,7 +53,6 @@ class ExperimentDatabase:
 
     def setup_groups(self, group_names, animals_per_group):
         '''Adds the groups to the database.
-
             arg1 (list): a list of all the group names
             arg2 (int): a number representing the number of animals per group
         '''
@@ -102,7 +101,6 @@ class ExperimentDatabase:
 
     def update_animals(self, animals):
         ''' Updates animal ids, groups, and cages
-
         arg1 list of tuples: each tuple contains 4 items (old animal id, new animal id, new group, new cage)
             the tuple should contain all the animals even if one animal does not change
         '''
@@ -119,6 +117,21 @@ class ExperimentDatabase:
             self._c.execute("UPDATE animal_rfid SET animal_id=? WHERE animal_id=?", (i+offset, i))
             self._conn.commit()
 
+    def get_all_groups(self):
+        self._c.execute("SELECT name FROM groups")
+        return self._c.fetchall()
+
+    def get_cages(self):
+        self._c.execute("SELECT cage_id, group_id FROM cages")
+        return self._c.fetchall()
+
+    def get_animals_in_cage(self, cage_id):
+        self._c.execute("SELECT animal_id FROM animals WHERE cage_id=?", (cage_id, ))
+        return self._c.fetchall()
+    
+    def get_animals_in_group(self, group_id):
+        self._c.execute("SELECT animal_id FROM animals WHERE group_id=?", (group_id, ))
+        return self._c.fetchall()
 
     def get_animals_in_cage(self, cage_id):
         self._c.execute("SELECT animal_id FROM animals WHERE cage_id=?", (cage_id, ))

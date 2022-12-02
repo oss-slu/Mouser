@@ -17,7 +17,7 @@ class ExperimentMenuUI(MouserPage):
 
         data_page = DataCollectionUI(parent, self)
         analysis_page = DataAnalysisUI(parent, self)
-        cage_page = CageConfigurationUI(parent, self)
+        cage_page = CageConfigurationUI(name, parent, self)
         rfid_page = MapRFIDPage(parent, self)
         invest_page = InvestigatorsUI(parent, self)
 
