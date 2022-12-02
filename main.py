@@ -5,7 +5,7 @@ from login import LoginFrame
 from tk_models import *
 
 from accounts import AccountsFrame
-from experiment_pages.experiments_ui import ExperimentsUI
+from experiment_pages.select_experiment_ui import ExperimentsUI
 
 
 root = Tk()

@@ -19,7 +19,7 @@ class ExperimentDatabase:
                                 group_id INTEGER,
                                 cage_id INTEGER,
                                 remarks TEXT,
-                                active INTEGER
+                                active INTEGER,
                                 weight INTEGER);''')
             self._c.execute('''CREATE TABLE groups (
                                 experiment_id INTEGER,
@@ -124,9 +124,21 @@ class ExperimentDatabase:
         self._c.execute("SELECT animal_id, group_id, cage_id, weight, active FROM animals")
         return self._c.fetchall()
 
+
     def get_animal_id(self, rfid):
         self._c.execute("SELECT animal_id FROM animal_rfid WHERE rfid=?", (rfid,))
         return self._c.fetchone()[0]
+
+    
+    def get_all_groups(self):
+        self._c.execute("SELECT name FROM groups")
+        return self._c.fetchall()
+
+    
+    def get_cages(self):
+        self._c.execute("SELECT cage_id, group_id FROM cages")
+        return self._c.fetchall()
+
 
     def get_all_experiment_info(self):
         self._c.execute("SELECT name, species, uses_rfid, num_animals, num_groups, cage_max FROM experiment")
@@ -162,3 +174,7 @@ if __name__ == "__main__":
     db.update_animals( [ (3, 1, 1, 1), (2, 2, 1, 1), (4, 3, 2, 2), (1, 4, 2, 2) ] )
     print(db.get_animals())
     #db.get_all_experiment_info()
+
+
+    print('TESTING::::: ')
+    print(db.get_cages())

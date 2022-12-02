@@ -4,6 +4,7 @@ from tk_models import *
 from ExperimentDatabase import ExperimentDatabase
 
 
+
 class CageConfigurationUI(MouserPage):
     def __init__(self, database, parent:Tk, prev_page: Frame = None):
         super().__init__(parent, "Group Configuration", prev_page)
@@ -11,8 +12,12 @@ class CageConfigurationUI(MouserPage):
         file = str(database) + '.db'
         self.db = ExperimentDatabase(file)
 
+
         # unchanging data for stuff:
         self.groups = self.db.get_all_groups()
+        self.ipad = 2
+        self.pad = 5
+
 
         self.main_frame = Frame(self)
         self.main_frame.grid(row=2, column=3, sticky='NESW')
@@ -45,61 +50,76 @@ class CageConfigurationUI(MouserPage):
         self.cage_input.grid(row=0, column=1, padx=5, pady=10)
 
         self.config_frame = Frame(self.main_frame)
-        self.config_frame.grid(row=1, column=0, columnspan=3)
+        self.config_frame.grid(row=1, column=0, columnspan=6)
 
         self.update_frame()
 
 
 
     def create_group_frame(self):
-        # use group frame (is on main)
-        
-        index = 0
-        for group in self.groups:
-            frame = Frame(self.config_frame, relief='ridge')
-            frame.grid(row=index, column=0, padx=10, pady=10)
-            Label(frame, text=group).grid(row=0, column=0, padx=10, pady=10)
-            index += 1
-
-
-
         animals = self.db.get_animals()
-        for anim in animals:
 
-            # make list of groups
+        i = 0   # group row
+        for group in self.groups:
+            frame = Frame(self.config_frame, width=500, height=140, relief='ridge')
+            frame.grid(row=i, column=0, padx=self.pad, pady=self.pad)
+            frame.grid_propagate(False)
+            label = Label(frame, text=group[0])
+            label.grid(row=0, column=3, padx=self.pad, pady=self.pad, sticky="EW")
+            label.grid_propagate(False)
+            i += 1
 
-            # call create cage frame
-            anim_frame = self.create_cage_frame(anim)
+            j = 0   # cage column
+            for anim in animals:
+                if anim[1] == group[0]:
+                    print(j)
+                    cage_frame = self.create_cage_frame(frame, anim, j)
+                    cage_frame.grid(row=1, column=j, padx=self.pad, pady=self.pad, 
+                                    ipadx=self.ipad, ipady=self.ipad)
+                    j += 1
 
-            # anim_frame.grid()
-            # place cage frame on group frame
+            self.group_frames.append(frame)            
 
 
 
-    def create_cage_frame(self, animal):
-        # use cage frame (is on group)
 
-        # cage_frame = Frame(self.group_frame)
-        # self.create_animal_frame(animal)
-        # place animal frame on cage frame
-        # return cage frame
+    def create_cage_frame(self, frame, animal, row_num):
+    
+        cage_frame = Frame(frame, relief='ridge')
+        label = Label(cage_frame, text=('Cage ' + str(animal[2])), anchor='center')
+        label.grid(row=0, column=0, padx=self.pad, pady=self.pad, 
+                    ipadx=self.ipad, ipady=2)
 
-        pass
+        anim_frame = self.create_animal_frame(animal, cage_frame)
+        anim_frame.grid(row=row_num+1, column=0, padx=self.pad, pady=self.pad, 
+                    ipadx=self.ipad, ipady=self.ipad)
+
+        Label(anim_frame, text='Animal ID').grid(row=0, column=0)
+        Label(anim_frame, text='Weight').grid(row=0, column=1)
+        
+        self.cage_frames.append(cage_frame)
+        return cage_frame
 
 
     def create_animal_frame(self, animal, frame):
-        # use anim frame (is on cage)
         
-        # anim_frame = Frame()
-        # return an animal frame  
-        pass
+        anim_frame = Frame(frame)
+        id_label = Label(anim_frame, text=str(animal[0]), anchor='center') 
+        meas_label = Label(anim_frame, text=str(animal[4]), anchor='center')
+
+        id_label.grid(row=1, column=0, padx=self.pad, pady=2, ipadx=self.ipad, ipady=self.ipad)
+        meas_label.grid(row=1, column=1, padx=self.pad, pady=2, ipadx=self.ipad, ipady=self.ipad)
+        
+        self.anim_frames.append(anim_frame)
+        return anim_frame
 
 
     def update_frame(self):
         for widget in self.config_frame.winfo_children():
             widget.destroy()
-        self.cage_frames = []
+        self.group_frames = []
         self.anim_frames = []
+        self.cage_frames = []
         self.create_group_frame()
 
 
@@ -164,7 +184,8 @@ class CageConfigurationUI(MouserPage):
             self.raise_warning(2)
         elif valid_cage == False:
             self.raise_warning(3)
-        elif  isinstance(int(self.id_input.get()), int) and isinstance(int(self.cage_input.get()), int) and valid_animal and valid_cage:
+        elif  isinstance(int(self.id_input.get()), int) and isinstance(int(self.cage_input.get()), 
+                int) and valid_animal and valid_cage:
             self.move_animal(self.id_input.get(), self.cage_input.get())
 
 
