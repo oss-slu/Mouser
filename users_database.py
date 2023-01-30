@@ -2,11 +2,15 @@ import sqlite3
 import random
 import string
 
-def get_random_email():
+def get_random_email(users: list):
     letters = string.ascii_lowercase
     emails = ["gmail.com", "hotmail.com", "aol.com", "yahoo.com", "test.org"]
-    email = (''.join((random.choice(letters)) for i in range(random.randint(10, 20)))) + "@" + random.choice(emails)
+    email = random.choice(["test", "foo", "bar", "abc", "someone"]) + "@" + random.choice(emails)
+    for user in users:
+        if user[1] == email:
+            return get_random_email(users)
     return email
+
 class UsersDatabase:
     def __init__(self):
         self.connection = None
@@ -20,6 +24,7 @@ class UsersDatabase:
                                 user_id INTEGER PRIMARY KEY AUTOINCREMENT,
                                 email TEXT,
                                 role TEXT CHECK( role IN ('admin', 'general', 'investigator') ) NOT NULL DEFAULT 'general',
+                                name TEXT,
                                 password TEXT
                             );
                             ''')
@@ -29,11 +34,11 @@ class UsersDatabase:
         except sqlite3.Error as e:
             print(e)
             
-    def add_user(self, email: str, role: str = None):
+    def add_user(self, email: str, name: str, role: str = None):
         if role:
-            self.db.execute( "INSERT INTO users (email, role, password) VALUES (?, ?, ?);", (email, role, "password") )
+            self.db.execute( "INSERT INTO users (email, role, name, password) VALUES (?, ?, ?, ?);", (email, role, name, "password") )
         else:
-            self.db.execute( "INSERT INTO users (email, password) VALUES (?, ?);", (email, "password") )
+            self.db.execute( "INSERT INTO users (email, name, password) VALUES (?, ?, ?);", (email, name, "password") )
         self.connection.commit()
         
     def get_all_users(self):
@@ -86,19 +91,10 @@ if __name__ == '__main__':
     database = UsersDatabase()
     
     users = database.get_all_users()
+    database.add_user(get_random_email(users), "Jemma Simmons", "general")
+    
+    users = database.get_all_users()
     print("Users:")
     for user in users:
         print(user)
-    
-    print("\nGetting roles from method in class:")
-    for user in users:
-        user_id = user[0]
-        print("User with id", user_id, "has role:", database.get_role_from_id(user_id))
-        
-    print("\nChange random user's email:")
-    user = random.choice(users[1:])
-    user_id = user[0]
-    database.change_user_email(user_id, get_random_email())
-    print("Old user:", user)
-    print("New user:", database.get_user_from_id(user_id))
-    
+     
