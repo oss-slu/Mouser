@@ -44,6 +44,19 @@ class UsersDatabase:
     def get_all_users(self):
         self.db.execute("SELECT * FROM users")
         return self.db.fetchall()
+    
+    def get_all_users_dict(self):
+        users = self.get_all_users()
+        all_user_dict = {}
+        for user in users:
+            new_dict = {}
+            new_dict["id"] = user[0]
+            new_dict["email"] = user[1]
+            new_dict["role"] = user[2]
+            new_dict["name"] = user[3]
+            new_dict["password"] = user[4]
+            all_user_dict[user[1]] = new_dict
+        return all_user_dict
         
     def get_user_from_id(self, id: int):
         self.db.execute("SELECT * FROM users WHERE user_id = ?", (id,) )
@@ -68,6 +81,14 @@ class UsersDatabase:
     
     def change_user_email(self, id: int, email: str):
         self.db.execute("UPDATE users SET email = ? WHERE user_id = ?", (email, id) )
+        self.connection.commit()
+        
+    def change_user_role(self, id: int, role: str):
+        self.db.execute("UPDATE users SET role = ? WHERE user_id = ?", (role, id) )
+        self.connection.commit()
+        
+    def change_user_name(self, id: int, name: str):
+        self.db.execute("UPDATE users SET name = ? WHERE user_id = ?", (name, id) )
         self.connection.commit()
         
     def login(self, email: str, password: str):

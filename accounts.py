@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
 import copy
+from users_database import UsersDatabase
 
 users = {
     'example.student@slu.edu': {
@@ -21,7 +22,7 @@ users = {
     }
 }
 
-roles = ["generic", "admin"]
+roles = ["general", "admin", "investigator"]
 
 
 class ConfigureUsersFrame(MouserPage):
@@ -30,9 +31,12 @@ class ConfigureUsersFrame(MouserPage):
 
         Label(self, text="Email:").place(
             relx=0.12, rely=0.30)
+        
+        self.user_database = UsersDatabase()
+        self.users = self.user_database.get_all_users_dict()
 
         self.user_select = Combobox(self, width=27)
-        self.user_select['values'] = tuple(users.keys())
+        self.user_select['values'] = tuple(self.users.keys())
         self.user_select['state'] = 'readonly'
         self.user_select.place(relx=0.25, rely=0.30)
         self.user_select.bind('<<ComboboxSelected>>', self.display_information)
@@ -48,7 +52,7 @@ class ConfigureUsersFrame(MouserPage):
 
         selected = self.user_select.get()
         self.selected = selected
-        self.changed_data = copy.deepcopy(users)
+        self.changed_data = copy.deepcopy(self.users)
 
         self.access_header.destroy()
         self.access_header = Label(self, text="Access:")
@@ -58,7 +62,7 @@ class ConfigureUsersFrame(MouserPage):
         self.access_select = Combobox(self, width=27)
         self.access_select['values'] = tuple(roles)
         self.access_select['state'] = 'readonly'
-        self.access_select.set(users[selected]["role"])
+        self.access_select.set(self.users[selected]["role"])
         self.access_select.place(relx=0.25, rely=0.50)
         self.access_select.bind('<<ComboboxSelected>>', self.set_data)
 
@@ -67,7 +71,7 @@ class ConfigureUsersFrame(MouserPage):
         self.name_header.place(relx=0.12, rely=0.40)
 
         self.name_label.destroy()
-        name_text = users[selected]["first"] + " " + users[selected]["last"]
+        name_text = self.users[selected]["name"]
         self.name_label = Label(self, text=name_text)
         self.name_label.place(relx=0.25, rely=0.40)
 
@@ -88,7 +92,7 @@ class ConfigureUsersFrame(MouserPage):
         self.detect_changes(None)
 
     def detect_changes(self, event):
-        user = users[self.selected]
+        user = self.users[self.selected]
         changed = False
         for key in user.keys():
             if (user[key] != self.changed_data[self.selected][key]):
@@ -103,12 +107,15 @@ class ConfigureUsersFrame(MouserPage):
             self.save_changes_button["state"] = "disabled"
 
     def save_changes(self):
-        global users
-        users = self.changed_data
+        self.users = copy.deepcopy(self.changed_data)
+        for email in self.users.keys():
+            user_id = self.users[email]["id"]
+            self.user_database.change_user_name(user_id, self.users[email]["name"])
+            self.user_database.change_user_role(user_id, self.users[email]["role"])
         self.detect_changes(None)
 
     def discard_changes(self):
-        self.changed_data = copy.deepcopy(users)
+        self.changed_data = copy.deepcopy(self.users)
         self.access_select.set(self.changed_data[self.selected]["role"])
         self.detect_changes(None)
 
