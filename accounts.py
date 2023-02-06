@@ -4,26 +4,7 @@ from tk_models import *
 import copy
 from users_database import UsersDatabase
 
-users = {
-    'example.student@slu.edu': {
-        "first": "Example",
-        "last": "Student",
-        "role": "generic"
-    },
-    'another.person@slu.edu': {
-        "first": "Another",
-        "last": "Person",
-        "role": "admin"
-    },
-    'test@slu.edu': {
-        "first": "Test",
-        "last": "Person",
-        "role": "generic"
-    }
-}
-
 roles = ["general", "admin", "investigator"]
-
 
 class ConfigureUsersFrame(MouserPage):
     def __init__(self, parent: Tk, previous_page: Frame):

@@ -91,16 +91,26 @@ class UsersDatabase:
         self.db.execute("UPDATE users SET name = ? WHERE user_id = ?", (name, id) )
         self.connection.commit()
         
+    def change_user_password(self, id: int, password: str):
+        self.db.execute("UPDATE users SET password = ? WHERE user_id = ?", (password, id) )
+        self.connection.commit()
+        
     def login(self, email: str, password: str):
         if (self.user):
             print("Already logged in")
         else:
             self.db.execute("SELECT * FROM users WHERE email = ?", (email,) )
-            user = self.db.fetchall()[0]
-            if (user and user[3] == password):
+            user_list = self.db.fetchall()
+            if (len(user_list) > 0):
+                user = user_list[0]
+            else:
+                user = None
+            if (user and user[4] == password):
                 self.user = user
+                return True
             else:
                 print("Cannot login with these credentials")
+        return False
     
     def logout(self):
         self.user = None
@@ -110,9 +120,6 @@ class UsersDatabase:
             
 if __name__ == '__main__':
     database = UsersDatabase()
-    
-    users = database.get_all_users()
-    database.add_user(get_random_email(users), "Jemma Simmons", "general")
     
     users = database.get_all_users()
     print("Users:")
