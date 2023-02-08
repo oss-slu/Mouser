@@ -99,8 +99,9 @@ class ExperimentDatabase:
 
     def _get_next_cage(self):
         self._c.execute("SELECT cage_id, num_animals FROM cages WHERE full=0")
-        cage_id = self._c.fetchone()[0]
-        num_animals = self._c.fetchone()[1] + 1
+        info = self._c.fetchone()
+        cage_id = info[0]
+        num_animals = info[1] + 1
 
         self._c.execute("SELECT cage_max FROM experiment")
         max = self._c.fetchone()[0]
@@ -108,22 +109,16 @@ class ExperimentDatabase:
         full = 0
         if (num_animals == max):
             full=1
-        
-        self._c.execute("SELECT num_animals FROM cages WHERE full=0") #only added for testing
-        print(self._c.fetchone()[0]) #only added for testing
-        
         self._c.execute("UPDATE cages SET num_animals=?, full=? WHERE cage_id=?", (num_animals, full, cage_id))
         self._conn.commit()
-        
-        self._c.execute("SELECT num_animals FROM cages WHERE full=0") #only added for testing
-        print(self._c.fetchone()[0]) #only added for testing
-        
+
         return cage_id
 
     def _get_next_group(self):
         self._c.execute("SELECT group_id, num_animals FROM groups WHERE full=0")
-        group_id = self._c.fetchone()[0]
-        num_group_animals = self._c.fetchone()[1] + 1
+        info = self._c.fetchone()
+        group_id = info[0]
+        num_group_animals = info[1] + 1
         
         self._c.execute("SELECT num_animals, num_groups FROM experiment")
         animals = self._c.fetchone()
@@ -212,8 +207,8 @@ class ExperimentDatabase:
         self._c.execute("SELECT name, num_animals, full FROM groups")
         print('Groups: name, num_animals, full')
         print(self._c.fetchall())
-        self._c.execute("SELECT group_id, num_animals, full FROM cages")
-        print('cages: group_id, num_animals, full')
+        self._c.execute("SELECT cage_id, group_id, num_animals, full FROM cages")
+        print('cages: cage_id, group_id, num_animals, full')
         print(self._c.fetchall())
         self._c.execute("SELECT item, auto FROM measurement_items")
         print('Measurement Items: item, auto')
