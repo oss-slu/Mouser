@@ -4,6 +4,7 @@ from tk_models import *
 from scrollable_frame import VerticalScrolledFrame
 from experiment_pages.group_config_ui import GroupConfigUI
 from experiment_pages.experiment import Experiment
+from users_database import UsersDatabase
 
 investigators = ['investigator a', 'investigator b', 'investigator c']
 
@@ -12,6 +13,7 @@ class NewExperimentUI(MouserPage):
         super().__init__(parent, "New Experiment", menu_page)
 
         self.input = Experiment()
+        self.users_database = UsersDatabase()
 
         self.next_page = GroupConfigUI(self.input, parent, self, menu_page)
         self.set_next_button(self.next_page)
@@ -46,7 +48,7 @@ class NewExperimentUI(MouserPage):
         Label(self.main_frame, text="Max Animals per Cage").grid(row=9, column=0, sticky=W, padx=pad_x, pady=pad_y)
 
         self.exper_name = Entry(self.main_frame, width=40)
-        self.investigators = Combobox(self.main_frame, values=investigators, width=37)
+        self.investigators = Combobox(self.main_frame, values=self.get_user_list(), width=37)
         self.species = Entry(self.main_frame, width=40)
         self.measure_items = Entry(self.main_frame, width=40)
         self.animal_num = Entry(self.main_frame, width=10)
@@ -129,6 +131,12 @@ class NewExperimentUI(MouserPage):
             buttons[index].configure(command=f)
             index += 1
 
+    def get_user_list(self):
+        users = self.users_database.get_all_users()
+        user_list = []
+        for user in users:
+            user_list.append(user[1] + " (" + user[3] + ")")
+        return user_list
 
     def add_investigator(self):
         if self.investigators.get() not in self.added_invest:

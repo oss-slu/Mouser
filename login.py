@@ -1,15 +1,16 @@
 from tkinter import *
 from tkinter.ttk import *
-
 from tk_models import *
 from authentication import *
 
-# from scroll_tkmodels_test import *
+from users_database import UsersDatabase
 
 class LoginFrame(MouserPage):
     def __init__(self, parent: Tk, next_page: Frame):
         super().__init__(parent, "Login")
         self.next_page = next_page
+        
+        self.users_database = UsersDatabase()
 
         self.email = Entry(self, width=40)
         self.email.place(relx=0.50, rely=0.30, anchor=CENTER)
@@ -28,7 +29,7 @@ class LoginFrame(MouserPage):
     def login(self):
         email = self.email.get()
         password = self.password.get()
-        success = login(email, password)
+        success = self.users_database.login(email, password)
         if success:
             raise_frame(self.next_page)
 
