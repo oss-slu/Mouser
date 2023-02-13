@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter.ttk import *
 
+from scroll_vert_example import VerticalScrolledFrame
 
 def raise_frame(frame: Frame):
     frame.tkraise()
@@ -45,6 +46,8 @@ class MouserPage(Frame):
         super().__init__(parent)
         self.title = title
 
+        self.main_frame = VerticalScrolledFrame(self, ) 
+
         self.canvas = Canvas(self, width=600, height=600)
         self.canvas.grid(row=0, column=0, columnspan=4)
         rectangle = self.canvas.create_rectangle(0, 0, 600, 50, fill='#0097A7')
@@ -86,21 +89,3 @@ class MouserPage(Frame):
         self.after(500, self.update_canvas_size)
 
 
-
-if __name__ == '__main__':
-    root = Tk()
-    root.title("Template Test")
-    root.geometry('600x600')
-
-    main_frame = MouserPage(root, "Main")
-    frame = MouserPage(root, "Template")
-
-    main_frame.set_next_button(frame)
-    frame.set_previous_button(main_frame)
-
-    main_frame.raise_frame()
-
-    root.grid_rowconfigure(0, weight=1)
-    root.grid_columnconfigure(0, weight=1)
-
-    root.mainloop()

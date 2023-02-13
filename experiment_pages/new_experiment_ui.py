@@ -1,18 +1,20 @@
 from tkinter import *
 from tkinter.ttk import *
-from tk_models import *
+from scroll_tkmodels_test import *
 from experiment_pages.group_config_ui import GroupConfigUI
 from experiment_pages.experiment import Experiment
 
 investigators = ['investigator a', 'investigator b', 'investigator c']
 
+from scroll_tkmodels_test import *
+
 class NewExperimentUI(MouserPage):
-    def __init__(self, parent:Tk, menu_page: Frame = None):
-        super().__init__(parent, "New Experiment", menu_page)
+    def __init__(self, parent:Tk, canvas, menu_page: Frame = None):
+        super().__init__(parent, canvas, "New Experiment", menu_page)
 
         self.input = Experiment()
 
-        self.next_page = GroupConfigUI(self.input, parent, self, menu_page)
+        self.next_page = GroupConfigUI(self.input, parent, canvas, self, menu_page)
         self.set_next_button(self.next_page)
 
         self.main_frame = Frame(self)

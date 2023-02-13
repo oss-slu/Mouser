@@ -1,13 +1,14 @@
 from tkinter import *
 from tkinter.ttk import *
 
-from tk_models import *
+# from tk_models import *
 from authentication import *
 
+from scroll_tkmodels_test import *
 
 class LoginFrame(MouserPage):
-    def __init__(self, parent: Tk, next_page: Frame):
-        super().__init__(parent, "Login")
+    def __init__(self, parent: Tk, canvas, next_page: Frame):
+        super().__init__(parent, canvas, "Login")
         self.next_page = next_page
 
         self.email = Entry(self, width=40)

@@ -1,12 +1,14 @@
 from tkinter import *
 from tkinter.ttk import *
-from tk_models import *
+# from tk_models import *
 from experiment_pages.summary_ui import SummaryUI
 from experiment_pages.experiment import Experiment
 
+from scroll_tkmodels_test import *
+
 class GroupConfigUI(MouserPage):
-    def __init__(self, input: Experiment, parent:Tk, prev_page: Frame, menu_page: Frame):
-        super().__init__(parent, "New Experiment - Group Configuration", prev_page)
+    def __init__(self, input: Experiment, parent:Tk, canvas: Canvas, prev_page: Frame, menu_page: Frame):
+        super().__init__(parent, canvas, "New Experiment - Group Configuration", prev_page)
 
         self.input = input
 

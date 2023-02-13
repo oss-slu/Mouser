@@ -3,7 +3,7 @@ from tkinter.ttk import *
 
 
 def raise_frame(frame: Frame):
-    frame.tkraise()
+    frame.raise_frame()
 
 
 def create_nav_button(parent: Frame, name: str, button_image: PhotoImage, frame: Frame, relx: float, rely: float):
@@ -21,7 +21,7 @@ class MenuButton(Button):
         self.previous_page = previous_page
 
     def navigate(self):
-        self.previous_page.tkraise()
+        self.previous_page.raise_frame()
 
 
 class ChangePageButton(Button):
@@ -37,19 +37,14 @@ class ChangePageButton(Button):
         self.next_page = next_page
 
     def navigate(self):
-        self.next_page.tkraise()
+        self.next_page.raise_frame()
 
 
 class MouserPage(Frame):
-    def __init__(self, parent: Tk, title: str, menu_page: Frame = None):
+    def __init__(self, parent: Tk, canvas: Canvas, title: str, menu_page: Frame = None):
         super().__init__(parent)
+        self.canvas = canvas
         self.title = title
-
-        self.canvas = Canvas(self, width=600, height=600)
-        self.canvas.grid(row=0, column=0, columnspan=4)
-        rectangle = self.canvas.create_rectangle(0, 0, 600, 50, fill='#0097A7')
-        titleLabel = self.canvas.create_text(300, 13, anchor="n")
-        self.canvas.itemconfig(titleLabel, text=title, font=("Arial", 18))
 
         self.grid(row=0, column=0, sticky="NESW")
         self.grid_rowconfigure(0, weight=1)
@@ -58,9 +53,10 @@ class MouserPage(Frame):
         self.next_button = None
         self.previous_button = None
 
-        self.update_canvas_size()
 
     def raise_frame(self):
+        self.canvas.set_title(self.title)
+        self.canvas.update_canvas_size(self)
         self.tkraise()
 
     def set_next_button(self, next_page):
@@ -78,29 +74,3 @@ class MouserPage(Frame):
             self.menu_button.destroy()
         self.menu_button = MenuButton(self, menu_page, False)
 
-    def update_canvas_size(self):
-        for child in self.winfo_children():
-            if child.winfo_height() > self.canvas.winfo_height():
-                self.canvas.config(height=child.winfo_height())
-
-        self.after(500, self.update_canvas_size)
-
-
-
-if __name__ == '__main__':
-    root = Tk()
-    root.title("Template Test")
-    root.geometry('600x600')
-
-    main_frame = MouserPage(root, "Main")
-    frame = MouserPage(root, "Template")
-
-    main_frame.set_next_button(frame)
-    frame.set_previous_button(main_frame)
-
-    main_frame.raise_frame()
-
-    root.grid_rowconfigure(0, weight=1)
-    root.grid_columnconfigure(0, weight=1)
-
-    root.mainloop()
