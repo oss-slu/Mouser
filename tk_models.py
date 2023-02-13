@@ -45,11 +45,11 @@ class MouserPage(Frame):
         super().__init__(parent)
         self.title = title
 
-        self.canvas = Canvas(self, width=600, height=600)
-        self.canvas.grid(row=0, column=0, columnspan=4)
-        rectangle = self.canvas.create_rectangle(0, 0, 600, 50, fill='#0097A7')
-        titleLabel = self.canvas.create_text(300, 13, anchor="n")
-        self.canvas.itemconfig(titleLabel, text=title, font=("Arial", 18))
+        canvas = Canvas(self, width=600, height=600)
+        canvas.grid(row=0, column=0, columnspan=4)
+        rectangle = canvas.create_rectangle(0, 0, 600, 50, fill='#0097A7')
+        titleLabel = canvas.create_text(300, 13, anchor="n")
+        canvas.itemconfig(titleLabel, text=title, font=("Arial", 18))
 
         self.grid(row=0, column=0, sticky="NESW")
         self.grid_rowconfigure(0, weight=1)
@@ -57,8 +57,6 @@ class MouserPage(Frame):
         self.menu_button = MenuButton(self, menu_page) if menu_page else None
         self.next_button = None
         self.previous_button = None
-
-        self.update_canvas_size()
 
     def raise_frame(self):
         self.tkraise()
@@ -77,14 +75,6 @@ class MouserPage(Frame):
         if self.menu_button:
             self.menu_button.destroy()
         self.menu_button = MenuButton(self, menu_page, False)
-
-    def update_canvas_size(self):
-        for child in self.winfo_children():
-            if child.winfo_height() > self.canvas.winfo_height():
-                self.canvas.config(height=child.winfo_height())
-
-        self.after(500, self.update_canvas_size)
-
 
 
 if __name__ == '__main__':

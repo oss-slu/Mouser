@@ -1,38 +1,38 @@
 from tkinter import *
 from tkinter.ttk import *
-# from tk_models import *
+from tk_models import *
+from scrollable_frame import VerticalScrolledFrame
 import csv
 from experiment_pages.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment_menu_ui import ExperimentMenuUI
 
-from scroll_tkmodels_test import *
-
 class NewExperimentButton(Button):
-    def __init__(self, parent: Tk, canvas: Canvas, page: Frame):
+    def __init__(self, parent: Tk, page: Frame):
         super().__init__(page, text="Create New Experiment", compound=TOP,
                          width=22, command=lambda: [self.create_next_page(), self.navigate()])
         self.place(relx=0.85, rely=0.15, anchor=CENTER)
         self.parent = parent
         self.page = page
-        self.canvas = canvas
 
     def create_next_page(self):
-        self.next_page = NewExperimentUI(self.parent, self.canvas, self.page)
+        self.next_page = NewExperimentUI(self.parent, self.page)
 
     def navigate(self):
         self.next_page.raise_frame()
 
 
 class ExperimentsUI(MouserPage):
-    def __init__(self, parent:Tk, canvas: Canvas, prev_page: Frame = None):
-        super().__init__(parent, canvas, "Experiments", prev_page)
+    def __init__(self, parent:Tk, prev_page: Frame = None):
+        super().__init__(parent, "Experiments", prev_page)
         self.parent = parent
 
-        NewExperimentButton(parent, canvas, self)
+        NewExperimentButton(parent, self)
 
-        self.main_frame = Frame(self, width=500)
+        scroll_canvas = VerticalScrolledFrame(self, width=500, height=400)
+        scroll_canvas.place(relx=0.12, rely=0.25)
+
+        self.main_frame = Frame(scroll_canvas, width=500)
         self.main_frame.grid(row=1, column=1, sticky='NESW')
-        self.main_frame.place(relx=0.12, rely=0.25)
 
         self.selectable_frames = []
         self.update_frame()

@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
+from scrollable_frame import VerticalScrolledFrame
 from experiment_pages.experiment import Experiment
 
 
@@ -24,9 +25,11 @@ class SummaryUI(MouserPage):
 
         CreateExperimentButton(input, self, menu_page)
 
-        self.main_frame = Frame(self)
+        scroll_canvas = VerticalScrolledFrame(self, width=390, height=400)
+        scroll_canvas.place(relx=0.30, rely=0.25)
+
+        self.main_frame = Frame(scroll_canvas)
         self.main_frame.grid(row=8, column=1, sticky='NESW')
-        self.main_frame.place(relx=0.38, rely=0.20)
 
         self.group_frame = Frame(self.main_frame)
         self.group_frame.grid(row=5, column=0, padx=10, pady=10, sticky='NESW')

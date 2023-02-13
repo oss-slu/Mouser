@@ -1,22 +1,24 @@
 from tkinter import *
 from tkinter.ttk import *
-# from tk_models import *
+from tk_models import *
+from scrollable_frame import VerticalScrolledFrame
 from experiment_pages.summary_ui import SummaryUI
 from experiment_pages.experiment import Experiment
 
-from scroll_tkmodels_test import *
-
 class GroupConfigUI(MouserPage):
-    def __init__(self, input: Experiment, parent:Tk, canvas: Canvas, prev_page: Frame, menu_page: Frame):
-        super().__init__(parent, canvas, "New Experiment - Group Configuration", prev_page)
+    def __init__(self, input: Experiment, parent:Tk, prev_page: Frame, menu_page: Frame):
+        super().__init__(parent, "New Experiment - Group Configuration", prev_page)
 
         self.input = input
 
         self.next_page = SummaryUI(self.input, parent, self, menu_page)
         self.set_next_button(self.next_page)
-        self.main_frame = Frame(self)
+
+        scroll_canvas = VerticalScrolledFrame(self, width=410, height=400)
+        scroll_canvas.place(relx=0.27, rely=0.25)
+
+        self.main_frame = Frame(scroll_canvas)
         self.main_frame.grid(row=2, column=1, sticky='NESW')
-        self.main_frame.place(relx=0.27, rely=0.20)
 
         self.group_frame = Frame(self.main_frame)
         self.item_frame = Frame(self.main_frame)
