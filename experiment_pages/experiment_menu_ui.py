@@ -15,7 +15,7 @@ class ExperimentMenuUI(MouserPage):
         main_frame.grid(row=6, column=1, sticky='NESW')
         main_frame.place(relx=0.3, rely=0.20)
 
-        data_page = DataCollectionUI(parent, self)
+        data_page = DataCollectionUI(parent, self, name)
         analysis_page = DataAnalysisUI(parent, self)
         cage_page = CageConfigurationUI(name, parent, self)
         rfid_page = MapRFIDPage(name, parent, self)
@@ -25,7 +25,7 @@ class ExperimentMenuUI(MouserPage):
 
         collection_button = Button(main_frame, text='Data Collection', width=button_size, 
                                 command= lambda: data_page.raise_frame())
-        analysis_button = Button(main_frame, text='Data Analyis', width=button_size,
+        analysis_button = Button(main_frame, text='Data Analysis', width=button_size,
                                 command= lambda: analysis_page.raise_frame())
         group_button = Button(main_frame, text='Group Configuration', width=button_size,
                                 command= lambda: cage_page.raise_frame())
