@@ -5,6 +5,7 @@ import random
 from playsound import playsound
 import threading
 
+from ExperimentDatabase import ExperimentDatabase
 
 def get_random_rfid():
     return random.randint(1000000, 9999999)
@@ -16,10 +17,14 @@ def play_sound_async(filename):
 
 
 class MapRFIDPage(MouserPage):
-    def __init__(self, parent: Tk, previous_page: Frame = None):
+    def __init__(self, database, parent: Tk, previous_page: Frame = None):
         super().__init__(parent, "Map RFID", previous_page)
+
+        file = str(database) + '.db'
+        self.db = ExperimentDatabase(file)
+
         self.animals = []
-        self.animal_id = 1
+        self.animal_id = 0
 
         self.animal_id_entry_text = StringVar(value="1")
 
@@ -79,10 +84,10 @@ class MapRFIDPage(MouserPage):
         self.add_value(rfid)
 
     def add_value(self, rfid):
+        self.animal_id = self.db.add_animal(rfid)
         value = (self.animal_id, rfid)
         self.table.insert('', END, values=value)
-        self.animals.append(value)
-        self.animal_id += 1
+        self.animals.append(value) 
         self.animal_id_entry_text.set(str(self.animal_id))
         play_sound_async('./sounds/rfid_success.mp3')
 
