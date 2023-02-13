@@ -58,7 +58,7 @@ class ExperimentDatabase:
             self._conn.commit()
 
     def setup_cages(self, num_animals, num_groups, cage_max):
-        cages_per_group = (int(num_animals)/int(num_groups)) / int(cage_max)
+        cages_per_group = (int(num_animals)//int(num_groups)) // int(cage_max)
         
         group = 1
         cage = 1
@@ -122,7 +122,7 @@ class ExperimentDatabase:
         
         self._c.execute("SELECT num_animals, num_groups FROM experiment")
         animals = self._c.fetchone()
-        max = animals[0] / animals[1]
+        max = animals[0] // animals[1]
 
         full = 0
         if (num_group_animals == max):
