@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
+from scrollable_frame import VerticalScrolledFrame
 import csv
 from experiment_pages.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment_menu_ui import ExperimentMenuUI
@@ -17,7 +18,7 @@ class NewExperimentButton(Button):
         self.next_page = NewExperimentUI(self.parent, self.page)
 
     def navigate(self):
-        self.next_page.tkraise()
+        self.next_page.raise_frame()
 
 
 class ExperimentsUI(MouserPage):
@@ -27,9 +28,11 @@ class ExperimentsUI(MouserPage):
 
         NewExperimentButton(parent, self)
 
-        self.main_frame = Frame(self, width=500)
+        scroll_canvas = VerticalScrolledFrame(self, width=500, height=400)
+        scroll_canvas.place(relx=0.12, rely=0.25)
+
+        self.main_frame = Frame(scroll_canvas, width=500)
         self.main_frame.grid(row=1, column=1, sticky='NESW')
-        self.main_frame.place(relx=0.12, rely=0.25)
 
         self.selectable_frames = []
         self.update_frame()

@@ -1,8 +1,8 @@
 from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
+from scrollable_frame import VerticalScrolledFrame
 from ExperimentDatabase import ExperimentDatabase
-
 
 
 class CageConfigurationUI(MouserPage):
@@ -18,10 +18,11 @@ class CageConfigurationUI(MouserPage):
         self.ipad = 2
         self.pad = 5
 
+        scroll_canvas = VerticalScrolledFrame(self, width=550, height=400)
+        scroll_canvas.place(relx=0.05, rely=0.20)
 
-        self.main_frame = Frame(self)
+        self.main_frame = Frame(scroll_canvas)
         self.main_frame.grid(row=2, column=3, sticky='NESW')
-        self.main_frame.place(relx=0.05, rely=0.20)
 
         move_frame = Frame(self.main_frame, relief=RIDGE)
         move_frame.grid(row=0, column=3, padx=10, pady=10)

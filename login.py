@@ -1,7 +1,8 @@
 from tkinter import *
 from tkinter.ttk import *
-
 from tk_models import *
+from authentication import *
+
 from users_database import UsersDatabase
 
 class LoginFrame(MouserPage):
