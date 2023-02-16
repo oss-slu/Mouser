@@ -45,11 +45,11 @@ class MouserPage(Frame):
         super().__init__(parent)
         self.title = title
 
-        canvas = Canvas(self, width=600, height=600)
-        canvas.grid(row=0, column=0, columnspan=4)
-        rectangle = canvas.create_rectangle(0, 0, 600, 50, fill='#0097A7')
-        titleLabel = canvas.create_text(300, 13, anchor="n")
-        canvas.itemconfig(titleLabel, text=title, font=("Arial", 18))
+        self.canvas = Canvas(self, width=600, height=600)
+        self.canvas.grid(row=0, column=0, columnspan=4)
+        self.rectangle = self.canvas.create_rectangle(0, 0, 600, 50, fill='#0097A7')
+        self.title_label = self.canvas.create_text(300, 13, anchor="n")
+        self.canvas.itemconfig(self.title_label, text=title, font=("Arial", 18))
 
         self.grid(row=0, column=0, sticky="NESW")
         self.grid_rowconfigure(0, weight=1)
@@ -57,6 +57,8 @@ class MouserPage(Frame):
         self.menu_button = MenuButton(self, menu_page) if menu_page else None
         self.next_button = None
         self.previous_button = None
+
+        self.check_window_size()
 
     def raise_frame(self):
         self.tkraise()
@@ -75,6 +77,27 @@ class MouserPage(Frame):
         if self.menu_button:
             self.menu_button.destroy()
         self.menu_button = MenuButton(self, menu_page, False)
+
+    def check_window_size(self):
+        root = self.winfo_toplevel()
+        if root.winfo_height() != self.canvas.winfo_height():
+            self.resize_canvas_height(root.winfo_height())
+        if root.winfo_width() != self.canvas.winfo_width():
+            self.resize_canvas_width(root.winfo_width())
+
+        self.after(10, self.check_window_size)
+
+    def resize_canvas_height(self, root_height):
+        self.canvas.config(height=root_height)
+
+    def resize_canvas_width(self, root_width):
+        self.canvas.config(width=root_width)
+
+        x0, y0, x1, y2 = self.canvas.coords(self.rectangle)
+        x3, y3 = self.canvas.coords(self.title_label)
+        self.canvas.coords(self.rectangle, x0, y0, root_width, y2)
+        self.canvas.coords(self.title_label, (root_width/2), y3)
+
 
 
 if __name__ == '__main__':
