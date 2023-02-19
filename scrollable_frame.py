@@ -1,7 +1,7 @@
 import tkinter as tk
 
 
-class VerticalScrolledFrame:
+class ScrolledFrame:
     def __init__(self, master, **kwargs):
         width = kwargs.pop('width', None)
         height = kwargs.pop('height', None)
@@ -9,16 +9,21 @@ class VerticalScrolledFrame:
 
         self.outer_frame = tk.Frame(master, **kwargs)
 
-        self.scrollbar = tk.Scrollbar(self.outer_frame, orient=tk.VERTICAL)
-        self.scrollbar.pack(fill=tk.Y, side=tk.RIGHT)
+        self.vert_scrollbar = tk.Scrollbar(self.outer_frame, orient=tk.VERTICAL)
+        self.horz_scrollbar = tk.Scrollbar(self.outer_frame, orient=tk.HORIZONTAL)
+
+        self.vert_scrollbar.pack(fill=tk.Y, side=tk.RIGHT)
+        self.horz_scrollbar.pack(fill=tk.X, side=tk.BOTTOM)
 
         self.canvas = tk.Canvas(self.outer_frame, highlightthickness=0, width=width, height=height, bg=background)
         self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self.canvas['yscrollcommand'] = self.scrollbar.set
+        self.canvas['yscrollcommand'] = self.vert_scrollbar.set
+        self.canvas['xscrollcommand'] = self.horz_scrollbar.set
         
         self.canvas.bind("<Enter>", self._bind_mouse)
         self.canvas.bind("<Leave>", self._unbind_mouse)
-        self.scrollbar['command'] = self.canvas.yview
+        self.vert_scrollbar['command'] = self.canvas.yview
+        self.horz_scrollbar['command'] = self.canvas.xview
 
         self.inner = tk.Frame(self.canvas, bg=background)
         
@@ -58,4 +63,29 @@ class VerticalScrolledFrame:
 
     def __str__(self):
         return str(self.outer_frame)
+
+
+    # code for main window resize from Mouser Page
+
+    # def check_window_size(self):
+    #     root = self.winfo_toplevel()
+    #     if root.winfo_height() != self.canvas.winfo_height():
+    #         self.resize_canvas_height(root.winfo_height())
+    #     if root.winfo_width() != self.canvas.winfo_width():
+    #         self.resize_canvas_width(root.winfo_width())
+
+    #     self.after(10, self.check_window_size)
+
+    # def resize_canvas_height(self, root_height):
+    #     self.canvas.config(height=root_height)
+
+    # def resize_canvas_width(self, root_width):
+    #     self.canvas.config(width=root_width)
+
+    #     x0, y0, x1, y2 = self.canvas.coords(self.rectangle)
+    #     x3, y3 = self.canvas.coords(self.title_label)
+    #     self.canvas.coords(self.rectangle, x0, y0, root_width, y2)
+    #     self.canvas.coords(self.title_label, (root_width/2), y3)
+
+
 
