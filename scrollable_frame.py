@@ -1,4 +1,5 @@
-import tkinter as tk
+from tkinter import *
+from tkinter.ttk import *
 
 
 class ScrolledFrame:
@@ -7,16 +8,16 @@ class ScrolledFrame:
         height = kwargs.pop('height', None)
         background = kwargs.pop('bg', kwargs.pop('background', None))
 
-        self.outer_frame = tk.Frame(master, **kwargs)
+        self.outer_frame = Frame(master, **kwargs)
 
-        self.vert_scrollbar = tk.Scrollbar(self.outer_frame, orient=tk.VERTICAL)
-        self.horz_scrollbar = tk.Scrollbar(self.outer_frame, orient=tk.HORIZONTAL)
+        self.vert_scrollbar = Scrollbar(self.outer_frame, orient=VERTICAL)
+        self.horz_scrollbar = Scrollbar(self.outer_frame, orient=HORIZONTAL)
 
-        self.vert_scrollbar.pack(fill=tk.Y, side=tk.RIGHT)
-        self.horz_scrollbar.pack(fill=tk.X, side=tk.BOTTOM)
+        self.vert_scrollbar.pack(fill=Y, side=RIGHT)
+        self.horz_scrollbar.pack(fill=X, side=BOTTOM)
 
-        self.canvas = tk.Canvas(self.outer_frame, highlightthickness=0, width=width, height=height, bg=background)
-        self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.canvas = Canvas(self.outer_frame, highlightthickness=0, width=width, height=height, bg=background)
+        self.canvas.pack(side=LEFT, fill=BOTH, expand=True)
         self.canvas['yscrollcommand'] = self.vert_scrollbar.set
         self.canvas['xscrollcommand'] = self.horz_scrollbar.set
         
@@ -25,12 +26,12 @@ class ScrolledFrame:
         self.vert_scrollbar['command'] = self.canvas.yview
         self.horz_scrollbar['command'] = self.canvas.xview
 
-        self.inner = tk.Frame(self.canvas, bg=background)
+        self.inner = Frame(self.canvas, bg=background)
         
         self.canvas.create_window(4, 4, window=self.inner, anchor='nw')
         self.inner.bind("<Configure>", self._on_frame_configure)
 
-        self.outer_attr = set(dir(tk.Widget))
+        self.outer_attr = set(dir(Widget))
 
     def __getattr__(self, item):
         if item in self.outer_attr:
@@ -63,4 +64,5 @@ class ScrolledFrame:
 
     def __str__(self):
         return str(self.outer_frame)
+
 
