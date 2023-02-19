@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
-from scrollable_frame import VerticalScrolledFrame
+from scrollable_frame import ScrolledFrame
 import csv
 from experiment_pages.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment_menu_ui import ExperimentMenuUI
@@ -28,7 +28,7 @@ class ExperimentsUI(MouserPage):
 
         NewExperimentButton(parent, self)
 
-        scroll_canvas = VerticalScrolledFrame(self, width=500, height=400)
+        scroll_canvas = ScrolledFrame(self, width=500, height=400)
         scroll_canvas.place(relx=0.12, rely=0.25)
 
         self.main_frame = Frame(scroll_canvas, width=500)

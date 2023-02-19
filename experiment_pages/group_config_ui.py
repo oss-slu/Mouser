@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
-from scrollable_frame import VerticalScrolledFrame
+from scrollable_frame import ScrolledFrame
 from experiment_pages.summary_ui import SummaryUI
 from experiment_pages.experiment import Experiment
 
@@ -14,7 +14,7 @@ class GroupConfigUI(MouserPage):
         self.next_page = SummaryUI(self.input, parent, self, menu_page)
         self.set_next_button(self.next_page)
 
-        scroll_canvas = VerticalScrolledFrame(self, width=410, height=400)
+        scroll_canvas = ScrolledFrame(self, width=410, height=400)
         scroll_canvas.place(relx=0.27, rely=0.25)
 
         self.main_frame = Frame(scroll_canvas)
