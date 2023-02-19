@@ -64,28 +64,3 @@ class ScrolledFrame:
     def __str__(self):
         return str(self.outer_frame)
 
-
-    # code for main window resize from Mouser Page
-
-    # def check_window_size(self):
-    #     root = self.winfo_toplevel()
-    #     if root.winfo_height() != self.canvas.winfo_height():
-    #         self.resize_canvas_height(root.winfo_height())
-    #     if root.winfo_width() != self.canvas.winfo_width():
-    #         self.resize_canvas_width(root.winfo_width())
-
-    #     self.after(10, self.check_window_size)
-
-    # def resize_canvas_height(self, root_height):
-    #     self.canvas.config(height=root_height)
-
-    # def resize_canvas_width(self, root_width):
-    #     self.canvas.config(width=root_width)
-
-    #     x0, y0, x1, y2 = self.canvas.coords(self.rectangle)
-    #     x3, y3 = self.canvas.coords(self.title_label)
-    #     self.canvas.coords(self.rectangle, x0, y0, root_width, y2)
-    #     self.canvas.coords(self.title_label, (root_width/2), y3)
-
-
-
