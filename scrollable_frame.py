@@ -3,12 +3,8 @@ from tkinter.ttk import *
 
 
 class ScrolledFrame:
-    def __init__(self, master, **kwargs):
-        width = kwargs.pop('width', None)
-        height = kwargs.pop('height', None)
-        background = kwargs.pop('bg', kwargs.pop('background', None))
-
-        self.outer_frame = Frame(master, **kwargs)
+    def __init__(self, master):
+        self.outer_frame = Frame(master)
 
         self.vert_scrollbar = Scrollbar(self.outer_frame, orient=VERTICAL)
         self.horz_scrollbar = Scrollbar(self.outer_frame, orient=HORIZONTAL)
@@ -16,7 +12,7 @@ class ScrolledFrame:
         self.vert_scrollbar.pack(fill=Y, side=RIGHT)
         self.horz_scrollbar.pack(fill=X, side=BOTTOM)
 
-        self.canvas = Canvas(self.outer_frame, highlightthickness=0, width=width, height=height, bg=background)
+        self.canvas = Canvas(self.outer_frame)
         self.canvas.pack(side=LEFT, fill=BOTH, expand=True)
         self.canvas['yscrollcommand'] = self.vert_scrollbar.set
         self.canvas['xscrollcommand'] = self.horz_scrollbar.set
@@ -26,12 +22,13 @@ class ScrolledFrame:
         self.vert_scrollbar['command'] = self.canvas.yview
         self.horz_scrollbar['command'] = self.canvas.xview
 
-        self.inner = Frame(self.canvas, bg=background)
+        self.inner = Frame(self.canvas)
         
         self.canvas.create_window(4, 4, window=self.inner, anchor='nw')
         self.inner.bind("<Configure>", self._on_frame_configure)
 
         self.outer_attr = set(dir(Widget))
+
 
     def __getattr__(self, item):
         if item in self.outer_attr:
@@ -44,8 +41,9 @@ class ScrolledFrame:
     def _on_frame_configure(self, event=None):
         x1, y1, x2, y2 = self.canvas.bbox("all")
         height = self.canvas.winfo_height()
-        self.canvas.config(scrollregion = (0,0, x2, max(y2, height)))
-
+        width = self.canvas.winfo_width()
+        self.canvas.config(scrollregion = (0,0, max(x2, width), max(y2, height)))
+        
     def _bind_mouse(self, event=None):
         self.canvas.bind_all("<4>", self._on_mousewheel)
         self.canvas.bind_all("<5>", self._on_mousewheel)
@@ -64,5 +62,4 @@ class ScrolledFrame:
 
     def __str__(self):
         return str(self.outer_frame)
-
 

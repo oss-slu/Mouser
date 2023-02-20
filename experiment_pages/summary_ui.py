@@ -25,8 +25,8 @@ class SummaryUI(MouserPage):
 
         CreateExperimentButton(input, self, menu_page)
 
-        scroll_canvas = ScrolledFrame(self, width=390, height=400)
-        scroll_canvas.place(relx=0.30, rely=0.25)
+        scroll_canvas = ScrolledFrame(self)
+        scroll_canvas.place(relx=0.30, rely=0.25, relheight=0.7, relwidth=0.8)
 
         self.main_frame = Frame(scroll_canvas)
         self.main_frame.grid(row=8, column=1, sticky='NESW')

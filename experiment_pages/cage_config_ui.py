@@ -12,14 +12,13 @@ class CageConfigurationUI(MouserPage):
         file = str(database) + '.db'
         self.db = ExperimentDatabase(file)
 
-
         # unchanging data for stuff:
         self.groups = self.db.get_all_groups()
         self.ipad = 2
         self.pad = 5
 
-        scroll_canvas = ScrolledFrame(self, width=550, height=400)
-        scroll_canvas.place(relx=0.05, rely=0.20)
+        scroll_canvas = ScrolledFrame(self)
+        scroll_canvas.place(relx=0.05, rely=0.20, relheight=0.75, relwidth=0.88)
 
         self.main_frame = Frame(scroll_canvas)
         self.main_frame.grid(row=2, column=3, sticky='NESW')
@@ -80,7 +79,6 @@ class CageConfigurationUI(MouserPage):
                     j += 1
 
             self.group_frames.append(frame)            
-
 
 
 
