@@ -18,7 +18,7 @@ class NewExperimentUI(MouserPage):
         self.next_page = GroupConfigUI(self.input, parent, self, menu_page)
         self.set_next_button(self.next_page)
 
-        scroll_canvas = ScrolledFrame(self, width=500, height=400)
+        scroll_canvas = ScrolledFrame(self)
         scroll_canvas.place(relx=0.12, rely=0.25, relheight=0.75, relwidth=0.88)
 
         self.main_frame = Frame(scroll_canvas)
