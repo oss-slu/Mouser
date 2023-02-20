@@ -12,7 +12,7 @@ class ScrolledFrame:
         self.vert_scrollbar.pack(fill=Y, side=RIGHT)
         self.horz_scrollbar.pack(fill=X, side=BOTTOM)
 
-        self.canvas = Canvas(self.outer_frame)
+        self.canvas = Canvas(self.outer_frame, highlightthickness=0)
         self.canvas.pack(side=LEFT, fill=BOTH, expand=True)
         self.canvas['yscrollcommand'] = self.vert_scrollbar.set
         self.canvas['xscrollcommand'] = self.horz_scrollbar.set
