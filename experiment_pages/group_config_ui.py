@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
-from scrollable_frame import VerticalScrolledFrame
+from scrollable_frame import ScrolledFrame
 from experiment_pages.summary_ui import SummaryUI
 from experiment_pages.experiment import Experiment
 
@@ -14,11 +14,11 @@ class GroupConfigUI(MouserPage):
         self.next_page = SummaryUI(self.input, parent, self, menu_page)
         self.set_next_button(self.next_page)
 
-        scroll_canvas = VerticalScrolledFrame(self, width=410, height=400)
-        scroll_canvas.place(relx=0.27, rely=0.25)
+        scroll_canvas = ScrolledFrame(self)
+        scroll_canvas.place(relx=0.1, rely=0.25, relheight=0.75, relwidth=0.88)
 
         self.main_frame = Frame(scroll_canvas)
-        self.main_frame.grid(row=2, column=1, sticky='NESW')
+        self.main_frame.grid(row=0, column=0, sticky='NESW')
 
         self.group_frame = Frame(self.main_frame)
         self.item_frame = Frame(self.main_frame)
@@ -46,7 +46,7 @@ class GroupConfigUI(MouserPage):
         Label(self.group_frame, text="Group Name").grid(row=0, column=0, padx=10, pady=10)
         self.group_input = []
         for i in range(0, num):
-            name = Entry(self.group_frame, width = 40)
+            name = Entry(self.group_frame, width = 60)
             name.grid(row=i+1, column=0, padx=10, pady=10)
             self.group_input.append(name)
 

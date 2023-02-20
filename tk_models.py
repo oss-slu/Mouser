@@ -1,6 +1,6 @@
 from tkinter import *
 from tkinter.ttk import *
-
+from scrollable_frame import ScrolledFrame
 
 def raise_frame(frame: Frame):
     frame.tkraise()
@@ -54,6 +54,10 @@ class MouserPage(Frame):
         self.grid(row=0, column=0, sticky="NESW")
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
+
+        self.canvas.grid_rowconfigure(0, weight=1)
+        self.canvas.grid_columnconfigure(0, weight=1)
+
         self.menu_button = MenuButton(self, menu_page) if menu_page else None
         self.next_button = None
         self.previous_button = None

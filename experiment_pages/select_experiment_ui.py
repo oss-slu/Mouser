@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
-from scrollable_frame import VerticalScrolledFrame
+from scrollable_frame import ScrolledFrame
 import csv
 from experiment_pages.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment_menu_ui import ExperimentMenuUI
@@ -28,11 +28,14 @@ class ExperimentsUI(MouserPage):
 
         NewExperimentButton(parent, self)
 
-        scroll_canvas = VerticalScrolledFrame(self, width=500, height=400)
-        scroll_canvas.place(relx=0.12, rely=0.25)
+        scroll_canvas = ScrolledFrame(self)
+        scroll_canvas.place(relx=0.12, rely=0.25, relheight=0.75, relwidth=0.88)
 
-        self.main_frame = Frame(scroll_canvas, width=500)
+        self.main_frame = Frame(scroll_canvas)
         self.main_frame.grid(row=1, column=1, sticky='NESW')
+
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
 
         self.selectable_frames = []
         self.update_frame()
@@ -62,10 +65,13 @@ class ExperimentsUI(MouserPage):
             date = exp[1]
             self.create_selectable_frame(name, date, index)
 
+            self.main_frame.grid_columnconfigure(index, weight=1)
+            self.main_frame.grid_rowconfigure(index, weight=1)
+
 
     def create_selectable_frame(self, name, date, index):
-        frame = Frame(self.main_frame, borderwidth=3, width=500, relief='groove')
-        frame.grid(row=index, column=0, pady=5)
+        frame = Frame(self.main_frame, borderwidth=3, relief='groove')
+        frame.grid(row=index, column=0, pady=5, sticky='NESW')
         name_label = Label(frame, text=name, width=30, font=("Arial", 12))
         name_label.grid(row=index, column=0, padx=20, sticky=W)
         date_label = Label(frame, text=date, font=("Arial", 12))

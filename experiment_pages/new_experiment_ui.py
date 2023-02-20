@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
-from scrollable_frame import VerticalScrolledFrame
+from scrollable_frame import ScrolledFrame
 from experiment_pages.group_config_ui import GroupConfigUI
 from experiment_pages.experiment import Experiment
 from users_database import UsersDatabase
@@ -18,8 +18,8 @@ class NewExperimentUI(MouserPage):
         self.next_page = GroupConfigUI(self.input, parent, self, menu_page)
         self.set_next_button(self.next_page)
 
-        scroll_canvas = VerticalScrolledFrame(self, width=500, height=400)
-        scroll_canvas.place(relx=0.12, rely=0.25)
+        scroll_canvas = ScrolledFrame(self)
+        scroll_canvas.place(relx=0.12, rely=0.25, relheight=0.75, relwidth=0.88)
 
         self.main_frame = Frame(scroll_canvas)
         self.main_frame.grid(row=10, column=3, sticky='NESW')
@@ -80,8 +80,8 @@ class NewExperimentUI(MouserPage):
         
         for i in range(0,10):
             if i < 3:
-                self.grid_columnconfigure(i, weight=1)
-            self.grid_rowconfigure(i, weight=1)
+                self.main_frame.grid_columnconfigure(i, weight=1)
+            self.main_frame.grid_rowconfigure(i, weight=1)
 
 
     def set_next_button(self, next_page):
