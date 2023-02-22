@@ -1,6 +1,5 @@
 from tkinter import *
 from tkinter.ttk import *
-from scrollable_frame import ScrolledFrame
 
 def raise_frame(frame: Frame):
     frame.tkraise()
