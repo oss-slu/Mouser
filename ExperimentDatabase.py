@@ -47,6 +47,7 @@ class ExperimentDatabase:
                             (name, species, uses_rfid, num_animals, num_groups, cage_max))
         self._conn.commit()
 
+
     def setup_groups(self, group_names):
         '''Adds the groups to the database.
             arg1 (list): a list of all the group names
@@ -56,6 +57,7 @@ class ExperimentDatabase:
                                 VALUES (?, ?, ?)''',
                                 (group, 0, 0))
             self._conn.commit()
+
 
     def setup_cages(self, num_animals, num_groups, cage_max):
         cages_per_group = (int(num_animals)/int(num_groups)) / int(cage_max)
@@ -71,6 +73,7 @@ class ExperimentDatabase:
                 cage += 1
             x += 1
 
+
     def setup_measurement_items(self, items):
         '''Adds the measurement items to the database.
         
@@ -84,6 +87,7 @@ class ExperimentDatabase:
                                 (item[0], item[1]))
             self._conn.commit()   
 
+
     def add_animal(self, rfid, remarks=''):
         self._c.execute("INSERT INTO animal_rfid (rfid) VALUES (?)", (rfid, ))
         self._conn.commit()
@@ -96,6 +100,7 @@ class ExperimentDatabase:
                         (animal_id, group_id, cage_id, remarks))
         self._conn.commit()
         return (self.get_animal_id(rfid))
+
 
     def _get_next_cage(self):
         self._c.execute("SELECT cage_id, num_animals FROM cages WHERE full=0")
@@ -113,6 +118,7 @@ class ExperimentDatabase:
         self._conn.commit()
 
         return cage_id
+
 
     def _get_next_group(self):
         self._c.execute("SELECT group_id, num_animals FROM groups WHERE full=0")
@@ -132,9 +138,11 @@ class ExperimentDatabase:
         
         return group_id
 
+
     def update_group_and_cage(self, animal_id, new_group, new_cage):
         self._c.execute("UPDATE animals SET group_id=?, cage_id=? WHERE animal_id=?", (new_group, new_cage, animal_id))
         self._conn.commit()
+
 
     def deactivate_animal(self, animal_id):
         self._c.execute("UPDATE animals SET active=0 WHERE animal_id=?", (animal_id,))
@@ -159,13 +167,16 @@ class ExperimentDatabase:
             self._c.execute("UPDATE animal_rfid SET animal_id=? WHERE animal_id=?", (i+offset, i))
             self._conn.commit()
 
+
     def get_number_animals(self):
         self._c.execute("SELECT num_animals FROM experiment")
         return self._c.fetchall()
  
+
     def get_number_groups(self):
         self._c.execute("SELECT num_groups FROM experiment")
         return self._c.fetchall()
+
 
     def get_cage_max(self):
         self._c.execute("SELECT cage_max FROM experiment")
@@ -176,29 +187,36 @@ class ExperimentDatabase:
         self._c.execute("SELECT name FROM groups")
         return self._c.fetchall()
 
+
     def get_cages(self):
         self._c.execute("SELECT cage_id, group_id FROM cages")
         return self._c.fetchall()
+
 
     def get_animals_in_cage(self, cage_id):
         self._c.execute("SELECT animal_id FROM animals WHERE cage_id=?", (cage_id, ))
         return self._c.fetchall()
     
+
     def get_animals_in_group(self, group_id):
         self._c.execute("SELECT animal_id FROM animals WHERE group_id=?", (group_id, ))
         return self._c.fetchall()
+
 
     def get_animals(self):
         self._c.execute("SELECT animal_id, group_id, cage_id, weight, active FROM animals")
         return self._c.fetchall()
 
+
     def get_animal_id(self, rfid):
         self._c.execute("SELECT animal_id FROM animal_rfid WHERE rfid=?", (rfid,))
         return self._c.fetchone()[0]
 
+
     def get_animals_rfid(self):
         self._c.execute("SELECT rfid FROM animal_rfid")
         return self._c.fetchall()
+
 
     def get_all_experiment_info(self):
         self._c.execute("SELECT name, species, uses_rfid, num_animals, num_groups, cage_max FROM experiment")
