@@ -6,8 +6,6 @@ from experiment_pages.group_config_ui import GroupConfigUI
 from experiment_pages.experiment import Experiment
 from users_database import UsersDatabase
 
-investigators = ['investigator a', 'investigator b', 'investigator c']
-
 class NewExperimentUI(MouserPage):
     def __init__(self, parent:Tk, menu_page: Frame = None):
         super().__init__(parent, "New Experiment", menu_page)
