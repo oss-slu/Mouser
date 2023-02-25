@@ -6,9 +6,33 @@ class DatabaseController():
         file = str(database) + '.db'
         self.db = ExperimentDatabase(file)
 
+        # self.measurement_items = self.db.get_measurement_items()
+        # self.cages_in_group = self.set_cages_in_group()    # {group : [cage ids]}
+        # self.animals_in_cage = self.set_animals_in_cage()   # {cage : [animal ids]}
 
-    def get_all_data(self):
-        return(self.db.get_all_experiment_info())
+        ### temporary dummy vars ###
+        self.measurement_items = ['Weight']
+        self.cages_in_group = {'Group A': ['1', '2', '3', '4', '5'], 'Group B': ['6', '7', '8', '9', '10']}
+        self.animals_in_cage = {'1': ['1', '2'], '2': ['3', '4'], '3': ['5', '6'], '4': ['7', '8'], 
+                             '5': ['9', '10'], '6': ['11', '12'], '7': ['13', '14'], '8': {'15', '16'}, 
+                             '9': ['17', '18'], '10': ['19', '20']}
+        
+        self.animal_weights = {}
+        for i in range(1, 21):
+            self.animal_weights[i] = '0'
+        ############################        
+
+
+    def set_cages_in_group(self):
+        # logic for putting data into dictionary
+        # return dictionary
+        pass
+
+
+    def set_animals_in_cage(self):
+        # logic for putting data into dictionary
+        # return dictionary
+        pass
 
 
     def get_groups(self):
@@ -27,54 +51,32 @@ class DatabaseController():
 
 
     def get_measurement_items(self):
-        # temporary for demo
-        return(['Weight'])
-        # return(self.db.get_measurement_items())
-
-
-    # demo purposes only until db insert working
-    def make_temporary_cages(self):
-        group_cages = {'Group A': ('1', '2', '3', '4', '5'), 'Group B': ('6', '7', '8', '9', '10')}
-        return (group_cages)
+        return(self.measurement_items)
 
 
     def get_cages_in_group(self, group):
-        # temporary call
-        groups_and_cages = self.make_temporary_cages()
-        return (groups_and_cages[group])
+        return (self.cages_in_group[group])
 
 
     def get_animals_in_cage(self, cage):
-        # temporary until db insert working
-        cages_and_animals = {'1': ('1', '2'), '2': ('3', '4'), '3': ('5', '6'), '4': ('7', '8'), 
-                             '5': ('9', '10'), '6': ('11', '12'), '7': ('13', '14'), '8': ('15', '16'), 
-                             '9': ('17', '18'), '10': ('19', '20')}
-        return(cages_and_animals[cage])
-
-
-    # def get_animals_in_cage(self, cage_id):
-    #     return(self.db.get_animals_in_cage(cage_id))
-
-
-    def make_temp_measurements(self):
-        # temporary data for demo
-        animal_weights = {}
-        for i in range(1, 21):
-            animal_weights[i] = '0'
-        return(animal_weights)
+        return(self.animals_in_cage[cage])
 
 
     def get_animal_measurements(self, animal_id):
-        weights = self.make_temp_measurements()
-        return(weights[int(animal_id)])
+        return(self.animal_weights[int(animal_id)])
 
 
-    # def get_animal_measurements(self, animal_id):
-    #     return(self.db.get_animal_measurements(animal_id))
+    def update_animal_cage(self, animal, old_cage, new_cage):
+        print('before: ', self.animals_in_cage[old_cage])
+        self.animals_in_cage[old_cage].remove(animal)
+        print('after removal: ', self.animals_in_cage[old_cage])
+        self.animals_in_cage[new_cage].append(animal)
+        print('after add to new: ', self.animals_in_cage[new_cage])
 
 
     def update_experiment(self):
-        # do stuff
+        # stored & updated values in self.animals_in_cage
+        # save to database
         self.close_db
 
 
@@ -89,5 +91,5 @@ if __name__ == '__main__':
 
     # print(controller.get_cages_in_group('Group B'))
     # print(controller.get_animals_in_cage(5))
-    print(controller.get_animal_measurements(4))
+    print(controller.update_animal_cage('2', '1', '2'))
 
