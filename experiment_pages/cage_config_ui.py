@@ -33,13 +33,13 @@ class CageConfigurationUI(MouserPage):
         self.id_input.bind("<Button-1>", lambda event, arg='id': self.clear_entry(event, arg))
         self.cage_input.bind("<Button-1>", lambda event, arg='cage': self.clear_entry(event, arg))
 
-        pad_x, pad_y = 10, 10
+        self.pad_x, self.pad_y = 10, 10
 
-        auto_button.grid(row=0, column=0, padx=pad_x, pady=pad_y)
-        self.id_input.grid(row=0, column=1, padx=pad_x, pady=pad_y)
-        self.cage_input.grid(row=0, column=2, padx=pad_x, pady=pad_y)
-        move_button.grid(row=0, column=3, padx=pad_x, pady=pad_y)
-        save_button.grid(row=0, column=4, padx=pad_x, pady=pad_y)
+        auto_button.grid(row=0, column=0, padx=self.pad_x, pady=self.pad_y)
+        self.id_input.grid(row=0, column=1, padx=self.pad_x, pady=self.pad_y)
+        self.cage_input.grid(row=0, column=2, padx=self.pad_x, pady=self.pad_y)
+        move_button.grid(row=0, column=3, padx=self.pad_x, pady=self.pad_y)
+        save_button.grid(row=0, column=4, padx=self.pad_x, pady=self.pad_y)
 
         for i in range(0, 4):
             input_frame.grid_columnconfigure(i, weight=1)
@@ -64,9 +64,15 @@ class CageConfigurationUI(MouserPage):
         groups = self.db.get_groups()
         self.group_frames = {}  # dict of {group name : frame id}
 
+        frame_style, label_style = Style(), Style()
+        frame_style.configure('GroupFrame.TFrame', background='#0097A7')
+        label_style.configure('GroupLabel.TLabel', background='#0097A7', font=('Arial', 12))
+        
+
         for group in groups:
-            frame = Frame(self.config_frame, borderwidth=3, relief='groove')
-            Label(frame, text=group).pack(side=TOP, anchor='center')
+            frame = Frame(self.config_frame, borderwidth=3, relief='groove', style='GroupFrame.TFrame')
+            label = Label(frame, text=group, style='GroupLabel.TLabel')
+            label.pack(side=TOP, padx=self.pad_x, pady=self.pad_y, anchor='center')
             
             self.create_cage_frames(group, frame)
             frame.pack(side=TOP, expand=TRUE, fill=BOTH, anchor='center')
@@ -82,7 +88,7 @@ class CageConfigurationUI(MouserPage):
             frame = Frame(group_frame, borderwidth=3, relief='groove')
             Label(frame, text='Cage ' + cages[i]).pack(side=TOP, anchor='center')
             
-            id_weight_label_frame = Frame(frame, borderwidth=3, relief='groove')
+            id_weight_label_frame = Frame(frame)
 
             Label(id_weight_label_frame, text='Animal ID').pack(side=LEFT, anchor='center')
             for item in meas_items:
@@ -105,14 +111,14 @@ class CageConfigurationUI(MouserPage):
             
             id_measurement_frame = Frame(frame)
 
-            Label(id_measurement_frame, text=animal).pack(
-                        side=LEFT, expand=TRUE, fill=BOTH, anchor='center')
-            Label(id_measurement_frame, text=self.db.get_animal_measurements(animal)).pack(
+            Label(id_measurement_frame, text=animal, anchor='center').pack(
+                        side=LEFT, expand=TRUE, fill=BOTH, anchor='e')
+            Label(id_measurement_frame, text=self.db.get_animal_measurements(animal), anchor='center').pack(
                         side=LEFT, expand=TRUE, fill=BOTH, anchor='center')
 
             id_measurement_frame.pack(side=TOP, expand=TRUE, fill=BOTH, anchor='center')
 
-            frame.pack(side=TOP, expand=TRUE, fill=BOTH, anchor='center')
+            frame.pack(side=TOP, expand=TRUE, fill=BOTH, anchor='center', padx= 5, pady= 5, ipadx= 5, ipady= 5)
             self.cage_frames[animal] = frame            
 
 
