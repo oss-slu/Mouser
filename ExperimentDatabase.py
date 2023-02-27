@@ -189,8 +189,6 @@ class ExperimentDatabase:
         return self._c.fetchall()
 
 
-
-
     def get_animals_by_cage(self):
         self._c.execute("SELECT cage_id FROM cages", ())
         cages = self._c.fetchall()
@@ -222,9 +220,6 @@ class ExperimentDatabase:
             animals_by_group[str(group[1])] = ans
 
         return animals_by_group
-
-
-
 
 
     def get_animals(self):
