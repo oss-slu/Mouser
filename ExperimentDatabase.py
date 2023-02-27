@@ -188,6 +188,40 @@ class ExperimentDatabase:
         self._c.execute("SELECT animal_id FROM animals WHERE group_id=?", (group_id, ))
         return self._c.fetchall()
 
+
+    def get_animals_by_cage(self):
+        self._c.execute("SELECT cage_id FROM cages", ())
+        cages = self._c.fetchall()
+
+        animals_by_cage = {}
+
+        for cage in cages:
+            self._c.execute("SELECT animal_id FROM animals WHERE cage_id=?", (cage[0],))
+            animals = self._c.fetchall()
+            ans =[]
+            for animal in animals:
+                ans.append(str(animal[0]))
+            animals_by_cage[str(cage[0])] = ans
+
+        return animals_by_cage
+
+    def get_animals_by_group(self):
+        self._c.execute("SELECT group_id, name FROM groups", ())
+        groups = self._c.fetchall()
+
+        animals_by_group = {}
+
+        for group in groups:
+            self._c.execute("SELECT animal_id FROM animals WHERE group_id=?", (group[0],))
+            animals = self._c.fetchall()
+            ans =[]
+            for animal in animals:
+                ans.append(str(animal[0]))
+            animals_by_group[str(group[1])] = ans
+
+        return animals_by_group
+
+
     def get_animals(self):
         self._c.execute("SELECT animal_id, group_id, cage_id, weight, active FROM animals")
         return self._c.fetchall()
@@ -251,8 +285,7 @@ if __name__ == "__main__":
     for x in range(1, 19):
         db.add_animal(x)
 
-    animals = db.get_animals()
-    for animal in animals:
-        print(animal)
-    db.get_all_experiment_info()
+    print(db.get_animals_by_group())
+    print(db.get_animals_by_cage())
+    
     
