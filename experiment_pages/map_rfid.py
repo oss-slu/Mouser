@@ -5,7 +5,7 @@ import random
 from playsound import playsound
 import threading
 
-from ExperimentDatabase import ExperimentDatabase
+from database_apis.experiment_database import ExperimentDatabase
 
 def get_random_rfid():
     return random.randint(1000000, 9999999)
@@ -20,7 +20,7 @@ class MapRFIDPage(MouserPage):
     def __init__(self, database, parent: Tk, previous_page: Frame = None):
         super().__init__(parent, "Map RFID", previous_page)
 
-        file = str(database) + '.db'
+        file = "databases/experiments/" + str(database) + '.db'
         self.db = ExperimentDatabase(file)
 
         self.animals = []
