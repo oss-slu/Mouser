@@ -5,35 +5,53 @@ from tkcalendar import Calendar
 from tk_models import *
 
 from database_apis.experiment_database import ExperimentDatabase
+from database_apis.data_collection_database import DataCollectionDatabase
 
 class DataCollectionUI(MouserPage):
     def __init__(self, parent: Tk, prev_page: Frame = None, database_name = ""):
         super().__init__(parent, "Data Collection", prev_page)
+        
         self.database = ExperimentDatabase("databases/experiments/" + database_name + ".db")
+        self.measurement_items = self.database.get_measurement_items()
+        self.measurement_strings = []
+        self.measurement_ids = []
+        for item in self.measurement_items:
+            self.measurement_strings.append(item[1])
+            self.measurement_ids.append(str(item[1]).lower().replace(" ", "_"))
+            
+        self.data_database = DataCollectionDatabase(database_name, self.measurement_strings)
+        
         self.animals = self.database.get_animals()
         self.table_frame = Frame(self)
         self.table_frame.place(relx=0.50, rely=0.75, anchor=CENTER)
         
-        columns = ('animal_id', 'weight', 'tail_length')
-        self.table = Treeview(
-            self.table_frame, columns=columns, show='headings', selectmode="browse")
+        columns = ['animal_id']
+        for id in self.measurement_ids:
+            columns.append(id)
+        
+        self.table = Treeview(self.table_frame, columns=columns, show='headings', selectmode="browse")
 
-        self.table.heading('animal_id', text='Animal ID')
-        self.table.heading('weight', text='Weight')
-        self.table.heading('tail_length', text='Tail Length')
+        for i, column in enumerate(columns):
+            text = "Animal ID"
+            if i != 0:
+                text = self.measurement_strings[i-1]
+            self.table.heading(column, text=text)
 
         self.table.grid(row=0, column=0, sticky='nsew')
         
-        self.calendar = Calendar(self, selectmode = 'day')
+        self.calendar = Calendar(self, selectmode = 'day', date_pattern="y-mm-dd")
         self.calendar.place(relx=0.50, rely=0.35, anchor=CENTER)
+        self.calendar.bind("<<CalendarSelected>>", self.get_values_for_date)
         
         for animal in self.animals:
             value = (animal[0], 0, 0)
             self.table.insert('', END, values=value)
+            
+        self.get_values_for_date(None)
 
         self.table.bind('<<TreeviewSelect>>', self.item_selected)
         
-        self.changer = ChangeMeasurementsDialog(parent, self)
+        self.changer = ChangeMeasurementsDialog(parent, self, self.measurement_strings)
     
     def item_selected(self, event):
         self.changing_value = self.table.selection()[0]
@@ -41,15 +59,33 @@ class DataCollectionUI(MouserPage):
         
     def change_selected_value(self, values):
         item = self.table.item(self.changing_value)
-        newValues = [item['values'][0]]
+        new_values = [self.current_date, item['values'][0]]
         for val in values:
-            newValues.append(val)
-        self.table.item(self.changing_value, values=tuple(newValues))
+            new_values.append(val)
+        self.table.item(self.changing_value, values=tuple(new_values[1:]))
+        self.data_database.set_data_for_entry(new_values)
+        
+    def get_values_for_date(self, event):
+        self.current_date = self.calendar.get_date()
+        values = self.data_database.get_data_for_date(self.current_date)
+        for child in self.table.get_children():
+            animal_id = self.table.item(child)["values"][0]
+            found = False
+            for val in values:
+                if str(val[1]) == str(animal_id):
+                    found = True
+                    self.table.item(child, values=tuple(val[1:]))
+            if not found:
+                new_values = [animal_id]
+                for item in self.measurement_items:
+                    new_values.append(0)
+                self.table.item(child, values=tuple(new_values))
 
 class ChangeMeasurementsDialog():
-    def __init__(self, parent: Tk, data_collection: DataCollectionUI):
+    def __init__(self, parent: Tk, data_collection: DataCollectionUI, measurement_items: list):
         self.parent = parent
         self.data_collection = data_collection
+        self.measurement_items = measurement_items
 
     def open(self):
         self.root = root = Toplevel(self.parent)
@@ -60,8 +96,8 @@ class ChangeMeasurementsDialog():
         root.grid_columnconfigure(0, weight=1)
         
         self.textboxes = []
-        valueList = ["Weight", "Tail Length"]
-        count = len(valueList) + 1
+        count = len(self.measurement_items) + 1
+
         for i in range(1, count):
             posY = i / count
             entry = Entry(root, width=40)
@@ -69,7 +105,7 @@ class ChangeMeasurementsDialog():
             entry.bind("<KeyRelease>", self.check_if_num)
             self.textboxes.append(entry)
             
-            header = Label(root, text=valueList[i-1]+": ", font=("Arial", 12))
+            header = Label(root, text=self.measurement_items[i-1]+": ", font=("Arial", 12))
             header.place(relx=0.28, rely=posY, anchor=E)
             
             if i == 1:
