@@ -220,6 +220,23 @@ class ExperimentDatabase:
             animals_by_group[str(group[1])] = ans
 
         return animals_by_group
+    
+     def get_cages_by_group(self):
+        self._c.execute("SELECT group_id, name FROM groups", ())
+        groups = self._c.fetchall()
+
+        cages_by_group = {}
+
+        for group in groups:
+            self._c.execute("SELECT cage_id FROM cages WHERE group_id=?", (group[0],))
+            cages = self._c.fetchall()
+
+            ans = []
+            for cage in cages:
+                ans.append(str(cage[0]))
+            cages_by_group[str(group[1])] = ans
+
+        return cages_by_group
 
 
     def get_animals(self):
@@ -287,5 +304,5 @@ if __name__ == "__main__":
 
     print(db.get_animals_by_group())
     print(db.get_animals_by_cage())
-    
+    print(db.get_cages_by_group())
     
