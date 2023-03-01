@@ -162,6 +162,16 @@ class ExperimentDatabase:
     def get_number_animals(self):
         self._c.execute("SELECT num_animals FROM experiment")
         return self._c.fetchall()
+    
+    def get_all_animal_ids(self):
+        self._c.execute("SELECT animal_id FROM animals")
+
+        ids = []
+        raw_ids = self._c.fetchall()
+        for i in range(len(raw_ids)):
+            ids.append(str(raw_ids[i][0]))
+
+        return ids
  
     def get_number_groups(self):
         self._c.execute("SELECT num_groups FROM experiment")
@@ -302,7 +312,6 @@ if __name__ == "__main__":
     for x in range(1, 19):
         db.add_animal(x)
 
-    print(db.get_animals_by_group())
-    print(db.get_animals_by_cage())
-    print(db.get_cages_by_group())
-    
+    # print(db.get_animals_by_group())
+    # print(db.get_animals_by_cage())
+    # print(db.get_cages_by_group())
