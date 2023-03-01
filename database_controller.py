@@ -67,6 +67,15 @@ class DatabaseController():
         return(self.animal_weights[int(animal_id)])
     
 
+    def get_animal_current_cage(self, id):
+        keys = self.animals_in_cage.keys()
+        cages = [self.animals_in_cage[key] for key in keys]
+        
+        for num in range(0,len(cages)):
+            if id in cages[num]:
+                return(str(num+1))
+
+
     def check_valid_animal(self, id):
         if id in self.valid_ids:
             return(True)
@@ -82,11 +91,11 @@ class DatabaseController():
 
 
     def update_animal_cage(self, animal, old_cage, new_cage):
-        print('before: ', self.animals_in_cage[old_cage])
+        # print('before: ', self.animals_in_cage[old_cage])
         self.animals_in_cage[old_cage].remove(animal)
-        print('after removal: ', self.animals_in_cage[old_cage])
+        # print('after removal: ', self.animals_in_cage[old_cage])
         self.animals_in_cage[new_cage].append(animal)
-        print('after add to new: ', self.animals_in_cage[new_cage])
+        # print('after add to new: ', self.animals_in_cage[new_cage])
 
 
     def update_experiment(self):
@@ -105,6 +114,9 @@ if __name__ == '__main__':
     controller = DatabaseController('Cancer Drug')
 
     # print(controller.get_cages_in_group('Group B'))
-    # print(controller.get_animals_in_cage(5))
-    # print(controller.update_animal_cage('2', '1', '2'))
+    print(controller.get_animals_in_cage('5'))
+    print(controller.update_animal_cage('2', '1', '2'))
 
+
+
+ 

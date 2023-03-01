@@ -131,10 +131,12 @@ class CageConfigurationUI(MouserPage):
         pass
 
     
-    def move_animal(self, id: int, cage: int):
+    def move_animal(self, id, new_cage):
+        old_cage = self.db.get_animal_current_cage(id)
+        self.db.update_animal_cage(id, old_cage, new_cage)
+        
         self.clear_entry(None, 'cage')
         self.clear_entry(None, 'id')
-
         self.id_input.insert(END, 'animal id')
         self.cage_input.insert(END, 'cage id')
 
@@ -154,7 +156,7 @@ class CageConfigurationUI(MouserPage):
         elif option == 2:
             label = Label(message, text='Not a valid Animal ID.')
             label.grid(row=0, column=0, padx=10, pady=10)
-            
+
         elif option == 3:
             label = Label(message, text='Not a valid Cage ID.')
             label.grid(row=0, column=0, padx=10, pady=10)
