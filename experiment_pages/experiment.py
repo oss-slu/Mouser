@@ -1,6 +1,6 @@
 import csv
 from datetime import date
-from ExperimentDatabase import ExperimentDatabase
+from database_apis.experiment_database import ExperimentDatabase
 from datetime import date
 
 class Experiment():
@@ -68,7 +68,7 @@ class Experiment():
 
     def save_to_database(self):
         self.add_to_list()
-        file = self.name + '.db'
+        file = "databases/experiments/" + self.name + '.db'
         db = ExperimentDatabase(file)
         db.setup_experiment(self.name, self.species, self.rfid, self.num_animals, 
                             self.num_groups, self.max_per_cage)

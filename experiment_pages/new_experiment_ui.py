@@ -4,7 +4,7 @@ from tk_models import *
 from scrollable_frame import ScrolledFrame
 from experiment_pages.group_config_ui import GroupConfigUI
 from experiment_pages.experiment import Experiment
-from users_database import UsersDatabase
+from database_apis.users_database import UsersDatabase
 
 investigators = ['investigator a', 'investigator b', 'investigator c']
 

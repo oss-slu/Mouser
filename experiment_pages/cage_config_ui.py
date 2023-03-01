@@ -2,14 +2,14 @@ from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
 from scrollable_frame import ScrolledFrame
-from ExperimentDatabase import ExperimentDatabase
+from database_apis.experiment_database import ExperimentDatabase
 
 
 class CageConfigurationUI(MouserPage):
     def __init__(self, database, parent:Tk, prev_page: Frame = None):
         super().__init__(parent, "Group Configuration", prev_page)
 
-        file = str(database) + '.db'
+        file = "databases/experiments/" + str(database) + '.db'
         self.db = ExperimentDatabase(file)
 
         # unchanging data for stuff:

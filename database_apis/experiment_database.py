@@ -38,7 +38,7 @@ class ExperimentDatabase:
                                 rfid TEXT UNIQUE);''')
             self._conn.commit()
         except sqlite3.OperationalError:
-            print('Tables already exist')
+            pass
 
 
     def setup_experiment(self, name, species, uses_rfid, num_animals, num_groups, cage_max):
