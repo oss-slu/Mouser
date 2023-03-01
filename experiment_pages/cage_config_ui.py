@@ -54,10 +54,7 @@ class CageConfigurationUI(MouserPage):
     def update_config_frame(self):
         for widget in self.config_frame.winfo_children():
             widget.destroy()
-
-        # start sequence
         self.create_group_frames()
-
         
 
     def create_group_frames(self):
@@ -67,7 +64,6 @@ class CageConfigurationUI(MouserPage):
         frame_style, label_style = Style(), Style()
         frame_style.configure('GroupFrame.TFrame', background='#0097A7')
         label_style.configure('GroupLabel.TLabel', background='#0097A7', font=('Arial', 12))
-        
 
         for group in groups:
             frame = Frame(self.config_frame, borderwidth=3, relief='groove', style='GroupFrame.TFrame')
@@ -130,16 +126,17 @@ class CageConfigurationUI(MouserPage):
 
 
     def auto_group(self):
-        # TO-DO : re-group by weight
+        # TO-DO : CALL DB CONTROLLER FUNCTION
         self.update_config_frame()
         pass
 
     
     def move_animal(self, id: int, cage: int):
-        # TO-DO : change in temp variable
-
         self.clear_entry(None, 'cage')
         self.clear_entry(None, 'id')
+
+        self.id_input.insert(END, 'animal id')
+        self.cage_input.insert(END, 'cage id')
 
         self.update_config_frame()
 
@@ -153,9 +150,11 @@ class CageConfigurationUI(MouserPage):
         if option == 1:
             label = Label(message, text='Animal ID and Cage ID must be integers.')
             label.grid(row=0, column=0, padx=10, pady=10)
+
         elif option == 2:
             label = Label(message, text='Not a valid Animal ID.')
             label.grid(row=0, column=0, padx=10, pady=10)
+            
         elif option == 3:
             label = Label(message, text='Not a valid Cage ID.')
             label.grid(row=0, column=0, padx=10, pady=10)
@@ -168,24 +167,26 @@ class CageConfigurationUI(MouserPage):
 
 
     def check_move_input(self):
-        # valid_animal = False
-        # valid_cage = False
-        valid_animal = True
-        valid_cage = True
+        animal = self.id_input.get()
+        cage = self.cage_input.get()
 
-        # TO-DO : call database/local variable check if valid
+        valid_animal = self.db.check_valid_animal(animal)
+        valid_cage = self.db.check_valid_cage(cage)        
 
-        if self.id_input.get() == '' or self.cage_input.get() == '':
+        if animal == '' or cage == '':
             self.raise_warning(1)
-        elif isinstance(int(self.id_input.get()), int) == False or isinstance(int(self.cage_input.get()), int) == False:
+
+        elif isinstance(int(animal), int) == False or isinstance(int(cage), int) == False:
             self.raise_warning(1)
+
         elif valid_animal == False:
             self.raise_warning(2)
+
         elif valid_cage == False:
             self.raise_warning(3)
-        elif  isinstance(int(self.id_input.get()), int) and isinstance(int(self.cage_input.get()), 
-                int) and valid_animal and valid_cage:
-            self.move_animal(self.id_input.get(), self.cage_input.get())
+
+        elif isinstance(int(animal), int) and isinstance(int(cage), int) and valid_animal and valid_cage: 
+            self.move_animal(animal, cage)
 
 
     def save_to_database(self):
