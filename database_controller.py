@@ -24,15 +24,11 @@ class DatabaseController():
 
 
     def set_cages_in_group(self):
-        # logic for putting data into dictionary
-        # return dictionary
-        pass
+        return(self.db.get_cages_by_group())
 
 
     def set_animals_in_cage(self):
-        # logic for putting data into dictionary
-        # return dictionary
-        pass
+        return(self.db.get_animals_by_cage())
 
 
     def get_groups(self):
