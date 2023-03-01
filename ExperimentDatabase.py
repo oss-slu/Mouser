@@ -221,7 +221,7 @@ class ExperimentDatabase:
 
         return animals_by_group
     
-     def get_cages_by_group(self):
+    def get_cages_by_group(self):
         self._c.execute("SELECT group_id, name FROM groups", ())
         groups = self._c.fetchall()
 
