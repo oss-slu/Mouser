@@ -61,7 +61,7 @@ class Experiment():
 
 
     def add_to_list(self):
-        with open('.database_apis/created_experiments.csv', 'a', newline='') as f:
+        with open('database_apis/created_experiments.csv', 'a', newline='') as f:
             writer = csv.writer(f)
             writer.writerow([self.name, self.date_created])
             f.close()
