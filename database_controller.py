@@ -3,7 +3,7 @@ from database_apis.experiment_database import ExperimentDatabase
 class DatabaseController():
     def __init__(self, database):
         
-        file = str(database) + '.db'
+        file = 'databases/experiments/' + str(database) + '.db'
         self.db = ExperimentDatabase(file)
 
         # self.measurement_items = self.db.get_measurement_items()
