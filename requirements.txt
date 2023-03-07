@@ -1,2 +1,2 @@
 playsound
-python-tkdnd
+tkcalendar

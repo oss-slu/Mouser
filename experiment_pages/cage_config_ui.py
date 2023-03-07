@@ -2,14 +2,20 @@ from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
 from scrollable_frame import ScrolledFrame
-from database_controller import DatabaseController
+from database_apis.experiment_database import ExperimentDatabase
 
 
 class CageConfigurationUI(MouserPage):
     def __init__(self, database, parent: Tk, prev_page: Frame = None):
         super().__init__(parent, "Group Configuration", prev_page)
 
-        self.db = DatabaseController(database)
+        file = "databases/experiments/" + str(database) + '.db'
+        self.db = ExperimentDatabase(file)
+
+        # unchanging data for stuff:
+        self.groups = self.db.get_all_groups()
+        self.ipad = 2
+        self.pad = 5
 
         scroll_canvas = ScrolledFrame(self)
         scroll_canvas.place(relx=0.05, rely=0.20, relheight=0.75, relwidth=0.88)
