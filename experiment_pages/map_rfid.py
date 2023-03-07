@@ -5,7 +5,7 @@ import random
 from playsound import playsound
 import threading
 
-from ExperimentDatabase import ExperimentDatabase
+from database_apis.experiment_database import ExperimentDatabase
 
 def get_random_rfid():
     return random.randint(1000000, 9999999)

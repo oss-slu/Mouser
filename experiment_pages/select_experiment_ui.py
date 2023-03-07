@@ -43,7 +43,7 @@ class ExperimentsUI(MouserPage):
 
     def read_csv(self):
         self.experiment_list = []
-        with open('./created_experiments.csv', 'r') as f:
+        with open('./database_apis/created_experiments.csv', 'r') as f:
             reader = csv.reader(f)
             for line in reader:
                 self.experiment_list.append(line)
