@@ -1,4 +1,4 @@
-from ExperimentDatabase import ExperimentDatabase
+from database_apis.experiment_database import ExperimentDatabase
 
 class DatabaseController():
     def __init__(self, database):
