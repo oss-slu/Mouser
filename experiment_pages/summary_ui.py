@@ -26,56 +26,94 @@ class SummaryUI(MouserPage):
         CreateExperimentButton(input, self, menu_page)
 
         scroll_canvas = ScrolledFrame(self)
-        scroll_canvas.place(relx=0.30, rely=0.25, relheight=0.7, relwidth=0.8)
+        scroll_canvas.place(relx=0.10, rely=0.25, relheight=0.7, relwidth=0.8)
 
         self.main_frame = Frame(scroll_canvas)
-        self.main_frame.grid(row=8, column=1, sticky='NESW')
-
-        self.group_frame = Frame(self.main_frame)
-        self.group_frame.grid(row=5, column=0, padx=10, pady=10, sticky='NESW')
+        self.main_frame.pack(side=LEFT, expand=True)
 
 
     def update_page(self):
-        for widget in self.group_frame.winfo_children():
+        for widget in self.main_frame.winfo_children():
             widget.destroy()
         self.create_summary_frame() 
 
 
     def create_summary_frame(self):
-        Label(self.main_frame, text=self.input.get_name()).grid(
-                row=0, column=0, padx=10, pady=10)
-        Label(self.main_frame, text=self.input.get_species()).grid(
-                row=2, column=0, padx=10, pady=10)
+        pad_x, pad_y = 10, 10
+        labels, inputs = [], []
+
+        label_style = Style()
+        label_style.configure('Summary.TLabel', font=('Arial', '10', 'bold'))
+
+        name_label = Label(self.main_frame, text='Experiment Name:', style='Summary.TLabel')
+        name_input = Label(self.main_frame, text=self.input.get_name())
+        labels.append(name_label)
+        inputs.append(name_input)
 
         names = ''
         for name in self.input.get_investigators():
-            names += name + ', '
-        Label(self.main_frame, text=names).grid(row=1, column=0, padx=10, pady=10)
+            names += name + ',\n'
+        invest_label = Label(self.main_frame, text='Investigators:', style='Summary.TLabel')
+        if len(names) >= 2:
+            invest_input = Label(self.main_frame, text=names[:-2])
+        else:
+            invest_input = Label(self.main_frame, text=names)
+        labels.append(invest_label)
+        inputs.append(invest_input)
+
+        species_label = Label(self.main_frame, text='Species:', style='Summary.TLabel')
+        species_input = Label(self.main_frame, text=self.input.get_species())
+        labels.append(species_label)
+        inputs.append(species_input)
 
         items = ''
         for item in self.input.get_measurement_items():
-            items += item + ', '
-        Label(self.main_frame, text=items).grid(row=2, column=0, padx=10, pady=10)
+            items += item + ',\n'
+        items_label = Label(self.main_frame, text='Measurement Items:', style='Summary.TLabel')
+        if len(items) >= 2:
+            items_input = Label(self.main_frame, text=items[:-2])
+        else:
+            items_input = Label(self.main_frame, text=items)
+        labels.append(items_label)
+        inputs.append(items_input)
 
         animals = self.input.get_num_animals() + ' ' + self.input.get_species()
-        Label(self.main_frame, text=animals).grid(row=3, column=0, padx=10, pady=10)
+        animal_label = Label(self.main_frame, text='Number of Animals:', style='Summary.TLabel')
+        animal_input = Label(self.main_frame, text=animals)
+        labels.append(animal_label)
+        inputs.append(animal_input)
 
-        cage = self.input.get_max_animals() + ' per Cage'
-        Label(self.main_frame, text=cage).grid(row=4, column=0, padx=10, pady=10)
+        cage_label = Label(self.main_frame, text='Animals per Cage:', style='Summary.TLabel')
+        cage_input = Label(self.main_frame, text=self.input.get_max_animals())
+        labels.append(cage_label)
+        inputs.append(cage_input)
 
         groups = self.input.get_group_names()
-        index = 0
+        group_names = ''
         for group in groups:
-            Label(self.group_frame, text=group).grid(row=index, column=0, padx=10, pady=10)
-            index += 1
-
-        rfid = self.input.uses_rfid()
-        if rfid == True:
-            Label(self.main_frame, text='Uses RFID').grid(row=6, column=0, padx=10, pady=10)
+            group_names += group + ',\n'
+            
+        group_label = Label(self.main_frame, text='Group Names:', style='Summary.TLabel')
+        if len(group_names) >= 2:
+            group_input = Label(self.main_frame, text=group_names[:-2])
         else:
-            Label(self.main_frame, text='Does Not Use RFID').grid(row=6, column=0, padx=10, pady=10)
+            group_input = Label(self.main_frame, text=group_names)
+        labels.append(group_label)
+        inputs.append(group_input)
+
+        rfid = str(self.input.uses_rfid())
+        rfid_label = Label(self.main_frame, text='Uses RFID:', style='Summary.TLabel')
+        rfid_input = Label(self.main_frame, text=rfid)
+        labels.append(rfid_label)
+        inputs.append(rfid_input)
+
+        for index in range(0, len(labels)):
+            labels[index].grid(row=index, column=0, padx= pad_x, pady= pad_y, sticky=NW)
+            inputs[index].grid(row=index, column=1, padx= pad_x, pady= pad_y, sticky=NW)
+
+            self.main_frame.grid_rowconfigure(index, weight=1)
+            self.main_frame.grid_columnconfigure(index, weight=1)
 
 
     def create_experiment(self):
         self.input.save_to_database()
-
