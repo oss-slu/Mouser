@@ -7,6 +7,7 @@ from experiment_pages.map_rfid import MapRFIDPage
 from experiment_pages.cage_config_ui import CageConfigurationUI
 from experiment_pages.experiment_invest_ui import InvestigatorsUI
 
+
 class ExperimentMenuUI(MouserPage):
     def __init__(self, parent:Tk, name: str, prev_page: Frame = None):
         super().__init__(parent, name, prev_page)
