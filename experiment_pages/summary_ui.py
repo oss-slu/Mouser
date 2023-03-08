@@ -54,7 +54,10 @@ class SummaryUI(MouserPage):
         for name in self.input.get_investigators():
             names += name + ',\n'
         invest_label = Label(self.main_frame, text='Investigators:', style='Summary.TLabel')
-        invest_input = Label(self.main_frame, text=names[:-2])
+        if len(names) >= 2:
+            invest_input = Label(self.main_frame, text=names[:-2])
+        else:
+            invest_input = Label(self.main_frame, text=names)
         labels.append(invest_label)
         inputs.append(invest_input)
 
@@ -67,7 +70,10 @@ class SummaryUI(MouserPage):
         for item in self.input.get_measurement_items():
             items += item + ',\n'
         items_label = Label(self.main_frame, text='Measurement Items:', style='Summary.TLabel')
-        items_input = Label(self.main_frame, text=items[:-2])
+        if len(items) >= 2:
+            items_input = Label(self.main_frame, text=items[:-2])
+        else:
+            items_input = Label(self.main_frame, text=items)
         labels.append(items_label)
         inputs.append(items_input)
 
@@ -88,7 +94,10 @@ class SummaryUI(MouserPage):
             group_names += group + ',\n'
             
         group_label = Label(self.main_frame, text='Group Names:', style='Summary.TLabel')
-        group_input = Label(self.main_frame, text=group_names[:-2])
+        if len(group_names) >= 2:
+            group_input = Label(self.main_frame, text=group_names[:-2])
+        else:
+            group_input = Label(self.main_frame, text=group_names)
         labels.append(group_label)
         inputs.append(group_input)
 
