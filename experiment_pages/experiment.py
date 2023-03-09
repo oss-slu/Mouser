@@ -20,6 +20,51 @@ class Experiment():
         self.data_collect_type = []
         self.date_created = str(date.today())
 
+
+    def set_name(self, name):
+        self.name = name
+
+
+    def set_investigators(self, invest):
+        self.investigators = invest
+
+
+    def set_species(self, species):
+        self.species = species
+
+
+    def set_measurement_items(self, items):
+        self.items = items
+
+
+    def set_uses_rfid(self, rfid):
+        self.rfid = rfid
+
+
+    def set_num_animals(self, num):
+        self.num_animals = num
+
+
+    def set_num_groups(self, num):
+        self.num_groups = num
+
+
+    def set_max_animals(self, num):
+        self.max_per_cage = num
+
+    
+    def set_group_names(self, names):
+        self.group_names = names
+
+
+    def set_collection_types(self, type):
+        self.data_collect_type = type
+
+
+    def set_animals_per_group(self, num):
+        self.animals_per_group = num
+
+
     def get_name(self):
         return self.name
 
@@ -58,6 +103,13 @@ class Experiment():
 
     def get_collection_types(self):
         return self.data_collect_type
+
+
+    def check_num_groups_change(self):
+        if self.get_num_groups == '0':
+            return False
+        else:
+            return True
 
 
     def add_to_list(self):
