@@ -195,15 +195,15 @@ class NewExperimentUI(MouserPage):
 
 
     def save_input(self):
-        self.input.name = self.exper_name.get()
-        self.input.investigators = self.added_invest
-        self.input.species = self.species.get()
-        self.input.items = self.items
-        self.input.rfid = self.rfid.get()
-        self.input.num_animals = self.animal_num.get()
-        self.input.num_groups = self.group_num.get()
-        self.input.max_per_cage = self.num_per_cage.get()
-        self.input.animals_per_group = int(self.animal_num.get()) / int(self.group_num.get())
+        self.input.set_name(self.exper_name.get())
+        self.input.set_investigators(self.added_invest)
+        self.input.set_species(self.species.get())
+        self.input.set_measurement_items(self.items)
+        self.input.set_uses_rfid(self.rfid.get())
+        self.input.set_num_animals(self.animal_num.get())
+        self.input.set_num_groups(self.group_num.get())
+        self.input.set_max_animals(self.num_per_cage.get())
+        self.input.set_animals_per_group(int(self.animal_num.get()) / int(self.group_num.get()))
 
         self.next_page.update_page()
 
