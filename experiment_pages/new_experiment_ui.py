@@ -129,12 +129,14 @@ class NewExperimentUI(MouserPage):
             buttons[index].configure(command=f)
             index += 1
 
+
     def get_user_list(self):
         users = self.users_database.get_all_users()
         user_list = []
         for user in users:
             user_list.append(user[1] + " (" + user[3] + ")")
         return user_list
+
 
     def add_investigator(self):
         if self.investigators.get() not in self.added_invest:

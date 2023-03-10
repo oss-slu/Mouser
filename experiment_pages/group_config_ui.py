@@ -71,12 +71,17 @@ class GroupConfigUI(MouserPage):
 
 
     def update_page(self):
-        for widget in self.group_frame.winfo_children():
-            widget.destroy()
-        for widget in self.item_frame.winfo_children():
-            widget.destroy()
-        self.create_group_entries(int(self.input.get_num_groups()))
-        self.create_item_frame(self.input.get_measurement_items())
+        if self.input.check_num_groups_change() == True:
+            for widget in self.group_frame.winfo_children():
+                widget.destroy()
+            self.create_group_entries(int(self.input.get_num_groups()))
+            self.input.set_group_num_changed_false()
+
+        if self.input.check_measurement_items_changed() == True:
+            for widget in self.item_frame.winfo_children():
+                widget.destroy()
+            self.create_item_frame(self.input.get_measurement_items())
+            self.input.set_measurement_items_changed_false()
 
 
     def save_input(self):
@@ -86,11 +91,11 @@ class GroupConfigUI(MouserPage):
             self.input.group_names = group_names
             
         items = self.input.get_measurement_items()
-        measurment_collect_type = []
+        measurement_collect_type = []
         for i in range(0, len(items)):
-            measurment_collect_type.append((items[i], self.button_vars[i].get()))
+            measurement_collect_type.append((items[i], self.button_vars[i].get()))
 
-        self.input.data_collect_type = measurment_collect_type
+        self.input.data_collect_type = measurement_collect_type
         self.next_page.update_page()
 
         
