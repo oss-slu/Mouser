@@ -23,8 +23,8 @@ class GroupConfigUI(MouserPage):
         self.group_frame = Frame(self.main_frame)
         self.item_frame = Frame(self.main_frame)
 
-        self.group_frame.grid(row=0, column=0, sticky='NESW')
-        self.item_frame.grid(row=1, column=0, sticky='NESW')
+        self.group_frame.pack(side=TOP)
+        self.item_frame.pack(side=TOP)
 
         self.create_group_entries(int(self.input.get_num_groups()))
         self.create_item_frame(self.input.get_measurement_items())
@@ -55,16 +55,20 @@ class GroupConfigUI(MouserPage):
         self.button_vars = [] 
         self.item_auto_buttons = []
         self.item_man_buttons = []
+
+        type_label = Label(self.item_frame, text="Input Method")
+        type_label.grid(row=0, column=0, columnspan=3, pady=8)
+
         for i in range(0, len(items)):
             self.type = BooleanVar()
             self.button_vars.append(self.type)
             
-            Label(self.item_frame, text=items[i]).grid(row=i, column=0, padx=10, pady=10, sticky=W)
+            Label(self.item_frame, text=items[i]).grid(row=i+1, column=0, padx=10, pady=10, sticky=W)
             auto = Radiobutton(self.item_frame, text='Automatic', variable=self.type, val=True)
             man = Radiobutton(self.item_frame, text='Manual', variable=self.type, val=False)
             
-            auto.grid(row=i, column=1, padx=10, pady=10)
-            man.grid(row=i, column=2, padx=10, pady=10)
+            auto.grid(row=i+1, column=1, padx=10, pady=10)
+            man.grid(row=i+1, column=2, padx=10, pady=10)
 
             self.item_auto_buttons.append(auto)
             self.item_man_buttons.append(man)
