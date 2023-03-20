@@ -23,8 +23,8 @@ class GroupConfigUI(MouserPage):
         self.group_frame = Frame(self.main_frame)
         self.item_frame = Frame(self.main_frame)
 
-        self.group_frame.grid(row=0, column=0, sticky='NESW')
-        self.item_frame.grid(row=1, column=0, sticky='NESW')
+        self.group_frame.pack(side=TOP)
+        self.item_frame.pack(side=TOP)
 
         self.create_group_entries(int(self.input.get_num_groups()))
         self.create_item_frame(self.input.get_measurement_items())
@@ -55,28 +55,37 @@ class GroupConfigUI(MouserPage):
         self.button_vars = [] 
         self.item_auto_buttons = []
         self.item_man_buttons = []
+
+        type_label = Label(self.item_frame, text="Input Method")
+        type_label.grid(row=0, column=0, columnspan=3, pady=8)
+
         for i in range(0, len(items)):
             self.type = BooleanVar()
             self.button_vars.append(self.type)
             
-            Label(self.item_frame, text=items[i]).grid(row=i, column=0, padx=10, pady=10, sticky=W)
+            Label(self.item_frame, text=items[i]).grid(row=i+1, column=0, padx=10, pady=10, sticky=W)
             auto = Radiobutton(self.item_frame, text='Automatic', variable=self.type, val=True)
             man = Radiobutton(self.item_frame, text='Manual', variable=self.type, val=False)
             
-            auto.grid(row=i, column=1, padx=10, pady=10)
-            man.grid(row=i, column=2, padx=10, pady=10)
+            auto.grid(row=i+1, column=1, padx=10, pady=10)
+            man.grid(row=i+1, column=2, padx=10, pady=10)
 
             self.item_auto_buttons.append(auto)
             self.item_man_buttons.append(man)
 
 
     def update_page(self):
-        for widget in self.group_frame.winfo_children():
-            widget.destroy()
-        for widget in self.item_frame.winfo_children():
-            widget.destroy()
-        self.create_group_entries(int(self.input.get_num_groups()))
-        self.create_item_frame(self.input.get_measurement_items())
+        if self.input.check_num_groups_change() == True:
+            for widget in self.group_frame.winfo_children():
+                widget.destroy()
+            self.create_group_entries(int(self.input.get_num_groups()))
+            self.input.set_group_num_changed_false()
+
+        if self.input.check_measurement_items_changed() == True:
+            for widget in self.item_frame.winfo_children():
+                widget.destroy()
+            self.create_item_frame(self.input.get_measurement_items())
+            self.input.set_measurement_items_changed_false()
 
 
     def save_input(self):
@@ -86,11 +95,11 @@ class GroupConfigUI(MouserPage):
             self.input.group_names = group_names
             
         items = self.input.get_measurement_items()
-        measurment_collect_type = []
+        measurement_collect_type = []
         for i in range(0, len(items)):
-            measurment_collect_type.append((items[i], self.button_vars[i].get()))
+            measurement_collect_type.append((items[i], self.button_vars[i].get()))
 
-        self.input.data_collect_type = measurment_collect_type
+        self.input.data_collect_type = measurement_collect_type
         self.next_page.update_page()
 
         
