@@ -23,13 +23,15 @@ class DataCollectionUI(MouserPage):
         
         self.animals = self.database.get_animals()
         self.table_frame = Frame(self)
-        self.table_frame.place(relx=0.50, rely=0.75, anchor=CENTER)
+        self.table_frame.place(relx=0.50, rely=0.65, anchor=CENTER)
         
         columns = ['animal_id']
         for id in self.measurement_ids:
             columns.append(id)
         
-        self.table = Treeview(self.table_frame, columns=columns, show='headings', selectmode="browse")
+        self.table = Treeview(self.table_frame, columns=columns, show='headings', selectmode="browse", height=len(self.animals))
+        style = Style()
+        style.configure("Treeview", font=("Arial", 18), rowheight=40)
 
         for i, column in enumerate(columns):
             text = "Animal ID"
@@ -40,8 +42,7 @@ class DataCollectionUI(MouserPage):
         self.table.grid(row=0, column=0, sticky='nsew')
         
         self.calendar = Calendar(self, selectmode = 'day', date_pattern="y-mm-dd")
-        self.calendar.place(relx=0.50, rely=0.35, anchor=CENTER)
-        self.calendar.bind("<<CalendarSelected>>", self.get_values_for_date)
+        self.date_label = Label(self)
         
         for animal in self.animals:
             value = (animal[0], 0, 0)
@@ -67,6 +68,10 @@ class DataCollectionUI(MouserPage):
         
     def get_values_for_date(self, event):
         self.current_date = self.calendar.get_date()
+        self.date_label.destroy()
+        date_text = "Current Date: " + self.current_date
+        self.date_label = Label(self, text=date_text, font=("Arial", 18))
+        self.date_label.place(relx=0.5, rely=0.25, anchor=CENTER)
         values = self.data_database.get_data_for_date(self.current_date)
         for child in self.table.get_children():
             animal_id = self.table.item(child)["values"][0]
