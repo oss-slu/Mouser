@@ -32,6 +32,7 @@ class DataCollectionUI(MouserPage):
         self.table = Treeview(self.table_frame, columns=columns, show='headings', selectmode="browse", height=len(self.animals))
         style = Style()
         style.configure("Treeview", font=("Arial", 18), rowheight=40)
+        style.configure("Treeview.Heading", font=("Arial", 18))
 
         for i, column in enumerate(columns):
             text = "Animal ID"
@@ -56,7 +57,8 @@ class DataCollectionUI(MouserPage):
     
     def item_selected(self, event):
         self.changing_value = self.table.selection()[0]
-        self.changer.open()
+        animal_id = self.table.item(self.changing_value)["values"][0]
+        self.changer.open(animal_id)
         
     def change_selected_value(self, values):
         item = self.table.item(self.changing_value)
@@ -92,13 +94,16 @@ class ChangeMeasurementsDialog():
         self.data_collection = data_collection
         self.measurement_items = measurement_items
 
-    def open(self):
+    def open(self, animal_id):
         self.root = root = Toplevel(self.parent)
         root.title("Modify Measurements")
-        root.geometry('400x400')
+        root.geometry('600x600')
         root.resizable(False, False)
         root.grid_rowconfigure(0, weight=1)
         root.grid_columnconfigure(0, weight=1)
+        
+        id_label = Label(root, text="Animal ID: "+str(animal_id), font=("Arial", 18))
+        id_label.place(relx=0.5, rely=0.1, anchor=CENTER)
         
         self.textboxes = []
         count = len(self.measurement_items) + 1
@@ -110,7 +115,7 @@ class ChangeMeasurementsDialog():
             entry.bind("<KeyRelease>", self.check_if_num)
             self.textboxes.append(entry)
             
-            header = Label(root, text=self.measurement_items[i-1]+": ", font=("Arial", 12))
+            header = Label(root, text=self.measurement_items[i-1]+": ", font=("Arial", 18))
             header.place(relx=0.28, rely=posY, anchor=E)
             
             if i == 1:
