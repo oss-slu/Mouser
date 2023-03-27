@@ -21,8 +21,9 @@ class DataCollectionUI(MouserPage):
             
         self.data_database = DataCollectionDatabase(database_name, self.measurement_strings)
         
-        self.auto_increment_button = Button(root, text="Start", compound=TOP, width=15, command=lambda: self.auto_increment())
+        self.auto_increment_button = Button(self, text="Start", compound=TOP, width=15, command=lambda: self.auto_increment())
         self.auto_increment_button.place(relx=0.5, rely=0.4, anchor=CENTER)
+        self.auto_inc_id = -1
         
         self.animals = self.database.get_animals()
         self.table_frame = Frame(self)
@@ -60,13 +61,21 @@ class DataCollectionUI(MouserPage):
         self.changer = ChangeMeasurementsDialog(parent, self, self.measurement_strings)
     
     def item_selected(self, event):
+        self.auto_inc_id = -1
         self.changing_value = self.table.selection()[0]
+        self.open_changer()
+        
+    def open_changer(self):
         animal_id = self.table.item(self.changing_value)["values"][0]
         self.changer.open(animal_id)
         
     def auto_increment(self):
         self.auto_inc_id = 0
+        self.open_auto_increment_changer()
         
+    def open_auto_increment_changer(self):
+        self.changing_value = self.table.get_children()[self.auto_inc_id]
+        self.open_changer()
         
     def change_selected_value(self, values):
         item = self.table.item(self.changing_value)
@@ -74,7 +83,11 @@ class DataCollectionUI(MouserPage):
         for val in values:
             new_values.append(val)
         self.table.item(self.changing_value, values=tuple(new_values[1:]))
-        self.data_database.set_data_for_entry(new_values)
+        print(new_values)
+        self.data_database.set_data_for_entry(tuple(new_values))
+        if self.auto_inc_id >= 0 and self.auto_inc_id < len(self.table.get_children()) - 1:
+            self.auto_inc_id += 1
+            self.open_auto_increment_changer()
         
     def get_values_for_date(self, event):
         self.current_date = self.calendar.get_date()
@@ -163,8 +176,9 @@ class ChangeMeasurementsDialog():
         return tuple(values)
 
     def finish(self):
-        self.data_collection.change_selected_value(self.get_all_values())
+        values = self.get_all_values()
         self.close()
+        self.data_collection.change_selected_value(values)
 
     def close(self):
         self.root.destroy()
