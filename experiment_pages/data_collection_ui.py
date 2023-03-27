@@ -21,6 +21,9 @@ class DataCollectionUI(MouserPage):
             
         self.data_database = DataCollectionDatabase(database_name, self.measurement_strings)
         
+        self.auto_increment_button = Button(root, text="Start", compound=TOP, width=15, command=lambda: self.auto_increment())
+        self.auto_increment_button.place(relx=0.5, rely=0.4, anchor=CENTER)
+        
         self.animals = self.database.get_animals()
         self.table_frame = Frame(self)
         self.table_frame.place(relx=0.50, rely=0.65, anchor=CENTER)
@@ -28,6 +31,7 @@ class DataCollectionUI(MouserPage):
         columns = ['animal_id']
         for id in self.measurement_ids:
             columns.append(id)
+            
         
         self.table = Treeview(self.table_frame, columns=columns, show='headings', selectmode="browse", height=len(self.animals))
         style = Style()
@@ -59,6 +63,10 @@ class DataCollectionUI(MouserPage):
         self.changing_value = self.table.selection()[0]
         animal_id = self.table.item(self.changing_value)["values"][0]
         self.changer.open(animal_id)
+        
+    def auto_increment(self):
+        self.auto_inc_id = 0
+        
         
     def change_selected_value(self, values):
         item = self.table.item(self.changing_value)
