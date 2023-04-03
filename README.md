@@ -17,3 +17,7 @@ This project is meant to be used for tracking the data of animal experiments.
 ### File Structure
 
 - The app is currently split up into multiple folders:
+  - Experiment Pages (experiment_pages)
+    - This folder include files that allow for the creation and modification of lab experiments
+    - Each page of the app exist in separate files. So, the code associated with the experiments menu, the experiment creation form, the data collection page, etc. are split up into different files.
+    - Most of the code revolves around the user interface, but there are also sections that connect the UI to our databases
