@@ -83,7 +83,6 @@ class DataCollectionUI(MouserPage):
         for val in values:
             new_values.append(val)
         self.table.item(self.changing_value, values=tuple(new_values[1:]))
-        print(new_values)
         self.data_database.set_data_for_entry(tuple(new_values))
         if self.auto_inc_id >= 0 and self.auto_inc_id < len(self.table.get_children()) - 1:
             self.auto_inc_id += 1
@@ -98,12 +97,11 @@ class DataCollectionUI(MouserPage):
         values = self.data_database.get_data_for_date(self.current_date)
         for child in self.table.get_children():
             animal_id = self.table.item(child)["values"][0]
-            found = False
             for val in values:
                 if str(val[1]) == str(animal_id):
-                    found = True
                     self.table.item(child, values=tuple(val[1:]))
-            if not found:
+                    break
+            else:
                 new_values = [animal_id]
                 for item in self.measurement_items:
                     new_values.append(0)
