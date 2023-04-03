@@ -14,7 +14,7 @@ class DataCollectionDatabase:
             f = open(self.filename, "x")
             string = "Date,Animal ID,"
             for item in measurement_items:
-                string += item[1] + ","
+                string += item + ","
             string = string[:-1]
             f.write(string)
             f.close()
@@ -37,13 +37,12 @@ class DataCollectionDatabase:
     def set_data_for_entry(self, values: tuple):
         data_file = pd.read_csv(self.filename)
         data = self.get_all_data()
-        found = False
         for i, entry in enumerate(data):
             if entry[0] == values[0] and entry[1] == values[1]:
-                found = True
                 for x, item in enumerate(self.measurement_items):
                     data_file.loc[i, item] = values[x+2]
-        if not found:
+                break
+        else:
             data_file.loc[len(data_file.index)] = values
                 
         data_file.to_csv(self.filename, index=False)
