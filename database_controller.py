@@ -56,11 +56,15 @@ class DatabaseController():
 
 
     def get_cages_in_group(self, group):
-        return (self.cages_in_group[group])
+        if group in self.cages_in_group.keys():
+            return (self.cages_in_group[group])
+        return []
 
 
     def get_animals_in_cage(self, cage):
-        return(self.animals_in_cage[cage])
+        if cage in self.animals_in_cage.keys():
+            return(self.animals_in_cage[cage])
+        return []
 
 
     def get_animal_measurements(self, animal_id):

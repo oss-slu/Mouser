@@ -82,7 +82,11 @@ class ExperimentDatabase:
             self._c.execute(''' INSERT INTO measurement_items (item, auto) 
                                 VALUES (?, ?)''',
                                 (item[0], item[1]))
-            self._conn.commit()   
+            self._conn.commit()  
+             
+    def get_measurement_items(self):
+        self._c.execute("SELECT measurement_id, item, auto FROM measurement_items")
+        return self._c.fetchall()
 
     def add_animal(self, rfid, remarks=''):
         self._c.execute("INSERT INTO animal_rfid (rfid) VALUES (?)", (rfid, ))
