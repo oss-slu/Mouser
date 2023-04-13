@@ -36,6 +36,11 @@ class DatabaseController():
         return(self.db.get_animals_by_cage())
 
 
+    def reset_attributes(self):
+        self.cages_in_group = self.set_cages_in_group()
+        self.animals_in_cage = self.set_animals_in_cage()
+
+
     def get_groups(self):
         raw_groups = self.db.get_all_groups()
         groups = []
@@ -131,4 +136,5 @@ class DatabaseController():
             group_id += 1
 
         self.db.update_animals(updated_animals_list)
+        self.reset_attributes()
 
