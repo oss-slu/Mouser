@@ -23,7 +23,7 @@ class DatabaseController():
         self.animal_weights = {}
         self.valid_ids = []
         for i in range(1, 21):
-            self.animal_weights[i] = str(i)
+            self.animal_weights[i] = '0'
             self.valid_ids.append(str(i))
         ############################        
 
