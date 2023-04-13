@@ -60,7 +60,6 @@ class CageConfigurationUI(MouserPage):
 
     def create_group_frames(self):
         groups = self.db.get_groups()
-        self.group_frames = {}  # dict of {group name : frame id}
 
         frame_style, label_style = Style(), Style()
         frame_style.configure('GroupFrame.TFrame', background='#0097A7')
@@ -73,13 +72,11 @@ class CageConfigurationUI(MouserPage):
             
             self.create_cage_frames(group, frame)
             frame.pack(side=TOP, expand=TRUE, fill=BOTH, anchor='center')
-            self.group_frames[group] = frame
            
 
     def create_cage_frames(self, group, group_frame):
         cages = self.db.get_cages_in_group(group)
         meas_items = self.db.get_measurement_items()
-        self.cage_frames = {}  # dict of {cage num : frame id}
 
         for i in range (0, len(cages)):
             frame = Frame(group_frame, borderwidth=3, relief='groove')
@@ -96,12 +93,10 @@ class CageConfigurationUI(MouserPage):
             self.create_animal_frames(cages[i], frame)
             
             frame.pack(side=LEFT, expand=TRUE, fill=BOTH, anchor='center')
-            self.cage_frames[cages[i]] = frame
 
        
     def create_animal_frames(self, cage, cage_frame):
         animals = self.db.get_animals_in_cage(cage)
-        self.animal_frames = {}  # dict of {animal id : frame id}
 
         for animal in animals:
             frame = Frame(cage_frame, borderwidth=3, relief='groove')
@@ -115,8 +110,7 @@ class CageConfigurationUI(MouserPage):
 
             id_measurement_frame.pack(side=TOP, expand=TRUE, fill=BOTH, anchor='center')
 
-            frame.pack(side=TOP, expand=TRUE, fill=BOTH, anchor='center', padx= 5, pady= 5, ipadx= 5, ipady= 5)
-            self.cage_frames[animal] = frame            
+            frame.pack(side=TOP, expand=TRUE, fill=BOTH, anchor='center', padx= 5, pady= 5, ipadx= 5, ipady= 5)      
 
 
     def clear_entry(self, event, input):
