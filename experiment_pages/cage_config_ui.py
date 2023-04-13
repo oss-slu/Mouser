@@ -9,6 +9,7 @@ class CageConfigurationUI(MouserPage):
     def __init__(self, database, parent: Tk, prev_page: Frame = None):
         super().__init__(parent, "Group Configuration", prev_page)
 
+        self.prev_page = prev_page
         self.db = DatabaseController(database)
 
         scroll_canvas = ScrolledFrame(self)
@@ -151,15 +152,17 @@ class CageConfigurationUI(MouserPage):
 
         if option == 1:
             label = Label(message, text='Animal ID and Cage ID must be integers.')
-            label.grid(row=0, column=0, padx=10, pady=10)
 
         elif option == 2:
             label = Label(message, text='Not a valid Animal ID.')
-            label.grid(row=0, column=0, padx=10, pady=10)
 
         elif option == 3:
             label = Label(message, text='Not a valid Cage ID.')
-            label.grid(row=0, column=0, padx=10, pady=10)
+
+        elif option == 4:
+            label = Label(message, text='Number of animals in a cage must not exceed '+ str(self.db.get_cage_max()))
+        
+        label.grid(row=0, column=0, padx=10, pady=10)
 
         ok_button = Button(message, text="OK", width=10, 
                         command= lambda: [message.destroy()])
@@ -191,8 +194,14 @@ class CageConfigurationUI(MouserPage):
             self.move_animal(animal, cage)
 
 
+    def check_num_in_cage_allowed(self):
+        return self.db.check_num_in_cage_allowed()
+
+
     def save_to_database(self):
-        # TO-DO : save to database
-        # TO-DO : return to menu
-        pass
+        if self.check_num_in_cage_allowed() == True:
+            self.db.update_experiment()
+            self.prev_page.tkraise()
+        else:
+            self.raise_warning(4)
 
