@@ -37,9 +37,15 @@ class DatabaseController():
 
 
     def reset_attributes(self):
-        self.cages_in_group = self.set_cages_in_group()
-        self.animals_in_cage = self.set_animals_in_cage()
+        ''' reset's the attribute lists so configuration in ui can be saved, 
+            the page can be exited, and then visited again displaying the new config   
+            without destroying all objects 
 
+            can go live when animal map to cage in database is live and working
+        '''
+        # self.cages_in_group = self.set_cages_in_group()
+        # self.animals_in_cage = self.set_animals_in_cage()
+        pass
 
     def get_groups(self):
         raw_groups = self.db.get_all_groups()
@@ -134,7 +140,9 @@ class DatabaseController():
                     updated_animals_list.append(animal_tuple)
                     new_animal_id += 1
             group_id += 1
-
+        
         self.db.update_animals(updated_animals_list)
-        self.reset_attributes()
+
+        ''' can go live when animal map to cage in database is live and working '''
+        # self.reset_attributes()
 
