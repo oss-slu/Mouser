@@ -184,7 +184,7 @@ class ExperimentDatabase:
     def get_number_cages(self):
         self._c.execute("SELECT num_animals, num_groups FROM experiment")
         item = self._c.fetchone()
-        return item[0] / item[1]
+        return item[0] // item[1]
 
     def get_cage_max(self):
         self._c.execute("SELECT cage_max FROM experiment")
