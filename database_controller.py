@@ -126,7 +126,7 @@ class DatabaseController():
         animal_weights_sorted = sorted(self.animal_weights.items(), key=lambda item: item[1])
 
         animals_grouped = []
-        g = 1
+        g = 1 #g determines the group the animal will be assigned to
         for i in range(1, num_animals+1):
             idx = i 
             animals_grouped.append((animal_weights_sorted[idx-1][0], g))
@@ -139,16 +139,16 @@ class DatabaseController():
 
         animals_sorted = []
         cage = 1
-        for i in range(1, num_groups+1):
+        for i in range(1, num_groups+1): #i is the group for which we are currently putting the animals into cages
             group = [item for item in animals_grouped if item[1] == i]
-            m = 0
-            for k in group:
+            m = 0 #m tracks the number of animals in a cage to see if we have hit the maxium number of animals in a cage
+            for k in group: #k refers to the animal in each group
                 if m == cage_max:
                     cage += 1
                     m = 1
                 else:
                     m += 1
-                animals_sorted.append( (k[0], k[1], cage) )
+                animals_sorted.append( (k[0], k[1], cage) ) #k[0] is animal id, k[1] is animal group
             cage += 1
 
         temp_animals_in_cage = copy.deepcopy(self.animals_in_cage)
@@ -156,7 +156,7 @@ class DatabaseController():
         for key, value_list in temp_animals_in_cage.items():
             for value in value_list:
                 index = animals_sorted.index(next(item for item in animals_sorted if str(item[0]) == value))
-                self.update_animal_cage(value, key, str(animals_sorted[index][2]))
+                self.update_animal_cage(value, key, str(animals_sorted[index][2])) #update_animal_cage(self, animal, old_cage, new_cage)
 
     def update_experiment(self, updated_animals):
         self.db.update_animals(updated_animals)
