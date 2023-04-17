@@ -36,6 +36,17 @@ class DatabaseController():
         return(self.db.get_animals_by_cage())
 
 
+    def reset_attributes(self):
+        ''' reset's the attribute lists so configuration in ui can be saved, 
+            the page can be exited, and then visited again displaying the new config   
+            without destroying all objects 
+
+            can go live when animal map to cage in database is live and working
+        '''
+        # self.cages_in_group = self.set_cages_in_group()
+        # self.animals_in_cage = self.set_animals_in_cage()
+        pass
+
     def get_groups(self):
         raw_groups = self.db.get_all_groups()
         groups = []
@@ -49,6 +60,12 @@ class DatabaseController():
     def get_num_cages(self):
         num = len(self.db.get_cages())
         return(num)
+
+
+    def get_cage_max(self):
+        raw_max = self.db.get_cage_max()
+        max = int(raw_max[0][0])
+        return(max)
 
 
     def get_measurement_items(self):
@@ -92,35 +109,40 @@ class DatabaseController():
             return(True)
         else:
             return(False)
+        
+    
+    def check_num_in_cage_allowed(self):
+        max = 0
+        for animals in self.animals_in_cage.values():
+            if len(animals) > max:
+                max = len(animals)
 
+        if max <= self.get_cage_max():
+            return True
+        else:
+            return False
 
+        
     def update_animal_cage(self, animal, old_cage, new_cage):
-        # print('before: ', self.animals_in_cage[old_cage])
         self.animals_in_cage[old_cage].remove(animal)
-        # print('after removal: ', self.animals_in_cage[old_cage])
         self.animals_in_cage[new_cage].append(animal)
-        # print('after add to new: ', self.animals_in_cage[new_cage])
 
 
     def update_experiment(self):
-        # stored & updated values in self.animals_in_cage
-        # save to database
-        self.close_db
+        updated_animals_list = []
+        group_id = 0
+        new_animal_id = 1 # renumber animal ids so they are always in numerical order  
 
+        for group in self.cages_in_group:
+            for cage in self.cages_in_group.get(group):
+                for animal in self.animals_in_cage.get(cage):
+                    animal_tuple = (int(animal), new_animal_id, group_id, int(cage))
+                    updated_animals_list.append(animal_tuple)
+                    new_animal_id += 1
+            group_id += 1
+        
+        self.db.update_animals(updated_animals_list)
 
-    def close_db(self):
-        self.db.close()
+        ''' can go live when animal map to cage in database is live and working '''
+        # self.reset_attributes()
 
-
-
-
-if __name__ == '__main__':
-    controller = DatabaseController('Cancer Drug')
-
-    # print(controller.get_cages_in_group('Group B'))
-    print(controller.get_animals_in_cage('5'))
-    print(controller.update_animal_cage('2', '1', '2'))
-
-
-
- 
