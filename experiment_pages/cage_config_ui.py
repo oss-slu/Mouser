@@ -126,9 +126,8 @@ class CageConfigurationUI(MouserPage):
 
 
     def auto_group(self):
-        # TO-DO : CALL DB CONTROLLER FUNCTION
+        self.db.autosort()
         self.update_config_frame()
-        pass
 
     
     def move_animal(self, id, new_cage):
@@ -192,7 +191,7 @@ class CageConfigurationUI(MouserPage):
 
 
     def save_to_database(self):
-        # TO-DO : save to database
+        updated_animals = self.db.get_updated_animals()
+        self.db.update_experiment(updated_animals)
         # TO-DO : return to menu
-        pass
 

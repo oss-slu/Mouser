@@ -1,4 +1,5 @@
 from database_apis.experiment_database import ExperimentDatabase
+import copy
 
 class DatabaseController():
     def __init__(self, database):
@@ -17,15 +18,17 @@ class DatabaseController():
         self.measurement_items = ['Weight']
         self.cages_in_group = {'Group A': ['1', '2', '3', '4', '5'], 'Group B': ['6', '7', '8', '9', '10']}
         self.animals_in_cage = {'1': ['1', '2'], '2': ['3', '4'], '3': ['5', '6'], '4': ['7', '8'], 
-                             '5': ['9', '10'], '6': ['11', '12'], '7': ['13', '14'], '8': {'15', '16'}, 
+                             '5': ['9', '10'], '6': ['11', '12'], '7': ['13', '14'], '8': ['15', '16'], 
                              '9': ['17', '18'], '10': ['19', '20']}
         
-        self.animal_weights = {}
+        self.animal_weights = {1: '80', 2: '73', 3: '65', 4: '66', 5: '66', 6: '69', 7: '89', 
+                                8: '74', 9: '70', 10: '75', 11: '70', 12: '66', 13: '80', 
+                                14: '72', 15: '80', 16: '90', 17: '76', 18: '87', 19: '90', 20: '65'}
+
         self.valid_ids = []
         for i in range(1, 21):
-            self.animal_weights[i] = '0'
             self.valid_ids.append(str(i))
-        ############################        
+        ############################
 
 
     def set_cages_in_group(self):
@@ -101,10 +104,62 @@ class DatabaseController():
         self.animals_in_cage[new_cage].append(animal)
         # print('after add to new: ', self.animals_in_cage[new_cage])
 
+    def get_updated_animals(self):
+        updated_animals = []
+        new_id = 1
+        group = 1
+        for cages in self.cages_in_group.values():
+            for cage in cages:
+                animals = self.animals_in_cage[cage]
+                for animal in animals:
+                    updated_animals.append((int(animal), new_id, group, int(cage)))
+                    new_id += 1
+            group += 1
+        return updated_animals
+        #get animals into format to update database [(old_animal_id, new_aniaml_id, new_group, new_cage), ...]
 
-    def update_experiment(self):
-        # stored & updated values in self.animals_in_cage
-        # save to database
+    def autosort(self):
+        num_animals = int(self.db.get_number_animals())
+        num_groups = int(self.db.get_number_groups())
+        cage_max = int(self.db.get_cage_max())
+
+        animal_weights_sorted = sorted(self.animal_weights.items(), key=lambda item: item[1])
+
+        animals_grouped = []
+        g = 1
+        for i in range(1, num_animals+1):
+            idx = i 
+            animals_grouped.append((animal_weights_sorted[idx-1][0], g))
+            if i % (num_groups*2) == 0:
+                g = 1
+            elif i % (num_groups*2) > num_groups:
+                g -= 1
+            elif i % (num_groups*2) < num_groups:
+                g += 1
+
+        animals_sorted = []
+        cage = 1
+        for i in range(1, num_groups+1):
+            group = [item for item in animals_grouped if item[1] == i]
+            m = 0
+            for k in group:
+                if m == cage_max:
+                    cage += 1
+                    m = 1
+                else:
+                    m += 1
+                animals_sorted.append( (k[0], k[1], cage) )
+            cage += 1
+
+        temp_animals_in_cage = copy.deepcopy(self.animals_in_cage)
+
+        for key, value_list in temp_animals_in_cage.items():
+            for value in value_list:
+                index = animals_sorted.index(next(item for item in animals_sorted if str(item[0]) == value))
+                self.update_animal_cage(value, key, str(animals_sorted[index][2]))
+
+    def update_experiment(self, updated_animals):
+        self.db.update_animals(updated_animals)
         self.close_db
 
 

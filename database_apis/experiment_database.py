@@ -165,7 +165,7 @@ class ExperimentDatabase:
 
     def get_number_animals(self):
         self._c.execute("SELECT num_animals FROM experiment")
-        return self._c.fetchall()
+        return self._c.fetchone()[0]
     
     def get_all_animal_ids(self):
         self._c.execute("SELECT animal_id FROM animals")
@@ -179,11 +179,16 @@ class ExperimentDatabase:
  
     def get_number_groups(self):
         self._c.execute("SELECT num_groups FROM experiment")
-        return self._c.fetchall()
+        return self._c.fetchone()[0]
+
+    def get_number_cages(self):
+        self._c.execute("SELECT num_animals, num_groups FROM experiment")
+        item = self._c.fetchone()
+        return item[0] / item[1]
 
     def get_cage_max(self):
         self._c.execute("SELECT cage_max FROM experiment")
-        return self._c.fetchall()
+        return self._c.fetchone()[0]
 
 
     def get_all_groups(self):
