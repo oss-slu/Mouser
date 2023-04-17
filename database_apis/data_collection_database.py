@@ -1,5 +1,6 @@
 from pathlib import Path
 import pandas as pd
+import os
 
 class DataCollectionDatabase:
     def __init__(self, experiment: str = None, measurement_items: list = ["Weight", "Length"]):
@@ -9,6 +10,10 @@ class DataCollectionDatabase:
             self.filename = experiment + ".csv"
         
         self.filename = "database_apis/fake_data/" + self.filename
+        try:
+            os.mkdir("./database_apis/fake_data/")
+        except:
+            pass
         path = Path(self.filename)
         if not path.is_file():
             f = open(self.filename, "x")
