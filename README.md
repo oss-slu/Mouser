@@ -10,14 +10,17 @@ This project is meant to be used for tracking the data of animal experiments.
 
 - This project requires a Python 3 installation, ideally 3.9 or newer.
 
-- Additional Python libraries also required and are found in the requirements.txt file. They can be installed using `pip install <LIBRARY>` (replace `<LIBRARY>` with the library that you want to install).
+- Additional Python libraries also required and are found in the `requirements.txt` file. They can be installed using `pip install <LIBRARY>` (replace `<LIBRARY>` with the library that you want to install).
 
 - This project works best on Windows machines, but can still be run on MacOS and Linux. The main issues with the latter concern graphics and how the app looks, but there are also some minor problems that can occur when using different operating systems.
 
 ### File Structure
 
-- The app is currently split up into multiple folders:
+- The main structure of the app is used in the file `main.py`, which is in the root directory.
+- The app is currently split up into multiple directories:
   - Experiment Pages (experiment_pages)
-    - This folder include files that allow for the creation and modification of lab experiments
+    - This directory include files that allow for the creation and modification of lab experiments
     - Each page of the app exist in separate files. So, the code associated with the experiments menu, the experiment creation form, the data collection page, etc. are split up into different files.
     - Most of the code revolves around the user interface, but there are also sections that connect the UI to our databases
+- The code that handles the account/login management is spread throughout the root directory. The two files for this are `accounts.py` and `login.py`. (In the future, they may end up in their own directory, but they are in the root at the moment.)
+- There are two files in the root directory, `tk_models.py` and `scrollable_frame.py`, that are shared across many of the files in this app. They both include classes that are used for the majority of the app, so the design can be easily changed if necessary. (Again, these may have a different directory later on.)
