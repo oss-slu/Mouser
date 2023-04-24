@@ -104,6 +104,7 @@ class ExperimentDatabase:
     def _get_next_cage(self):
         self._c.execute("SELECT cage_id, num_animals FROM cages WHERE full=0")
         info = self._c.fetchone()
+        print(info)
         cage_id = info[0]
         num_animals = info[1] + 1
 
@@ -169,12 +170,10 @@ class ExperimentDatabase:
     
     def get_all_animal_ids(self):
         self._c.execute("SELECT animal_id FROM animals")
-
         ids = []
         raw_ids = self._c.fetchall()
         for i in range(len(raw_ids)):
             ids.append(str(raw_ids[i][0]))
-
         return ids
  
     def get_number_groups(self):
@@ -259,6 +258,10 @@ class ExperimentDatabase:
 
     def get_animal_id(self, rfid):
         self._c.execute("SELECT animal_id FROM animal_rfid WHERE rfid=?", (rfid,))
+        return self._c.fetchone()[0]
+
+    def get_animal_rfid(self, id):
+        self._c.execute("SELECT rfid FROM animal_rfid WHERE animal_id=?", (int(id),))
         return self._c.fetchone()[0]
 
     def get_animals_rfid(self):

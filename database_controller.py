@@ -1,6 +1,8 @@
 from database_apis.experiment_database import ExperimentDatabase
 import copy
 
+import random #only used to generate random weights can be removed once connected to data collection database
+
 class DatabaseController():
     def __init__(self, database):
         
@@ -8,28 +10,17 @@ class DatabaseController():
         self.db = ExperimentDatabase(file)
 
         # self.measurement_items = self.db.get_measurement_items()
-
-        # # WORKING DATABASE CALLS (go live when animal data is able to be entered)
-        # self.cages_in_group = self.set_cages_in_group()    # {group : [cage ids]}
-        # self.animals_in_cage = self.set_animals_in_cage()   # {cage : [animal ids]}
-        # self.valid_ids = self.db.get_all_animal_ids()
-
-        ### temporary dummy vars ###
         self.measurement_items = ['Weight']
-        self.cages_in_group = {'Group A': ['1', '2', '3', '4', '5'], 'Group B': ['6', '7', '8', '9', '10']}
-        self.animals_in_cage = {'1': ['1', '2'], '2': ['3', '4'], '3': ['5', '6'], '4': ['7', '8'], 
-                             '5': ['9', '10'], '6': ['11', '12'], '7': ['13', '14'], '8': ['15', '16'], 
-                             '9': ['17', '18'], '10': ['19', '20']}
+
+
+        self.cages_in_group = self.set_cages_in_group()    # {group : [cage ids]}
+        self.animals_in_cage = self.set_animals_in_cage()   # {cage : [animal ids]}
+        self.valid_ids = self.db.get_all_animal_ids()      # [id, id, id, ...]
         
-        self.animal_weights = {1: '80', 2: '73', 3: '65', 4: '66', 5: '66', 6: '69', 7: '89', 
-                                8: '74', 9: '70', 10: '75', 11: '70', 12: '66', 13: '80', 
-                                14: '72', 15: '80', 16: '90', 17: '76', 18: '87', 19: '90', 20: '65'}
-
-        self.valid_ids = []
-        for i in range(1, 21):
-            self.valid_ids.append(str(i))
-        ############################
-
+        #adding random weights while not connected to the database
+        self.animal_weights = {}          #{animalId : 'weight'}
+        for animal in self.valid_ids:
+            self.animal_weights[int(animal)] = random.randint(65, 90)
 
     def set_cages_in_group(self):
         return(self.db.get_cages_by_group())
@@ -98,11 +89,8 @@ class DatabaseController():
 
 
     def update_animal_cage(self, animal, old_cage, new_cage):
-        # print('before: ', self.animals_in_cage[old_cage])
         self.animals_in_cage[old_cage].remove(animal)
-        # print('after removal: ', self.animals_in_cage[old_cage])
         self.animals_in_cage[new_cage].append(animal)
-        # print('after add to new: ', self.animals_in_cage[new_cage])
 
     def get_updated_animals(self):
         updated_animals = []
@@ -165,9 +153,6 @@ class DatabaseController():
 
     def close_db(self):
         self.db.close()
-
-
-
 
 if __name__ == '__main__':
     controller = DatabaseController('Cancer Drug')
