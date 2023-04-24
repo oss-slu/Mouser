@@ -12,6 +12,8 @@ This project is meant to be used for tracking the data of animal experiments.
 
 - Additional Python libraries also required and are found in the `requirements.txt` file. They can be installed using `pip install <LIBRARY>` (replace `<LIBRARY>` with the library that you want to install).
 
+  - Licenses for these libraries: https://docs.google.com/spreadsheets/d/10V4Tzy8WnGbYQM76NdHAqNodl70Ce8RNN2XIa36jQHw/edit#gid=0
+
 - This project works best on Windows machines, but can still be run on MacOS and Linux. The main issues with the latter concern graphics and how the app looks, but there are also some minor problems that can occur when using different operating systems.
 
 ### File Structure
