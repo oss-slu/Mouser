@@ -29,7 +29,9 @@ class ExperimentMenuUI(MouserPage):
         analysis_button = Button(main_frame, text='Data Analysis', width=button_size,
                                 command= lambda: analysis_page.raise_frame())
         group_button = Button(main_frame, text='Group Configuration', width=button_size,
-                                command= lambda: [cage_page.raise_frame(), cage_page.update_config_frame()])
+                                command= lambda: [cage_page.raise_frame(), 
+                                                  cage_page.update_controller_attributes(), 
+                                                  cage_page.update_config_frame()])
         rfid_button = Button(main_frame, text='Map RFID', width=button_size,
                                 command= lambda: rfid_page.raise_frame())
         invest_button = Button(main_frame, text='Investigators', width=button_size,

@@ -151,16 +151,14 @@ class ExperimentDatabase:
             the tuple should contain all the animals even if one animal does not change
         '''
         offset=10000
-        i=1
-        while i <= len(animals):
-            self._c.execute("UPDATE animals SET animal_id=? WHERE animal_id=?", (i+offset, i))
-            self._c.execute("UPDATE animal_rfid SET animal_id=? WHERE animal_id=?", (i+offset, i))
+        for animal in animals:
+            self._c.execute("UPDATE animals SET animal_id=? WHERE animal_id=?", (animal[0]+offset, animal[0]))
+            self._c.execute("UPDATE animal_rfid SET animal_id=? WHERE animal_id=?", (animal[0]+offset, animal[0]))
             self._conn.commit()
-            i+=1
 
         for animal in animals:
             self._c.execute("UPDATE animals SET animal_id=?, group_id=?, cage_id=? WHERE animal_id=?", (animal[1], animal[2], animal[3], animal[0]+offset))
-            self._c.execute("UPDATE animal_rfid SET animal_id=? WHERE animal_id=?", (i+offset, i))
+            self._c.execute("UPDATE animal_rfid SET animal_id=? WHERE animal_id=?", (animal[1], animal[0]+offset))
             self._conn.commit()
 
     def get_number_animals(self):
@@ -169,12 +167,10 @@ class ExperimentDatabase:
     
     def get_all_animal_ids(self):
         self._c.execute("SELECT animal_id FROM animals")
-
         ids = []
         raw_ids = self._c.fetchall()
         for i in range(len(raw_ids)):
             ids.append(str(raw_ids[i][0]))
-
         return ids
  
     def get_number_groups(self):
@@ -259,6 +255,10 @@ class ExperimentDatabase:
 
     def get_animal_id(self, rfid):
         self._c.execute("SELECT animal_id FROM animal_rfid WHERE rfid=?", (rfid,))
+        return self._c.fetchone()[0]
+
+    def get_animal_rfid(self, id):
+        self._c.execute("SELECT rfid FROM animal_rfid WHERE animal_id=?", (int(id),))
         return self._c.fetchone()[0]
 
     def get_animals_rfid(self):

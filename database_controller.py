@@ -1,6 +1,8 @@
 from database_apis.experiment_database import ExperimentDatabase
 import copy
 
+import random #only used to generate random weights can be removed once connected to data collection database
+
 class DatabaseController():
     def __init__(self, database):
         
@@ -8,27 +10,9 @@ class DatabaseController():
         self.db = ExperimentDatabase(file)
 
         # self.measurement_items = self.db.get_measurement_items()
-
-        # # WORKING DATABASE CALLS (go live when animal data is able to be entered)
-        # self.cages_in_group = self.set_cages_in_group()    # {group : [cage ids]}
-        # self.animals_in_cage = self.set_animals_in_cage()   # {cage : [animal ids]}
-        # self.valid_ids = self.db.get_all_animal_ids()
-
-        ### temporary dummy vars ###
         self.measurement_items = ['Weight']
-        self.cages_in_group = {'Group A': ['1', '2', '3', '4', '5'], 'Group B': ['6', '7', '8', '9', '10']}
-        self.animals_in_cage = {'1': ['1', '2'], '2': ['3', '4'], '3': ['5', '6'], '4': ['7', '8'], 
-                             '5': ['9', '10'], '6': ['11', '12'], '7': ['13', '14'], '8': ['15', '16'], 
-                             '9': ['17', '18'], '10': ['19', '20']}
         
-        self.animal_weights = {1: '80', 2: '73', 3: '65', 4: '66', 5: '66', 6: '69', 7: '89', 
-                                8: '74', 9: '70', 10: '75', 11: '70', 12: '66', 13: '80', 
-                                14: '72', 15: '80', 16: '90', 17: '76', 18: '87', 19: '90', 20: '65'}
-
-        self.valid_ids = []
-        for i in range(1, 21):
-            self.valid_ids.append(str(i))
-        ############################
+        self.reset_attributes()
 
 
     def set_cages_in_group(self):
@@ -38,6 +22,24 @@ class DatabaseController():
     def set_animals_in_cage(self):
         return(self.db.get_animals_by_cage())
 
+
+    def reset_attributes(self):
+        ''' reset's the attribute lists so configuration in ui can be saved, 
+            the page can be exited, and then visited again displaying the new config   
+            without destroying all objects 
+        '''
+        self.cages_in_group = self.set_cages_in_group()    # {group : [cage ids]}
+        self.animals_in_cage = self.set_animals_in_cage()   # {cage : [animal ids]}
+        self.valid_ids = self.db.get_all_animal_ids()      # [id, id, id, ...]
+        
+        # adding weights while not connected to the data collection database 
+        # when weights connected, add db call to get animal weight for animal id
+        self.animal_weights = {}          # {animalId : 'weight'}
+        counter = 1
+        for animal in self.valid_ids:
+            self.animal_weights[int(animal)] = counter
+            counter += 1
+        
 
     def get_groups(self):
         raw_groups = self.db.get_all_groups()
@@ -52,6 +54,11 @@ class DatabaseController():
     def get_num_cages(self):
         num = len(self.db.get_cages())
         return(num)
+    
+
+    def get_cage_max(self):
+        max = int(self.db.get_cage_max())
+        return(max)
 
 
     def get_measurement_items(self):
@@ -95,14 +102,24 @@ class DatabaseController():
             return(True)
         else:
             return(False)
+        
+
+    def check_num_in_cage_allowed(self):
+        max = 0
+        for animals in self.animals_in_cage.values():
+            if len(animals) > max:
+                max = len(animals)
+
+        if max <= self.get_cage_max():
+            return True
+        else:
+            return False
 
 
     def update_animal_cage(self, animal, old_cage, new_cage):
-        # print('before: ', self.animals_in_cage[old_cage])
         self.animals_in_cage[old_cage].remove(animal)
-        # print('after removal: ', self.animals_in_cage[old_cage])
         self.animals_in_cage[new_cage].append(animal)
-        # print('after add to new: ', self.animals_in_cage[new_cage])
+
 
     def get_updated_animals(self):
         updated_animals = []
@@ -118,10 +135,11 @@ class DatabaseController():
         return updated_animals
         #get animals into format to update database [(old_animal_id, new_aniaml_id, new_group, new_cage), ...]
 
+
     def autosort(self):
         num_animals = int(self.db.get_number_animals())
         num_groups = int(self.db.get_number_groups())
-        cage_max = int(self.db.get_cage_max())
+        cage_max = self.get_cage_max()
 
         animal_weights_sorted = sorted(self.animal_weights.items(), key=lambda item: item[1])
 
@@ -158,20 +176,8 @@ class DatabaseController():
                 index = animals_sorted.index(next(item for item in animals_sorted if str(item[0]) == value))
                 self.update_animal_cage(value, key, str(animals_sorted[index][2])) #update_animal_cage(self, animal, old_cage, new_cage)
 
-    def update_experiment(self, updated_animals):
+
+    def update_experiment(self):
+        updated_animals = self.get_updated_animals()
         self.db.update_animals(updated_animals)
-        self.close_db
-
-
-    def close_db(self):
-        self.db.close()
-
-
-
-
-if __name__ == '__main__':
-    controller = DatabaseController('Cancer Drug')
-
-    # print(controller.get_cages_in_group('Group B'))
-    print(controller.get_animals_in_cage('5'))
-    print(controller.update_animal_cage('2', '1', '2'))
+        self.reset_attributes()
