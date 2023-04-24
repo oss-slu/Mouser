@@ -17,7 +17,7 @@ class DatabaseController():
         self.animals_in_cage = self.set_animals_in_cage()   # {cage : [animal ids]}
         self.valid_ids = self.db.get_all_animal_ids()      # [id, id, id, ...]
         
-        #adding random weights while not connected to the database
+        #adding random weights while not connected to the data collection database #need to connect
         self.animal_weights = {}          #{animalId : 'weight'}
         for animal in self.valid_ids:
             self.animal_weights[int(animal)] = random.randint(65, 90)
@@ -149,7 +149,6 @@ class DatabaseController():
     def update_experiment(self, updated_animals):
         self.db.update_animals(updated_animals)
         self.close_db
-
 
     def close_db(self):
         self.db.close()
