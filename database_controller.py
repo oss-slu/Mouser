@@ -13,6 +13,13 @@ class DatabaseController():
         self.measurement_items = ['Weight']
         self.reset_attributes()
 
+        # adding weights while not connected to the data collection database 
+        self.animal_weights = {}          #{animalId : 'weight'}
+        counter = 1
+        for animal in self.valid_ids:
+            self.animal_weights[int(animal)] = counter
+            counter += 1
+
 
     def set_cages_in_group(self):
         return(self.db.get_cages_by_group())
@@ -30,13 +37,8 @@ class DatabaseController():
         self.cages_in_group = self.set_cages_in_group()    # {group : [cage ids]}
         self.animals_in_cage = self.set_animals_in_cage()   # {cage : [animal ids]}
         self.valid_ids = self.db.get_all_animal_ids()      # [id, id, id, ...]
-
-        #adding random weights while not connected to the data collection database #need to connect
-        self.animal_weights = {}          #{animalId : 'weight'}
-        for animal in self.valid_ids:
-            self.animal_weights[int(animal)] = random.randint(65, 90)
-
-        print('reset attributes')
+        # get weights from database when weights are added
+        
 
 
     def get_groups(self):
@@ -175,6 +177,7 @@ class DatabaseController():
                 self.update_animal_cage(value, key, str(animals_sorted[index][2])) #update_animal_cage(self, animal, old_cage, new_cage)
 
 
-    def update_experiment(self, updated_animals):
+    def update_experiment(self):
+        updated_animals = self.get_updated_animals()
         self.db.update_animals(updated_animals)
         self.reset_attributes()

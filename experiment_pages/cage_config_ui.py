@@ -53,8 +53,6 @@ class CageConfigurationUI(MouserPage):
 
 
     def update_config_frame(self):
-        print('updating')
-        self.db.reset_attributes()
         for widget in self.config_frame.winfo_children():
             widget.destroy()
         self.create_group_frames()
