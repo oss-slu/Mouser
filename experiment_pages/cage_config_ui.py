@@ -191,6 +191,10 @@ class CageConfigurationUI(MouserPage):
         return self.db.check_num_in_cage_allowed()
 
 
+    def update_controller_attributes(self):
+        self.db.reset_attributes()
+
+
     def save_to_database(self):
         if self.check_num_in_cage_allowed() == True:
             self.db.update_experiment()
