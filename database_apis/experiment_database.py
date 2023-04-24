@@ -104,7 +104,6 @@ class ExperimentDatabase:
     def _get_next_cage(self):
         self._c.execute("SELECT cage_id, num_animals FROM cages WHERE full=0")
         info = self._c.fetchone()
-        print(info)
         cage_id = info[0]
         num_animals = info[1] + 1
 
