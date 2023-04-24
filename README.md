@@ -18,9 +18,19 @@ This project is meant to be used for tracking the data of animal experiments.
 
 - The main structure of the app is used in the file `main.py`, which is in the root directory.
 - The app is currently split up into multiple directories:
-  - Experiment Pages (experiment_pages)
+  - Experiment Pages (`experiment_pages`)
     - This directory include files that allow for the creation and modification of lab experiments
     - Each page of the app exist in separate files. So, the code associated with the experiments menu, the experiment creation form, the data collection page, etc. are split up into different files.
-    - Most of the code revolves around the user interface, but there are also sections that connect the UI to our databases
+    - Most of the code revolves around the user interface, but there are also sections that grab data from or send data to the databases
+  - Database APIs (`database_apis`)
+    - This directory has the code that is essentially a "buffer" between the front end of the application and the databases.
+    - There are two Python files in the directory: one works with the database of users, and the other works with the database of experiments.
+      - Both have methods to connect to our SQLite databases, where they can be created, modified, and examined.
+  - Databases (`databases`)
+    - This directory is where all of the databases are stored, including the experiments and users databases.
+    - The databases are managed using SQLite.
 - The code that handles the account/login management is spread throughout the root directory. The two files for this are `accounts.py` and `login.py`. (In the future, they may end up in their own directory, but they are in the root at the moment.)
 - There are two files in the root directory, `tk_models.py` and `scrollable_frame.py`, that are shared across many of the files in this app. They both include classes that are used for the majority of the app, so the design can be easily changed if necessary. (Again, these may have a different directory later on.)
+- External assets are either put into the `images` directory, or the `sounds` directory.
+  - It should be determined whether we have permission to use any assets (current or new).
+- Multiple `.gitignore` files are spread throughout the application, mostly to prevent the `__pycache__` directory and certain databases from being pushed to git.
