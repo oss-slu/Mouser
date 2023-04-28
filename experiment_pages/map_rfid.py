@@ -72,13 +72,13 @@ class MapRFIDPage(MouserPage):
 
         self.item_selected(None)
 
-        animals_setup = self.db.get_all_animal_ids()
-        for animal in animals_setup:
-            rfid = self.db.get_animal_rfid(animal)
-            value = (int(animal), rfid)
-            self.table.insert('', END, values=value)
-            self.animals.append(value) 
-            self.animal_id_entry_text.set(animal)
+        # animals_setup = self.db.get_all_animal_ids()
+        # for animal in animals_setup:
+        #     rfid = self.db.get_animal_rfid(animal)
+        #     value = (int(animal), rfid)
+        #     self.table.insert('', END, values=value)
+        #     self.animals.append(value)
+        #     self.animal_id_entry_text.set(animal)
 
     def right_click_menu(self, event):
         if len(self.table.selection()) != 0:
@@ -88,9 +88,9 @@ class MapRFIDPage(MouserPage):
                 self.right_click.grab_release()
 
     def add_random_rfid(self):
-        if (len(self.animals) == self.db.get_number_animals()):
-            #raise error already have max number of animals
-            return
+        # if (len(self.animals) == self.db.get_number_animals()):
+        #     self.raise_warning()
+        # else:
         rfid = get_random_rfid()
         self.add_value(rfid)
 
@@ -131,6 +131,21 @@ class MapRFIDPage(MouserPage):
         self.change_rfid_button["state"] = "disabled"
         self.changer.open()
 
+    def raise_warning(self):
+        message = Tk()
+        message.title("WARNING")
+        message.geometry('320x100')
+        message.resizable(False, False)
+
+        label = Label(message, text='Maximum number of animals reached.')
+        label.grid(row=0, column=0, padx=10, pady=10)
+
+        ok_button = Button(message, text="OK", width=10, 
+                        command= lambda: [message.destroy()])
+        ok_button.grid(row=2, column=0, padx=10, pady=10)
+
+        message.mainloop()
+
 
 
 class ChangeRFIDDialog():
@@ -159,5 +174,3 @@ class ChangeRFIDDialog():
 
     def close(self):
         self.root.destroy()
-
-
