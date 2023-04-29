@@ -11,7 +11,6 @@ def get_random_rfid():
     return random.randint(1000000, 9999999)
 
 
-# TODO: Error, doesn't play sound after first attempt
 def play_sound_async(filename):
     threading.Thread(target=playsound, args=(filename,), daemon=True).start()
 
@@ -41,9 +40,12 @@ class MapRFIDPage(MouserPage):
         self.table_frame = Frame(self)
         self.table_frame.place(relx=0.15, rely=0.40)
 
+        heading_style = Style()
+        heading_style.configure("Treeview.Heading", font=('Arial', 10))
+
         columns = ('animal_id', 'rfid')
         self.table = Treeview(
-            self.table_frame, columns=columns, show='headings')
+            self.table_frame, columns=columns, show='headings', height=5, style='column.Treeview')
 
         self.table.heading('animal_id', text='Animal ID')
         self.table.heading('rfid', text='RFID')
@@ -76,7 +78,8 @@ class MapRFIDPage(MouserPage):
         for animal in animals_setup:
             rfid = self.db.get_animal_rfid(animal)
             value = (int(animal), rfid)
-            self.table.insert('', END, values=value)
+            self.table.tag_configure('text_font', font=('Arial', 10))
+            self.table.insert('', END, values=value, tags='text_font')
             self.animals.append(value)
             self.animal_id_entry_text.set(animal)
 
@@ -97,8 +100,9 @@ class MapRFIDPage(MouserPage):
     def add_value(self, rfid):
         self.animal_id = self.db.add_animal(rfid)
         value = (self.animal_id, rfid)
-        self.table.insert('', END, values=value)
-        self.animals.append(value) 
+        self.table.tag_configure('text_font', font=('Arial', 10))
+        self.table.insert('', END, values=value, tags='text_font')
+        self.animals.append(value)
         self.animal_id_entry_text.set(str(self.animal_id))
         play_sound_async('./sounds/rfid_success.mp3')
 
