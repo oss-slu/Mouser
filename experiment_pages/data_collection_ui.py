@@ -1,6 +1,6 @@
 from tkinter import *
 from tkinter.ttk import *
-from tkcalendar import Calendar
+from datetime import date
 
 from tk_models import *
 
@@ -46,8 +46,7 @@ class DataCollectionUI(MouserPage):
             self.table.heading(column, text=text)
 
         self.table.grid(row=0, column=0, sticky='nsew')
-        
-        self.calendar = Calendar(self, selectmode = 'day', date_pattern="y-mm-dd")
+
         self.date_label = Label(self)
         
         for animal in self.animals:
@@ -89,7 +88,7 @@ class DataCollectionUI(MouserPage):
             self.open_auto_increment_changer()
         
     def get_values_for_date(self, event):
-        self.current_date = self.calendar.get_date()
+        self.current_date = str(date.today())
         self.date_label.destroy()
         date_text = "Current Date: " + self.current_date
         self.date_label = Label(self, text=date_text, font=("Arial", 18))

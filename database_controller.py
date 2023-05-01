@@ -1,7 +1,6 @@
 from database_apis.experiment_database import ExperimentDatabase
 import copy
 
-import random #only used to generate random weights can be removed once connected to data collection database
 
 class DatabaseController():
     def __init__(self, database):
