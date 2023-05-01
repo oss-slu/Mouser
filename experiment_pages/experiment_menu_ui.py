@@ -25,17 +25,17 @@ class ExperimentMenuUI(MouserPage):
         button_size = 30
 
         collection_button = Button(main_frame, text='Data Collection', width=button_size, 
-                                command= lambda: data_page.tkraise())
+                                command= lambda: data_page.raise_frame())
         analysis_button = Button(main_frame, text='Data Analysis', width=button_size,
-                                command= lambda: analysis_page.tkraise())
+                                command= lambda: analysis_page.raise_frame())
         group_button = Button(main_frame, text='Group Configuration', width=button_size,
-                                command= lambda: [cage_page.tkraise(), 
+                                command= lambda: [cage_page.raise_frame(), 
                                                   cage_page.update_controller_attributes(),
                                                   cage_page.update_config_frame()])
         rfid_button = Button(main_frame, text='Map RFID', width=button_size,
-                                command= lambda: rfid_page.tkraise())
+                                command= lambda: rfid_page.raise_frame())
         invest_button = Button(main_frame, text='Investigators', width=button_size,
-                                command= lambda: invest_page.tkraise())
+                                command= lambda: invest_page.raise_frame())
         delete_button = Button(main_frame, text='Delete Experiment', width=button_size,
                                 command= lambda: self.delete_warning())
 
