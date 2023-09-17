@@ -28,6 +28,12 @@ class UsersDatabase:
                                 password TEXT
                             );
                             ''')
+            self.db.execute('''
+                            CREATE TABLE auto_login(
+                                mac_address TEXT,
+                                date TEXT
+                            );
+                            ''')
             self.connection.commit()
         except sqlite3.OperationalError:
             pass
@@ -117,6 +123,29 @@ class UsersDatabase:
         
     def get_current_user(self):
         return self.user
+    
+    def add_auto_login_information(self, mac_address : str):
+        self.db.execute( "INSERT INTO auto_login (mac_address, date) VALUES (?, datetime('now', '+7 day'));", (mac_address) )
+
+    def auto_login(self, mac_address : str):
+        self.db.execute("SELECT * FROM auto_login WHERE mac_address = ?", (mac_address) )
+        address_list = self.db.fetchall()
+        if (len(address_list) > 0):
+            address = address_list[0]
+        else:
+            address = None
+        if (address[0] == mac_address):
+            return True
+        return False
+    
+    def remove_auto_login_credentials(self):
+        self.db.execute("DELETE FROM auto_login WHERE date < datetime('now')")
+
+
+
+    
+
+
             
 if __name__ == '__main__':
     database = UsersDatabase()
@@ -125,4 +154,5 @@ if __name__ == '__main__':
     print("Users:")
     for user in users:
         print(user)
+
      
