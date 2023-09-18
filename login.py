@@ -37,9 +37,9 @@ class LoginFrame(MouserPage):
         email = self.email.get()
         password = self.password.get()
         success = self.users_database.login(email, password)
-        if self.auto_login_check.get():
-            self.users_database.add_auto_login_information(gma())
         if success:
+            if self.auto_login_check.get():
+                self.users_database.add_auto_login_information(gma())
             raise_frame(self.next_page)
 
     def auto_login(self):
