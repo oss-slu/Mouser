@@ -31,7 +31,9 @@ class UsersDatabase:
             self.db.execute('''
                             CREATE TABLE auto_login(
                                 mac_address TEXT,
-                                date TEXT
+                                date TEXT, 
+                                email TEXT,
+                                password TEXT
                             );
                             ''')
             self.connection.commit()
@@ -124,17 +126,18 @@ class UsersDatabase:
     def get_current_user(self):
         return self.user
     
-    def add_auto_login_information(self, mac_address : str):
-        self.db.execute( "INSERT INTO auto_login (mac_address, date) VALUES (?, datetime('now', '+7 day'));", (mac_address,) )
+    def add_auto_login_information(self, mac_address : str, email: str, password : str):
+        self.db.execute( "INSERT INTO auto_login (mac_address, date, email, password) VALUES (?, datetime('now', '+7 day'), ?, ?);", (mac_address, email, password,) )
         self.connection.commit()
 
     def auto_login(self, mac_address : str):
         self.db.execute("SELECT * FROM auto_login WHERE mac_address = ?", (mac_address,) )
-        address_list = self.db.fetchall()
-        if (len(address_list) > 0):
-            address = address_list[0]
+        auto_login__list = self.db.fetchall()
+        if (len(auto_login__list) > 0):
+            address = auto_login__list[0]
             if (address[0] == mac_address):
-                return True
+                if self.login(address[2], address[3]):
+                    return True
         else:
             address = None
         return False
@@ -148,7 +151,16 @@ class UsersDatabase:
         self.db.execute("DELETE FROM auto_login")
         self.connection.commit()
 
-    
+    def test(self):
+        self.db.execute('''
+                            CREATE TABLE auto_login(
+                                mac_address TEXT,
+                                date TEXT, 
+                                email TEXT,
+                                password TEXT
+                            );
+                            ''')
+        self.connection.commit()
 
 
             
