@@ -125,17 +125,18 @@ class UsersDatabase:
         return self.user
     
     def add_auto_login_information(self, mac_address : str):
-        self.db.execute( "INSERT INTO auto_login (mac_address, date) VALUES (?, datetime('now', '+7 day'));", (mac_address) )
+        self.db.execute( "INSERT INTO auto_login (mac_address, date) VALUES (?, datetime('now', '+7 day'));", (mac_address,) )
+        self.connection.commit()
 
     def auto_login(self, mac_address : str):
-        self.db.execute("SELECT * FROM auto_login WHERE mac_address = ?", (mac_address) )
+        self.db.execute("SELECT * FROM auto_login WHERE mac_address = ?", (mac_address,) )
         address_list = self.db.fetchall()
         if (len(address_list) > 0):
             address = address_list[0]
+            if (address[0] == mac_address):
+                return True
         else:
             address = None
-        if (address[0] == mac_address):
-            return True
         return False
     
     def remove_auto_login_credentials(self):
