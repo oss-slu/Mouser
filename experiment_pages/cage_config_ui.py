@@ -18,8 +18,8 @@ class CageConfigurationUI(MouserPage):
         input_frame = Frame(scroll_canvas)
         self.config_frame = Frame(scroll_canvas, relief=RIDGE)
 
-        auto_button = Button(input_frame, text='Auto Group', width=15, 
-                            command= lambda: self.auto_group())
+        auto_button = Button(input_frame, text='Randomize', width=15, 
+                            command= lambda: self.randomize())
         save_button = Button(input_frame, text='Save', width=15, 
                             command= lambda: self.save_to_database())
         move_button = Button(input_frame, text='Move', width=15, 
@@ -120,7 +120,7 @@ class CageConfigurationUI(MouserPage):
             self.cage_input.delete(0, END)
 
 
-    def auto_group(self):
+    def randomize(self):
         self.db.autosort()
         self.update_config_frame()
 
