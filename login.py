@@ -28,7 +28,7 @@ class LoginFrame(MouserPage):
         self.auto_login_check = IntVar()
         self.auto_login_checkButton = Checkbutton(self, variable = self.auto_login_check, 
                                                   onvalue = 1, offvalue = 0, text = "Enable Automatic Login", 
-                                                width = 20)
+                                                width = 24)
         self.auto_login_checkButton.place(relx = 0.50, rely=0.60, anchor=CENTER)
         
         
