@@ -140,8 +140,12 @@ class UsersDatabase:
     
     def remove_auto_login_credentials(self):
         self.db.execute("DELETE FROM auto_login WHERE date < datetime('now')")
+        self.connection.commit()
 
-
+    # for testing purpose
+    def auto_login_remove_all(self):
+        self.db.execute("DELETE FROM auto_login")
+        self.connection.commit()
 
     
 
