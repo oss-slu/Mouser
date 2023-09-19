@@ -39,11 +39,13 @@ class LoginFrame(MouserPage):
         success = self.users_database.login(email, password)
         if success:
             if self.auto_login_check.get():
-                self.users_database.add_auto_login_information(gma(), email, password)
+                self.users_database.add_auto_login_information(gma(), email)
+                #notes: add change email and password for auto_login in database
             raise_frame(self.next_page)
 
     def auto_login(self):
         if self.users_database.auto_login(gma()):
+            print('2')
             raise_frame(self.next_page)
 
     def remove_outdated_auto_login(self):
