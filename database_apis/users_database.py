@@ -119,27 +119,22 @@ class UsersDatabase:
         
     def get_current_user(self):
         return self.user
-    
-    def add_auto_login_information(self, mac_address : str, email: str):
-        self.db.execute( "UPDATE users SET mac_address = ? WHERE email = ?", (mac_address, email,) )
-        self.db.execute( "UPDATE users SET date = datetime('now', '+7 day') WHERE email = ?", (email,) )
-        self.connection.commit()
 
     def auto_login(self, mac_address : str):                #problem here
         self.db.execute("SELECT * FROM users WHERE mac_address = ?", (mac_address,) )
         users_list = self.db.fetchall()
         if (len(users_list) > 0):
-            print("size: ",users_list[0])
             address = users_list[0][5]
             if (address == mac_address):
-                print('yes 1')
                 if self.login(users_list[0][1], users_list[0][4]):
-                    print('yes')
                     return True
-        else:                                               #problem here
-            address = None
-            print('none')
+            
         return False
+    
+    def add_auto_login_information(self, mac_address : str, email: str):
+        self.db.execute( "UPDATE users SET mac_address = ? WHERE email = ?", (mac_address, email,) )
+        self.db.execute( "UPDATE users SET date = datetime('now', '+7 day') WHERE email = ?", (email,) )
+        self.connection.commit()
     
     def remove_auto_login_credentials(self):
         self.db.execute("UPDATE users SET mac_address = NULL WHERE date < datetime('now')")
