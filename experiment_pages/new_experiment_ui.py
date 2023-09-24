@@ -139,7 +139,7 @@ class NewExperimentUI(MouserPage):
 
 
     def add_investigator(self):
-        if self.investigators.get() not in self.added_invest:
+        if self.investigators.get() not in self.added_invest and self.investigators.get() != '':
             self.added_invest.append(self.investigators.get())
             self.update_invest_frame()
 
