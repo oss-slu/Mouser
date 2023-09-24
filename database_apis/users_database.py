@@ -25,7 +25,9 @@ class UsersDatabase:
                                 email TEXT,
                                 role TEXT CHECK( role IN ('admin', 'general', 'investigator') ) NOT NULL DEFAULT 'general',
                                 name TEXT,
-                                password TEXT
+                                password TEXT,
+                                mac_address TEXT,
+                                date TEXT
                             );
                             ''')
             self.connection.commit()
@@ -117,12 +119,39 @@ class UsersDatabase:
         
     def get_current_user(self):
         return self.user
+
+    def auto_login(self, mac_address : str):                #problem here
+        self.db.execute("SELECT * FROM users WHERE mac_address = ?", (mac_address,) )
+        users_list = self.db.fetchall()
+        if (len(users_list) > 0):
+            address = users_list[0][5]
+            if (address == mac_address):
+                if self.login(users_list[0][1], users_list[0][4]):
+                    return True
+            
+        return False
+    
+    def add_auto_login_information(self, mac_address : str, email: str):
+        self.db.execute( "UPDATE users SET mac_address = ? WHERE email = ?", (mac_address, email,) )
+        self.db.execute( "UPDATE users SET date = datetime('now', '+7 day') WHERE email = ?", (email,) )
+        self.connection.commit()
+    
+    def remove_auto_login_credentials(self):
+        self.db.execute("UPDATE users SET mac_address = NULL WHERE date < datetime('now')")
+        self.db.execute("UPDATE users SET date = NULL WHERE date < datetime('now')")
+        self.connection.commit()
+
+
+
+
+
             
 if __name__ == '__main__':
     database = UsersDatabase()
-    
+
     users = database.get_all_users()
     print("Users:")
     for user in users:
         print(user)
+
      

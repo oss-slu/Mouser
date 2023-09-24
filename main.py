@@ -29,6 +29,10 @@ create_nav_button(main_frame, "Accounts", user_image,
 
 
 raise_frame(login_frame)
+
+login_frame.remove_outdated_auto_login()
+login_frame.auto_login()
+
 root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)
 
