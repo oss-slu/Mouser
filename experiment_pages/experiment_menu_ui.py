@@ -12,7 +12,7 @@ from experiment_pages.experiment_invest_ui import InvestigatorsUI
 
 
 class ExperimentMenuUI(MouserPage):
-    def __init__(self, parent:Tk, name: str, prev_page: Frame = None):
+    def __init__(self, parent:Tk, name: str, prev_page: ChangeableFrame = None):
         super().__init__(parent, name, prev_page)
         
         main_frame = Frame(self)
@@ -50,7 +50,7 @@ class ExperimentMenuUI(MouserPage):
         delete_button.grid(row=5, column=0, ipadx=10, ipady=10, pady=10, padx=10)
 
 
-    def delete_warning(self, page: Frame, name: str):
+    def delete_warning(self, page: ChangeableFrame, name: str):
         message = Tk()
         message.title("WARNING")
         message.geometry('300x100')
@@ -81,39 +81,34 @@ class ExperimentMenuUI(MouserPage):
         self.rfid_page.close_connection()
 
 
-    def delete_experiment(self, page: Frame, name: str):
+    def delete_experiment(self, page: ChangeableFrame, name: str):
         # TO-DO delete database
         # TO-DO delete from experiment selection file
         # TO-DO return to experiment selection page
 
         #delete from database
-        print("name: ", name)
         self.disconnect_database()
         file = "databases/experiments/" + name + '.db'
         try:
             os.remove(file)
-            print("file " + name + " is removed.")
         except OSError as error:
-            print("error from removing file")
             print(error)
 
         #delete from experiment selection file from the created_experiments csv
-        # csv_row = []
-        # with open('./database_apis/created_experiments.csv', 'r') as f:
-        #     reader = csv.reader(f)
-        #     for line in reader:
-        #         if line[0] == name:
-        #             csv_row = line
-        #             break
+        experiment_list = []
+        with open('./database_apis/created_experiments.csv', 'r') as f:
+            reader = csv.reader(f)
+            for line in reader:
+                if line[0] != name:
+                    experiment_list.append(line)
+        with open('./database_apis/created_experiments.csv', 'w') as f:
+            writer = csv.writer(f)
+            writer.writerows(experiment_list)
 
-        # print("name:"+name+"<-")
-        # df = pd.read_csv('./database_apis/created_experiments.csv', #header = None#)
-        # print(csv_row)
-        # print(df)
-        # df.drop(df.index[-1])
-        # df.to_csv('./database_apis/created_experiments.csv')
 
-        # #return to experiment selection page with the next_page
+        # #return to experiment selection page 
+        # problem: the selection page still has the experiment
+        page.update_frame()
         page.tkraise()
 
 
