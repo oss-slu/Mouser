@@ -150,6 +150,9 @@ class MapRFIDPage(MouserPage):
 
         message.mainloop()
 
+    def close_connection(self):
+        self.db.close()
+
 
 class ChangeRFIDDialog():
     def __init__(self, parent: Tk, map_rfid: MapRFIDPage):
