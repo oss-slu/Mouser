@@ -2,7 +2,6 @@ from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
 import os
-import pandas as pd
 import csv
 from experiment_pages.data_collection_ui import DataCollectionUI
 from experiment_pages.data_analysis_ui import DataAnalysisUI
