@@ -21,7 +21,7 @@ class NewExperimentButton(Button):
         self.next_page.raise_frame()
 
 
-class ExperimentsUI(MouserPage):
+class ExperimentsUI(MouserPage, ChangeableFrame):
     def __init__(self, parent:Tk, prev_page: Frame = None):
         super().__init__(parent, "Experiments", prev_page)
         self.parent = parent
