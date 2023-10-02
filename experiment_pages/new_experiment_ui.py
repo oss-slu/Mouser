@@ -166,7 +166,8 @@ class NewExperimentUI(MouserPage):
         message = Tk()
         message.title("WARNING")
         message.geometry('320x100')
-        message.resizable(False, False)
+        #Because the unequal group size message is detailed in how to resolve issue, I allowed the message to be resizeable to read the full explanation.
+        message.resizable(True,True)
 
         if option == 1:
             label = Label(message, text='Number of animals must be divisible by number groups.')
@@ -174,9 +175,11 @@ class NewExperimentUI(MouserPage):
         else:
             label1 = Label(message, text='Number of animals, groups, or maximum')
             label2 = Label(message, text='animals per cage must be greater than 0.')
+            #Added new warning for unequal group sizes.
+            label3 = Label(message, text = 'Unequal Group Size: Please allow the total number of animals to be less than or equal to the total number of animals allowed in all combined cages')
             label1.grid(row=0, column=0, padx=10)
             label2.grid(row=1, column=0, padx=10)
-
+            label3.grid(row=0, column =0, padx=10)
         ok_button = Button(message, text="OK", width=10, 
                         command= lambda: [message.destroy()])
         ok_button.grid(row=2, column=0, padx=10, pady=10)
@@ -185,12 +188,17 @@ class NewExperimentUI(MouserPage):
 
 
     def check_animals_divisible(self):
-        if self.animal_num.get() == '' or self.group_num.get() == '' or self.animal_num.get() == '': 
+        #If the total number of animals is greater than the total number of animals allowed in all combined cages, raise warning. Fixes Issue #108.
+        if int(self.animal_num.get()) > (int(self.group_num.get()) * int(self.num_per_cage.get())):
+            self.raise_warning(3)
+        elif self.animal_num.get() == '' or self.group_num.get() == '' or self.animal_num.get() == '': 
             self.raise_warning(2)
         elif int(self.animal_num.get()) % int(self.group_num.get()) != 0:
             self.raise_warning(1)
         elif int(self.animal_num.get()) == 0 or int(self.group_num.get()) == 0 or int(self.animal_num.get()) == 0:
             self.raise_warning(2)
+        elif int(self.group_num.get()) * int(self.num_per_cage.get()) > int(self.animal_num.get()):
+            self.raise_warning(1)
         elif int(self.animal_num.get()) % int(self.group_num.get()) == 0 and int(self.animal_num.get()) != 0:
             self.save_input()
         
