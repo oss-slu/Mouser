@@ -79,7 +79,7 @@ class MouserPage(Frame):
     def set_menu_button(self, menu_page):
         if self.menu_button:
             self.menu_button.destroy()
-        self.menu_button = MenuButton(self, menu_page, False)
+        self.menu_button = MenuButton(self, menu_page)
 
     def check_window_size(self):
         root = self.winfo_toplevel()
