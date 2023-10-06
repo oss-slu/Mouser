@@ -180,3 +180,7 @@ class DatabaseController():
         updated_animals = self.get_updated_animals()
         self.db.update_animals(updated_animals)
         self.reset_attributes()
+
+
+    def close(self):
+        self.db.close()
