@@ -201,3 +201,6 @@ class CageConfigurationUI(MouserPage):
             self.prev_page.tkraise()
         else:
             self.raise_warning(4)
+
+    def close_connection(self):
+        self.db.close()
