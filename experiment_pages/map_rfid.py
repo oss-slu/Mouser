@@ -144,6 +144,16 @@ class MapRFIDPage(MouserPage):
         self.change_rfid_button["state"] = "disabled"
         self.changer.open()
 
+
+
+
+
+
+
+
+
+
+
     def raise_warning(self, warning_message = 'Maximum number of animals reached'):
         message = Tk()
         message.title("WARNING")
