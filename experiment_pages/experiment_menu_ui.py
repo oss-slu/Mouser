@@ -1,6 +1,8 @@
 from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
+import os
+import csv
 from experiment_pages.data_collection_ui import DataCollectionUI
 from experiment_pages.data_analysis_ui import DataAnalysisUI
 from experiment_pages.map_rfid import MapRFIDPage
@@ -9,35 +11,35 @@ from experiment_pages.experiment_invest_ui import InvestigatorsUI
 
 
 class ExperimentMenuUI(MouserPage):
-    def __init__(self, parent:Tk, name: str, prev_page: Frame = None):
+    def __init__(self, parent:Tk, name: str, prev_page: ChangeableFrame = None):
         super().__init__(parent, name, prev_page)
         
         main_frame = Frame(self)
         main_frame.grid(row=6, column=1, sticky='NESW')
         main_frame.place(relx=0.3, rely=0.20)
 
-        data_page = DataCollectionUI(parent, self, name)
-        analysis_page = DataAnalysisUI(parent, self)
-        cage_page = CageConfigurationUI(name, parent, self)
-        rfid_page = MapRFIDPage(name, parent, self)
-        invest_page = InvestigatorsUI(parent, self)
+        self.data_page = DataCollectionUI(parent, self, name)
+        self.analysis_page = DataAnalysisUI(parent, self)
+        self.cage_page = CageConfigurationUI(name, parent, self)
+        self.rfid_page = MapRFIDPage(name, parent, self)
+        self.invest_page = InvestigatorsUI(parent, self)
 
         button_size = 30
 
         collection_button = Button(main_frame, text='Data Collection', width=button_size, 
-                                command= lambda: data_page.raise_frame())
+                                command= lambda: self.data_page.raise_frame())
         analysis_button = Button(main_frame, text='Data Analysis', width=button_size,
-                                command= lambda: analysis_page.raise_frame())
+                                command= lambda: self.analysis_page.raise_frame())
         group_button = Button(main_frame, text='Group Configuration', width=button_size,
-                                command= lambda: [cage_page.raise_frame(), 
-                                                  cage_page.update_controller_attributes(),
-                                                  cage_page.update_config_frame()])
+                                command= lambda: [self.cage_page.raise_frame(), 
+                                                  self.cage_page.update_controller_attributes(),
+                                                  self.cage_page.update_config_frame()])
         rfid_button = Button(main_frame, text='Map RFID', width=button_size,
-                                command= lambda: rfid_page.raise_frame())
+                                command= lambda: self.rfid_page.raise_frame())
         invest_button = Button(main_frame, text='Investigators', width=button_size,
-                                command= lambda: invest_page.raise_frame())
+                                command= lambda: self.invest_page.raise_frame())
         delete_button = Button(main_frame, text='Delete Experiment', width=button_size,
-                                command= lambda: self.delete_warning())
+                                command= lambda: self.delete_warning(prev_page, name))
 
         collection_button.grid(row=0, column=0, ipady=10, ipadx=10, pady=10, padx=10)
         analysis_button.grid(row=1, column=0, ipady=10, ipadx=10, pady=10, padx=10)
@@ -47,7 +49,7 @@ class ExperimentMenuUI(MouserPage):
         delete_button.grid(row=5, column=0, ipadx=10, ipady=10, pady=10, padx=10)
 
 
-    def delete_warning(self):
+    def delete_warning(self, page: ChangeableFrame, name: str):
         message = Tk()
         message.title("WARNING")
         message.geometry('300x100')
@@ -60,7 +62,7 @@ class ExperimentMenuUI(MouserPage):
         label2.grid(row=1, column=0, columnspan=2, padx=10)
 
         yes_button = Button(message, text="Yes, Delete", width=10, 
-                        command= lambda: [self.delete_experiment(), message.destroy()])
+                        command= lambda: [self.delete_experiment(page, name), message.destroy()])
         no_button = Button(message, text="Cancel", width=10, command= lambda: message.destroy())
 
         yes_button.grid(row=2, column=0, padx=10, pady=10)
@@ -72,10 +74,40 @@ class ExperimentMenuUI(MouserPage):
 
         message.mainloop()
 
+    def disconnect_database(self):
+        self.data_page.close_connection()
+        self.cage_page.close_connection()
+        self.rfid_page.close_connection()
 
-    def delete_experiment(self):
+
+    def delete_experiment(self, page: ChangeableFrame, name: str):
         # TO-DO delete database
         # TO-DO delete from experiment selection file
         # TO-DO return to experiment selection page
-        pass
+
+        #delete from database
+        self.disconnect_database()
+        file = "databases/experiments/" + name + '.db'
+        try:
+            os.remove(file)
+        except OSError as error:
+            print(error)
+
+        #delete from experiment selection file from the created_experiments csv
+        experiment_list = []
+        with open('./database_apis/created_experiments.csv', 'r') as f:
+            reader = csv.reader(f)
+            for line in reader:
+                if line[0] != name:
+                    experiment_list.append(line)
+        with open('./database_apis/created_experiments.csv', 'w') as f:
+            writer = csv.writer(f)
+            writer.writerows(experiment_list)
+
+
+        # #return to experiment selection page 
+        # problem: the selection page still has the experiment
+        page.update_frame()
+        page.tkraise()
+
 

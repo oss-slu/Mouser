@@ -14,6 +14,8 @@ def get_random_rfid():
 def play_sound_async(filename):
     threading.Thread(target=playsound, args=(filename,), daemon=True).start()
 
+         
+
 
 class MapRFIDPage(MouserPage):
     def __init__(self, database, parent: Tk, previous_page: Frame = None):
@@ -83,6 +85,13 @@ class MapRFIDPage(MouserPage):
             self.animals.append(value)
             self.animal_id_entry_text.set(animal)
 
+        ##setting previous button behavior
+        self.menu_button = None
+        self.set_menu_button(previous_page)
+        self.menu_page = previous_page
+
+        self.menu_button.configure(command = lambda: self.press_back_to_menu_button())
+
     def right_click_menu(self, event):
         if len(self.table.selection()) != 0:
             try:
@@ -135,13 +144,14 @@ class MapRFIDPage(MouserPage):
         self.change_rfid_button["state"] = "disabled"
         self.changer.open()
 
-    def raise_warning(self):
+
+    def raise_warning(self, warning_message = 'Maximum number of animals reached'):
         message = Tk()
         message.title("WARNING")
         message.geometry('320x100')
         message.resizable(False, False)
 
-        label = Label(message, text='Maximum number of animals reached.')
+        label = Label(message, text= warning_message)
         label.grid(row=0, column=0, padx=10, pady=10)
 
         ok_button = Button(message, text="OK", width=10, 
@@ -149,6 +159,15 @@ class MapRFIDPage(MouserPage):
         ok_button.grid(row=2, column=0, padx=10, pady=10)
 
         message.mainloop()
+
+    def press_back_to_menu_button(self):
+        if (len(self.animals) != self.db.get_number_animals()):
+            self.raise_warning(warning_message= 'Not all animals have been mapped to RFIDs')
+        else:
+            self.menu_page.tkraise()
+
+    def close_connection(self):
+        self.db.close()
 
 
 class ChangeRFIDDialog():

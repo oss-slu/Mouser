@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter.ttk import *
+from abc import ABC, abstractmethod
 
 def raise_frame(frame: Frame):
     frame.tkraise()
@@ -79,7 +80,7 @@ class MouserPage(Frame):
     def set_menu_button(self, menu_page):
         if self.menu_button:
             self.menu_button.destroy()
-        self.menu_button = MenuButton(self, menu_page, False)
+        self.menu_button = MenuButton(self, menu_page)
 
     def check_window_size(self):
         root = self.winfo_toplevel()
@@ -101,6 +102,12 @@ class MouserPage(Frame):
         self.canvas.coords(self.rectangle, x0, y0, root_width, y2)
         self.canvas.coords(self.title_label, (root_width/2), y3)
 
+
+class ChangeableFrame(ABC, Frame):
+
+    @abstractmethod
+    def update_frame(self):
+        pass
 
 
 if __name__ == '__main__':

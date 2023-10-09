@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
+from os.path import *
 from scrollable_frame import ScrolledFrame
 from experiment_pages.group_config_ui import GroupConfigUI
 from experiment_pages.experiment import Experiment
@@ -172,14 +173,22 @@ class NewExperimentUI(MouserPage):
         if option == 1:
             label = Label(message, text='Number of animals must be divisible by number groups.')
             label.grid(row=0, column=0, padx=10, pady=10)
-        else:
+        elif option == 2:
             label1 = Label(message, text='Number of animals, groups, or maximum')
             label2 = Label(message, text='animals per cage must be greater than 0.')
             #Added new warning for unequal group sizes.
-            label3 = Label(message, text = 'Unequal Group Size: Please allow the total number of animals to be less than or equal to the total number of animals allowed in all combined cages')
+            label4 = Label(message, text = 'Unequal Group Size: Please allow the total number of animals to be less than or equal to the total number of animals allowed in all combined cages')
             label1.grid(row=0, column=0, padx=10)
             label2.grid(row=1, column=0, padx=10)
-            label3.grid(row=0, column =0, padx=10)
+
+            label4.grid(row=0, column =0, padx=10)
+
+        elif option == 3:
+            label3 = Label(message, text='Experiment name used. Please use other name.')
+            label3.grid(row=0, column=0, padx=10, pady=10)
+
+
+        
         ok_button = Button(message, text="OK", width=10, 
                         command= lambda: [message.destroy()])
         ok_button.grid(row=2, column=0, padx=10, pady=10)
@@ -190,7 +199,7 @@ class NewExperimentUI(MouserPage):
     def check_animals_divisible(self):
         #If the total number of animals is greater than the total number of animals allowed in all combined cages, raise warning. Fixes Issue #108.
         if int(self.animal_num.get()) > (int(self.group_num.get()) * int(self.num_per_cage.get())):
-            self.raise_warning(3)
+            self.raise_warning(4)
         elif self.animal_num.get() == '' or self.group_num.get() == '' or self.animal_num.get() == '': 
             self.raise_warning(2)
         elif int(self.animal_num.get()) % int(self.group_num.get()) != 0:
@@ -201,20 +210,30 @@ class NewExperimentUI(MouserPage):
             self.raise_warning(1)
         elif int(self.animal_num.get()) % int(self.group_num.get()) == 0 and int(self.animal_num.get()) != 0:
             self.save_input()
+
+    def check_name_exist(self):
+        file = 'databases/experiments/' + self.exper_name.get() + '.db'
+        if exists(file):
+            self.raise_warning(3)
+            return False
+        else:
+            return True
+
         
 
 
     def save_input(self):
-        self.input.set_name(self.exper_name.get())
-        self.input.set_investigators(self.added_invest)
-        self.input.set_species(self.species.get())
-        self.input.set_measurement_items(self.items)
-        self.input.set_uses_rfid(self.rfid.get())
-        self.input.set_num_animals(self.animal_num.get())
-        self.input.set_num_groups(self.group_num.get())
-        self.input.set_max_animals(self.num_per_cage.get())
-        self.input.set_animals_per_group(int(self.animal_num.get()) / int(self.group_num.get()))
+        if self.check_name_exist():
+            self.input.set_name(self.exper_name.get())
+            self.input.set_investigators(self.added_invest)
+            self.input.set_species(self.species.get())
+            self.input.set_measurement_items(self.items)
+            self.input.set_uses_rfid(self.rfid.get())
+            self.input.set_num_animals(self.animal_num.get())
+            self.input.set_num_groups(self.group_num.get())
+            self.input.set_max_animals(self.num_per_cage.get())
+            self.input.set_animals_per_group(int(self.animal_num.get()) / int(self.group_num.get()))
 
-        self.next_page.update_page()
+            self.next_page.update_page()
 
         
