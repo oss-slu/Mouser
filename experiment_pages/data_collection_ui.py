@@ -105,6 +105,9 @@ class DataCollectionUI(MouserPage):
                 for item in self.measurement_items:
                     new_values.append(0)
                 self.table.item(child, values=tuple(new_values))
+                
+    def close_connection(self):
+        self.database.close()
 
 class ChangeMeasurementsDialog():
     def __init__(self, parent: Tk, data_collection: DataCollectionUI, measurement_items: list):
