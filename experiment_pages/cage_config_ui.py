@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
+from tkcalendar import DateEntry
 from scrollable_frame import ScrolledFrame
 from database_controller import DatabaseController
 
@@ -35,6 +36,8 @@ class CageConfigurationUI(MouserPage):
         self.cage_input.bind("<Button-1>", lambda event, arg='cage': self.clear_entry(event, arg))
 
         self.pad_x, self.pad_y = 10, 10
+        self.calendar = DateEntry(input_frame, date_pattern='yyyy-mm-dd')
+        self.calendar.grid(row=0, column=5, padx=self.pad_x, pady=self.pad_y)
 
         auto_button.grid(row=0, column=0, padx=self.pad_x, pady=self.pad_y)
         self.id_input.grid(row=0, column=1, padx=self.pad_x, pady=self.pad_y)
