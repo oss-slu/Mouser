@@ -167,7 +167,7 @@ class NewExperimentUI(MouserPage):
         message = Tk()
         message.title("WARNING")
         message.geometry('320x100')
-        message.resizable(False, False)
+        message.resizable(True, True)
 
         if option == 1:
             label = Label(message, text='Number of animals must be divisible by number groups.')
@@ -180,7 +180,10 @@ class NewExperimentUI(MouserPage):
         elif option == 3:
             label3 = Label(message, text='Experiment name used. Please use other name.')
             label3.grid(row=0, column=0, padx=10, pady=10)
-
+        elif option == 4:
+            label4 = Label(message, text='Unequal Group Size: Please allow the total number of animals to be less than or equal to the total number of animals allowed in all combined cages')
+            label4.grid(row=0, column=0, padx=10, pady=10)
+        
 
         ok_button = Button(message, text="OK", width=10, 
                         command= lambda: [message.destroy()])
@@ -190,12 +193,17 @@ class NewExperimentUI(MouserPage):
 
 
     def check_animals_divisible(self):
-        if self.animal_num.get() == '' or self.group_num.get() == '' or self.animal_num.get() == '': 
+        #If the total number of animals is greater than the total number of animals allowed in all combined cages, raise warning. Fixes Issue #108.
+        if int(self.animal_num.get()) > (int(self.group_num.get()) * int(self.num_per_cage.get())):
+            self.raise_warning(4)
+        elif self.animal_num.get() == '' or self.group_num.get() == '' or self.animal_num.get() == '': 
             self.raise_warning(2)
         elif int(self.animal_num.get()) % int(self.group_num.get()) != 0:
             self.raise_warning(1)
         elif int(self.animal_num.get()) == 0 or int(self.group_num.get()) == 0 or int(self.animal_num.get()) == 0:
             self.raise_warning(2)
+        elif int(self.group_num.get()) * int(self.num_per_cage.get()) > int(self.animal_num.get()):
+            self.raise_warning(1)
         elif int(self.animal_num.get()) % int(self.group_num.get()) == 0 and int(self.animal_num.get()) != 0:
             self.save_input()
 
