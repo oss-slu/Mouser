@@ -167,8 +167,7 @@ class NewExperimentUI(MouserPage):
         message = Tk()
         message.title("WARNING")
         message.geometry('320x100')
-        #Because the unequal group size message is detailed in how to resolve issue, I allowed the message to be resizeable to read the full explanation.
-        message.resizable(True,True)
+        message.resizable(True, True)
 
         if option == 1:
             label = Label(message, text='Number of animals must be divisible by number groups.')
@@ -176,19 +175,16 @@ class NewExperimentUI(MouserPage):
         elif option == 2:
             label1 = Label(message, text='Number of animals, groups, or maximum')
             label2 = Label(message, text='animals per cage must be greater than 0.')
-            #Added new warning for unequal group sizes.
-            label4 = Label(message, text = 'Unequal Group Size: Please allow the total number of animals to be less than or equal to the total number of animals allowed in all combined cages')
             label1.grid(row=0, column=0, padx=10)
             label2.grid(row=1, column=0, padx=10)
-
-            label4.grid(row=0, column =0, padx=10)
-
         elif option == 3:
             label3 = Label(message, text='Experiment name used. Please use other name.')
             label3.grid(row=0, column=0, padx=10, pady=10)
-
-
+        elif option == 4:
+            label4 = Label(message, text='Unequal Group Size: Please allow the total number of animals to be less than or equal to the total number of animals allowed in all combined cages')
+            label4.grid(row=0, column=0, padx=10, pady=10)
         
+
         ok_button = Button(message, text="OK", width=10, 
                         command= lambda: [message.destroy()])
         ok_button.grid(row=2, column=0, padx=10, pady=10)
