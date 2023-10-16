@@ -101,7 +101,6 @@ class ExperimentMenuUI(MouserPage):
             for line in reader:
                 if line[0] != name:
                     experiment_list.append(line)
-            print(experiment_list)
 
         with open('./database_apis/created_experiments.csv', 'w', newline="") as f:
             writer = csv.writer(f)
