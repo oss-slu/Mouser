@@ -92,6 +92,7 @@ class ExperimentMenuUI(MouserPage):
             os.remove(file)
         except OSError as error:
             print(error)
+            return
 
         #delete from experiment selection file from the created_experiments csv
         experiment_list = []
@@ -100,7 +101,9 @@ class ExperimentMenuUI(MouserPage):
             for line in reader:
                 if line[0] != name:
                     experiment_list.append(line)
-        with open('./database_apis/created_experiments.csv', 'w') as f:
+            print(experiment_list)
+
+        with open('./database_apis/created_experiments.csv', 'w', newline="") as f:
             writer = csv.writer(f)
             writer.writerows(experiment_list)
 
