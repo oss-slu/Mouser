@@ -1,9 +1,12 @@
 from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
+import tkinter.font as tkfont
 import random
 from playsound import playsound
 import threading
+import serial.tools.list_ports
+import serial
 
 from database_apis.experiment_database import ExperimentDatabase
 
@@ -66,6 +69,12 @@ class MapRFIDPage(MouserPage):
         self.table.bind("<Button-3>", self.right_click_menu)
 
         self.changer = ChangeRFIDDialog(parent, self)
+        self.serial_port_panel = SerialPortSelection(parent, self)
+
+        self.serial_port_button = Button(self, text="Select Serial Port", compound=TOP,
+                                      width=15, command=self.open_serial_port_selection)
+        self.serial_port_button.place(relx=0.10, rely=0.85, anchor=CENTER)
+
         self.change_rfid_button = Button(self, text="Change RFID", compound=TOP,
                                          width=15, command=self.open_change_rfid)
         self.change_rfid_button.place(relx=0.40, rely=0.85, anchor=CENTER)
@@ -127,8 +136,10 @@ class MapRFIDPage(MouserPage):
 
         if len(selected) != 1:
             self.change_rfid_button["state"] = "disabled"
+            self.serial_port_button["state"] = "disabled"
         else:
             self.change_rfid_button["state"] = "normal"
+            self.serial_port_button["state"] = "normal"
 
         if len(selected) == 0:
             self.delete_button["state"] = "disabled"
@@ -143,6 +154,10 @@ class MapRFIDPage(MouserPage):
         self.changing_value = self.table.selection()[0]
         self.change_rfid_button["state"] = "disabled"
         self.changer.open()
+
+    def open_serial_port_selection(self):
+        self.serial_port_button["state"] = "disabled"
+        self.serial_port_panel.open()
 
 
     def raise_warning(self, warning_message = 'Maximum number of animals reached'):
@@ -196,3 +211,76 @@ class ChangeRFIDDialog():
 
     def close(self):
         self.root.destroy()
+
+class SerialPortSelection():
+    def __init__(self, parent: Tk, map_rfid: MapRFIDPage):
+        self.parent = parent
+        self.map_rfid = map_rfid
+        self.id = None
+        self.ports_in_used = []     #prevent user from selecting ports in use
+    
+    def open(self):
+        root = Toplevel(self.parent)
+        root.title("Serial Port Selection")
+        root.geometry('400x400')
+        columns = ('port', 'description')
+        self.table = Treeview(root, columns=columns, show='headings')
+
+
+        #headings
+        self.table.heading('port', text='Port')
+        self.table.column('port', width = 100)
+        self.table.heading('description', text='Description')
+        self.table.column('description', width = 400)
+
+        #grid for the serial ports
+        self.table.grid(row=0, column=0, sticky=NSEW)
+
+        self.table.bind('<<TreeviewSelect>>', self.item_selected)
+
+        #scrollbar
+        scrollbar = Scrollbar(root, orient=VERTICAL, command=self.table.yview)
+        self.table.configure(yscroll=scrollbar.set)
+        scrollbar.grid(row=0, column=1, sticky='ns')
+
+        self.update_ports()
+
+        self.select_port = Button(root, text = "Select Port", compound=TOP, width=15, command=self.conform_selection)
+        self.select_port.place(relx=0.50, rely=0.85, anchor=CENTER)
+
+
+    def update_ports(self):
+        self.available_ports = []
+        ports = list(serial.tools.list_ports.comports())
+
+        for port_ in ports:
+            if (port_ in self.ports_in_used):       #prevention
+                pass
+            else:
+                self.available_ports.append((f'{port_.device}', f'{port_.description}'))
+        self.table.tag_configure('TkTextFont', font=tkfont.nametofont('TkTextFont'))
+        style = Style()
+        style.configure('TkTextFont', font = (NONE,30))
+        for line in self.available_ports:
+            self.table.insert('', END, values = line, tags='TkTextFont')
+        
+    def item_selected(self, event):
+        self.id = self.table.selection()[0]
+
+
+    def conform_selection(self):
+        if (self.id != None):
+            port_info = self.table.item(self.id)       #port_info = ['port name', 'description']
+            self.read_information(port_info)
+
+
+
+    def read_information(self, port: str):
+        # Todo: open the selected serial port, add it into the ports_in_use list
+        # Todo: read data from the port and store it in database
+        # Todo: close the port
+        print(port)
+        pass
+
+
+
