@@ -74,7 +74,8 @@ class CageConfigurationUI(MouserPage):
             label.pack(side=TOP, padx=self.pad_x, pady=self.pad_y, anchor='center')
             
             self.create_cage_frames(group, frame)
-            frame.pack(side=TOP, expand=TRUE, fill=BOTH, anchor='center')
+            #Only Necessary Change is the side of the frame. From TOP to LEFT gives us the cage groups horizontally.
+            frame.pack(side=LEFT, expand=TRUE, fill=BOTH, anchor='center')
            
 
     def create_cage_frames(self, group, group_frame):
@@ -96,7 +97,6 @@ class CageConfigurationUI(MouserPage):
             self.create_animal_frames(cages[i], frame)
             
             frame.pack(side=LEFT, expand=TRUE, fill=BOTH, anchor='center')
-
        
     def create_animal_frames(self, cage, cage_frame):
         animals = self.db.get_animals_in_cage(cage)
