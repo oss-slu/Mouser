@@ -5,8 +5,7 @@ import tkinter.font as tkfont
 import random
 from playsound import playsound
 import threading
-import serial.tools.list_ports
-import serial
+from serial_port_controller import SerialPortController
 
 from database_apis.experiment_database import ExperimentDatabase
 
@@ -217,7 +216,7 @@ class SerialPortSelection():
         self.parent = parent
         self.map_rfid = map_rfid
         self.id = None
-        self.ports_in_used = []     #prevent user from selecting ports in use
+        self.portController = SerialPortController()
     
     def open(self):
         root = Toplevel(self.parent)
@@ -250,18 +249,14 @@ class SerialPortSelection():
 
 
     def update_ports(self):
-        self.available_ports = []
-        ports = list(serial.tools.list_ports.comports())
-
-        for port_ in ports:
-            if (port_ in self.ports_in_used):       #prevention
-                pass
-            else:
-                self.available_ports.append((f'{port_.device}', f'{port_.description}'))
+        ports = self.portController.get_available_ports()
+        for port in ports:
+            if (ports[0].isOpen()):
+                self.portController.close_port()
         self.table.tag_configure('TkTextFont', font=tkfont.nametofont('TkTextFont'))
         style = Style()
         style.configure('TkTextFont', font = (NONE,30))
-        for line in self.available_ports:
+        for line in ports:
             self.table.insert('', END, values = line, tags='TkTextFont')
         
     def item_selected(self, event):
@@ -270,17 +265,13 @@ class SerialPortSelection():
 
     def conform_selection(self):
         if (self.id != None):
-            port_info = self.table.item(self.id)       #port_info = ['port name', 'description']
-            self.read_information(port_info)
+            item_details = self.table.item(self.id)      #port_info = ['port name', 'description']
+            print(len(item_details))
+            port_info = item_details.get("values")
+            print(port_info[0])
+            self.portController.read_info(port_info[0])
 
 
-
-    def read_information(self, port: str):
-        # Todo: open the selected serial port, add it into the ports_in_use list
-        # Todo: read data from the port and store it in database
-        # Todo: close the port
-        print(port)
-        pass
 
 
 
