@@ -1,9 +1,11 @@
 from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
+import tkinter.font as tkfont
 import random
 from playsound import playsound
 import threading
+from serial_port_controller import SerialPortController
 
 from database_apis.experiment_database import ExperimentDatabase
 
@@ -66,6 +68,12 @@ class MapRFIDPage(MouserPage):
         self.table.bind("<Button-3>", self.right_click_menu)
 
         self.changer = ChangeRFIDDialog(parent, self)
+        self.serial_port_panel = SerialPortSelection(parent, self)
+
+        self.serial_port_button = Button(self, text="Select Serial Port", compound=TOP,
+                                      width=15, command=self.open_serial_port_selection)
+        self.serial_port_button.place(relx=0.10, rely=0.85, anchor=CENTER)
+
         self.change_rfid_button = Button(self, text="Change RFID", compound=TOP,
                                          width=15, command=self.open_change_rfid)
         self.change_rfid_button.place(relx=0.40, rely=0.85, anchor=CENTER)
@@ -127,8 +135,10 @@ class MapRFIDPage(MouserPage):
 
         if len(selected) != 1:
             self.change_rfid_button["state"] = "disabled"
+            self.serial_port_button["state"] = "disabled"
         else:
             self.change_rfid_button["state"] = "normal"
+            self.serial_port_button["state"] = "normal"
 
         if len(selected) == 0:
             self.delete_button["state"] = "disabled"
@@ -143,6 +153,10 @@ class MapRFIDPage(MouserPage):
         self.changing_value = self.table.selection()[0]
         self.change_rfid_button["state"] = "disabled"
         self.changer.open()
+
+    def open_serial_port_selection(self):
+        self.serial_port_button["state"] = "disabled"
+        self.serial_port_panel.open()
 
 
     def raise_warning(self, warning_message = 'Maximum number of animals reached'):
@@ -196,3 +210,64 @@ class ChangeRFIDDialog():
 
     def close(self):
         self.root.destroy()
+
+class SerialPortSelection():
+    def __init__(self, parent: Tk, map_rfid: MapRFIDPage):
+        self.parent = parent
+        self.map_rfid = map_rfid
+        self.id = None
+        self.portController = SerialPortController()
+    
+    def open(self):
+        root = Toplevel(self.parent)
+        root.title("Serial Port Selection")
+        root.geometry('400x400')
+        columns = ('port', 'description')
+        self.table = Treeview(root, columns=columns, show='headings')
+
+
+        #headings
+        self.table.heading('port', text='Port')
+        self.table.column('port', width = 100)
+        self.table.heading('description', text='Description')
+        self.table.column('description', width = 400)
+
+        #grid for the serial ports
+        self.table.grid(row=0, column=0, sticky=NSEW)
+
+        self.table.bind('<<TreeviewSelect>>', self.item_selected)
+
+        #scrollbar
+        scrollbar = Scrollbar(root, orient=VERTICAL, command=self.table.yview)
+        self.table.configure(yscroll=scrollbar.set)
+        scrollbar.grid(row=0, column=1, sticky='ns')
+
+        self.update_ports()
+
+        self.select_port = Button(root, text = "Select Port", compound=TOP, width=15, command=self.conform_selection)
+        self.select_port.place(relx=0.50, rely=0.85, anchor=CENTER)
+
+
+    def update_ports(self):
+        ports = self.portController.get_available_ports()
+        self.table.tag_configure('TkTextFont', font=tkfont.nametofont('TkTextFont'))
+        style = Style()
+        style.configure('TkTextFont', font = (NONE,30))
+        for line in ports:
+            self.table.insert('', END, values = line, tags='TkTextFont')
+        
+    def item_selected(self, event):
+        self.id = self.table.selection()[0]
+
+
+    def conform_selection(self):
+        if (self.id != None):
+            item_details = self.table.item(self.id)      #port_info = ['port name', 'description']
+            port_info = item_details.get("values")
+            #self.portController.read_info(port_info[0])
+            # Todo: complete the implementation of read_info in serial_port_controller
+
+
+
+
+
