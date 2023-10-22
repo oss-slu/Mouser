@@ -37,7 +37,6 @@ class SerialPortController():
         ser.open()
         while True:         # continue asking for data until the other device closes
             info = ser.readline().decode('ascii')
-            print(info)
         self.close_port(ser, port)
         # Todo: read data from the port and store it in database
         # Todo: break out of the loop if the time taken to get data is too long
@@ -50,9 +49,7 @@ class SerialPortController():
         message = ""
         while (message != "q"):
             message = input('type something: ')
-            print(message)
             byte_message = message.encode()
-            print('1')
             ser.write(byte_message)
 
         ser.close()

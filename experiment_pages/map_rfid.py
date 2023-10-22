@@ -250,9 +250,6 @@ class SerialPortSelection():
 
     def update_ports(self):
         ports = self.portController.get_available_ports()
-        for port in ports:
-            if (ports[0].isOpen()):
-                self.portController.close_port()
         self.table.tag_configure('TkTextFont', font=tkfont.nametofont('TkTextFont'))
         style = Style()
         style.configure('TkTextFont', font = (NONE,30))
@@ -266,10 +263,9 @@ class SerialPortSelection():
     def conform_selection(self):
         if (self.id != None):
             item_details = self.table.item(self.id)      #port_info = ['port name', 'description']
-            print(len(item_details))
             port_info = item_details.get("values")
-            print(port_info[0])
-            self.portController.read_info(port_info[0])
+            #self.portController.read_info(port_info[0])
+            # Todo: complete the implementation of read_info in serial_port_controller
 
 
 
