@@ -179,6 +179,8 @@ class MapRFIDPage(MouserPage):
             self.raise_warning(warning_message= 'Not all animals have been mapped to RFIDs')
         else:
             self.menu_page.tkraise()
+    def close_connection(self):
+        self.db.close()
 
     def close_connection(self):
         self.db.close()
