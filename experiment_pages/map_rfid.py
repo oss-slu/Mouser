@@ -238,6 +238,7 @@ class SerialPortSelection():
         self.table.bind('<<TreeviewSelect>>', self.item_selected)
 
         #scrollbar
+        #Changing the scroll for map rfid to be able to scroll to latest entry instead of piling entries and needing to manually scroll to latest entry.
         scrollbar = Scrollbar(root, orient=VERTICAL, command=self.table.yview)
         self.table.configure(yscroll=scrollbar.set)
         scrollbar.grid(row=0, column=1, sticky='ns')
