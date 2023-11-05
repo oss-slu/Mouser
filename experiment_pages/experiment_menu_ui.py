@@ -17,7 +17,9 @@ class ExperimentMenuUI(MouserPage):
         
         main_frame = Frame(self)
         main_frame.grid(row=6, column=1, sticky='NESW')
-        main_frame.place(relx=0.3, rely=0.20)
+        main_frame.place(relx=0.3, rely=0.20, relwidth= 0.40, relheight = 0.60)
+        
+        main_frame.grid_columnconfigure(0, weight = 1)
 
         self.data_page = DataCollectionUI(parent, self, name)
         self.analysis_page = DataAnalysisUI(parent, self)

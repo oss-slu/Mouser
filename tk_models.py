@@ -46,11 +46,10 @@ class MouserPage(Frame):
         self.title = title
 
         self.canvas = Canvas(self, width=600, height=600)
-        self.canvas.grid(row=0, column=0, columnspan=4)
+        self.canvas.grid(row=0, column=0)
         self.rectangle = self.canvas.create_rectangle(0, 0, 600, 50, fill='#0097A7')
         self.title_label = self.canvas.create_text(300, 13, anchor="n")
         self.canvas.itemconfig(self.title_label, text=title, font=("Arial", 18))
-
         self.grid(row=0, column=0, sticky="NESW")
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)

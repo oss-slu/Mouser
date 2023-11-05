@@ -41,8 +41,12 @@ class MapRFIDPage(MouserPage):
                                       width=15, command=lambda: self.add_random_rfid())
         simulate_rfid_button.place(relx=0.80, rely=0.20, anchor=CENTER)
 
+
         self.table_frame = Frame(self)
-        self.table_frame.place(relx=0.15, rely=0.40)
+        self.table_frame.place(relx=0.15, rely=0.40, relheight= 0.40, relwidth=0.80)
+        self.table_frame.grid_columnconfigure(0, weight= 1)
+        self.table_frame.grid_rowconfigure(0, weight= 1)
+        
 
         heading_style = Style()
         heading_style.configure("Treeview.Heading", font=('Arial', 10))
@@ -55,6 +59,10 @@ class MapRFIDPage(MouserPage):
         self.table.heading('rfid', text='RFID')
 
         self.table.grid(row=0, column=0, sticky='nsew')
+        self.table.grid_columnconfigure(0, weight = 1)
+        self.table.grid_rowconfigure(0, weight = 1)
+
+
         scrollbar = Scrollbar(
             self.table_frame, orient=VERTICAL, command=self.table.yview)
         self.table.configure(yscroll=scrollbar.set)
