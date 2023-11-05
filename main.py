@@ -13,6 +13,7 @@ root.title("Mouser")
 root.geometry('600x600')
 root.minsize(600,600)
 
+
 main_frame = MouserPage(root, "Mouser")
 login_frame = LoginFrame(root, main_frame)
 
