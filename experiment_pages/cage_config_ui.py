@@ -13,9 +13,6 @@ class CageConfigurationUI(MouserPage):
         self.prev_page = prev_page
         self.db = DatabaseController(database)
 
-        s = Style()
-        s.configure("TestingFrame.TFrame", background = 'red')
-
         scroll_canvas = ScrolledFrame(self)
         scroll_canvas.place(relx=0.05, rely=0.20, relheight=0.75, relwidth=0.88)
 
