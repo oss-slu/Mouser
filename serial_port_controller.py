@@ -3,13 +3,21 @@ import serial
 
 
 
-# recommendation: use com0com to create virtual serial ports and PuTTy to display the result
-# to do so, connect the two serial ports from com0com, one for reading on PuTTy (not with our code) 
-# and one for writing (with our code)
+#SerialPortController provides list of available serial ports in the pc
+#the writer port is used to write to a given port, and reader port is 
+#used to read from a port. Note that a port can't be writer and reader
+#port at the same time.
+
+#Virtual testing requires two virtual port, one for reading, one for 
+#writing. In order to do so, you must have both port established before
+#you write to a port, else reading from the reader port will return 
+#nothing even if you write to writer port already
 
 class SerialPortController():
     def __init__(self):
         self.ports_in_used = []
+        self.writer_port = None
+        self.reader_port = None
 
 
     def get_available_ports(self):
@@ -23,33 +31,50 @@ class SerialPortController():
                 available_ports.append((f'{port_.device}', f'{port_.description}'))
         return available_ports
     
-    def close_port(self, ser: serial, port: str):
-        if (ser.isOpen()):
-            ser.close()
-        if ser.name in self.ports_in_used:
-            self.ports_in_used.remove(port)
+    def get_virtual_port(self):
+        virtual_ports = []
+        ports = list(serial.tools.list_ports.comports())
+        for port_ in ports:
+            words = port_.description.split(" ")
+            if ("com0com" in words):
+                virtual_ports.append(port_.device)
+
+        return virtual_ports
+
+    def set_writer_port(self, port: str):
+        self.writer_port = serial.Serial(port, 9600, timeout = 1 )
+        self.ports_in_used.append(self.writer_port)
+
+    def set_reader_port(self, port: str):
+        self.reader_port = serial.Serial(port, 9600, timeout = 1 )
+        self.ports_in_used.append(self.reader_port)
+
+    def close_writer_port(self):
+        if (self.writer_port != None):
+            self.writer_port.close()
+
+
+    def close_reader_port(self):
+        if (self.reader_port != None):
+            self.reader_port.close()
     
-    def read_info(self, port: str):
-        ser = serial.Serial(port, 9600, timeout = 1)
-        self.ports_in_used.append(port)
-        if (ser.isOpen()):
-            ser.close()
-        ser.open()
-        while True:         # continue asking for data until the other device closes
-            info = ser.readline().decode('ascii')
-        self.close_port(ser, port)
-        # Todo: read data from the port and store it in database
-        # Todo: break out of the loop if the time taken to get data is too long
+    def read_info(self):
+
+        info = self.reader_port.readline().decode('ascii')
+        return info
 
 
+    def write_to(self, message: str):
 
-    #for testing purpose only, this function currently doesn't work well
-    def write_info(self, port: str):
-        ser = serial.Serial(port, 9600, timeout = 1, write_timeout=1)
-        message = ""
-        while (message != "q"):
-            message = input('type something: ')
-            byte_message = message.encode()
-            ser.write(byte_message)
+        byte_message = message.encode()
+        self.writer_port.write(byte_message)
 
-        ser.close()
+    def close_all_port(self):
+        hold = self.ports_in_used
+        for port_ in hold:
+            port_.close()
+            self.ports_in_used.remove(port_)
+
+        self.close_reader_port()
+        self.close_writer_port()
+

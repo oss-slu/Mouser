@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
 import os
+import pandas as pd
 import csv
 from experiment_pages.data_collection_ui import DataCollectionUI
 from experiment_pages.data_analysis_ui import DataAnalysisUI
@@ -16,7 +17,9 @@ class ExperimentMenuUI(MouserPage):
         
         main_frame = Frame(self)
         main_frame.grid(row=6, column=1, sticky='NESW')
-        main_frame.place(relx=0.3, rely=0.20)
+        main_frame.place(relx=0.3, rely=0.20, relwidth= 0.40, relheight = 0.75)
+        
+        main_frame.grid_columnconfigure(0, weight = 1)
 
         self.data_page = DataCollectionUI(parent, self, name)
         self.analysis_page = DataAnalysisUI(parent, self)
@@ -49,7 +52,7 @@ class ExperimentMenuUI(MouserPage):
         delete_button.grid(row=5, column=0, ipadx=10, ipady=10, pady=10, padx=10)
 
 
-    def delete_warning(self, page: ChangeableFrame, name: str):
+    def delete_warning(self, page: Frame, name: str):
         message = Tk()
         message.title("WARNING")
         message.geometry('300x100')
@@ -80,7 +83,8 @@ class ExperimentMenuUI(MouserPage):
         self.rfid_page.close_connection()
 
 
-    def delete_experiment(self, page: ChangeableFrame, name: str):
+
+    def delete_experiment(self, page: Frame, name: str):
         # TO-DO delete database
         # TO-DO delete from experiment selection file
         # TO-DO return to experiment selection page

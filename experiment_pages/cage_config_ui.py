@@ -45,12 +45,13 @@ class CageConfigurationUI(MouserPage):
         move_button.grid(row=0, column=3, padx=self.pad_x, pady=self.pad_y)
         save_button.grid(row=0, column=4, padx=self.pad_x, pady=self.pad_y)
 
-        for i in range(0, 4):
+        for i in range(0, 5):
             input_frame.grid_columnconfigure(i, weight=1)
         input_frame.grid_rowconfigure(0, weight=1)
 
-        input_frame.pack(side=TOP, expand=TRUE, anchor='center')
-        self.config_frame.pack(side=TOP, expand=TRUE, anchor='center')
+        input_frame.pack(side=TOP, fill=X, anchor='center')
+        self.config_frame.pack(side=TOP, fill=BOTH, anchor ='center')
+        
 
         self.update_config_frame()
 

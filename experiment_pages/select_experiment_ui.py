@@ -28,14 +28,10 @@ class ExperimentsUI(MouserPage, ChangeableFrame):
 
         NewExperimentButton(parent, self)
 
-        scroll_canvas = ScrolledFrame(self)
-        scroll_canvas.place(relx=0.12, rely=0.25, relheight=0.75, relwidth=0.88)
-
-        self.main_frame = Frame(scroll_canvas)
-        self.main_frame.grid(row=1, column=1, sticky='NESW')
-
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
+        self.main_frame = Frame(self)
+        self.main_frame.place(relx=.12, rely = 0.25, relheight= .75, relwidth= .75)
+        self.main_frame.grid_columnconfigure(0, weight=1)
+        
 
         self.selectable_frames = []
         self.update_frame()
@@ -65,17 +61,21 @@ class ExperimentsUI(MouserPage, ChangeableFrame):
             date = exp[1]
             self.create_selectable_frame(name, date, index)
 
-            self.main_frame.grid_columnconfigure(index, weight=1)
-            self.main_frame.grid_rowconfigure(index, weight=1)
 
 
     def create_selectable_frame(self, name, date, index):
+        
+
+
         frame = Frame(self.main_frame, borderwidth=3, relief='groove')
         frame.grid(row=index, column=0, pady=5, sticky='NESW')
+        frame.grid_columnconfigure(0, weight= 1)
+        frame.grid_columnconfigure(1, weight= 1)
         name_label = Label(frame, text=name, width=30, font=("Arial", 12))
         name_label.grid(row=index, column=0, padx=20, sticky=W)
+
         date_label = Label(frame, text=date, font=("Arial", 12))
-        date_label.grid(row=index, column=1, padx=20, pady=10, sticky=E)
+        date_label.grid(row=index, column=1, padx=15, pady=10)
 
         frame.bind("<Enter>", lambda event, arg=frame: self.frame_hover(event, arg))
         frame.bind("<Leave>", lambda event, arg=frame: self.frame_hover_leave(event, arg))
