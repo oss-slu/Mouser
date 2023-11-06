@@ -18,7 +18,6 @@ def play_sound_async(filename):
 
          
 
-
 class MapRFIDPage(MouserPage):
     def __init__(self, database, parent: Tk, previous_page: Frame = None):
         super().__init__(parent, "Map RFID", previous_page)
@@ -43,6 +42,8 @@ class MapRFIDPage(MouserPage):
 
         self.table_frame = Frame(self)
         self.table_frame.place(relx=0.15, rely=0.40)
+        
+        
 
         heading_style = Style()
         heading_style.configure("Treeview.Heading", font=('Arial', 10))
@@ -59,6 +60,8 @@ class MapRFIDPage(MouserPage):
             self.table_frame, orient=VERTICAL, command=self.table.yview)
         self.table.configure(yscroll=scrollbar.set)
         scrollbar.grid(row=0, column=1, sticky='ns')
+        self.table.yview_moveto(1)
+        scrollbar.update_idletasks()
 
         self.table.bind('<<TreeviewSelect>>', self.item_selected)
 
@@ -92,6 +95,8 @@ class MapRFIDPage(MouserPage):
             self.table.insert('', END, values=value, tags='text_font')
             self.animals.append(value)
             self.animal_id_entry_text.set(animal)
+            self.table.yview_moveto(1)
+        
 
         ##setting previous button behavior
         self.menu_button = None
@@ -99,6 +104,9 @@ class MapRFIDPage(MouserPage):
         self.menu_page = previous_page
 
         self.menu_button.configure(command = lambda: self.press_back_to_menu_button())
+    def scroll_to_latest_entry(self):
+        #Scroll to newest Entry
+        self.table.yview_moveto(1)
 
     def right_click_menu(self, event):
         if len(self.table.selection()) != 0:
@@ -116,12 +124,18 @@ class MapRFIDPage(MouserPage):
 
     def add_value(self, rfid):
         self.animal_id = self.db.add_animal(rfid)
+
+
         value = (self.animal_id, rfid)
         self.table.tag_configure('text_font', font=('Arial', 10))
         self.table.insert('', END, values=value, tags='text_font')
         self.animals.append(value)
         self.animal_id_entry_text.set(str(self.animal_id))
         play_sound_async('./sounds/rfid_success.mp3')
+        #When new entry is made, auto scroll to latest entry is called. 
+        #I will rewrite the code in the future to write after 5 entries this should be called. 
+        #As auto scroll is not needed until entry #6. For now this works.
+        self.scroll_to_latest_entry()
 
     def change_selected_value(self, rfid):
         item = self.table.item(self.changing_value)
@@ -238,9 +252,9 @@ class SerialPortSelection():
         self.table.bind('<<TreeviewSelect>>', self.item_selected)
 
         #scrollbar
-        #Changing the scroll for map rfid to be able to scroll to latest entry instead of piling entries and needing to manually scroll to latest entry.
         scrollbar = Scrollbar(root, orient=VERTICAL, command=self.table.yview)
         self.table.configure(yscroll=scrollbar.set)
+        self.table.yview_moveto(1)
         scrollbar.grid(row=0, column=1, sticky='ns')
 
         self.update_ports()
@@ -266,9 +280,4 @@ class SerialPortSelection():
             item_details = self.table.item(self.id)      #port_info = ['port name', 'description']
             port_info = item_details.get("values")
             #self.portController.read_info(port_info[0])
-            # Todo: complete the implementation of read_info in serial_port_controller
-
-
-
-
 
