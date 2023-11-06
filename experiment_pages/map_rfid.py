@@ -111,6 +111,9 @@ class MapRFIDPage(MouserPage):
         self.menu_page = previous_page
 
         self.menu_button.configure(command = lambda: self.press_back_to_menu_button())
+        self.scroll_to_latest_entry()
+    def scroll_to_latest_entry(self):
+        self.table.yview_moveto(1)
 
     def right_click_menu(self, event):
         if len(self.table.selection()) != 0:
@@ -133,6 +136,7 @@ class MapRFIDPage(MouserPage):
         self.table.insert('', END, values=value, tags='text_font')
         self.animals.append(value)
         self.animal_id_entry_text.set(str(self.animal_id))
+        self.scroll_to_latest_entry()
         play_sound_async('./sounds/rfid_success.mp3')
 
     def change_selected_value(self, rfid):
@@ -393,9 +397,3 @@ class SerialSimulator():
         message.title('Warning')
         label = Label(message, text='Please select a serial port from the drop down list')
         label.grid(row=0, column=0, padx=10, pady=10)
-
-
-
-
-
-
