@@ -136,8 +136,8 @@ class MapRFIDPage(MouserPage):
         self.table.insert('', END, values=value, tags='text_font')
         self.animals.append(value)
         self.animal_id_entry_text.set(str(self.animal_id))
-        play_sound_async('./sounds/rfid_success.mp3')
         self.scroll_to_latest_entry()
+        play_sound_async('./sounds/rfid_success.mp3')
 
     def change_selected_value(self, rfid):
         item = self.table.item(self.changing_value)
@@ -397,89 +397,3 @@ class SerialSimulator():
         message.title('Warning')
         label = Label(message, text='Please select a serial port from the drop down list')
         label.grid(row=0, column=0, padx=10, pady=10)
-
-
-
-
-            self.drop_down_ports = Combobox(self.root, values=self.serial_controller.get_virtual_port())
-            self.drop_down_ports.place(relx=0.30, rely = 0.88)
-
-            self.comfirm_port = Button(self.root, text="confirm port", width=15,
-                                        command=self.set_written_port)
-            self.comfirm_port.place(relx=0.80, rely=0.900, anchor=CENTER)
-
-            self.input_entry = Entry(self.root, width=40)
-            self.input_entry.place(relx=0.50, rely=0.80, anchor=CENTER)
-
-            self.sent_button = Button(self.root, text = "sent", width = 15, command=self.sent)
-            self.sent_button.place(relx=0.80, rely = 0.80, anchor=CENTER)
-            self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
-
-
-    def sent(self):
-        if (self.written_port != None):
-            print(self.written_port)
-            message = self.input_entry.get()
-            self.serial_controller.write_to(message)
-            self.read_and_display()
-        else:
-            self.raise_warning()
-            """
-            messagebox.showinfo(
-                message=f"Please select a serial port from the drop down list",
-                title="Warning"
-                )"""
-    
-    def setup_ports(self):
-
-        self.serial_controller.set_writer_port(self.written_port)
-
-        available_port = self.serial_controller.get_virtual_port()
-        available_port.remove(self.written_port)
-
-        self.serial_controller.set_reader_port(available_port[0])
-
-
-    def read_and_display(self):
-        available_port = self.serial_controller.get_virtual_port()
-        available_port.remove(self.written_port)
-        if (len(available_port)==0):
-            messagebox.showwarning(
-                message=f"There seems to be problem with the virtual port, please submit bug report.",
-                title="Warning"
-                )
-        else:
-            message = self.serial_controller.read_info()
-            self.read_message.insert(END,message)
-
-
-
-    def check_written_port(self):
-        if (self.written_port == None):
-            return False
-        else:
-            return True
-
-    
-    def set_written_port(self):
-        self.written_port = self.drop_down_ports.get()
-        try:
-            self.setup_ports()
-        except serialutil.SerialException:
-            self.raise_warning()
-
-    def download_link(self):
-        webbrowser.open("https://softradar.com/com0com/")
-
-    def on_closing(self):
-        self.serial_controller.close_all_port()
-        self.written_port = None
-        self.root.destroy()
-
-    def raise_warning(self):
-        message = Toplevel()
-        message.geometry("320x100")
-        message.title('Warning')
-        label = Label(message, text='Please select a serial port from the drop down list')
-        label.grid(row=0, column=0, padx=10, pady=10)
-
