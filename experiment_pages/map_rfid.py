@@ -82,6 +82,10 @@ class MapRFIDPage(MouserPage):
                                     width=20, command=self.remove_selected_items)
         self.delete_button.place(relx=0.70, rely=0.85, anchor=CENTER)
 
+        # implementing a way to detect RFID through serial port
+        self.assign_rfid_button = Button(self, text="Assign RFID", compound=TOP,
+                                    width=20)
+
         self.item_selected(None)
 
         animals_setup = self.db.get_all_animal_ids()
