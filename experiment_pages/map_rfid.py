@@ -161,9 +161,17 @@ class MapRFIDPage(MouserPage):
         else:
             self.delete_button["state"] = "normal"
 
+    
     def remove_selected_items(self):
         for item in self.table.selection():
+            # Animal ID Before Removing
+            animal_id_remove = int(self.table.item(item, 'values')[0])
+            
             self.table.delete(item)
+
+            # If Animal ID is greater than the ID to remove, subtract the animal ID by one
+            if self.animal_id > animal_id_to_remove:
+                self.animal_id -= 1
 
     def open_change_rfid(self):
         self.changing_value = self.table.selection()[0]
