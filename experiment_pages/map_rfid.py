@@ -268,8 +268,14 @@ class SerialPortSelection():
         if (self.id != None):
             item_details = self.table.item(self.id)      #port_info = ['port name', 'description']
             port_info = item_details.get("values")
-            #self.portController.read_info(port_info[0])
-            # Todo: complete the implementation of read_info in serial_port_controller
+            # todo: allow confirm_selection to select the port that Map_RFID will read from to get
+            # its RFID
+
+            # idea: let map_RFID have a serialport controller, and this function sets the 
+            # reader port of the controller to whatever the user selected. 
+            # To test this function, work with simulate RFID function such that
+            # if the reader port isn't None it gives the RFID 123456, else it's random
+            # RFID as what give_random_RFID is suppose to do
 
 
 
