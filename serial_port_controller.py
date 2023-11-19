@@ -78,3 +78,18 @@ class SerialPortController():
         self.close_reader_port()
         self.close_writer_port()
 
+    
+    def get_reader_port(self):
+        return self.reader_port
+    
+    def get_writer_port(self):
+        return self.writer_port
+    
+
+
+    # testing function for map_rfid serial port
+    def get_set_RFID(self, rfid: int):
+        message = rfid.encode()
+        self.writer_port.write(message)
+    
+

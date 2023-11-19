@@ -29,6 +29,7 @@ class MapRFIDPage(MouserPage):
 
         file = "databases/experiments/" + str(database) + '.db'
         self.db = ExperimentDatabase(file)
+        self.serial_port_controller = SerialPortController()
 
         self.animals = []
         self.animal_id = 0
@@ -80,7 +81,7 @@ class MapRFIDPage(MouserPage):
         self.table.bind("<Button-3>", self.right_click_menu)
 
         self.changer = ChangeRFIDDialog(parent, self)
-        self.serial_port_panel = SerialPortSelection(parent, self)
+        self.serial_port_panel = SerialPortSelection(parent,self.serial_port_controller, self)
 
         self.serial_port_button = Button(self, text="Select Serial Port", compound=TOP,
                                       width=15, command=self.open_serial_port_selection)
@@ -123,8 +124,15 @@ class MapRFIDPage(MouserPage):
                 self.right_click.grab_release()
 
     def add_random_rfid(self):
+        #print(self.serial_port_controller.get_reader_port())
+        #print(self.serial_port_controller.get_writer_port())
         if (len(self.animals) == self.db.get_number_animals()):
             self.raise_warning()
+        elif(self.serial_port_controller.get_writer_port() != None):
+            self.serial_port_controller.write_to("123")
+            constant_rfid = self.serial_port_controller.read_info()
+            rand_rfid = constant_rfid+str(random.randint(10000, 99999))
+            self.add_value(int(rand_rfid))
         else:
             rfid = get_random_rfid()
             self.add_value(rfid)
@@ -151,10 +159,10 @@ class MapRFIDPage(MouserPage):
 
         if len(selected) != 1:
             self.change_rfid_button["state"] = "disabled"
-            self.serial_port_button["state"] = "disabled"
+            #self.serial_port_button["state"] = "disabled"
         else:
             self.change_rfid_button["state"] = "normal"
-            self.serial_port_button["state"] = "normal"
+            #self.serial_port_button["state"] = "normal"
 
         if len(selected) == 0:
             self.delete_button["state"] = "disabled"
@@ -171,7 +179,7 @@ class MapRFIDPage(MouserPage):
         self.changer.open()
 
     def open_serial_port_selection(self):
-        self.serial_port_button["state"] = "disabled"
+        #self.serial_port_button["state"] = "disabled"
         self.serial_port_panel.open()
 
 
@@ -230,19 +238,21 @@ class ChangeRFIDDialog():
         self.root.destroy()
 
 class SerialPortSelection():
-    def __init__(self, parent: Tk, map_rfid: MapRFIDPage):
+    def __init__(self, parent: Tk, controller: SerialPortController, map_rfid: MapRFIDPage):
         self.parent = parent
         self.map_rfid = map_rfid
         self.id = None
-        self.portController = SerialPortController()
+
+        self.portController = controller
+
         self.serial_simulator = SerialSimulator(self.parent)
     
     def open(self):
-        root = Toplevel(self.parent)
-        root.title("Serial Port Selection")
-        root.geometry('400x400')
+        self.root = Toplevel(self.parent)
+        self.root.title("Serial Port Selection")
+        self.root.geometry('400x400')
         columns = ('port', 'description')
-        self.table = Treeview(root, columns=columns, show='headings')
+        self.table = Treeview(self.root, columns=columns, show='headings')
 
 
         #headings
@@ -257,16 +267,16 @@ class SerialPortSelection():
         self.table.bind('<<TreeviewSelect>>', self.item_selected)
 
         #scrollbar
-        scrollbar = Scrollbar(root, orient=VERTICAL, command=self.table.yview)
+        scrollbar = Scrollbar(self.root, orient=VERTICAL, command=self.table.yview)
         self.table.configure(yscroll=scrollbar.set)
         scrollbar.grid(row=0, column=1, sticky='ns')
 
         self.update_ports()
 
-        self.select_port = Button(root, text = "Select Port", compound=TOP, width=15, command=self.conform_selection)
+        self.select_port = Button(self.root, text = "Select Port", compound=TOP, width=15, command=self.conform_selection)
         self.select_port.place(relx=0.50, rely=0.85, anchor=CENTER)
 
-        self.run_simulate = Button(root, text = "Run Simulation", compound=TOP, width=15, command=self.open_simulator)
+        self.run_simulate = Button(self.root, text = "Run Simulation", compound=TOP, width=15, command=self.open_simulator)
         self.run_simulate.place(relx=0.75, rely=0.85, anchor=CENTER)
 
 
@@ -286,8 +296,23 @@ class SerialPortSelection():
         if (self.id != None):
             item_details = self.table.item(self.id)      #port_info = ['port name', 'description']
             port_info = item_details.get("values")
+            virtual_ports = self.portController.get_virtual_port()
+
+            if (self.portController.set_reader_port != None):
+                self.portController.close_reader_port()
+                self.portController.close_writer_port()      
+
             self.portController.set_reader_port(port_info[0])
-            # Todo: complete the implementation of read_info in serial_port_controller
+            description = port_info[1].split(" ")
+
+            if ("com0com" in description):
+                virtual_ports.remove(port_info[0])
+                self.portController.set_writer_port(virtual_ports[0])
+
+            self.root.destroy()
+            # todo: allow user to choose a virtual port as reader_port and the other 
+            # virtual port as writer port, when user selects any other ports that's not
+            # virtual, raise warning
 
     def open_simulator(self):
         self.serial_simulator.open()
