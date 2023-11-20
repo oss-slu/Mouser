@@ -136,16 +136,33 @@ class MapRFIDPage(MouserPage):
         else:
             rfid = get_random_rfid()
             self.add_value(rfid)
-
     def add_value(self, rfid):
-        self.animal_id = self.db.add_animal(rfid)
-        value = (self.animal_id, rfid)
-        self.table.tag_configure('text_font', font=('Arial', 10))
-        self.table.insert('', END, values=value, tags='text_font')
-        self.animals.append(value)
-        self.animal_id_entry_text.set(str(self.animal_id))
-        self.scroll_to_latest_entry()
-        play_sound_async('./sounds/rfid_success.mp3')
+        item_id = len(self.animals) + 1
+        self.table.insert('', END, values=(item_id, rfid), tags='text_font')
+        self.animals.append((item_id, rfid))
+        self.animal_id_entry_text.set(str(item_id))
+
+    def add_animal(self, rfid, remarks=''):
+    # Add the RFID to the animal_rfid table
+        self._c.execute("INSERT INTO animal_rfid (rfid) VALUES (?)", (rfid,))
+        self._conn.commit()
+
+    # Get the last inserted animal_id
+        self._c.execute("SELECT last_insert_rowid()")
+        animal_id = self._c.fetchone()[0]
+
+    # Get the next available cage_id
+        cage_id = self._get_next_cage()
+
+    # Get the next available group_id
+        group_id = self._get_next_group()
+
+    # Insert the animal information into the animals table
+        self._c.execute("INSERT INTO animals (animal_id, group_id, cage_id, remarks, active) VALUES (?, ?, ?, ?, 1)",
+                    (animal_id, group_id, cage_id, remarks))
+        self._conn.commit()
+
+        return animal_id
 
     def change_selected_value(self, rfid):
         item = self.table.item(self.changing_value)
@@ -170,8 +187,29 @@ class MapRFIDPage(MouserPage):
             self.delete_button["state"] = "normal"
 
     def remove_selected_items(self):
-        for item in self.table.selection():
+        selected_items = self.table.selection()
+
+        for item in selected_items:
+            item_id = int(self.table.item(item, 'values')[0])
             self.table.delete(item)
+
+            # Update animal id
+            self.animals = [(index, rfid) for index, (_, rfid) in enumerate(self.animals, start=1) if index != item_id]
+            self.value_removal()
+
+            # Subtract one from the animal_id counter
+            self.animal_id -= 1
+
+    def value_removal(self):
+        # Adjust Animal ID after animal is removed
+        for i, item in enumerate(self.animals, start=1):
+            self.table.item(i, values=(i, item[1]), tags='text_font')
+
+        # Update entry text after removal
+        if self.animals:
+            self.animal_id_entry_text.set(str(self.animals[-1][0]))
+        else:
+            self.animal_id_entry_text.set("")
 
     def open_change_rfid(self):
         self.changing_value = self.table.selection()[0]
