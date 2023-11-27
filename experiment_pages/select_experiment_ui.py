@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter.filedialog import *
 from tkinter.ttk import *
 from tk_models import *
 from scrollable_frame import ScrolledFrame
@@ -25,6 +26,13 @@ class ExperimentsUI(MouserPage, ChangeableFrame):
     def __init__(self, parent:Tk, prev_page: Frame = None):
         super().__init__(parent, "Experiments", prev_page)
         self.parent = parent
+
+        #Adds menu bar to root and binds the function to file_menu
+        menu_bar = Menu(parent)
+        file_menu = Menu(menu_bar, tearoff= 0)
+        file_menu.add_command(label = "Open", command = self.open_file)
+        menu_bar.add_cascade(label = "File", menu=file_menu)
+        parent.config(menu=menu_bar)
 
         NewExperimentButton(parent, self)
 
@@ -97,3 +105,8 @@ class ExperimentsUI(MouserPage, ChangeableFrame):
         page = ExperimentMenuUI(self.parent, name, self)
         page.tkraise()
 
+    #command for 'open' option in menu bar
+    def open_file(self):
+        file_path = askopenfilename(filetypes=[("Databse files","*.db")]);
+        page = ExperimentMenuUI(self.parent, file_path, self)
+        page.tkraise()

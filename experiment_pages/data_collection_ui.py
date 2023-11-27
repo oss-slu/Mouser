@@ -11,7 +11,7 @@ class DataCollectionUI(MouserPage):
     def __init__(self, parent: Tk, prev_page: Frame = None, database_name = ""):
         super().__init__(parent, "Data Collection", prev_page)
         
-        self.database = ExperimentDatabase("databases/experiments/" + database_name + ".db")
+        self.database = ExperimentDatabase(database_name)
         self.measurement_items = self.database.get_measurement_items()
         self.measurement_strings = []
         self.measurement_ids = []

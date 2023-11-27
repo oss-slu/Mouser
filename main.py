@@ -8,10 +8,13 @@ from accounts import AccountsFrame
 from experiment_pages.select_experiment_ui import ExperimentsUI
 
 
+
 root = Tk()
 root.title("Mouser")
 root.geometry('600x600')
 root.minsize(600,600)
+
+
 
 
 main_frame = MouserPage(root, "Mouser")

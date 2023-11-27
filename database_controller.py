@@ -5,7 +5,7 @@ import copy
 class DatabaseController():
     def __init__(self, database):
         
-        file = 'databases/experiments/' + str(database) + '.db'
+        file = database
         self.db = ExperimentDatabase(file)
 
         # self.measurement_items = self.db.get_measurement_items()

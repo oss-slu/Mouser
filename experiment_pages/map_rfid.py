@@ -27,7 +27,7 @@ class MapRFIDPage(MouserPage):
     def __init__(self, database, parent: Tk, previous_page: Frame = None):
         super().__init__(parent, "Map RFID", previous_page)
 
-        file = "databases/experiments/" + str(database) + '.db'
+        file = database
         self.db = ExperimentDatabase(file)
         self.serial_port_controller = SerialPortController()
 
