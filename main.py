@@ -29,7 +29,7 @@ create_nav_button(main_frame, "Accounts", user_image,
                   accounts_frame, 0.5, 0.67)
 
 
-raise_frame(main_frame)
+raise_frame(experiments_frame)
 
 
 root.grid_rowconfigure(0, weight=1)
