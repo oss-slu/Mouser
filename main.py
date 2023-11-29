@@ -12,7 +12,7 @@ from experiment_pages.select_experiment_ui import ExperimentsUI
 #command for 'open' option in menu bar
 def open_file():
     file_path = askopenfilename(filetypes=[("Database files","*.db")]);
-    page = ExperimentMenuUI(root, file_path, main_frame)
+    page = ExperimentMenuUI(root, file_path, experiments_frame)
     page.tkraise()
 
 
