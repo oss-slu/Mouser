@@ -4,10 +4,16 @@ import os
 
 class DataCollectionDatabase:
     def __init__(self, experiment: str = None, measurement_items: list = ["Weight", "Length"]):
-        if not experiment:
+        
+        #gets the name of the file from the file path
+        experiment_name = os.path.basename(experiment)
+        experiment_name = os.path.splitext(experiment_name)[0]
+
+
+        if not experiment_name:
             self.filename = "data.csv"
         else:
-            self.filename = experiment + ".csv"
+            self.filename = experiment_name + ".csv"
         
         self.filename = "database_apis/fake_data/" + self.filename
         try:

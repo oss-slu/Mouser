@@ -13,7 +13,11 @@ from experiment_pages.experiment_invest_ui import InvestigatorsUI
 
 class ExperimentMenuUI(MouserPage):
     def __init__(self, parent:Tk, name: str, prev_page: ChangeableFrame = None):
-        super().__init__(parent, name, prev_page)
+        #Get name of file from file path
+        experiment_name = os.path.basename(name)
+        experiment_name = os.path.splitext(experiment_name)[0]
+
+        super().__init__(parent, experiment_name, prev_page)
         
         main_frame = Frame(self)
         main_frame.grid(row=6, column=1, sticky='NESW')
