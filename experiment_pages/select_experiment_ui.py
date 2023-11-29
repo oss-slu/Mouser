@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter.filedialog import *
 from tkinter.ttk import *
 from tk_models import *
 from scrollable_frame import ScrolledFrame
