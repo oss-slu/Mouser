@@ -11,7 +11,8 @@ class ExperimentDatabase:
                                 uses_rfid INTEGER,
                                 num_animals INTEGER,
                                 num_groups INTEGER,
-                                cage_max INTEGER);''')
+                                cage_max INTEGER,
+                                id TEXT);''')
             self._c.execute('''CREATE TABLE animals (
                                 animal_id INTEGER PRIMARY KEY,
                                 group_id INTEGER,
@@ -41,10 +42,10 @@ class ExperimentDatabase:
             pass
 
 
-    def setup_experiment(self, name, species, uses_rfid, num_animals, num_groups, cage_max):
-        self._c.execute(''' INSERT INTO experiment (name, species, uses_rfid, num_animals, num_groups, cage_max) 
-                            VALUES (?, ?, ?, ?, ?, ?)''',
-                            (name, species, uses_rfid, num_animals, num_groups, cage_max))
+    def setup_experiment(self, name, species, uses_rfid, num_animals, num_groups, cage_max, id):
+        self._c.execute(''' INSERT INTO experiment (name, species, uses_rfid, num_animals, num_groups, cage_max, id) 
+                            VALUES (?, ?, ?, ?, ?, ?, ?)''',
+                            (name, species, uses_rfid, num_animals, num_groups, cage_max, id))
         self._conn.commit()
 
     def setup_groups(self, group_names):

@@ -1,4 +1,5 @@
 import csv
+import uuid
 from datetime import date
 from database_apis.experiment_database import ExperimentDatabase
 from database_apis.experiment_database import ExperimentDatabase
@@ -11,6 +12,7 @@ class Experiment():
         self.investigators = []
         self.species = ''
         self.items = []
+        self.id = ''
         self.rfid = False
         self.num_animals = ''
         self.num_groups = '0'
@@ -58,6 +60,10 @@ class Experiment():
 
     def set_max_animals(self, num):
         self.max_per_cage = num
+    
+    def set_unique_id(self):
+        unique_id = uuid.uuid1()
+        self.id = str(unique_id)
 
     
     def set_group_names(self, names):
@@ -140,7 +146,7 @@ class Experiment():
         file = 'databases/experiments/' + self.name + '.db'
         db = ExperimentDatabase(file)
         db.setup_experiment(self.name, self.species, self.rfid, self.num_animals, 
-                            self.num_groups, self.max_per_cage)
+                            self.num_groups, self.max_per_cage, self.id)
         db.setup_groups(self.group_names)
         db.setup_cages(self.num_animals, self.num_groups, self.max_per_cage)
         db.setup_measurement_items(self.data_collect_type)
