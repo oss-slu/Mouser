@@ -221,6 +221,7 @@ class NewExperimentUI(MouserPage):
     def save_input(self):
         if self.check_name_exist():
             self.input.set_name(self.exper_name.get())
+            self.input.set_unique_id()
             self.input.set_investigators(self.added_invest)
             self.input.set_species(self.species.get())
             self.input.set_measurement_items(self.items)
