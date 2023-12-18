@@ -32,7 +32,7 @@ class MapRFIDPage(MouserPage):
         self.serial_port_controller = SerialPortController()
 
         self.animals = []
-        self.animal_id = 0
+        self.animal_id = 1
 
         self.animal_id_entry_text = StringVar(value="1")
 
@@ -124,8 +124,6 @@ class MapRFIDPage(MouserPage):
                 self.right_click.grab_release()
 
     def add_random_rfid(self):
-        #print(self.serial_port_controller.get_reader_port())
-        #print(self.serial_port_controller.get_writer_port())
         if (len(self.animals) == self.db.get_number_animals()):
             self.raise_warning()
         elif(self.serial_port_controller.get_writer_port() != None):
@@ -136,16 +134,13 @@ class MapRFIDPage(MouserPage):
         else:
             rfid = get_random_rfid()
             self.add_value(rfid)
-
+            
     def add_value(self, rfid):
-        self.animal_id = self.db.add_animal(rfid)
-        value = (self.animal_id, rfid)
-        self.table.tag_configure('text_font', font=('Arial', 10))
-        self.table.insert('', END, values=value, tags='text_font')
-        self.animals.append(value)
-        self.animal_id_entry_text.set(str(self.animal_id))
-        self.scroll_to_latest_entry()
-        play_sound_async('./sounds/rfid_success.mp3')
+        item_id = self.animal_id
+        self.table.insert('', item_id-1, values=(item_id, rfid), tags='text_font')
+        # self.animals.append((item_id, rfid))
+        self.animals.insert(item_id-1, (item_id, rfid))
+        self.change_entry_text()
 
     def change_selected_value(self, rfid):
         item = self.table.item(self.changing_value)
@@ -159,10 +154,8 @@ class MapRFIDPage(MouserPage):
 
         if len(selected) != 1:
             self.change_rfid_button["state"] = "disabled"
-            #self.serial_port_button["state"] = "disabled"
         else:
             self.change_rfid_button["state"] = "normal"
-            #self.serial_port_button["state"] = "normal"
 
         if len(selected) == 0:
             self.delete_button["state"] = "disabled"
@@ -170,8 +163,33 @@ class MapRFIDPage(MouserPage):
             self.delete_button["state"] = "normal"
 
     def remove_selected_items(self):
-        for item in self.table.selection():
+        selected_items = self.table.selection()
+
+        for item in selected_items:
+            item_id = int(self.table.item(item, 'values')[0])
             self.table.delete(item)
+
+            # Update animal id
+            self.animals = [(index, rfid) for (index, rfid) in self.animals if index != item_id]
+        
+        self.change_entry_text()
+
+    def change_entry_text(self):
+        # Update entry text after removal
+        if self.animals:
+            next_animal = self.get_next_animal()
+            self.animal_id_entry_text.set(str(next_animal))
+            self.animal_id = next_animal
+        else:
+            self.animal_id_entry_text.set("1")
+            
+    def get_next_animal(self):
+        next_animal = self.animals[-1][0] + 1
+        for i, animal in enumerate(self.animals):
+            if i < len(self.animals) - 1 and animal[0] + 1 != self.animals[i+1][0]:
+                next_animal = animal[0] + 1
+                break
+        return next_animal
 
     def open_change_rfid(self):
         self.changing_value = self.table.selection()[0]
