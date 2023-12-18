@@ -32,7 +32,7 @@ class MapRFIDPage(MouserPage):
         self.serial_port_controller = SerialPortController()
 
         self.animals = []
-        self.animal_id = 0
+        self.animal_id = 1
 
         self.animal_id_entry_text = StringVar(value="1")
 
@@ -124,8 +124,6 @@ class MapRFIDPage(MouserPage):
                 self.right_click.grab_release()
 
     def add_random_rfid(self):
-        #print(self.serial_port_controller.get_reader_port())
-        #print(self.serial_port_controller.get_writer_port())
         if (len(self.animals) == self.db.get_number_animals()):
             self.raise_warning()
         elif(self.serial_port_controller.get_writer_port() != None):
@@ -136,33 +134,13 @@ class MapRFIDPage(MouserPage):
         else:
             rfid = get_random_rfid()
             self.add_value(rfid)
+            
     def add_value(self, rfid):
-        item_id = len(self.animals) + 1
-        self.table.insert('', END, values=(item_id, rfid), tags='text_font')
-        self.animals.append((item_id, rfid))
-        self.animal_id_entry_text.set(str(item_id))
-
-    def add_animal(self, rfid, remarks=''):
-    # Add the RFID to the animal_rfid table
-        self._c.execute("INSERT INTO animal_rfid (rfid) VALUES (?)", (rfid,))
-        self._conn.commit()
-
-    # Get the last inserted animal_id
-        self._c.execute("SELECT last_insert_rowid()")
-        animal_id = self._c.fetchone()[0]
-
-    # Get the next available cage_id
-        cage_id = self._get_next_cage()
-
-    # Get the next available group_id
-        group_id = self._get_next_group()
-
-    # Insert the animal information into the animals table
-        self._c.execute("INSERT INTO animals (animal_id, group_id, cage_id, remarks, active) VALUES (?, ?, ?, ?, 1)",
-                    (animal_id, group_id, cage_id, remarks))
-        self._conn.commit()
-
-        return animal_id
+        item_id = self.animal_id
+        self.table.insert('', item_id-1, values=(item_id, rfid), tags='text_font')
+        # self.animals.append((item_id, rfid))
+        self.animals.insert(item_id-1, (item_id, rfid))
+        self.change_entry_text()
 
     def change_selected_value(self, rfid):
         item = self.table.item(self.changing_value)
@@ -176,10 +154,8 @@ class MapRFIDPage(MouserPage):
 
         if len(selected) != 1:
             self.change_rfid_button["state"] = "disabled"
-            #self.serial_port_button["state"] = "disabled"
         else:
             self.change_rfid_button["state"] = "normal"
-            #self.serial_port_button["state"] = "normal"
 
         if len(selected) == 0:
             self.delete_button["state"] = "disabled"
@@ -194,22 +170,26 @@ class MapRFIDPage(MouserPage):
             self.table.delete(item)
 
             # Update animal id
-            self.animals = [(index, rfid) for index, (_, rfid) in enumerate(self.animals, start=1) if index != item_id]
-            self.value_removal()
+            self.animals = [(index, rfid) for (index, rfid) in self.animals if index != item_id]
+        
+        self.change_entry_text()
 
-            # Subtract one from the animal_id counter
-            self.animal_id -= 1
-
-    def value_removal(self):
-        # Adjust Animal ID after animal is removed
-        for i, item in enumerate(self.animals, start=1):
-            self.table.item(i, values=(i, item[1]), tags='text_font')
-
+    def change_entry_text(self):
         # Update entry text after removal
         if self.animals:
-            self.animal_id_entry_text.set(str(self.animals[-1][0]))
+            next_animal = self.get_next_animal()
+            self.animal_id_entry_text.set(str(next_animal))
+            self.animal_id = next_animal
         else:
-            self.animal_id_entry_text.set("")
+            self.animal_id_entry_text.set("1")
+            
+    def get_next_animal(self):
+        next_animal = self.animals[-1][0] + 1
+        for i, animal in enumerate(self.animals):
+            if i < len(self.animals) - 1 and animal[0] + 1 != self.animals[i+1][0]:
+                next_animal = animal[0] + 1
+                break
+        return next_animal
 
     def open_change_rfid(self):
         self.changing_value = self.table.selection()[0]
