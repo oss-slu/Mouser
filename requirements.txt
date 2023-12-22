@@ -1,5 +1,5 @@
 playsound
-# tkcalendar
+tkcalendar
 # pandas
 # getmac
 # pyserial
