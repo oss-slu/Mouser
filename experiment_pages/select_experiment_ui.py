@@ -24,7 +24,7 @@ class NewExperimentButton(Button):
 
 class ExperimentsUI(MouserPage, ChangeableFrame):
     def __init__(self, parent:Tk, prev_page: Frame = None):
-        super().__init__(parent, "Experiments", prev_page)
+        super().__init__(parent, "Experiments")
         self.parent = parent
 
         NewExperimentButton(parent, self)
@@ -32,28 +32,18 @@ class ExperimentsUI(MouserPage, ChangeableFrame):
         self.main_frame = Frame(self)
         self.main_frame.place(relx=.12, rely = 0.25, relheight= .75, relwidth= .75)
         self.main_frame.grid_columnconfigure(0, weight=1)
-        
 
         self.selectable_frames = []
         self.update_frame()
 
-
     def read_csv(self):
         self.experiment_list = []
-        with open('./database_apis/created_experiments.csv', 'r') as f:
-            reader = csv.reader(f)
-            for line in reader:
-                self.experiment_list.append(line)
-            f.close()
-
 
     def update_frame(self):
         for widget in self.main_frame.winfo_children():
             widget.destroy()
 
         self.read_csv()
-        Label(self, text='Name').place(relx=0.14, rely=0.2)
-        Label(self, text='Date Created').place(relx=0.7, rely=0.2)
 
         index = 0
         for exp in self.experiment_list:
@@ -62,12 +52,7 @@ class ExperimentsUI(MouserPage, ChangeableFrame):
             date = exp[1]
             self.create_selectable_frame(name, date, index)
 
-
-
     def create_selectable_frame(self, name, date, index):
-        
-
-
         frame = Frame(self.main_frame, borderwidth=3, relief='groove')
         frame.grid(row=index, column=0, pady=5, sticky='NESW')
         frame.grid_columnconfigure(0, weight= 1)
@@ -85,14 +70,11 @@ class ExperimentsUI(MouserPage, ChangeableFrame):
         name_label.bind("<Button-1>", lambda event, arg=name: self.frame_click(event, arg))
         date_label.bind("<Button-1>", lambda event, arg=name: self.frame_click(event, arg))
 
-
     def frame_hover(self, event, frame):
         frame['relief'] = 'sunken'
 
-
     def frame_hover_leave(self, event, frame):
         frame['relief'] = 'groove'
-
 
     def frame_click(self, event, name):
         page = ExperimentMenuUI(self.parent, name, self)

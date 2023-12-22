@@ -1,0 +1,37 @@
+on:
+  push:
+    branches:
+      - main
+      - create-exe
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["windows-latest", "macos-latest"]
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.11
+      - run: brew install mysql pkg-config portaudio
+        if: ${{ matrix.os == 'macos-latest' }}
+      - run: pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
+      - run: pip uninstall -y typing
+      - run: pyinstaller --noconfirm --noconsole --onedir -c --copy-metadata tqdm --copy-metadata regex --copy-metadata sacremoses --copy-metadata requests --copy-metadata packaging --copy-metadata filelock --copy-metadata tokenizers --copy-metadata importlib_metadata --collect-data sv_ttk --hidden-import "babel.numbers" GUI.py
+      - shell: cmd
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: |
+          robocopy databases dist/main/databases
+          robocopy images dist/main/images
+          robocopy sounds dist/main/sounds
+          ren dist\main\main.exe Mouser.exe
+      - uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: Mouser_${{ matrix.os }}
+          path: dist/main/*

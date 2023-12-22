@@ -133,16 +133,7 @@ class Experiment():
     def check_measurement_items_changed(self):
         return self.measurement_items_changed
 
-
-    def add_to_list(self):
-        with open('database_apis/created_experiments.csv', 'a', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow([self.name, self.date_created])
-            f.close()
-
-
     def save_to_database(self):
-        self.add_to_list()
         file = 'databases/experiments/' + self.name + '.db'
         db = ExperimentDatabase(file)
         db.setup_experiment(self.name, self.species, self.rfid, self.num_animals, 
