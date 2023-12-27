@@ -207,30 +207,18 @@ class NewExperimentUI(MouserPage):
         elif int(self.animal_num.get()) % int(self.group_num.get()) == 0 and int(self.animal_num.get()) != 0:
             self.save_input()
 
-    def check_name_exist(self):
-        file = 'databases/experiments/' + self.exper_name.get() + '.db'
-        if exists(file):
-            self.raise_warning(3)
-            return False
-        else:
-            return True
-
-        
-
-
     def save_input(self):
-        if self.check_name_exist():
-            self.input.set_name(self.exper_name.get())
-            self.input.set_unique_id()
-            self.input.set_investigators(self.added_invest)
-            self.input.set_species(self.species.get())
-            self.input.set_measurement_items(self.items)
-            self.input.set_uses_rfid(self.rfid.get())
-            self.input.set_num_animals(self.animal_num.get())
-            self.input.set_num_groups(self.group_num.get())
-            self.input.set_max_animals(self.num_per_cage.get())
-            self.input.set_animals_per_group(int(self.animal_num.get()) / int(self.group_num.get()))
+        self.input.set_name(self.exper_name.get())
+        self.input.set_unique_id()
+        self.input.set_investigators(self.added_invest)
+        self.input.set_species(self.species.get())
+        self.input.set_measurement_items(self.items)
+        self.input.set_uses_rfid(self.rfid.get())
+        self.input.set_num_animals(self.animal_num.get())
+        self.input.set_num_groups(self.group_num.get())
+        self.input.set_max_animals(self.num_per_cage.get())
+        self.input.set_animals_per_group(int(self.animal_num.get()) / int(self.group_num.get()))
 
-            self.next_page.update_page()
+        self.next_page.update_page()
 
         

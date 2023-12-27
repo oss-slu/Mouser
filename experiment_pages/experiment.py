@@ -133,8 +133,8 @@ class Experiment():
     def check_measurement_items_changed(self):
         return self.measurement_items_changed
 
-    def save_to_database(self):
-        file = 'databases/experiments/' + self.name + '.db'
+    def save_to_database(self, directory: str):
+        file = directory + '/' + self.name + '.db'
         db = ExperimentDatabase(file)
         db.setup_experiment(self.name, self.species, self.rfid, self.num_animals, 
                             self.num_groups, self.max_per_cage, self.id)

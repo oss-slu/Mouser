@@ -24,10 +24,8 @@ class NewExperimentButton(Button):
 
 class ExperimentsUI(MouserPage, ChangeableFrame):
     def __init__(self, parent:Tk, prev_page: Frame = None):
-        super().__init__(parent, "Experiments")
+        super().__init__(parent, "Mouser")
         self.parent = parent
-
-        NewExperimentButton(parent, self)
 
         self.main_frame = Frame(self)
         self.main_frame.place(relx=.12, rely = 0.25, relheight= .75, relwidth= .75)

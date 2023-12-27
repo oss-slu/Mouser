@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter.ttk import *
+from tkinter.filedialog import *
 from tk_models import *
 from scrollable_frame import ScrolledFrame
 from experiment_pages.experiment import Experiment
@@ -8,12 +9,18 @@ from experiment_pages.experiment import Experiment
 class CreateExperimentButton(Button):
     def __init__(self, experiment: Experiment, page: Frame, menu_page: Frame):
         super().__init__(page, text="Create", compound=TOP,
-                         width=15, command=lambda: [experiment.save_to_database(), menu_page.update_frame(), self.navigate()])
+                         width=15, command=lambda: [self.create_experiment(), self.navigate()])
         self.place(relx=0.85, rely=0.15, anchor=CENTER)
+        self.experiment = experiment
         self.next_page = menu_page
 
     def navigate(self):
         self.next_page.tkraise()
+        
+    def create_experiment(self):
+        directory = askdirectory()
+        if directory:
+            self.experiment.save_to_database(directory)
 
 
 class SummaryUI(MouserPage):
@@ -113,7 +120,4 @@ class SummaryUI(MouserPage):
 
             self.main_frame.grid_rowconfigure(index, weight=1)
             self.main_frame.grid_columnconfigure(index, weight=1)
-
-
-    def create_experiment(self):
-        self.input.save_to_database()
+            
