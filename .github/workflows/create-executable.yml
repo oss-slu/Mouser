@@ -32,7 +32,6 @@ jobs:
           robocopy images dist/main/images
           robocopy sounds dist/main/sounds
           ren dist\main\main.exe Mouser.exe
-          mkdir dist\main\database_apis\fake_data
       - uses: actions/upload-artifact@v2
         if: always()
         with:
