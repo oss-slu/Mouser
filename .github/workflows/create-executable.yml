@@ -24,7 +24,7 @@ jobs:
       - run: pip install --upgrade wheel
       - run: pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
       - run: pip uninstall -y typing
-      - run: pyinstaller --noconfirm --noconsole --onedir -c --copy-metadata tqdm --copy-metadata regex --copy-metadata sacremoses --copy-metadata requests --copy-metadata packaging --copy-metadata filelock --copy-metadata tokenizers --copy-metadata importlib_metadata --collect-data sv_ttk --hidden-import "babel.numbers" GUI.py
+      - run: pyinstaller --noconfirm --noconsole --onedir -c --copy-metadata tqdm --copy-metadata regex --copy-metadata sacremoses --copy-metadata requests --copy-metadata packaging --copy-metadata filelock --copy-metadata tokenizers --copy-metadata importlib_metadata --collect-data sv_ttk --hidden-import "babel.numbers" main.py
       - shell: cmd
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
