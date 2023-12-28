@@ -32,20 +32,20 @@ class DataCollectionDatabase:
         
     #     self.measurement_items = measurement_items
       
-    # def get_all_data(self):
+    def get_all_data(self):
     #     data_file = pd.read_csv(self.filename)
     #     list_of_csv = [tuple(row) for row in data_file.values]
-    #     return list_of_csv
+        return []
           
-    # def get_data_for_date(self, date: str):
+    def get_data_for_date(self, date: str):
     #     data = self.get_all_data()
     #     new_data = []
     #     for entry in data:
     #         if entry[0] == date:
     #             new_data.append(entry)
-    #     return new_data
+        return []
     
-    # def set_data_for_entry(self, values: tuple):
+    def set_data_for_entry(self, values: tuple):
     #     data_file = pd.read_csv(self.filename)
     #     data = self.get_all_data()
     #     for i, entry in enumerate(data):
@@ -57,3 +57,4 @@ class DataCollectionDatabase:
     #         data_file.loc[len(data_file.index)] = values
                 
     #     data_file.to_csv(self.filename, index=False)
+        data = []
