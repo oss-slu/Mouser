@@ -102,19 +102,6 @@ class ExperimentMenuUI(MouserPage):
             print(error)
             return
 
-        #delete from experiment selection file from the created_experiments csv
-        experiment_list = []
-        with open('./database_apis/created_experiments.csv', 'r') as f:
-            reader = csv.reader(f)
-            for line in reader:
-                if line[0] != name:
-                    experiment_list.append(line)
-
-        with open('./database_apis/created_experiments.csv', 'w', newline="") as f:
-            writer = csv.writer(f)
-            writer.writerows(experiment_list)
-
-
         # #return to experiment selection page 
         # problem: the selection page still has the experiment
         page.update_frame()
