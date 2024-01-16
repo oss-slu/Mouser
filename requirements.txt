@@ -3,3 +3,4 @@ tkcalendar
 pandas
 getmac
 pyserial
+cryptography
