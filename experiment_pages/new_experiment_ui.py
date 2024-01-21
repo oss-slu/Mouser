@@ -1,4 +1,4 @@
-from tkinter import *
+from tkinter  import *
 from tkinter.ttk import *
 from tk_models import *
 from os.path import *
@@ -10,13 +10,14 @@ from database_apis.users_database import UsersDatabase
 class NewExperimentUI(MouserPage):
     def __init__(self, parent:Tk, menu_page: Frame = None):
         super().__init__(parent, "New Experiment", menu_page)
-
+        if self.is_main_page==False:
+            self.hide_welcome_elements()
         self.input = Experiment()
         self.users_database = UsersDatabase()
-
+        #self.menu_button = MenuButton(self, menu_page) if menu_page else None
         self.next_page = GroupConfigUI(self.input, parent, self, menu_page)
         self.set_next_button(self.next_page)
-
+        
         scroll_canvas = ScrolledFrame(self)
         scroll_canvas.place(relx=0.12, rely=0.25, relheight=0.75, relwidth=0.88)
 
@@ -47,7 +48,7 @@ class NewExperimentUI(MouserPage):
         Label(self.main_frame, text="Max Animals per Cage").grid(row=9, column=0, sticky=W, padx=pad_x, pady=pad_y)
 
         self.exper_name = Entry(self.main_frame, width=40)
-        self.investigators = Combobox(self.main_frame, values=self.get_user_list(), width=37)
+        self.investigators = Entry(self.main_frame, width=37)
         self.species = Entry(self.main_frame, width=40)
         self.measure_items = Entry(self.main_frame, width=40)
         self.animal_num = Entry(self.main_frame, width=10)
@@ -206,6 +207,7 @@ class NewExperimentUI(MouserPage):
             self.raise_warning(1)
         elif int(self.animal_num.get()) % int(self.group_num.get()) == 0 and int(self.animal_num.get()) != 0:
             self.save_input()
+        
 
     def save_input(self):
         self.input.set_name(self.exper_name.get())
@@ -220,5 +222,3 @@ class NewExperimentUI(MouserPage):
         self.input.set_animals_per_group(int(self.animal_num.get()) / int(self.group_num.get()))
 
         self.next_page.update_page()
-
-        

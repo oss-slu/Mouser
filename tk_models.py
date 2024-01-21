@@ -1,6 +1,7 @@
-from tkinter import *
+from tkinter  import *
 from tkinter.ttk import *
 from abc import ABC, abstractmethod
+from PIL import Image, ImageTk
 
 def raise_frame(frame: Frame):
     frame.tkraise()
@@ -41,30 +42,63 @@ class ChangePageButton(Button):
 
 
 class MouserPage(Frame):
-    def __init__(self, parent: Tk, title: str, menu_page: Frame = None):
+    def __init__(self, parent: Tk, title: str, is_main_page: bool = True, menu_page: Frame = None):
         super().__init__(parent)
         self.title = title
-
-        self.canvas = Canvas(self, width=600, height=600)
-        self.canvas.grid(row=0, column=0, columnspan= 4)
+        self.is_main_page = is_main_page
+        self.canvas = Canvas(self, width=800, height=800)
+        self.canvas.grid(row=0, column=0, columnspan= 5)
         self.rectangle = self.canvas.create_rectangle(0, 0, 600, 50, fill='#0097A7')
         self.title_label = self.canvas.create_text(300, 13, anchor="n")
         self.canvas.itemconfig(self.title_label, text=title, font=("Arial", 18))
+       
+        if self.is_main_page:
+            self.display_welcome_elements()
+            
         self.grid(row=0, column=0, sticky="NESW")
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
         self.canvas.grid_rowconfigure(0, weight=1)
         self.canvas.grid_columnconfigure(0, weight=1)
-
-        self.menu_button = MenuButton(self, menu_page) if menu_page else None
+        
+        #self.menu_button = MenuButton(self, menu_page) if menu_page else None
         self.next_button = None
         self.previous_button = None
 
         self.check_window_size()
+        
 
     def raise_frame(self):
         self.tkraise()
+
+    def display_welcome_elements(self):
+        # Add a welcome message
+        if self.is_main_page:
+            self.welcome_label = Label(self.canvas, text="Welcome to Mouser!", font=("Arial", 16))
+            self.canvas.create_window(300, 55, anchor="n", window=self.welcome_label)
+            self.welcome_label.place()
+        
+        # Add an image
+        image_path = "images/mouse_small.png"  # Change this to the path of your image file
+        self.img = Image.open(image_path)
+        self.img = self.img.resize((50,50))
+        self.img = ImageTk.PhotoImage(self.img)
+        self.image_label = Label(self.canvas, image=self.img)
+        self.image_label.image = self.img
+        self.canvas.create_window(550, 0, anchor="n", window=self.image_label)
+        self.image_label.place()
+        #Add minor instructions
+        #self.instructions_label = Label(self.canvas, text="To create/open experiments, use the 'File' menu.",
+         #                               font=("Arial", 12))
+        #self.canvas.create_window(100,140, anchor="n", window=self.instructions_label)
+
+    def hide_welcome_elements(self):
+        if hasattr(self, 'welcome_label'):
+            self.welcome_label.grid_forget()
+
+        if hasattr(self, 'image_label'):
+            self.image_label.grid_forget()
 
     def set_next_button(self, next_page):
         if self.next_button:
@@ -114,7 +148,8 @@ if __name__ == '__main__':
     root.title("Template Test")
     root.geometry('600x600')
 
-    main_frame = MouserPage(root, "Main")
+    main_frame = MouserPage(root, "Main", is_main_page)
+    
     frame = MouserPage(root, "Template")
 
     main_frame.set_next_button(frame)

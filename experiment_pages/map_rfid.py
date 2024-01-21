@@ -1,8 +1,8 @@
-from tkinter import *
-from tkinter import messagebox
+from tkinter  import *
+from tkinter  import messagebox
 from tkinter.ttk import *
 from tk_models import *
-import tkinter.font as tkfont
+import tkinter .font as tkfont
 import random
 from playsound import playsound
 import threading
@@ -216,7 +216,7 @@ class MapRFIDPage(MouserPage):
 
         message.mainloop()
 
-    def press_back_to_menu_button(self):
+    def press__button(self):
         if (len(self.animals) != self.db.get_number_animals()):
             self.raise_warning(warning_message= 'Not all animals have been mapped to RFIDs')
         else:

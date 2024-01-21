@@ -1,4 +1,4 @@
-from tkinter import *
+from tkinter  import *
 from tkinter.ttk import *
 from tk_models import *
 import os
@@ -16,15 +16,15 @@ class ExperimentMenuUI(MouserPage):
         #Get name of file from file path
         experiment_name = os.path.basename(name)
         experiment_name = os.path.splitext(experiment_name)[0]
-
-        super().__init__(parent, experiment_name, prev_page)
         
+        super().__init__(parent, experiment_name, prev_page)
+        self.welcome_label.pack_forget()
         main_frame = Frame(self)
         main_frame.grid(row=6, column=1, sticky='NESW')
         main_frame.place(relx=0.3, rely=0.20, relwidth= 0.40, relheight = 0.75)
         
         main_frame.grid_columnconfigure(0, weight = 1)
-
+        
         self.data_page = DataCollectionUI(parent, self, name)
         self.analysis_page = DataAnalysisUI(parent, self)
         self.cage_page = CageConfigurationUI(name, parent, self)
@@ -43,18 +43,19 @@ class ExperimentMenuUI(MouserPage):
                                                   self.cage_page.update_config_frame()])
         rfid_button = Button(main_frame, text='Map RFID', width=button_size,
                                 command= lambda: self.rfid_page.raise_frame())
-        invest_button = Button(main_frame, text='Investigators', width=button_size,
+        """invest_button = Button(main_frame, text='Investigators', width=button_size,
                                 command= lambda: self.invest_page.raise_frame())
         delete_button = Button(main_frame, text='Delete Experiment', width=button_size,
-                                command= lambda: self.delete_warning(prev_page, name))
+                                command= lambda: self.delete_warning(prev_page, name))"""
 
         collection_button.grid(row=0, column=0, ipady=10, ipadx=10, pady=10, padx=10)
         analysis_button.grid(row=1, column=0, ipady=10, ipadx=10, pady=10, padx=10)
         group_button.grid(row=2, column=0, ipady=10, ipadx=10, pady=10, padx=10)
         rfid_button.grid(row=3, column=0, ipady=10, ipadx=10, pady=10, padx=10)
-        invest_button.grid(row=4, column=0, ipadx=10, ipady=10, pady=10, padx=10)
-        delete_button.grid(row=5, column=0, ipadx=10, ipady=10, pady=10, padx=10)
+        #invest_button.grid(row=4, column=0, ipadx=10, ipady=10, pady=10, padx=10)
+        #delete_button.grid(row=5, column=0, ipadx=10, ipady=10, pady=10, padx=10)
 
+    
 
     def delete_warning(self, page: Frame, name: str):
         message = Tk()
@@ -106,5 +107,3 @@ class ExperimentMenuUI(MouserPage):
         # problem: the selection page still has the experiment
         page.update_frame()
         page.tkraise()
-
-

@@ -2,7 +2,9 @@
 
 ## Description
 
-This project is meant to be used for tracking the data of animal experiments.
+This project is meant to be used for used for collecting and analyzing data from animal experiments. 
+Mouser allows laboratory equipment (balances, calipers, RFID chip readers) to be connected to a PC, and researchers can quickly take repeated measurements with as little interaction as possible. 
+The program gives confirmation to the user through sounds and changes in display, allowing them to focus on the experiment.
 
 ## Developer Guide
 
@@ -10,8 +12,8 @@ This project is meant to be used for tracking the data of animal experiments.
 
 - This project requires a Python 3 installation, ideally 3.9 or newer.
 
-- Additional Python libraries also required and are found in the `requirements.txt` file. They can be installed using `pip install <LIBRARY>` (replace `<LIBRARY>` with the library that you want to install).
-
+- Additional Python libraries also required and are found in the `requirements.txt` file. They can be installed using `pip install -r requirements.txt` 
+All the Libraries 
   - Licenses for these libraries: https://docs.google.com/spreadsheets/d/10V4Tzy8WnGbYQM76NdHAqNodl70Ce8RNN2XIa36jQHw/edit#gid=0
 
 - This project works best on Windows machines, but can still be run on MacOS and Linux. The main issues with the latter concern graphics and how the app looks, but there are also some minor problems that can occur when using different operating systems.
@@ -24,6 +26,10 @@ This project is meant to be used for tracking the data of animal experiments.
     - This directory include files that allow for the creation and modification of lab experiments
     - Each page of the app exist in separate files. So, the code associated with the experiments menu, the experiment creation form, the data collection page, etc. are split up into different files.
     - Most of the code revolves around the user interface, but there are also sections that grab data from or send data to the databases
+  - images
+    - This directory includes all the images utilized in the project
+  - sounds
+    - This directory includes sounds utilized in the project
   - Database APIs (`database_apis`)
     - This directory has the code that is essentially a "buffer" between the front end of the application and the databases.
     - There are two Python files in the directory: one works with the database of users, and the other works with the database of experiments.

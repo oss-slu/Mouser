@@ -1,4 +1,6 @@
-from tkinter import *
+#Main.py
+
+from tkinter  import *
 from tkinter.ttk import *
 from tkinter.filedialog import *
 from login import LoginFrame
@@ -32,7 +34,7 @@ file_menu.add_command(label = "Open", command = open_file)
 menu_bar.add_cascade(label = "File", menu=file_menu)
 root.config(menu=menu_bar)
 
-main_frame = MouserPage(root, "Mouser")
+main_frame = MouserPage(root, "Mouser", is_main_page=True)
 login_frame = LoginFrame(root, main_frame)
 
 experiments_frame = ExperimentsUI(root, main_frame)
@@ -43,5 +45,3 @@ root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)
 
 root.mainloop()
-
-

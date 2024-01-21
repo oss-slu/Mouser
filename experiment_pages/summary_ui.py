@@ -1,4 +1,4 @@
-from tkinter import *
+from tkinter  import *
 from tkinter.ttk import *
 from tkinter.filedialog import *
 from tk_models import *

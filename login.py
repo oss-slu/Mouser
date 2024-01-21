@@ -1,4 +1,4 @@
-from tkinter import *
+from tkinter  import *
 from tkinter.ttk import *
 from tk_models import *
 from getmac import get_mac_address as gma
