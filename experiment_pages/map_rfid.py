@@ -12,6 +12,7 @@ from serial import serialutil
 
 
 from database_apis.experiment_database import ExperimentDatabase
+from audio import AudioManager
 
 def get_random_rfid():
     return random.randint(1000000, 9999999)
@@ -142,12 +143,21 @@ class MapRFIDPage(MouserPage):
         self.animals.insert(item_id-1, (item_id, rfid))
         self.change_entry_text()
 
+        manager = AudioManager()
+        manager.play("C:/Users/adobe/Capstone/Mouser/sounds/rfid_success.wav")
+
     def change_selected_value(self, rfid):
         item = self.table.item(self.changing_value)
         self.table.item(self.changing_value, values=(
             item['values'][0], rfid))
         self.change_rfid_button["state"] = "normal"
-        play_sound_async('./sounds/rfid_success.mp3')
+        #play_sound_async('./sounds/rfid_success.mp3')
+
+        manager = AudioManager()
+        manager.play("C:/Users/adobe/Capstone/Mouser/sounds/rfid_success.wav")
+
+
+        
 
     def item_selected(self, event):
         selected = self.table.selection()
