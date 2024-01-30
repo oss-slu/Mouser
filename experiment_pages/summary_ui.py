@@ -4,23 +4,49 @@ from tkinter.filedialog import *
 from tk_models import *
 from scrollable_frame import ScrolledFrame
 from experiment_pages.experiment import Experiment
+from experiment_pages.experiment_menu_ui import ExperimentMenuUI
+from experiment_pages.password_utils import PasswordManager
+import os
+import tempfile
 
 
 class CreateExperimentButton(Button):
     def __init__(self, experiment: Experiment, page: Frame, menu_page: Frame):
         super().__init__(page, text="Create", compound=TOP,
-                         width=15, command=lambda: [self.create_experiment(), self.navigate()])
+                         width=15, command=lambda: [self.create_experiment()])
         self.place(relx=0.85, rely=0.15, anchor=CENTER)
         self.experiment = experiment
         self.next_page = menu_page
-
-    def navigate(self):
-        self.next_page.tkraise()
         
     def create_experiment(self):
         directory = askdirectory()
         if directory:
             self.experiment.save_to_database(directory)
+            if(self.experiment.get_password()):
+                password = self.experiment.get_password()
+                file = directory + '/' + self.experiment.get_name() + '_Protected.mouser'
+                manager = PasswordManager(password)
+                decrypted_data = manager.decrypt_file(file)
+                temp_folder_name = "Mouser"
+                temp_folder_path = os.path.join(tempfile.gettempdir(), temp_folder_name)
+                os.makedirs(temp_folder_path, exist_ok=True)
+                temp_file_name = self.experiment.get_name() + '_Protected.mouser'
+                temp_file_path = os.path.join(temp_folder_path, temp_file_name)
+                if os.path.exists(temp_file_path):
+                    os.remove(temp_file_path)
+
+                with open(temp_file_path, "wb") as temp_file:
+                    temp_file.write(decrypted_data)
+                    temp_file.seek(0)
+                    root= self.winfo_toplevel()
+                    page = ExperimentMenuUI(root, temp_file.name)
+                    page.tkraise()
+                        
+            else:
+                file = directory + '/' + self.experiment.get_name() + '.mouser'
+                root= self.winfo_toplevel()
+                page = ExperimentMenuUI(root, file)
+                page.tkraise()
 
 
 class SummaryUI(MouserPage):
