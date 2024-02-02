@@ -142,19 +142,16 @@ class MapRFIDPage(MouserPage):
         # self.animals.append((item_id, rfid))
         self.animals.insert(item_id-1, (item_id, rfid))
         self.change_entry_text()
-
-        manager = AudioManager()
-        manager.play("C:/Users/adobe/Capstone/Mouser/sounds/rfid_success.wav")
+        AudioManager.play("sounds/rfid_success.wav")
 
     def change_selected_value(self, rfid):
         item = self.table.item(self.changing_value)
         self.table.item(self.changing_value, values=(
             item['values'][0], rfid))
         self.change_rfid_button["state"] = "normal"
-        #play_sound_async('./sounds/rfid_success.mp3')
+        
+        AudioManager.play("sounds/rfid_success.wav")
 
-        manager = AudioManager()
-        manager.play("C:/Users/adobe/Capstone/Mouser/sounds/rfid_success.wav")
 
 
         
