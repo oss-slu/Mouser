@@ -221,6 +221,8 @@ class MapRFIDPage(MouserPage):
                         command= lambda: [message.destroy()])
         ok_button.grid(row=2, column=0, padx=10, pady=10)
 
+        AudioManager.play("sounds\error.wav")
+
         message.mainloop()
 
     def press_back_to_menu_button(self):
@@ -447,3 +449,5 @@ class SerialSimulator():
         message.title('Warning')
         label = Label(message, text='Please select a serial port from the drop down list')
         label.grid(row=0, column=0, padx=10, pady=10)
+
+        AudioManager.play("sounds/error.wav")

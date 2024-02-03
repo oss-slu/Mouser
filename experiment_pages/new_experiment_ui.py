@@ -6,6 +6,7 @@ from scrollable_frame import ScrolledFrame
 from experiment_pages.group_config_ui import GroupConfigUI
 from experiment_pages.experiment import Experiment
 from database_apis.users_database import UsersDatabase
+from audio import AudioManager
 
 class NewExperimentUI(MouserPage):
     def __init__(self, parent:Tk, menu_page: Frame = None):
@@ -184,6 +185,7 @@ class NewExperimentUI(MouserPage):
             label4 = Label(message, text='Unequal Group Size: Please allow the total number of animals to be less than or equal to the total number of animals allowed in all combined cages')
             label4.grid(row=0, column=0, padx=10, pady=10)
         
+        AudioManager.play("sounds/error.wav")
 
         ok_button = Button(message, text="OK", width=10, 
                         command= lambda: [message.destroy()])
