@@ -134,13 +134,17 @@ class MapRFIDPage(MouserPage):
         else:
             rfid = get_random_rfid()
             self.add_value(rfid)
-            
+
     def add_value(self, rfid):
         item_id = self.animal_id
         self.table.insert('', item_id-1, values=(item_id, rfid), tags='text_font')
         # self.animals.append((item_id, rfid))
         self.animals.insert(item_id-1, (item_id, rfid))
         self.change_entry_text()
+        # TODO: save the input RFID to the database in this format: animal ID, RFID ID
+        # then displays the rfid if the database has the record
+        self.db.add_animal_rfid(item_id, rfid)
+
 
     def change_selected_value(self, rfid):
         item = self.table.item(self.changing_value)
