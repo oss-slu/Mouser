@@ -56,6 +56,7 @@ class MapRFIDPage(MouserPage):
         heading_style = Style()
         heading_style.configure("Treeview.Heading", font=('Arial', 10))
 
+        # TODO: display the animal and rfid here with data from database
         columns = ('animal_id', 'rfid')
         self.table = Treeview(
             self.table_frame, columns=columns, show='headings', height=5, style='column.Treeview')
@@ -144,6 +145,8 @@ class MapRFIDPage(MouserPage):
         # TODO: save the input RFID to the database in this format: animal ID, RFID ID
         # then displays the rfid if the database has the record
         self.db.add_animal_rfid(item_id, rfid)
+
+        
 
 
     def change_selected_value(self, rfid):
