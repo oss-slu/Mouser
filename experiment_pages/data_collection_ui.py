@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter.ttk import *
+import customtkinter as ctk
 from datetime import date
 
 from tk_models import *
@@ -8,7 +9,7 @@ from database_apis.experiment_database import ExperimentDatabase
 from database_apis.data_collection_database import DataCollectionDatabase
 
 class DataCollectionUI(MouserPage):
-    def __init__(self, parent: Tk, prev_page: Frame = None, database_name = ""):
+    def __init__(self, parent: ctk, prev_page: Frame = None, database_name = ""):
         super().__init__(parent, "Data Collection", prev_page)
         
         self.database = ExperimentDatabase(database_name)
@@ -110,7 +111,7 @@ class DataCollectionUI(MouserPage):
         self.database.close()
 
 class ChangeMeasurementsDialog():
-    def __init__(self, parent: Tk, data_collection: DataCollectionUI, measurement_items: list):
+    def __init__(self, parent: ctk, data_collection: DataCollectionUI, measurement_items: list):
         self.parent = parent
         self.data_collection = data_collection
         self.measurement_items = measurement_items
