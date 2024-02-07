@@ -4,3 +4,4 @@ getmac
 pyserial
 pysound
 wave
+cryptography
