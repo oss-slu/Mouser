@@ -12,6 +12,7 @@ from serial import serialutil
 
 
 from database_apis.experiment_database import ExperimentDatabase
+from audio import AudioManager
 
 def get_random_rfid():
     return random.randint(1000000, 9999999)
@@ -141,13 +142,19 @@ class MapRFIDPage(MouserPage):
         # self.animals.append((item_id, rfid))
         self.animals.insert(item_id-1, (item_id, rfid))
         self.change_entry_text()
+        AudioManager.play("sounds/rfid_success.wav")
 
     def change_selected_value(self, rfid):
         item = self.table.item(self.changing_value)
         self.table.item(self.changing_value, values=(
             item['values'][0], rfid))
         self.change_rfid_button["state"] = "normal"
-        play_sound_async('./sounds/rfid_success.mp3')
+        
+        AudioManager.play("sounds/rfid_success.wav")
+
+
+
+        
 
     def item_selected(self, event):
         selected = self.table.selection()
@@ -213,6 +220,8 @@ class MapRFIDPage(MouserPage):
         ok_button = Button(message, text="OK", width=10, 
                         command= lambda: [message.destroy()])
         ok_button.grid(row=2, column=0, padx=10, pady=10)
+
+        AudioManager.play("sounds\error.wav")
 
         message.mainloop()
 
@@ -440,3 +449,5 @@ class SerialSimulator():
         message.title('Warning')
         label = Label(message, text='Please select a serial port from the drop down list')
         label.grid(row=0, column=0, padx=10, pady=10)
+
+        AudioManager.play("sounds/error.wav")
