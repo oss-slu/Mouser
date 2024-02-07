@@ -87,7 +87,7 @@ class DataCollectionUI(MouserPage):
         if self.auto_inc_id >= 0 and self.auto_inc_id < len(self.table.get_children()) - 1:
             self.auto_inc_id += 1
             self.open_auto_increment_changer()
-        AudioManager.play("sounds/rfid_success.wav")
+        AudioManager.play("sounds/rfid_success.wav") #play succsess sound
         
     def get_values_for_date(self, event):
         self.current_date = str(date.today())
