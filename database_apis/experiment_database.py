@@ -89,9 +89,17 @@ class ExperimentDatabase:
         self._c.execute("SELECT measurement_id, item, auto FROM measurement_items")
         return self._c.fetchall()
 
-    def add_animal(self, rfid, remarks=''):
-        self._c.execute("INSERT INTO animal_rfid (rfid) VALUES (?)", (rfid, ))
+    def add_animal_rfid(self, animal_id, rfid):
+        self._c.execute("INSERT INTO animal_rfid (animal_id, rfid) VALUES (?, ?)", (animal_id, rfid))
         self._conn.commit()
+
+    def add_animal(self, id, rfid, remarks=''):
+        # Problem: There's never an animal ID added to animal_rfid along with the rfid
+
+        #self._c.execute("INSERT INTO animal_rfid (rfid) VALUES (?)", (rfid, ))
+        #self._conn.commit()
+
+        self.add_animal_rfid(id, rfid)
         
         animal_id = self.get_animal_id(rfid)
         cage_id = self._get_next_cage()

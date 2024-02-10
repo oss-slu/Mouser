@@ -71,7 +71,9 @@ file_menu = Menu(menu_bar, tearoff= 0)
 file_menu.add_command(label = "New", command = create_file)
 file_menu.add_command(label = "Open", command = open_file)
 menu_bar.add_cascade(label = "File", menu=file_menu)
+
 root.config(menu=menu_bar)
+
 
 main_frame = MouserPage(root, "Mouser")
 login_frame = LoginFrame(root, main_frame)

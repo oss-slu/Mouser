@@ -45,6 +45,7 @@ class DataCollectionUI(MouserPage):
             if i != 0:
                 text = self.measurement_strings[i-1]
             self.table.heading(column, text=text)
+            print(text)
 
         self.table.grid(row=0, column=0, sticky='nsew')
 
@@ -66,8 +67,11 @@ class DataCollectionUI(MouserPage):
         self.open_changer()
         
     def open_changer(self):
+        print("here1")
         animal_id = self.table.item(self.changing_value)["values"][0]
+        print("here")
         self.changer.open(animal_id)
+        print("here 2")
         
     def auto_increment(self):
         self.auto_inc_id = 0
