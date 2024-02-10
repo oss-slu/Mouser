@@ -6,6 +6,7 @@ from tk_models import *
 
 from database_apis.experiment_database import ExperimentDatabase
 from database_apis.data_collection_database import DataCollectionDatabase
+from audio import AudioManager
 
 class DataCollectionUI(MouserPage):
     def __init__(self, parent: Tk, prev_page: Frame = None, database_name = ""):
@@ -90,6 +91,7 @@ class DataCollectionUI(MouserPage):
         if self.auto_inc_id >= 0 and self.auto_inc_id < len(self.table.get_children()) - 1:
             self.auto_inc_id += 1
             self.open_auto_increment_changer()
+        AudioManager.play("sounds/rfid_success.wav") #play succsess sound
         
     def get_values_for_date(self, event):
         self.current_date = str(date.today())
@@ -168,6 +170,7 @@ class ChangeMeasurementsDialog():
     def show_error(self):
         self.error_text.place(relx=0.5, rely=0.85, anchor=CENTER)
         self.submit_button["state"] = "disabled"
+        AudioManager.play("sounds/error.wav")
         
     def get_all_values(self):
         values = []

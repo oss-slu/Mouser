@@ -4,6 +4,7 @@ from datetime import date
 from database_apis.experiment_database import ExperimentDatabase
 from database_apis.experiment_database import ExperimentDatabase
 from datetime import date
+from .password_utils import PasswordManager
 
 class Experiment():
     def __init__(self):
@@ -21,6 +22,7 @@ class Experiment():
         self.group_names = []
         self.data_collect_type = []
         self.date_created = str(date.today())
+        self.password = None
 
         self.group_num_changed = False
         self.measurement_items_changed = False
@@ -78,6 +80,10 @@ class Experiment():
         self.animals_per_group = num
 
 
+    def set_password(self, password):
+        self.password = password
+
+
     def set_group_num_changed_false(self):
         self.group_num_changed = False
 
@@ -126,6 +132,10 @@ class Experiment():
         return self.data_collect_type
 
 
+    def get_password(self):
+        return self.password
+
+
     def check_num_groups_change(self):
         return self.group_num_changed
     
@@ -134,13 +144,19 @@ class Experiment():
         return self.measurement_items_changed
 
     def save_to_database(self, directory: str):
-        file = directory + '/' + self.name + '.db'
+        if(self.password):
+            file = directory + '/' + self.name + '_Protected.mouser'
+        else:
+            file = directory + '/' + self.name + '.mouser'
         db = ExperimentDatabase(file)
         db.setup_experiment(self.name, self.species, self.rfid, self.num_animals, 
                             self.num_groups, self.max_per_cage, self.id)
         db.setup_groups(self.group_names)
         db.setup_cages(self.num_animals, self.num_groups, self.max_per_cage)
         db.setup_measurement_items(self.data_collect_type)
+        if(self.password):
+            manager = PasswordManager(self.password)
+            manager.encrypt_file(file)
         
         # TO:DO save date created to db
 
