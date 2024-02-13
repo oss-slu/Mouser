@@ -1,12 +1,15 @@
+'''Contains shared tkinter models used througout the program.'''
 from tkinter import *
 from tkinter.ttk import *
 from abc import ABC, abstractmethod
 
-def raise_frame(frame: Frame):
-    frame.tkraise()
+def raise_frame(raised_frame: Frame):
+    '''Raises the frame in the stacking order.'''
+    raised_frame.tkraise()
 
 
 def create_nav_button(parent: Frame, name: str, button_image: PhotoImage, frame: Frame, relx: float, rely: float):
+    '''Makes a navigation button to the various sub-menus of the program.'''
     button = Button(parent, text=name, image=button_image,
                     compound=TOP, width=25, command=lambda: raise_frame(frame))
     button.place(relx=relx, rely=rely, anchor=CENTER)
@@ -14,6 +17,7 @@ def create_nav_button(parent: Frame, name: str, button_image: PhotoImage, frame:
 
 
 class MenuButton(Button):
+    '''A standard button that navigates backwards in the program.'''
     def __init__(self, page: Frame, previous_page: Frame):
         super().__init__(page, text="Back to Menu", compound=TOP,
                          width=15, command=lambda: self.navigate())
@@ -21,10 +25,12 @@ class MenuButton(Button):
         self.previous_page = previous_page
 
     def navigate(self):
+        '''Raises the previous_page in the stacking order.'''
         self.previous_page.tkraise()
 
 
 class ChangePageButton(Button):
+    '''A standard button that navigates somewhere else in the program.'''
     def __init__(self, page: Frame, next_page: Frame, previous: bool = True):
         text = "Next"
         x = 0.75
@@ -37,10 +43,12 @@ class ChangePageButton(Button):
         self.next_page = next_page
 
     def navigate(self):
+        '''Raises the next_page in the stacking order.'''
         self.next_page.tkraise()
 
 
 class MouserPage(Frame):
+    '''Standard pageframe used throught the program.'''
     def __init__(self, parent: Tk, title: str, menu_page: Frame = None):
         super().__init__(parent)
         self.title = title
@@ -64,36 +72,45 @@ class MouserPage(Frame):
         self.check_window_size()
 
     def raise_frame(self):
+        '''Raises the page frame in the stacking order.'''
         self.tkraise()
 
     def set_next_button(self, next_page):
+        '''Sets next_button to be a ChangePageButton that naviages to next_page.'''
         if self.next_button:
             self.next_button.destroy()
         self.next_button = ChangePageButton(self, next_page, False)
 
     def set_previous_button(self, previous_page):
+        '''Sets previous_button to be a ChangePageButton that naviages to previous_page.'''
         if self.previous_button:
             self.previous_button.destroy()
         self.previous_button = ChangePageButton(self, previous_page)
 
     def set_menu_button(self, menu_page):
+        '''Sets menu_button to be a ChangePageButton that naviages to menu_page.'''
         if self.menu_button:
             self.menu_button.destroy()
         self.menu_button = MenuButton(self, menu_page)
 
     def check_window_size(self):
-        root = self.winfo_toplevel()
-        if root.winfo_height() != self.canvas.winfo_height():
-            self.resize_canvas_height(root.winfo_height())
-        if root.winfo_width() != self.canvas.winfo_width():
-            self.resize_canvas_width(root.winfo_width())
+        '''checks to see if the window size and page size match.
+        If they don't, resizes the page to match.
+        '''
+        window = self.winfo_toplevel()
+        if window.winfo_height() != self.canvas.winfo_height():
+            self.resize_canvas_height(window.winfo_height())
+        if window.winfo_width() != self.canvas.winfo_width():
+            self.resize_canvas_width(window.winfo_width())
 
         self.after(10, self.check_window_size)
 
     def resize_canvas_height(self, root_height):
+        '''Resizes page height.'''
         self.canvas.config(height=root_height)
 
     def resize_canvas_width(self, root_width):
+        '''Resizes page width.'''
         self.canvas.config(width=root_width)
 
         x0, y0, x1, y2 = self.canvas.coords(self.rectangle)
@@ -103,9 +120,11 @@ class MouserPage(Frame):
 
 
 class ChangeableFrame(ABC, Frame):
+    '''Abstract class.'''
 
     @abstractmethod
     def update_frame(self):
+        '''Abstract update_frame.'''
         pass
 
 

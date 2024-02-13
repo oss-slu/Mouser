@@ -1,17 +1,18 @@
+'''
+Module that contains methods and classes that are used for the audio in our program.
+'''
 import wave
-import pyaudio
 from threading import Thread
-
+import pyaudio
 
 class AudioManager:
-    
+    '''
+    Contains the helper function play(String:filepath)
+    '''
 
-    def __play(filepath):
-        CHUNK = 1024
-        FORMAT = pyaudio.paInt16
-        CHANNELS = 1
-        RATE = 44100
-        p = pyaudio.PyAudio()
+
+    def __play(self, filepath):
+        chunk = 1024
 
         audio_file = wave.open(filepath, "rb")
 
@@ -23,17 +24,19 @@ class AudioManager:
             output = True
         )
 
-        print("Playing Audio")
-        data = audio_file.readframes(CHUNK)
+        print("Playing Audio:", filepath)
+        data = audio_file.readframes(chunk)
         while data != b"": #Reads through the audio files and plays it to the out_stream
             out_stream.write(data)
-            data = audio_file.readframes(CHUNK)
+            data = audio_file.readframes(chunk)
 
         out_stream.close()
-        print("Audio has ended")
-        return
+        print("Audio", filepath, "has ended.")
 
-    #Creates and starts a thread that plays the specificed .wav file. Threading used to keep program from waiting for the audio to finish playing
-    #the filepath argument only accepts a relative file path if that is the path from the audio.py file to the sound file for this project the file paths should go sounds/[name of file]
-    def play(filepath):
+    def play(self, filepath):
+        '''
+        Takes a file path to a .wav file and plays the audio file.
+        
+        Requires filepath to be the fileparth from the audio.py file to the .wav file.
+        '''
         Thread(target=AudioManager.__play, args=[filepath], daemon= True).start()
