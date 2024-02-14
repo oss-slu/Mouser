@@ -1,3 +1,6 @@
+import tempfile
+import os
+from io import StringIO
 from tkinter import *
 from tkinter.ttk import *
 from tkinter.filedialog import *
@@ -7,13 +10,14 @@ from tk_models import *
 from experiment_pages.experiment_menu_ui import ExperimentMenuUI
 from experiment_pages.new_experiment_ui import NewExperimentUI
 from experiment_pages.select_experiment_ui import ExperimentsUI
-from io import StringIO
 from experiment_pages.password_utils import PasswordManager
-import tempfile
-import os
 
-# Command for 'Open' option in menu bar
+
 def open_file():
+    '''Command for 'Open' option in menu bar.
+
+    Opens a .mouser file
+    '''
     file_path = askopenfilename(filetypes=[("Database files","*.mouser")])
     if file_path:
         if "Protected" in file_path:
@@ -39,7 +43,7 @@ def open_file():
                     temp_file_path = os.path.join(temp_folder_path, temp_file_name)
                     if os.path.exists(temp_file_path):
                         os.remove(temp_file_path)
-                    
+
                     with open(temp_file_path, "wb") as temp_file:
                         temp_file.write(decrypted_data)
                         temp_file.seek(0)
@@ -57,6 +61,9 @@ def open_file():
 
 # Command for 'New' option in menu bar
 def create_file():
+    '''Command for the 'New' option in the menue bar.
+    
+    Navigates to the NewExperimentUI page.'''
     page = NewExperimentUI(root, experiments_frame)
     page.raise_frame()
 
@@ -86,5 +93,3 @@ root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)
 
 root.mainloop()
-
-

@@ -50,9 +50,8 @@ class GroupConfigUI(MouserPage):
             name.grid(row=i+1, column=0, padx=10, pady=10)
             self.group_input.append(name)
 
-    
     def create_item_frame(self, items):
-        self.button_vars = [] 
+        self.button_vars = []
         self.item_auto_buttons = []
         self.item_man_buttons = []
 
@@ -62,17 +61,16 @@ class GroupConfigUI(MouserPage):
         for i in range(0, len(items)):
             self.type = BooleanVar()
             self.button_vars.append(self.type)
-            
+
             Label(self.item_frame, text=items[i]).grid(row=i+1, column=0, padx=10, pady=10, sticky=W)
             auto = Radiobutton(self.item_frame, text='Automatic', variable=self.type, val=True)
             man = Radiobutton(self.item_frame, text='Manual', variable=self.type, val=False)
-            
+
             auto.grid(row=i+1, column=1, padx=10, pady=10)
             man.grid(row=i+1, column=2, padx=10, pady=10)
 
             self.item_auto_buttons.append(auto)
             self.item_man_buttons.append(man)
-
 
     def update_page(self):
         if self.input.check_num_groups_change() == True:
@@ -87,13 +85,12 @@ class GroupConfigUI(MouserPage):
             self.create_item_frame(self.input.get_measurement_items())
             self.input.set_measurement_items_changed_false()
 
-
     def save_input(self):
         group_names = []
         for entry in self.group_input:
             group_names.append(entry.get())
             self.input.group_names = group_names
-            
+
         items = self.input.get_measurement_items()
         measurement_collect_type = []
         for i in range(0, len(items)):
@@ -101,5 +98,4 @@ class GroupConfigUI(MouserPage):
 
         self.input.data_collect_type = measurement_collect_type
         self.next_page.update_page()
-
         

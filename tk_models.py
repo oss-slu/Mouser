@@ -8,10 +8,10 @@ def raise_frame(raised_frame: Frame):
     raised_frame.tkraise()
 
 
-def create_nav_button(parent: Frame, name: str, button_image: PhotoImage, frame: Frame, relx: float, rely: float):
+def create_nav_button(parent: Frame, name: str, button_image: PhotoImage, raised_frame: Frame, relx: float, rely: float):
     '''Makes a navigation button to the various sub-menus of the program.'''
     button = Button(parent, text=name, image=button_image,
-                    compound=TOP, width=25, command=lambda: raise_frame(frame))
+                    compound=TOP, width=25, command = lambda: raise_frame(raised_frame))
     button.place(relx=relx, rely=rely, anchor=CENTER)
     button.image = button_image
 
@@ -20,7 +20,7 @@ class MenuButton(Button):
     '''A standard button that navigates backwards in the program.'''
     def __init__(self, page: Frame, previous_page: Frame):
         super().__init__(page, text="Back to Menu", compound=TOP,
-                         width=15, command=lambda: self.navigate())
+                         width=15, command = self.navigate)
         self.place(relx=0.15, rely=0.15, anchor=CENTER)
         self.previous_page = previous_page
 
@@ -38,7 +38,7 @@ class ChangePageButton(Button):
             text = "Previous"
             x = 0.25
         super().__init__(page, text=text, compound=TOP,
-                         width=15, command=lambda: self.navigate())
+                         width=15, command = self.navigate)
         self.place(relx=x, rely=0.85, anchor=CENTER)
         self.next_page = next_page
 
@@ -113,8 +113,8 @@ class MouserPage(Frame):
         '''Resizes page width.'''
         self.canvas.config(width=root_width)
 
-        x0, y0, x1, y2 = self.canvas.coords(self.rectangle)
-        x3, y3 = self.canvas.coords(self.title_label)
+        x0, y0, _, y2 = self.canvas.coords(self.rectangle)
+        _, y3 = self.canvas.coords(self.title_label)
         self.canvas.coords(self.rectangle, x0, y0, root_width, y2)
         self.canvas.coords(self.title_label, (root_width/2), y3)
 
@@ -126,7 +126,6 @@ class ChangeableFrame(ABC, Frame):
     def update_frame(self):
         '''Abstract update_frame.'''
         pass
-
 
 if __name__ == '__main__':
     root = Tk()
