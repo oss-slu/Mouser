@@ -89,22 +89,16 @@ class ExperimentMenuUI(MouserPage):
 
 
     def delete_experiment(self, page: Frame, name: str):
-        # TO-DO delete database
-        # TO-DO delete from experiment selection file
-        # TO-DO return to experiment selection page
+        
+        # TO-DO remove the protected file when deleted
 
-        #delete from database
+        # disconnect the file from the database
         self.disconnect_database()
-        file = "databases/experiments/" + name + '.db'
+
         try:
-            os.remove(file)
+            os.remove(name)
         except OSError as error:
-            print(error)
+            print("error from deleting experiment: ",error)
             return
 
-        # #return to experiment selection page 
-        # problem: the selection page still has the experiment
-        page.update_frame()
         page.tkraise()
-
-
