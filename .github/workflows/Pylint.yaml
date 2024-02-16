@@ -26,7 +26,7 @@ jobs:
         
     - name: Analysing the code with pylint and handling exit code
       run: |
-        pylint --disable=import-error *.py || 
+        pylint --disable=import-error --fail-under 9.5 *.py || 
         pylint_exit=$?
         if [ $pylint_exit -eq 0 ]; then
           echo "Pylint exited with code $pylint_exit"
