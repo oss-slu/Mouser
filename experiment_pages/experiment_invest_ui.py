@@ -1,3 +1,4 @@
+#pylint: skip-file
 '''Experiement Investigator Module.'''
 from tkinter import *
 from tkinter.ttk import *
