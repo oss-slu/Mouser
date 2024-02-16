@@ -30,7 +30,6 @@ jobs:
               do
                 pylint --disable=import-error,R,wildcard-import,unused-wildcard-import,attribute-defined-outside-init --max-line-length=115 --fail-under 9.5    
               done
-        fi
 
 
 
