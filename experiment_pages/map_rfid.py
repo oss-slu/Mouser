@@ -5,13 +5,11 @@ import tkinter.font as tkfont
 import random
 import threading
 import webbrowser
-
+from playsound import playsound
+from serial import serialutil
+from serial_port_controller import SerialPortController
 from tkinter.ttk import *
 from tk_models import *
-
-from playsound import playsound
-from serial_port_controller import SerialPortController
-from serial import serialutil
 
 from database_apis.experiment_database import ExperimentDatabase
 from audio import AudioManager

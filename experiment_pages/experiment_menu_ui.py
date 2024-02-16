@@ -10,9 +10,9 @@ from experiment_pages.cage_config_ui import CageConfigurationUI
 from experiment_pages.experiment_invest_ui import InvestigatorsUI
 
 
-class ExperimentMenuUI(MouserPage):
+class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
     '''Experiment Menu Page Frame'''
-    def __init__(self, parent:Tk, name: str, prev_page: ChangeableFrame = None):
+    def __init__(self, parent:Tk, name: str, prev_page: ChangeableFrame = None): #pylint: disable= undefined-variable
         #Get name of file from file path
         experiment_name = os.path.basename(name)
         experiment_name = os.path.splitext(experiment_name)[0]
