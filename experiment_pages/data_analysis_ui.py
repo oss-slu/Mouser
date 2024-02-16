@@ -1,3 +1,4 @@
+#pylint: skip-file
 '''Page for analying data collected in database files.'''
 from tkinter import *
 from tkinter.ttk import *
