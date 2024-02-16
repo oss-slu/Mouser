@@ -93,7 +93,7 @@ class SerialPortController():
         '''Returns the writer port.'''
         return self.writer_port
 
-    def get_set_RFID(self, rfid: int):
+    def get_set_RFID(self, rfid: int): #pylint: disable= invalid-name
         '''Testing function for map_rfid serial port.'''
         message = rfid.encode()
         self.writer_port.write(message)

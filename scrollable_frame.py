@@ -40,18 +40,18 @@ class ScrolledFrame:
         # all other attributes (_w, children, etc) are passed to self.inner
         return getattr(self.inner, item)
 
-    def _on_frame_configure(self, event=None):
-        x1, y1, x2, y2 = self.canvas.bbox("all")
+    def _on_frame_configure(self, _=None):
+        _, _, x2, y2 = self.canvas.bbox("all")
         height = self.canvas.winfo_height()
         width = self.canvas.winfo_width()
         self.canvas.config(scrollregion = (0,0, max(x2, width), max(y2, height)))
 
-    def _bind_mouse(self, event=None):
+    def _bind_mouse(self, _=None):
         self.canvas.bind_all("<4>", self._on_mousewheel)
         self.canvas.bind_all("<5>", self._on_mousewheel)
         self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
 
-    def _unbind_mouse(self, event=None):
+    def _unbind_mouse(self, _=None):
         self.canvas.unbind_all("<4>")
         self.canvas.unbind_all("<5>")
         self.canvas.unbind_all("<MouseWheel>")

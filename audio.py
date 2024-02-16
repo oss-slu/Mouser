@@ -11,7 +11,7 @@ class AudioManager:
     '''
 
 
-    def __play(self, filepath):
+    def __play(filepath): #pylint: disable= no-self-argument
         chunk = 1024
 
         audio_file = wave.open(filepath, "rb")
@@ -33,7 +33,7 @@ class AudioManager:
         out_stream.close()
         print("Audio", filepath, "has ended.")
 
-    def play(self, filepath):
+    def play(filepath): #pylint: disable= no-self-argument
         '''
         Takes a file path to a .wav file and plays the audio file.
         

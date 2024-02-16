@@ -8,7 +8,7 @@ def raise_frame(raised_frame: Frame):
     raised_frame.tkraise()
 
 
-def create_nav_button(parent: Frame, name: str, button_image: PhotoImage, raised_frame: Frame, relx: float, rely: float):
+def create_nav_button(parent: Frame, name: str, button_image: PhotoImage, raised_frame: Frame, relx: float, rely: float): #pylint: disable= line-too-long
     '''Makes a navigation button to the various sub-menus of the program.'''
     button = Button(parent, text=name, image=button_image,
                     compound=TOP, width=25, command = lambda: raise_frame(raised_frame))
@@ -125,7 +125,7 @@ class ChangeableFrame(ABC, Frame):
     @abstractmethod
     def update_frame(self):
         '''Abstract update_frame.'''
-        pass
+        pass # pylint: disable= unnecessary-pass
 
 if __name__ == '__main__':
     root = Tk()

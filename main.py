@@ -1,6 +1,6 @@
+'''Main functionality of Program.'''
 import tempfile
 import os
-from io import StringIO
 from tkinter import *
 from tkinter.ttk import *
 from tkinter.filedialog import *
@@ -50,7 +50,7 @@ def open_file():
                         page = ExperimentMenuUI(root, temp_file.name, experiments_frame)
                         page.tkraise()
                     password_prompt.destroy()
-                except Exception as e:
+                except Exception as _:# pylint: disable= broad-exception-caught
                     showerror("Error", "Incorrect password")
 
             password_button = Button(password_prompt, text="OK", command=handle_password)

@@ -104,7 +104,7 @@ class DataCollectionUI(MouserPage):
         if self.auto_inc_id >= 0 and self.auto_inc_id < len(self.table.get_children()) - 1:
             self.auto_inc_id += 1
             self.open_auto_increment_changer()
-        AudioManager.play("sounds/rfid_success.wav") #play succsess sound
+        AudioManager.play(filepath="sounds/rfid_success.wav") #play succsess sound
 
     def get_values_for_date(self, _):
         '''Gets current date and gets the data for the current date.'''
@@ -139,7 +139,7 @@ class ChangeMeasurementsDialog():
 
     def open(self, animal_id):
         '''Opens the change measurement dialog window.'''
-        self.root = root = Toplevel(self.parent)
+        self.root = root = Toplevel(self.parent) # pylint: disable=redefined-outer-name
         root.title("Modify Measurements")
         root.geometry('600x600')
         root.resizable(False, False)
@@ -189,7 +189,7 @@ class ChangeMeasurementsDialog():
         '''Displays an error window.'''
         self.error_text.place(relx=0.5, rely=0.85, anchor=CENTER)
         self.submit_button["state"] = "disabled"
-        AudioManager.play("sounds/error.wav")
+        AudioManager.play(filepath="sounds/error.wav")
 
     def get_all_values(self):
         '''Returns the values of all entries in self.textboxes as an array.'''

@@ -1,17 +1,19 @@
+'''Serial Simulation.'''
+import shutil
 from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
-import tkinter.font as tkfont
-import shutil
 from serial_port_controller import SerialPortController
 
 class SerialSimulator():
+    '''Serial Simulator User Interface.'''
     def __init__(self, parent: Tk):
         self.parent = parent
         self.controller = SerialPortController()
 
     def open(self):
-        root = Toplevel(self.parent)
+        '''Opens Serial Simulator user interface.'''
+        root = Toplevel(self.parent) #pylint: disable= redefined-outer-name
         root.title("Serial Port Selection")
         root.geometry('400x700')
 
@@ -22,10 +24,8 @@ class SerialSimulator():
 
 
     def write(self):
-
-        message = self.input_entry.get()
-        pass
-
+        '''Writes to simulated serial'''
+        _ = self.input_entry.get()
     def check_installed(self, name):
-
+        '''Checks if the passed name is installed.'''
         return shutil.which(name)

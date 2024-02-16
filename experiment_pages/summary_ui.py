@@ -1,28 +1,30 @@
+'''Summary UI at the end of making a new experiment.'''
 from tkinter import *
 from tkinter.ttk import *
 from tkinter.filedialog import *
+import os
+import tempfile
 from tk_models import *
 from scrollable_frame import ScrolledFrame
 from experiment_pages.experiment import Experiment
 from experiment_pages.experiment_menu_ui import ExperimentMenuUI
 from experiment_pages.password_utils import PasswordManager
-import os
-import tempfile
-
 
 class CreateExperimentButton(Button):
+    '''Button to save a new experiment.'''
     def __init__(self, experiment: Experiment, page: Frame, menu_page: Frame):
         super().__init__(page, text="Create", compound=TOP,
                          width=15, command=lambda: [self.create_experiment()])
         self.place(relx=0.85, rely=0.15, anchor=CENTER)
         self.experiment = experiment
         self.next_page = menu_page
-        
+
     def create_experiment(self):
+        '''Saves an experiment as a new .mouser file.'''
         directory = askdirectory()
         if directory:
             self.experiment.save_to_database(directory)
-            if(self.experiment.get_password()):
+            if self.experiment.get_password():
                 password = self.experiment.get_password()
                 file = directory + '/' + self.experiment.get_name() + '_Protected.mouser'
                 manager = PasswordManager(password)
@@ -38,25 +40,24 @@ class CreateExperimentButton(Button):
                 with open(temp_file_path, "wb") as temp_file:
                     temp_file.write(decrypted_data)
                     temp_file.seek(0)
-                    root= self.winfo_toplevel()
+                    root= self.winfo_toplevel() #pylint: disable= redefined-outer-name
                     page = ExperimentMenuUI(root, temp_file.name)
                     page.tkraise()
-                        
             else:
                 file = directory + '/' + self.experiment.get_name() + '.mouser'
                 root= self.winfo_toplevel()
                 page = ExperimentMenuUI(root, file)
                 page.tkraise()
 
-
-class SummaryUI(MouserPage):
-    def __init__(self, input: Experiment, parent:Tk, prev_page: Frame, menu_page: Frame):
+class SummaryUI(MouserPage): # pylint: disable=undefined-variable
+    '''Summary User Interface.'''
+    def __init__(self, experiment: Experiment, parent:Tk, prev_page: Frame, menu_page: Frame):
         super().__init__(parent, "New Experiment - Summary", prev_page)
-        
-        self.input = input
+
+        self.input = experiment
         self.menu = menu_page
 
-        CreateExperimentButton(input, self, menu_page)
+        CreateExperimentButton(experiment, self, menu_page)
 
         scroll_canvas = ScrolledFrame(self)
         scroll_canvas.place(relx=0.10, rely=0.25, relheight=0.7, relwidth=0.8)
@@ -64,14 +65,14 @@ class SummaryUI(MouserPage):
         self.main_frame = Frame(scroll_canvas)
         self.main_frame.pack(side=LEFT, expand=True)
 
-
     def update_page(self):
+        '''Updates the frame.'''
         for widget in self.main_frame.winfo_children():
             widget.destroy()
-        self.create_summary_frame() 
-
+        self.create_summary_frame()
 
     def create_summary_frame(self):
+        '''Creates and populates summary frame.'''
         pad_x, pad_y = 10, 10
         labels, inputs = [], []
 
@@ -125,7 +126,7 @@ class SummaryUI(MouserPage):
         group_names = ''
         for group in groups:
             group_names += group + ',\n'
-            
+
         group_label = Label(self.main_frame, text='Group Names:', style='Summary.TLabel')
         if len(group_names) >= 2:
             group_input = Label(self.main_frame, text=group_names[:-2])
@@ -139,11 +140,11 @@ class SummaryUI(MouserPage):
         rfid_input = Label(self.main_frame, text=rfid)
         labels.append(rfid_label)
         inputs.append(rfid_input)
-
+        # pylint: disable= consider-using-enumerate
         for index in range(0, len(labels)):
             labels[index].grid(row=index, column=0, padx= pad_x, pady= pad_y, sticky=NW)
             inputs[index].grid(row=index, column=1, padx= pad_x, pady= pad_y, sticky=NW)
 
             self.main_frame.grid_rowconfigure(index, weight=1)
             self.main_frame.grid_columnconfigure(index, weight=1)
-            
+        # pylint: enable= consider-using-enumerate

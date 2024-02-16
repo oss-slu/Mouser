@@ -1,3 +1,4 @@
+'''Group configuration module.'''
 from tkinter import *
 from tkinter.ttk import *
 from tk_models import *
@@ -5,13 +6,15 @@ from scrollable_frame import ScrolledFrame
 from experiment_pages.summary_ui import SummaryUI
 from experiment_pages.experiment import Experiment
 
+# pylint: disable= undefined-variable
 class GroupConfigUI(MouserPage):
-    def __init__(self, input: Experiment, parent:Tk, prev_page: Frame, menu_page: Frame):
+    '''Group Congifuratin User Interface and Window.'''
+    def __init__(self, experiment: Experiment, parent:Tk, prev_page: Frame, menu_page: Frame):
         super().__init__(parent, "New Experiment - Group Configuration", prev_page)
+# pylint: disable= undefined-variable
+        self.experiment = experiment
 
-        self.input = input
-
-        self.next_page = SummaryUI(self.input, parent, self, menu_page)
+        self.next_page = SummaryUI(self.experiment, parent, self, menu_page)
         self.set_next_button(self.next_page)
 
         scroll_canvas = ScrolledFrame(self)
@@ -26,23 +29,28 @@ class GroupConfigUI(MouserPage):
         self.group_frame.pack(side=TOP)
         self.item_frame.pack(side=TOP)
 
-        self.create_group_entries(int(self.input.get_num_groups()))
-        self.create_item_frame(self.input.get_measurement_items())
+        self.create_group_entries(int(self.experiment.get_num_groups()))
+        self.create_item_frame(self.experiment.get_measurement_items())
 
         for i in range(0,2):
             self.grid_columnconfigure(i, weight=1)
             self.grid_rowconfigure(i, weight=1)
 
+        self.next_button = None
 
     def set_next_button(self, next_page):
+        '''Sets the page that the next button navigaties too.'''
         if self.next_button:
             self.next_button.destroy()
+        # pylint: disable= undefined-variable
         self.next_button = ChangePageButton(self, next_page, False)
-        self.next_button.configure(command= lambda: [self.save_input(), self.next_button.navigate()])
+        # pylint: enable= undefined-variable
+        self.next_button.configure(command= lambda: [self.save_experiment(), self.next_button.navigate()])
         self.next_button.place(relx=0.85, rely=0.15)
 
 
     def create_group_entries(self, num):
+        '''Creates the widgit for group entries.'''
         Label(self.group_frame, text="Group Name").grid(row=0, column=0, padx=10, pady=10)
         self.group_input = []
         for i in range(0, num):
@@ -51,6 +59,7 @@ class GroupConfigUI(MouserPage):
             self.group_input.append(name)
 
     def create_item_frame(self, items):
+        '''Creates a grid of all each item in items.'''
         self.button_vars = []
         self.item_auto_buttons = []
         self.item_man_buttons = []
@@ -58,6 +67,7 @@ class GroupConfigUI(MouserPage):
         type_label = Label(self.item_frame, text="Input Method")
         type_label.grid(row=0, column=0, columnspan=3, pady=8)
 
+        # pylint: disable= consider-using-enumerate
         for i in range(0, len(items)):
             self.type = BooleanVar()
             self.button_vars.append(self.type)
@@ -71,31 +81,33 @@ class GroupConfigUI(MouserPage):
 
             self.item_auto_buttons.append(auto)
             self.item_man_buttons.append(man)
+        # pylint: enable= consider-using-enumerate
 
     def update_page(self):
-        if self.input.check_num_groups_change() == True:
+        '''Updates page to reflect current state of the experiment.'''
+        if self.experiment.check_num_groups_change():
             for widget in self.group_frame.winfo_children():
                 widget.destroy()
-            self.create_group_entries(int(self.input.get_num_groups()))
-            self.input.set_group_num_changed_false()
+            self.create_group_entries(int(self.experiment.get_num_groups()))
+            self.experiment.set_group_num_changed_false()
 
-        if self.input.check_measurement_items_changed() == True:
+        if self.experiment.check_measurement_items_changed():
             for widget in self.item_frame.winfo_children():
                 widget.destroy()
-            self.create_item_frame(self.input.get_measurement_items())
-            self.input.set_measurement_items_changed_false()
+            self.create_item_frame(self.experiment.get_measurement_items())
+            self.experiment.set_measurement_items_changed_false()
 
-    def save_input(self):
+    def save_experiment(self):
+        '''Saves the experiment file to a the database file.'''
         group_names = []
         for entry in self.group_input:
             group_names.append(entry.get())
-            self.input.group_names = group_names
-
-        items = self.input.get_measurement_items()
+            self.experiment.group_names = group_names
+        # pylint: disable= consider-using-enumerate
+        items = self.experiment.get_measurement_items()
         measurement_collect_type = []
         for i in range(0, len(items)):
             measurement_collect_type.append((items[i], self.button_vars[i].get()))
-
-        self.input.data_collect_type = measurement_collect_type
+        # pylint: enable= consider-using-enumerate
+        self.experiment.data_collect_type = measurement_collect_type
         self.next_page.update_page()
-        

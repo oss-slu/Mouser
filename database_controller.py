@@ -77,13 +77,13 @@ class DatabaseController():
 
     def get_cages_in_group(self, group):
         '''Returns a list of all cage ids in the specified group.'''
-        if group in self.cages_in_group.keys():
+        if group in self.cages_in_group:
             return self.cages_in_group[group]
         return []
 
     def get_animals_in_cage(self, cage):
         '''Returns a list of animal ids in the specified cage.'''
-        if cage in self.animals_in_cage.keys():
+        if cage in self.animals_in_cage:
             return self.animals_in_cage[cage]
         return []
 
@@ -97,7 +97,7 @@ class DatabaseController():
         keys = self.animals_in_cage.keys()
         cages = [self.animals_in_cage[key] for key in keys]
 
-        for num in range(0,len(cages)):
+        for num in range(0,len(cages)): #pylint: disable= consider-using-enumerate
             if animal_id in cages[num]:
                 return str(num+1)
 
@@ -167,9 +167,7 @@ class DatabaseController():
         for i in range(1, num_groups+1):
             #i is the group for which we are currently putting the animals into cages
             group = [item for item in animals_grouped if item[1] == i]
-            m = 0
-            '''m tracks the number of animals in a cage to see if we
-            have hit the maxium number of animals in a cage'''
+            m = 0 #m tracks the number of animals in a cage to see if we have hit the maximum
             for k in group:
                 #k refers to the animal in each group
                 if m == cage_max:

@@ -19,7 +19,7 @@ class ExperimentMenuUI(MouserPage):
 
         super().__init__(parent, experiment_name, prev_page)
 
-        main_frame = Frame(self)
+        main_frame = Frame(self) # pylint: disable=redefined-outer-name
         main_frame.grid(row=6, column=1, sticky='NESW')
         main_frame.place(relx=0.3, rely=0.20, relwidth= 0.40, relheight = 0.75)
 

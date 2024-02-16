@@ -75,15 +75,15 @@ class CageConfigurationUI(MouserPage):
         label_style.configure('GroupLabel.TLabel', background='#0097A7', font=('Arial', 12))
 
         for group in groups:
-            frame = Frame(self.config_frame,
+            group_frame = Frame(self.config_frame,
                           borderwidth=3,
                           relief='groove',
                           style='GroupFrame.TFrame')
 
-            label = Label(frame, text=group, style='GroupLabel.TLabel')
+            label = Label(group_frame, text=group, style='GroupLabel.TLabel')
             label.pack(side=TOP, padx=self.pad_x, pady=self.pad_y, anchor='center')
 
-            self.create_cage_frames(group, frame)
+            self.create_cage_frames(group, group_frame)
             #Only Necessary Change is the side of the frame.
             #From TOP to LEFT gives us the cage groups horizontally.
             frame.pack(side=LEFT, expand=TRUE, fill=BOTH, anchor='center')
@@ -95,10 +95,10 @@ class CageConfigurationUI(MouserPage):
         meas_items = self.db.get_measurement_items()
 
         for cage in cages:
-            frame = Frame(group_frame, borderwidth=3, relief='groove')
-            Label(frame, text='Cage ' + cage).pack(side=TOP, anchor='center')
+            cage_frame = Frame(group_frame, borderwidth=3, relief='groove')
+            Label(cage_frame, text='Cage ' + cage).pack(side=TOP, anchor='center')
 
-            id_weight_label_frame = Frame(frame)
+            id_weight_label_frame = Frame(cage_frame)
 
             Label(id_weight_label_frame, text='Animal ID').pack(side=LEFT, anchor='center')
             for item in meas_items:
@@ -106,18 +106,18 @@ class CageConfigurationUI(MouserPage):
 
             id_weight_label_frame.pack(side=TOP, expand=TRUE, fill=BOTH, anchor='center')
 
-            self.create_animal_frames(cage, frame)
+            self.create_animal_frames(cage, cage_frame)
 
-            frame.pack(side=LEFT, expand=TRUE, fill=BOTH, anchor='center')
+            cage_frame.pack(side=LEFT, expand=TRUE, fill=BOTH, anchor='center')
 
     def create_animal_frames(self, cage, cage_frame):
         '''Creates frames for animals from information in database.'''
         animals = self.db.get_animals_in_cage(cage)
 
         for animal in animals:
-            frame = Frame(cage_frame, borderwidth=3, relief='groove')
+            animal_frame = Frame(cage_frame, borderwidth=3, relief='groove')
 
-            id_measurement_frame = Frame(frame)
+            id_measurement_frame = Frame(animal_frame)
 
             Label(id_measurement_frame, text=animal, anchor='center').pack(
                         side=LEFT, expand=TRUE, fill=BOTH, anchor='e')
@@ -126,7 +126,7 @@ class CageConfigurationUI(MouserPage):
 
             id_measurement_frame.pack(side=TOP, expand=TRUE, fill=BOTH, anchor='center')
 
-            frame.pack(side=TOP,
+            animal_frame.pack(side=TOP,
                        expand=TRUE,
                        fill=BOTH,
                        anchor='center',
@@ -185,7 +185,7 @@ class CageConfigurationUI(MouserPage):
                         command= lambda: [message.destroy()])
         ok_button.grid(row=2, column=0, padx=10, pady=10)
 
-        AudioManager.play("sounds/error.wav")
+        AudioManager.play(filepath='sounds/error.wav')
 
         message.mainloop()
 
