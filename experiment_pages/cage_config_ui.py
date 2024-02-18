@@ -4,6 +4,7 @@ from tk_models import *
 from tkcalendar import DateEntry
 from scrollable_frame import ScrolledFrame
 from database_controller import DatabaseController
+from audio import AudioManager
 
 
 class CageConfigurationUI(MouserPage):
@@ -162,6 +163,8 @@ class CageConfigurationUI(MouserPage):
         ok_button = CTkButton(message, text="OK", width=10, 
                         command= lambda: [message.destroy()])
         ok_button.grid(row=2, column=0, padx=10, pady=10)
+
+        AudioManager.play("sounds/error.wav")
 
         message.mainloop()
 

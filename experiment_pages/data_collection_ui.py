@@ -6,6 +6,7 @@ from tk_models import *
 
 from database_apis.experiment_database import ExperimentDatabase
 from database_apis.data_collection_database import DataCollectionDatabase
+from audio import AudioManager
 
 class DataCollectionUI(MouserPage):
     def __init__(self, parent: CTk, prev_page: CTkFrame = None, database_name = ""):
@@ -44,6 +45,7 @@ class DataCollectionUI(MouserPage):
             if i != 0:
                 text = self.measurement_strings[i-1]
             self.table.heading(column, text=text)
+            print(text)
 
         self.table.grid(row=0, column=0, sticky='nsew')
 
@@ -65,8 +67,11 @@ class DataCollectionUI(MouserPage):
         self.open_changer()
         
     def open_changer(self):
+        print("here1")
         animal_id = self.table.item(self.changing_value)["values"][0]
+        print("here")
         self.changer.open(animal_id)
+        print("here 2")
         
     def auto_increment(self):
         self.auto_inc_id = 0
@@ -86,6 +91,7 @@ class DataCollectionUI(MouserPage):
         if self.auto_inc_id >= 0 and self.auto_inc_id < len(self.table.get_children()) - 1:
             self.auto_inc_id += 1
             self.open_auto_increment_changer()
+        AudioManager.play("sounds/rfid_success.wav") #play succsess sound
         
     def get_values_for_date(self, event):
         self.current_date = str(date.today())
@@ -164,6 +170,7 @@ class ChangeMeasurementsDialog():
     def show_error(self):
         self.error_text.place(relx=0.5, rely=0.85, anchor=CENTER)
         self.submit_button["state"] = "disabled"
+        AudioManager.play("sounds/error.wav")
         
     def get_all_values(self):
         values = []

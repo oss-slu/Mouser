@@ -75,7 +75,9 @@ file_menu = menu_bar.add_cascade("File")
 file_dropdown = CustomDropdownMenu(widget=file_menu)
 file_dropdown.add_option(option="New", command = create_file)
 file_dropdown.add_option(option="Open", command = open_file)
+
 root.config(menu=menu_bar)
+
 
 main_frame = MouserPage(root, "Mouser")
 login_frame = LoginFrame(root, main_frame)

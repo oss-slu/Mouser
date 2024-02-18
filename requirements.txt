@@ -1,8 +1,9 @@
-playsound
 tkcalendar
 pandas
 getmac
 pyserial
+pysound
+wave
 cryptography
 customtkinter
 CTkMessagebox

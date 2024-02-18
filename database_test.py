@@ -30,7 +30,7 @@ class Test_Animal_RFID_Methods:
     db.setup_cages(4, 2, 2)
     db.setup_measurement_items({"Weight"})
     for i in range(0,4):
-        db.add_animal(10 + i)
+        db.add_animal(i, 10 + i)
     
     def test_add_animal_ids(self):
         assert 1 == self.db.get_animal_id(10)
@@ -54,7 +54,7 @@ class Test_Cage_Functions:
     db.setup_cages(4, 2, 2)
     db.setup_measurement_items({"Weight"})
     for i in range(0,4):
-        db.add_animal(10 + i)
+        db.add_animal(i, 10 + i)
     
     def test_get_cages(self):
         assert [(1, 1), (2, 2)] == self.db.get_cages()
@@ -74,7 +74,7 @@ class Test_Group_Functions:
     db.setup_cages(4, 2, 2)
     db.setup_measurement_items({"Weight"})
     for i in range(0,4):
-        db.add_animal(10 + i)
+        db.add_animal(i, 10 + i)
 
     def test_get_all_groups(self):
         assert [('Control',), ('Group 1',)] == self.db.get_all_groups()
