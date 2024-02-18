@@ -1,5 +1,4 @@
-from tkinter import *
-from tkinter.ttk import *
+from customtkinter import *
 from tk_models import *
 import copy
 from database_apis.users_database import UsersDatabase
@@ -7,27 +6,27 @@ from database_apis.users_database import UsersDatabase
 roles = ["general", "admin", "investigator"]
 
 class ConfigureUsersFrame(MouserPage):
-    def __init__(self, parent: Tk, previous_page: Frame):
+    def __init__(self, parent: CTk, previous_page: CTkFrame):
         super().__init__(parent, "User Configuration", previous_page)
 
-        Label(self, text="Email:").place(
+        CTkLabel(self, text="Email:").place(
             relx=0.12, rely=0.30)
         
         self.user_database = UsersDatabase()
         self.users = self.user_database.get_all_users_dict()
 
-        self.user_select = Combobox(self, width=27)
+        self.user_select = CTkComboBox(self, width=27)
         self.user_select['values'] = tuple(self.users.keys())
         self.user_select['state'] = 'readonly'
         self.user_select.place(relx=0.25, rely=0.30)
         self.user_select.bind('<<ComboboxSelected>>', self.display_information)
 
-        self.name_header = Label(self)
-        self.name_label = Label(self)
-        self.access_header = Label(self)
-        self.access_select = Combobox(self)
-        self.discard_changes_button = Button(self)
-        self.save_changes_button = Button(self)
+        self.name_header = CTkLabel(self)
+        self.name_label = CTkLabel(self)
+        self.access_header = CTkLabel(self)
+        self.access_select = CTkComboBox(self)
+        self.discard_changes_button = CTkButton(self)
+        self.save_changes_button = CTkButton(self)
 
     def display_information(self, event):
 
@@ -36,11 +35,11 @@ class ConfigureUsersFrame(MouserPage):
         self.changed_data = copy.deepcopy(self.users)
 
         self.access_header.destroy()
-        self.access_header = Label(self, text="Access:")
+        self.access_header = CTkLabel(self, text="Access:")
         self.access_header.place(relx=0.12, rely=0.50)
 
         self.access_select.destroy()
-        self.access_select = Combobox(self, width=27)
+        self.access_select = CTkComboBox(self, width=27)
         self.access_select['values'] = tuple(roles)
         self.access_select['state'] = 'readonly'
         self.access_select.set(self.users[selected]["role"])
@@ -48,22 +47,22 @@ class ConfigureUsersFrame(MouserPage):
         self.access_select.bind('<<ComboboxSelected>>', self.set_data)
 
         self.name_header.destroy()
-        self.name_header = Label(self, text="Name:")
+        self.name_header = CTkLabel(self, text="Name:")
         self.name_header.place(relx=0.12, rely=0.40)
 
         self.name_label.destroy()
         name_text = self.users[selected]["name"]
-        self.name_label = Label(self, text=name_text)
+        self.name_label = CTkLabel(self, text=name_text)
         self.name_label.place(relx=0.25, rely=0.40)
 
         self.discard_changes_button.destroy()
-        self.discard_changes_button = Button(
+        self.discard_changes_button = CTkButton(
             self, text="Discard", compound=TOP, width=15, command=lambda: self.discard_changes())
         self.discard_changes_button.place(relx=0.20, rely=0.70)
         self.discard_changes_button["state"] = "disabled"
 
         self.save_changes_button.destroy()
-        self.save_changes_button = Button(
+        self.save_changes_button = CTkButton(
             self, text="Save", compound=TOP, width=15, command=lambda: self.save_changes())
         self.save_changes_button.place(relx=0.50, rely=0.70)
         self.save_changes_button["state"] = "disabled"
@@ -102,17 +101,17 @@ class ConfigureUsersFrame(MouserPage):
 
 
 class ChangePasswordFrame(MouserPage):
-    def __init__(self, parent: Tk, previous_page: Frame):
+    def __init__(self, parent: CTk, previous_page: CTkFrame):
         super().__init__(parent, "Change Password", previous_page)
 
 
 class ConfigureOrganizationFrame(MouserPage):
-    def __init__(self, parent: Tk, previous_page: Frame):
+    def __init__(self, parent: CTk, previous_page: CTkFrame):
         super().__init__(parent, "Organization Configuration", previous_page)
 
 
 class AccountsFrame(MouserPage):
-    def __init__(self, parent: Tk, previous_page: Frame):
+    def __init__(self, parent: CTk, previous_page: CTkFrame):
         super().__init__(parent, "Accounts", previous_page)
 
         gears_image = PhotoImage(file="./images/gears.png")

@@ -1,6 +1,7 @@
-from tkinter import *
-from tkinter import messagebox
-from tkinter.ttk import *
+from tkinter import Menu
+from tkinter.ttk import Style, Treeview
+from customtkinter import *
+from CTkMessagebox import CTkMessagebox
 from tk_models import *
 import tkinter.font as tkfont
 import random
@@ -10,22 +11,17 @@ import webbrowser
 from serial_port_controller import SerialPortController
 from serial import serialutil
 
-
 from database_apis.experiment_database import ExperimentDatabase
 from audio import AudioManager
 
 def get_random_rfid():
     return random.randint(1000000, 9999999)
 
-
 def play_sound_async(filename):
     threading.Thread(target=playsound, args=(filename,), daemon=True).start()
 
-         
-
-
 class MapRFIDPage(MouserPage):
-    def __init__(self, database, parent: Tk, previous_page: Frame = None):
+    def __init__(self, database, parent: CTk, previous_page: CTkFrame = None):
         super().__init__(parent, "Map RFID", previous_page)
 
         file = database
@@ -37,18 +33,18 @@ class MapRFIDPage(MouserPage):
 
         self.animal_id_entry_text = StringVar(value="1")
 
-        self.animal_id_entry = Entry(
-            self, width=40, textvariable=self.animal_id_entry_text)
+        self.animal_id_entry = CTkEntry(
+            self, width=140, textvariable=self.animal_id_entry_text)
         self.animal_id_entry.place(relx=0.50, rely=0.20, anchor=CENTER)
-        animal_id_header = Label(self, text="Animal ID:", font=("Arial", 12))
+        animal_id_header = CTkLabel(self, text="Animal ID:", font=("Arial", 12))
         animal_id_header.place(relx=0.28, rely=0.20, anchor=E)
 
-        simulate_rfid_button = Button(self, text="Simulate RFID", compound=TOP,
+        simulate_rfid_button = CTkButton(self, text="Simulate RFID", compound=TOP,
                                       width=15, command=lambda: self.add_random_rfid())
         simulate_rfid_button.place(relx=0.80, rely=0.20, anchor=CENTER)
 
 
-        self.table_frame = Frame(self)
+        self.table_frame = CTkFrame(self)
         self.table_frame.place(relx=0.15, rely=0.40, relheight= 0.40, relwidth=0.80)
         self.table_frame.grid_columnconfigure(0, weight= 1)
         self.table_frame.grid_rowconfigure(0, weight= 1)
@@ -69,8 +65,8 @@ class MapRFIDPage(MouserPage):
         self.table.grid_rowconfigure(0, weight = 1)
 
 
-        scrollbar = Scrollbar(
-            self.table_frame, orient=VERTICAL, command=self.table.yview)
+        scrollbar = CTkScrollbar(
+            self.table_frame, orientation=VERTICAL, command=self.table.yview)
         self.table.configure(yscroll=scrollbar.set)
         scrollbar.grid(row=0, column=1, sticky='ns')
 
@@ -84,15 +80,15 @@ class MapRFIDPage(MouserPage):
         self.changer = ChangeRFIDDialog(parent, self)
         self.serial_port_panel = SerialPortSelection(parent,self.serial_port_controller, self)
 
-        self.serial_port_button = Button(self, text="Select Serial Port", compound=TOP,
+        self.serial_port_button = CTkButton(self, text="Select Serial Port", compound=TOP,
                                       width=15, command=self.open_serial_port_selection)
         self.serial_port_button.place(relx=0.10, rely=0.85, anchor=CENTER)
 
-        self.change_rfid_button = Button(self, text="Change RFID", compound=TOP,
+        self.change_rfid_button = CTkButton(self, text="Change RFID", compound=TOP,
                                          width=15, command=self.open_change_rfid)
         self.change_rfid_button.place(relx=0.40, rely=0.85, anchor=CENTER)
 
-        self.delete_button = Button(self, text="Remove Selection(s)", compound=TOP,
+        self.delete_button = CTkButton(self, text="Remove Selection(s)", compound=TOP,
                                     width=20, command=self.remove_selected_items)
         self.delete_button.place(relx=0.70, rely=0.85, anchor=CENTER)
 
@@ -114,6 +110,7 @@ class MapRFIDPage(MouserPage):
 
         self.menu_button.configure(command = lambda: self.press_back_to_menu_button())
         self.scroll_to_latest_entry()
+        
     def scroll_to_latest_entry(self):
         self.table.yview_moveto(1)
 
@@ -211,15 +208,15 @@ class MapRFIDPage(MouserPage):
 
 
     def raise_warning(self, warning_message = 'Maximum number of animals reached'):
-        message = Tk()
+        message = CTk()
         message.title("WARNING")
         message.geometry('320x100')
         message.resizable(False, False)
 
-        label = Label(message, text= warning_message)
+        label = CTkLabel(message, text= warning_message)
         label.grid(row=0, column=0, padx=10, pady=10)
 
-        ok_button = Button(message, text="OK", width=10, 
+        ok_button = CTkButton(message, text="OK", width=10, 
                         command= lambda: [message.destroy()])
         ok_button.grid(row=2, column=0, padx=10, pady=10)
 
@@ -231,7 +228,7 @@ class MapRFIDPage(MouserPage):
         if (len(self.animals) != self.db.get_number_animals()):
             self.raise_warning(warning_message= 'Not all animals have been mapped to RFIDs')
         else:
-            self.menu_page.tkraise()
+            raise_frame(self.menu_page)
     def close_connection(self):
         self.db.close()
 
@@ -240,19 +237,19 @@ class MapRFIDPage(MouserPage):
 
 
 class ChangeRFIDDialog():
-    def __init__(self, parent: Tk, map_rfid: MapRFIDPage):
+    def __init__(self, parent: CTk, map_rfid: MapRFIDPage):
         self.parent = parent
         self.map_rfid = map_rfid
 
     def open(self):
-        self.root = root = Toplevel(self.parent)
+        self.root = root = CTkToplevel(self.parent)
         root.title("Change RFID")
         root.geometry('400x400')
         root.resizable(False, False)
         root.grid_rowconfigure(0, weight=1)
         root.grid_columnconfigure(0, weight=1)
 
-        simulate_rfid_button = Button(root, text="Simulate RFID", compound=TOP,
+        simulate_rfid_button = CTkButton(root, text="Simulate RFID", compound=TOP,
                                       width=15, command=lambda: self.add_random_rfid())
         simulate_rfid_button.place(relx=0.50, rely=0.20, anchor=CENTER)
 
@@ -267,7 +264,7 @@ class ChangeRFIDDialog():
         self.root.destroy()
 
 class SerialPortSelection():
-    def __init__(self, parent: Tk, controller: SerialPortController, map_rfid: MapRFIDPage):
+    def __init__(self, parent: CTk, controller: SerialPortController, map_rfid: MapRFIDPage):
         self.parent = parent
         self.map_rfid = map_rfid
         self.id = None
@@ -277,7 +274,7 @@ class SerialPortSelection():
         self.serial_simulator = SerialSimulator(self.parent)
     
     def open(self):
-        self.root = Toplevel(self.parent)
+        self.root = CTkToplevel(self.parent)
         self.root.title("Serial Port Selection")
         self.root.geometry('400x400')
         columns = ('port', 'description')
@@ -296,16 +293,16 @@ class SerialPortSelection():
         self.table.bind('<<TreeviewSelect>>', self.item_selected)
 
         #scrollbar
-        scrollbar = Scrollbar(self.root, orient=VERTICAL, command=self.table.yview)
+        scrollbar = CTkScrollbar(self.root, orientation=VERTICAL, command=self.table.yview)
         self.table.configure(yscroll=scrollbar.set)
         scrollbar.grid(row=0, column=1, sticky='ns')
 
         self.update_ports()
 
-        self.select_port = Button(self.root, text = "Select Port", compound=TOP, width=15, command=self.conform_selection)
+        self.select_port = CTkButton(self.root, text = "Select Port", compound=TOP, width=15, command=self.conform_selection)
         self.select_port.place(relx=0.50, rely=0.85, anchor=CENTER)
 
-        self.run_simulate = Button(self.root, text = "Run Simulation", compound=TOP, width=15, command=self.open_simulator)
+        self.run_simulate = CTkButton(self.root, text = "Run Simulation", compound=TOP, width=15, command=self.open_simulator)
         self.run_simulate.place(relx=0.75, rely=0.85, anchor=CENTER)
 
 
@@ -348,39 +345,37 @@ class SerialPortSelection():
 
 
 class SerialSimulator():
-    def __init__(self, parent: Tk):
+    def __init__(self, parent: CTk):
         self.parent = parent
         self.serial_controller = SerialPortController()
         self.written_port = None
 
     def open(self):
         if (len(self.serial_controller.get_virtual_port()) == 0):
-            warning = messagebox.askyesno(
-                message=f"Virtual ports missing, would you like to download the virtual ports?",
-                title="Warning"
-                )
-            if (warning):
+            warning = CTkMessagebox(title="Warning", message="Virtual ports missing, would you like to download the virtual ports?",
+                                    icon="warning", option_1="Cancel", option_2="Download")
+            if warning.get() == "Download":
                 self.download_link()
               
         else:
-            self.root = Toplevel(self.parent)
+            self.root = CTkToplevel(self.parent)
             self.root.title("Serial Port Selection")
             self.root.geometry('400x400')
 
-            self.read_message = Text(self.root, height=15, width = 40)
+            self.read_message = CTkTextbox(self.root, height=15, width = 40)
             self.read_message.place(relx=0.10, rely = 0.00)
 
-            self.drop_down_ports = Combobox(self.root, values=self.serial_controller.get_virtual_port())
+            self.drop_down_ports = CTkComboBox(self.root, values=self.serial_controller.get_virtual_port())
             self.drop_down_ports.place(relx=0.30, rely = 0.88)
 
-            self.comfirm_port = Button(self.root, text="confirm port", width=15,
+            self.comfirm_port = CTkButton(self.root, text="confirm port", width=15,
                                         command=self.set_written_port)
             self.comfirm_port.place(relx=0.80, rely=0.900, anchor=CENTER)
 
-            self.input_entry = Entry(self.root, width=40)
+            self.input_entry = CTkEntry(self.root, width=140)
             self.input_entry.place(relx=0.50, rely=0.80, anchor=CENTER)
 
-            self.sent_button = Button(self.root, text = "sent", width = 15, command=self.sent)
+            self.sent_button = CTkButton(self.root, text = "sent", width = 15, command=self.sent)
             self.sent_button.place(relx=0.80, rely = 0.80, anchor=CENTER)
             self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
@@ -413,10 +408,11 @@ class SerialSimulator():
         available_port = self.serial_controller.get_virtual_port()
         available_port.remove(self.written_port)
         if (len(available_port)==0):
-            messagebox.showwarning(
+            CTkMessagebox(
                 message=f"There seems to be problem with the virtual port, please submit bug report.",
-                title="Warning"
-                )
+                title="Warning",
+                icon="cancel"
+            )
         else:
             message = self.serial_controller.read_info()
             self.read_message.insert(END,message)
@@ -446,10 +442,10 @@ class SerialSimulator():
         self.root.destroy()
 
     def raise_warning(self):
-        message = Toplevel()
+        message = CTkToplevel()
         message.geometry("320x100")
         message.title('Warning')
-        label = Label(message, text='Please select a serial port from the drop down list')
+        label = CTkLabel(message, text='Please select a serial port from the drop down list')
         label.grid(row=0, column=0, padx=10, pady=10)
 
         AudioManager.play("sounds/error.wav")
