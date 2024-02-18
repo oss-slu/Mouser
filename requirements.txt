@@ -4,3 +4,6 @@ pandas
 getmac
 pyserial
 cryptography
+customtkinter
+CTkMessagebox
+CTkMenuBar

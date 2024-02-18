@@ -1,7 +1,7 @@
-from tkinter import *
-from tkinter.ttk import *
+from customtkinter import *
+from CTkMenuBar import *
 from tkinter.filedialog import *
-from tkinter.messagebox import showerror
+from CTkMessagebox import CTkMessagebox
 from login import LoginFrame
 from tk_models import *
 from experiment_pages.experiment_menu_ui import ExperimentMenuUI
@@ -17,14 +17,14 @@ def open_file():
     file_path = askopenfilename(filetypes=[("Database files","*.mouser")])
     if file_path:
         if "Protected" in file_path:
-            password_prompt = Toplevel(root)
+            password_prompt = CTkToplevel(root)
             password_prompt.title("Enter Password")
             password_prompt.geometry("300x100")
 
-            password_label = Label(password_prompt, text="Enter password:")
+            password_label = CTkLabel(password_prompt, text="Enter password:")
             password_label.pack(pady=10)
 
-            password_entry = Entry(password_prompt, show="*")
+            password_entry = CTkEntry(password_prompt, show="*")
             password_entry.pack(pady=5)
 
             def handle_password():
@@ -44,33 +44,37 @@ def open_file():
                         temp_file.write(decrypted_data)
                         temp_file.seek(0)
                         page = ExperimentMenuUI(root, temp_file.name, experiments_frame)
-                        page.tkraise()
+                        page.raise_frame()
                     password_prompt.destroy()
                 except Exception as e:
-                    showerror("Error", "Incorrect password")
+                    CTkMessagebox(
+                        message=f"Incorrect password",
+                        title="Error",
+                        icon="cancel"
+                    )
 
-            password_button = Button(password_prompt, text="OK", command=handle_password)
+            password_button = CTkButton(password_prompt, text="OK", command=handle_password)
             password_button.pack()
         else:
             page = ExperimentMenuUI(root, file_path, experiments_frame)
-            page.tkraise()
-
+            page.raise_frame()
+            
 # Command for 'New' option in menu bar
 def create_file():
     page = NewExperimentUI(root, experiments_frame)
     page.raise_frame()
 
-root = Tk()
+root = CTk()
 root.title("Mouser")
-root.geometry('600x600')
-root.minsize(600,600)
+root.geometry('900x600')
+root.minsize(900,600)
 
 # Adds menu bar to root and binds the function to file_menu
-menu_bar = Menu(root)
-file_menu = Menu(menu_bar, tearoff= 0)
-file_menu.add_command(label = "New", command = create_file)
-file_menu.add_command(label = "Open", command = open_file)
-menu_bar.add_cascade(label = "File", menu=file_menu)
+menu_bar = CTkMenuBar(root)
+file_menu = menu_bar.add_cascade("File")
+file_dropdown = CustomDropdownMenu(widget=file_menu)
+file_dropdown.add_option(option="New", command = create_file)
+file_dropdown.add_option(option="Open", command = open_file)
 root.config(menu=menu_bar)
 
 main_frame = MouserPage(root, "Mouser")

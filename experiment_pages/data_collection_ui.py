@@ -1,6 +1,5 @@
-from tkinter import *
-from tkinter.ttk import *
-import customtkinter as ctk
+from tkinter.ttk import Treeview, Style
+from customtkinter import *
 from datetime import date
 
 from tk_models import *
@@ -9,7 +8,7 @@ from database_apis.experiment_database import ExperimentDatabase
 from database_apis.data_collection_database import DataCollectionDatabase
 
 class DataCollectionUI(MouserPage):
-    def __init__(self, parent: ctk, prev_page: Frame = None, database_name = ""):
+    def __init__(self, parent: CTk, prev_page: CTkFrame = None, database_name = ""):
         super().__init__(parent, "Data Collection", prev_page)
         
         self.database = ExperimentDatabase(database_name)
@@ -22,12 +21,12 @@ class DataCollectionUI(MouserPage):
             
         self.data_database = DataCollectionDatabase(database_name, self.measurement_strings)
         
-        self.auto_increment_button = Button(self, text="Start", compound=TOP, width=15, command=lambda: self.auto_increment())
+        self.auto_increment_button = CTkButton(self, text="Start", compound=TOP, width=15, command=lambda: self.auto_increment())
         self.auto_increment_button.place(relx=0.5, rely=0.4, anchor=CENTER)
         self.auto_inc_id = -1
         
         self.animals = self.database.get_animals()
-        self.table_frame = Frame(self)
+        self.table_frame = CTkFrame(self)
         self.table_frame.place(relx=0.50, rely=0.65, anchor=CENTER)
         
         columns = ['animal_id']
@@ -48,7 +47,7 @@ class DataCollectionUI(MouserPage):
 
         self.table.grid(row=0, column=0, sticky='nsew')
 
-        self.date_label = Label(self)
+        self.date_label = CTkLabel(self)
         
         for animal in self.animals:
             value = (animal[0], 0, 0)
@@ -92,7 +91,7 @@ class DataCollectionUI(MouserPage):
         self.current_date = str(date.today())
         self.date_label.destroy()
         date_text = "Current Date: " + self.current_date
-        self.date_label = Label(self, text=date_text, font=("Arial", 18))
+        self.date_label = CTkLabel(self, text=date_text, font=("Arial", 18))
         self.date_label.place(relx=0.5, rely=0.25, anchor=CENTER)
         values = self.data_database.get_data_for_date(self.current_date)
         for child in self.table.get_children():
@@ -111,20 +110,20 @@ class DataCollectionUI(MouserPage):
         self.database.close()
 
 class ChangeMeasurementsDialog():
-    def __init__(self, parent: ctk, data_collection: DataCollectionUI, measurement_items: list):
+    def __init__(self, parent: CTk, data_collection: DataCollectionUI, measurement_items: list):
         self.parent = parent
         self.data_collection = data_collection
         self.measurement_items = measurement_items
 
     def open(self, animal_id):
-        self.root = root = Toplevel(self.parent)
+        self.root = root = CTkToplevel(self.parent)
         root.title("Modify Measurements")
         root.geometry('600x600')
         root.resizable(False, False)
         root.grid_rowconfigure(0, weight=1)
         root.grid_columnconfigure(0, weight=1)
         
-        id_label = Label(root, text="Animal ID: "+str(animal_id), font=("Arial", 18))
+        id_label = CTkLabel(root, text="Animal ID: "+str(animal_id), font=("Arial", 18))
         id_label.place(relx=0.5, rely=0.1, anchor=CENTER)
         
         self.textboxes = []
@@ -132,19 +131,19 @@ class ChangeMeasurementsDialog():
 
         for i in range(1, count):
             posY = i / count
-            entry = Entry(root, width=40)
+            entry = CTkEntry(root, width=40)
             entry.place(relx=0.60, rely=posY, anchor=CENTER)
             entry.bind("<KeyRelease>", self.check_if_num)
             self.textboxes.append(entry)
             
-            header = Label(root, text=self.measurement_items[i-1]+": ", font=("Arial", 18))
+            header = CTkLabel(root, text=self.measurement_items[i-1]+": ", font=("Arial", 18))
             header.place(relx=0.28, rely=posY, anchor=E)
             
             if i == 1:
                 entry.focus()
                 
-        self.error_text = Label(root, text="One or more values are not a number")
-        self.submit_button = Button(root, text="Submit", compound=TOP, width=15, command=lambda: self.finish())
+        self.error_text = CTkLabel(root, text="One or more values are not a number")
+        self.submit_button = CTkButton(root, text="Submit", compound=TOP, width=15, command=lambda: self.finish())
         self.submit_button.place(relx=0.97, rely=0.97, anchor=SE)
 
         self.root.mainloop()
