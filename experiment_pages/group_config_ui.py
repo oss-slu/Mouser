@@ -9,7 +9,7 @@ from experiment_pages.experiment import Experiment
 class GroupConfigUI(MouserPage): # pylint: disable= undefined-variable
     '''Group Congifuratin User Interface and Window.'''
 
-    def __init__(self, input: Experiment, parent: CTk, prev_page: CTkFrame, menu_page: CTkFrame):
+    def __init__(self, experiment: Experiment, parent: CTk, prev_page: CTkFrame, menu_page: CTkFrame):
 
         super().__init__(parent, "New Experiment - Group Configuration", prev_page)
         self.experiment = experiment
@@ -67,11 +67,10 @@ class GroupConfigUI(MouserPage): # pylint: disable= undefined-variable
         type_label = CTkLabel(self.item_frame, text="Input Method")
         type_label.grid(row=0, column=0, columnspan=3, pady=8)
 
-        
         for i in range(0, len(items)): # pylint: disable= consider-using-enumerate
             self.type = BooleanVar()
             self.button_vars.append(self.type)
-            
+
             CTkLabel(self.item_frame, text=items[i]).grid(row=i+1, column=0, padx=10, pady=10, sticky=W)
             auto = CTkRadioButton(self.item_frame, text='Automatic', variable=self.type, value=1)
             man = CTkRadioButton(self.item_frame, text='Manual', variable=self.type, value=0)

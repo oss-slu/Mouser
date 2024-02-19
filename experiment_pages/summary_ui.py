@@ -1,9 +1,8 @@
 '''Summary UI at the end of making a new experiment.'''
-from customtkinter import *
-from tkinter.ttk import Style
-from tkinter.filedialog import *
 import os
 import tempfile
+from tkinter.filedialog import *
+from customtkinter import *
 from tk_models import *
 from scrollable_frame import ScrolledFrame
 from experiment_pages.experiment import Experiment
@@ -48,11 +47,11 @@ class CreateExperimentButton(CTkButton):
                 file = directory + '/' + self.experiment.get_name() + '.mouser'
                 root= self.winfo_toplevel()
                 page = ExperimentMenuUI(root, file)
-                raise_frame(page)
+                raise_frame(page) #pylint: disable=undefined-variable
 
 class SummaryUI(MouserPage):# pylint: disable=undefined-variable
     '''Summary User Interface.'''
-    def __init__(self, input: Experiment, parent: CTk, prev_page: CTkFrame, menu_page: CTkFrame):
+    def __init__(self, experiment: Experiment, parent: CTk, prev_page: CTkFrame, menu_page: CTkFrame):
         super().__init__(parent, "New Experiment - Summary", prev_page)
 
         self.input = experiment
@@ -126,7 +125,7 @@ class SummaryUI(MouserPage):# pylint: disable=undefined-variable
         group_names = ''
         for group in groups:
             group_names += group + ',\n'
-            
+
         group_label = CTkLabel(self.main_frame, text='Group Names:', font=label_style)
 
         if len(group_names) >= 2:

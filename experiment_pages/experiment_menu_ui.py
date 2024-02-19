@@ -1,7 +1,7 @@
 '''Experiment Menu Module'''
+import os
 from customtkinter import *
 from tk_models import *
-import os
 from experiment_pages.data_collection_ui import DataCollectionUI
 from experiment_pages.data_analysis_ui import DataAnalysisUI
 from experiment_pages.map_rfid import MapRFIDPage
@@ -35,12 +35,12 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         button_size = 30
 
 
-        collection_button = CTkButton(main_frame, text='Data Collection', width=button_size, 
+        collection_button = CTkButton(main_frame, text='Data Collection', width=button_size,
                                 command= self.data_page.raise_frame)
         analysis_button = CTkButton(main_frame, text='Data Analysis', width=button_size,
                                 command= self.analysis_page.raise_frame)
         group_button = CTkButton(main_frame, text='Group Configuration', width=button_size,
-                                command= lambda: [self.cage_page.raise_frame(), 
+                                command= lambda: [self.cage_page.raise_frame(),
                                                   self.cage_page.update_controller_attributes(),
                                                   self.cage_page.update_config_frame()])
         rfid_button = CTkButton(main_frame, text='Map RFID', width=button_size,
@@ -58,7 +58,6 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         delete_button.grid(row=5, column=0, ipadx=10, ipady=10, pady=10, padx=10)
 
 
-        
     def delete_warning(self, page: CTkFrame, name: str):
         '''Raises warning frame for deleting experiment.'''
         message = CTk()
@@ -72,7 +71,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         label1.grid(row=0, column=0, columnspan=2, padx=10)
         label2.grid(row=1, column=0, columnspan=2, padx=10)
 
-        yes_button = CTkButton(message, text="Yes, Delete", width=10, 
+        yes_button = CTkButton(message, text="Yes, Delete", width=10,
                         command= lambda: [self.delete_experiment(page, name), message.destroy()])
         no_button = CTkButton(message, text="Cancel", width=10, command= message.destroy)
         yes_button.grid(row=2, column=0, padx=10, pady=10)
@@ -89,9 +88,6 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         self.data_page.close_connection()
         self.cage_page.close_connection()
         self.rfid_page.close_connection()
-
-
-       
 
     def delete_experiment(self, page: CTkFrame, name: str):
         '''Delete Experiment.'''
@@ -111,4 +107,4 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         # #return to experiment selection page
         # problem: the selection page still has the experiment
         page.update_frame()
-        raise_frame(page)
+        raise_frame(page) #pylint: disable=undefined-variable

@@ -2,12 +2,9 @@
 from customtkinter import *
 from tk_models import *
 from experiment_pages.new_experiment_ui import NewExperimentUI
-from experiment_pages.experiment_menu_ui import ExperimentMenuUI
 
-
-    
 class NewExperimentButton(CTkButton):# pylint: disable= undefined-variable
-  '''New Experiment Button widgit'''
+    '''New Experiment Button widgit'''
     def __init__(self, parent: CTk, page: CTkFrame):
         super().__init__(page, text="Create New Experiment", compound=TOP,
                          width=22, command=lambda: [self.create_next_page(), self.navigate()])

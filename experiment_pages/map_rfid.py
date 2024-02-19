@@ -1,15 +1,16 @@
 '''Map RFID module.'''
 from tkinter import Menu
 from tkinter.ttk import Style, Treeview
-from customtkinter import *
-from CTkMessagebox import CTkMessagebox
-from tk_models import *
 import tkinter.font as tkfont
 import random
 import threading
 import webbrowser
+from customtkinter import *
+from CTkMessagebox import CTkMessagebox
 from playsound import playsound
 from serial import serialutil
+from tk_models import *
+from serial_port_controller import SerialPortController
 
 from database_apis.experiment_database import ExperimentDatabase
 from audio import AudioManager
@@ -229,7 +230,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         label.grid(row=0, column=0, padx=10, pady=10)
 
 
-        ok_button = CTkButton(message, text="OK", width=10, 
+        ok_button = CTkButton(message, text="OK", width=10,
                         command= lambda: [message.destroy()])
         ok_button.grid(row=2, column=0, padx=10, pady=10)
 
@@ -242,7 +243,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         if len(self.animals) != self.db.get_number_animals():
             self.raise_warning(warning_message= 'Not all animals have been mapped to RFIDs')
         else:
-            raise_frame(self.menu_page)
+            raise_frame(self.menu_page) #pylint: disable= undefined-variable
 
     def close_connection(self):
         '''Closes database file.'''
@@ -318,10 +319,18 @@ class SerialPortSelection():
         self.update_ports()
 
 
-        self.select_port = CTkButton(self.root, text = "Select Port", compound=TOP, width=15, command=self.conform_selection)
+        self.select_port = CTkButton(self.root,
+                                     text = "Select Port",
+                                     compound=TOP,
+                                     width=15,
+                                     command=self.conform_selection)
         self.select_port.place(relx=0.50, rely=0.85, anchor=CENTER)
 
-        self.run_simulate = CTkButton(self.root, text = "Run Simulation", compound=TOP, width=15, command=self.open_simulator)
+        self.run_simulate = CTkButton(self.root,
+                                      text = "Run Simulation",
+                                      compound=TOP,
+                                      width=15,
+                                      command=self.open_simulator)
 
         self.run_simulate.place(relx=0.75, rely=0.85, anchor=CENTER)
 
@@ -375,9 +384,12 @@ class SerialSimulator():
     def open(self):
 
         '''Opens the serial simulator dialog.'''
-        if (len(self.serial_controller.get_virtual_port()) == 0):
-            warning = CTkMessagebox(title="Warning", message="Virtual ports missing, would you like to download the virtual ports?",
-                                    icon="warning", option_1="Cancel", option_2="Download")
+        if len(self.serial_controller.get_virtual_port()) == 0:
+            warning = CTkMessagebox(title="Warning",
+                                    message="Virtual ports missing, would you like to download the virtual ports?",
+                                    icon="warning",
+                                    option_1="Cancel",
+                                    option_2="Download")
             if warning.get() == "Download":
                 self.download_link()
 
@@ -426,10 +438,10 @@ class SerialSimulator():
         '''Reads from available port.'''
         available_port = self.serial_controller.get_virtual_port()
         available_port.remove(self.written_port)
-        
-        if (len(available_port)==0):
+
+        if len(available_port)==0:
             CTkMessagebox(
-                message=f"There seems to be problem with the virtual port, please submit bug report.",
+                message="There seems to be problem with the virtual port, please submit bug report.",
                 title="Warning",
                 icon="cancel"
             )

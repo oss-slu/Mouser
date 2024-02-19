@@ -1,7 +1,7 @@
 '''Data collection ui module.'''
+from datetime import date
 from tkinter.ttk import Treeview, Style
 from customtkinter import *
-from datetime import date
 
 from tk_models import *
 
@@ -9,7 +9,7 @@ from database_apis.experiment_database import ExperimentDatabase
 from database_apis.data_collection_database import DataCollectionDatabase
 from audio import AudioManager
 
-class DataCollectionUI(MouserPage):
+class DataCollectionUI(MouserPage): #pylint: disable= undefined-variable
     '''Page Frame for Data Collection.'''
 
     def __init__(self, parent: CTk, prev_page: CTkFrame = None, database_name = ""):
@@ -25,8 +25,12 @@ class DataCollectionUI(MouserPage):
             self.measurement_ids.append(str(item[1]).lower().replace(" ", "_"))
 
         self.data_database = DataCollectionDatabase(database_name, self.measurement_strings)
-        
-        self.auto_increment_button = CTkButton(self, text="Start", compound=TOP, width=15, command=lambda: self.auto_increment())
+
+        self.auto_increment_button = CTkButton(self,
+                                               text="Start",
+                                               compound=TOP,
+                                               width=15,
+                                               command= self.auto_increment)
         self.auto_increment_button.place(relx=0.5, rely=0.4, anchor=CENTER)
         self.auto_inc_id = -1
 
@@ -56,7 +60,7 @@ class DataCollectionUI(MouserPage):
         self.table.grid(row=0, column=0, sticky='nsew')
 
         self.date_label = CTkLabel(self)
-        
+
         for animal in self.animals:
             value = (animal[0], 0, 0)
             self.table.insert('', END, values=value)
@@ -146,7 +150,7 @@ class ChangeMeasurementsDialog():
         root.resizable(False, False)
         root.grid_rowconfigure(0, weight=1)
         root.grid_columnconfigure(0, weight=1)
-        
+
         id_label = CTkLabel(root, text="Animal ID: "+str(animal_id), font=("Arial", 18))
         id_label.place(relx=0.5, rely=0.1, anchor=CENTER)
 
@@ -155,20 +159,20 @@ class ChangeMeasurementsDialog():
 
         for i in range(1, count):
 
-            posY = i / count
+            pos_y = i / count
             entry = CTkEntry(root, width=40)
-            entry.place(relx=0.60, rely=posY, anchor=CENTER)
+            entry.place(relx=0.60, rely=pos_y, anchor=CENTER)
             entry.bind("<KeyRelease>", self.check_if_num)
             self.textboxes.append(entry)
-            
+
             header = CTkLabel(root, text=self.measurement_items[i-1]+": ", font=("Arial", 18))
-            header.place(relx=0.28, rely=posY, anchor=E)
-            
+            header.place(relx=0.28, rely=pos_y, anchor=E)
+
             if i == 1:
                 entry.focus()
-                
+
         self.error_text = CTkLabel(root, text="One or more values are not a number")
-        self.submit_button = CTkButton(root, text="Submit", compound=TOP, width=15, command=lambda: self.finish())
+        self.submit_button = CTkButton(root, text="Submit", compound=TOP, width=15, command= self.finish)
         self.submit_button.place(relx=0.97, rely=0.97, anchor=SE)
 
         self.root.mainloop()

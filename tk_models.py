@@ -5,16 +5,17 @@ from abc import ABC, abstractmethod
 
 current_frame: CTkFrame = None
 
-def raise_frame(frame: CTkFrame):
+def raise_frame(frame: CTkFrame): #pylint: disable= redefined-outer-name
+    '''Raises passed frame.'''
     global current_frame
     if current_frame:
         current_frame.pack_forget()
     current_frame = frame
     current_frame.pack()
 
+def create_nav_button(parent: CTkFrame, name: str, button_image: PhotoImage, frame: CTkFrame, relx: float, rely: float): #pylint: disable= line-too-long,redefined-outer-name
+    '''Makes a navigation button to the various sub-menus of the program.'''
 
-def create_nav_button(parent: CTkFrame, name: str, button_image: PhotoImage, frame: CTkFrame, relx: float, rely: float): #pylint: disable= line-too-long
-  '''Makes a navigation button to the various sub-menus of the program.'''
     button = CTkButton(parent, text=name, image=button_image,
                     compound=TOP, width=25, command=lambda: raise_frame(frame))
     button.place(relx=relx, rely=rely, anchor=CENTER)
@@ -23,7 +24,7 @@ def create_nav_button(parent: CTkFrame, name: str, button_image: PhotoImage, fra
 
 
 class MenuButton(CTkButton):
-  '''A standard button that navigates backwards in the program.'''
+    '''A standard button that navigates backwards in the program.'''
     def __init__(self, page: CTkFrame, previous_page: CTkFrame):
 
         super().__init__(page, text="Back to Menu", compound=TOP,
@@ -37,8 +38,8 @@ class MenuButton(CTkButton):
 
 
 class ChangePageButton(CTkButton):
+    '''A standard button that navigates somewhere else in the program.'''
     def __init__(self, page: CTkFrame, next_page: CTkFrame, previous: bool = True):
-  '''A standard button that navigates somewhere else in the program.'''
         text = "Next"
         x = 0.75
         if previous:
@@ -55,8 +56,8 @@ class ChangePageButton(CTkButton):
 
 
 class MouserPage(CTkFrame):
+    '''Standard pageframe used throught the program.'''
     def __init__(self, parent: CTk, title: str, menu_page: CTkFrame = None):
-        '''Standard pageframe used throught the program.'''
         super().__init__(parent)
         self.root = parent
         self.title = title

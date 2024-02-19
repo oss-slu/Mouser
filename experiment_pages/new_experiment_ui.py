@@ -1,7 +1,6 @@
 '''New Experiment Module'''
-from customtkinter import *
-from tk_models import *
 from os.path import *
+from customtkinter import *
 from tk_models import *
 from scrollable_frame import ScrolledFrame
 from experiment_pages.group_config_ui import GroupConfigUI
@@ -43,15 +42,24 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.items = []
         self.added_invest = []
 
-        CTkLabel(self.main_frame, text='Experiment Name').grid(row=0, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text="Password").grid(row=0, column=2, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text='Investigators').grid(row=1, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text='Species').grid(row=3, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text='Measurement Items').grid(row=4, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text="RFID").grid(row=6, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text="Number of Animals").grid(row=7, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text="Number of Groups").grid(row=8, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text="Max Animals per Cage").grid(row=9, column=0, sticky=W, padx=pad_x, pady=pad_y)
+        CTkLabel(self.main_frame, text='Experiment Name').grid(
+                        row=0, column=0, sticky=W, padx=pad_x, pady=pad_y)
+        CTkLabel(self.main_frame, text="Password").grid(
+                        row=0, column=2, sticky=W, padx=pad_x, pady=pad_y)
+        CTkLabel(self.main_frame, text='Investigators').grid(
+                     row=1, column=0, sticky=W, padx=pad_x, pady=pad_y)
+        CTkLabel(self.main_frame, text='Species').grid(
+                       row=3, column=0, sticky=W, padx=pad_x, pady=pad_y)
+        CTkLabel(self.main_frame, text='Measurement Items').grid(
+                      row=4, column=0, sticky=W, padx=pad_x, pady=pad_y)
+        CTkLabel(self.main_frame, text="RFID").grid(
+                      row=6, column=0, sticky=W, padx=pad_x, pady=pad_y)
+        CTkLabel(self.main_frame, text="Number of Animals").grid(
+                       row=7, column=0, sticky=W, padx=pad_x, pady=pad_y)
+        CTkLabel(self.main_frame, text="Number of Groups").grid(
+                       row=8, column=0, sticky=W, padx=pad_x, pady=pad_y)
+        CTkLabel(self.main_frame,text="Max Animals per Cage").grid(
+                      row=9, column=0, sticky=W, padx=pad_x, pady=pad_y)
 
         self.exper_name = CTkEntry(self.main_frame, width=140)
         self.password = CTkEntry(self.main_frame,width=120,show="*")
@@ -73,16 +81,16 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
 
         self.rfid = BooleanVar()
 
-        CTkRadioButton(self.rfid_frame, text='Yes', variable=self.rfid, value=1).grid(row=0, column=0, 
+        CTkRadioButton(self.rfid_frame, text='Yes', variable=self.rfid, value=1).grid(row=0, column=0,
                     padx=pad_x, pady=pad_y)
-        CTkRadioButton(self.rfid_frame, text='No', variable=self.rfid, value=0).grid(row=0, column=1, 
+        CTkRadioButton(self.rfid_frame, text='No', variable=self.rfid, value=0).grid(row=0, column=1,
                     padx=pad_x, pady=pad_y)
 
-        add_invest_button = CTkButton(self.main_frame, text='+', width=3, 
-                            command= lambda: self.add_investigator())
+        add_invest_button = CTkButton(self.main_frame, text='+', width=3,
+                            command= self.add_investigator)
         add_invest_button.grid(row=1, column=2, padx=pad_x, pady=pad_y)
 
-        add_item_button = CTkButton(self.main_frame, text='+', width=3, 
+        add_item_button = CTkButton(self.main_frame, text='+', width=3,
                             command= lambda: [self.add_measuremnt_item(), self.measure_items.delete(0, END)])
         add_item_button.grid(row=4, column=2, padx=pad_x, pady=pad_y)
 
@@ -109,7 +117,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         funcs = []
         buttons = []
         for investigator in self.added_invest:
-            CTkLabel(self.invest_frame, text=investigator).grid(row=self.added_invest.index(investigator), 
+            CTkLabel(self.invest_frame, text=investigator).grid(row=self.added_invest.index(investigator),
                     column=1, sticky=W, padx=10)
             rem_button = CTkButton(self.invest_frame, text='-', width=3)
             rem_button.grid(row=self.added_invest.index(investigator), column=2, padx=10)
@@ -201,7 +209,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         AudioManager.play("sounds/error.wav")
 
 
-        ok_button = CTkButton(message, text="OK", width=10, 
+        ok_button = CTkButton(message, text="OK", width=10,
                         command= lambda: [message.destroy()])
         ok_button.grid(row=2, column=0, padx=10, pady=10)
 
