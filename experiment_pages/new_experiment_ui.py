@@ -49,7 +49,7 @@ class NewExperimentUI(MouserPage):
 
         self.exper_name = CTkEntry(self.main_frame, width=140)
         self.password = CTkEntry(self.main_frame,width=120,show="*")
-        self.investigators = CTkComboBox(self.main_frame, values=self.get_user_list(), width=137)
+        self.investigators = CTkEntry(self.main_frame, width=137)
         self.species = CTkEntry(self.main_frame, width=140)
         self.measure_items = CTkEntry(self.main_frame, width=140)
         self.animal_num = CTkEntry(self.main_frame, width=110)
@@ -72,7 +72,7 @@ class NewExperimentUI(MouserPage):
                     padx=pad_x, pady=pad_y)
 
         add_invest_button = CTkButton(self.main_frame, text='+', width=3, 
-                            command= lambda: self.add_investigator())
+                            ccommand= lambda: self.add_investigator(self.investigators.get()))
         add_invest_button.grid(row=1, column=2, padx=pad_x, pady=pad_y)
 
         add_item_button = CTkButton(self.main_frame, text='+', width=3, 
@@ -90,8 +90,31 @@ class NewExperimentUI(MouserPage):
         if self.next_button:
             self.next_button.destroy()
         self.next_button = ChangePageButton(self, next_page, False)
-        self.next_button.configure(command= lambda: [self.check_animals_divisible(), self.next_button.navigate()])
-        self.next_button.place(relx=0.85, rely=0.15)
+        self.next_button.configure(command= self.all_entries)
+        self.next_button.place(relx=0.85, rely=0.15)\
+        self.bind_all_entries
+    
+    def bind_all_entries(self):
+        
+        self.exper_name.bind("<FocusOut>", self.all_entries)
+        self.password.bind("<FocusOut>", self.all_entries)
+        self.species.bind("<FocusOut>", self.all_entries)
+        self.measure_items.bind("<FocusOut>", self.all_entries)
+        self.animal_num.bind("<FocusOut>", self.all_entries)
+        self.group_num.bind("<FocusOut>", self.all_entries)
+        self.num_per_cage.bind("<FocusOut>", self.all_entries)
+    def all_entries(self, event=None):
+        
+        if (self.exper_name.get() and self.password.get() and
+                self.species.get() and self.measure_items.get() and
+                self.animal_num.get() and self.group_num.get() and
+                self.num_per_cage.get()):
+            
+            self.next_button.configure(state="normal")
+        else:
+            
+            self.next_button.configure(state="disabled")
+
 
 
     def update_invest_frame(self):
@@ -144,7 +167,7 @@ class NewExperimentUI(MouserPage):
 
     def add_investigator(self):
         if self.investigators.get() not in self.added_invest and self.investigators.get() != '':
-            self.added_invest.append(self.investigators.get())
+            self.added_invest.append(investigator)
             self.update_invest_frame()
 
 
