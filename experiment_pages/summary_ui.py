@@ -1,6 +1,6 @@
 '''Summary UI at the end of making a new experiment.'''
-from tkinter import *
-from tkinter.ttk import *
+from customtkinter import *
+from tkinter.ttk import Style
 from tkinter.filedialog import *
 import os
 import tempfile
@@ -10,9 +10,10 @@ from experiment_pages.experiment import Experiment
 from experiment_pages.experiment_menu_ui import ExperimentMenuUI
 from experiment_pages.password_utils import PasswordManager
 
-class CreateExperimentButton(Button):
+class CreateExperimentButton(CTkButton):
     '''Button to save a new experiment.'''
-    def __init__(self, experiment: Experiment, page: Frame, menu_page: Frame):
+    def __init__(self, experiment: Experiment, page: CTkFrame, menu_page: CTkFrame):
+
         super().__init__(page, text="Create", compound=TOP,
                          width=15, command=lambda: [self.create_experiment()])
         self.place(relx=0.85, rely=0.15, anchor=CENTER)
@@ -42,16 +43,16 @@ class CreateExperimentButton(Button):
                     temp_file.seek(0)
                     root= self.winfo_toplevel() #pylint: disable= redefined-outer-name
                     page = ExperimentMenuUI(root, temp_file.name)
-                    page.tkraise()
+
             else:
                 file = directory + '/' + self.experiment.get_name() + '.mouser'
                 root= self.winfo_toplevel()
                 page = ExperimentMenuUI(root, file)
-                page.tkraise()
+                raise_frame(page)
 
-class SummaryUI(MouserPage): # pylint: disable=undefined-variable
+class SummaryUI(MouserPage):# pylint: disable=undefined-variable
     '''Summary User Interface.'''
-    def __init__(self, experiment: Experiment, parent:Tk, prev_page: Frame, menu_page: Frame):
+    def __init__(self, input: Experiment, parent: CTk, prev_page: CTkFrame, menu_page: CTkFrame):
         super().__init__(parent, "New Experiment - Summary", prev_page)
 
         self.input = experiment
@@ -62,7 +63,7 @@ class SummaryUI(MouserPage): # pylint: disable=undefined-variable
         scroll_canvas = ScrolledFrame(self)
         scroll_canvas.place(relx=0.10, rely=0.25, relheight=0.7, relwidth=0.8)
 
-        self.main_frame = Frame(scroll_canvas)
+        self.main_frame = CTkFrame(scroll_canvas)
         self.main_frame.pack(side=LEFT, expand=True)
 
     def update_page(self):
@@ -76,49 +77,48 @@ class SummaryUI(MouserPage): # pylint: disable=undefined-variable
         pad_x, pad_y = 10, 10
         labels, inputs = [], []
 
-        label_style = Style()
-        label_style.configure('Summary.TLabel', font=('Arial', '10', 'bold'))
+        label_style = CTkFont("Arial", 10, "bold")
 
-        name_label = Label(self.main_frame, text='Experiment Name:', style='Summary.TLabel')
-        name_input = Label(self.main_frame, text=self.input.get_name())
+        name_label = CTkLabel(self.main_frame, text='Experiment Name:', font=label_style)
+        name_input = CTkLabel(self.main_frame, text=self.input.get_name())
         labels.append(name_label)
         inputs.append(name_input)
 
         names = ''
         for name in self.input.get_investigators():
             names += name + ',\n'
-        invest_label = Label(self.main_frame, text='Investigators:', style='Summary.TLabel')
+        invest_label = CTkLabel(self.main_frame, text='Investigators:', font=label_style)
         if len(names) >= 2:
-            invest_input = Label(self.main_frame, text=names[:-2])
+            invest_input = CTkLabel(self.main_frame, text=names[:-2])
         else:
-            invest_input = Label(self.main_frame, text=names)
+            invest_input = CTkLabel(self.main_frame, text=names)
         labels.append(invest_label)
         inputs.append(invest_input)
 
-        species_label = Label(self.main_frame, text='Species:', style='Summary.TLabel')
-        species_input = Label(self.main_frame, text=self.input.get_species())
+        species_label = CTkLabel(self.main_frame, text='Species:', font=label_style)
+        species_input = CTkLabel(self.main_frame, text=self.input.get_species())
         labels.append(species_label)
         inputs.append(species_input)
 
         items = ''
         for item in self.input.get_measurement_items():
             items += item + ',\n'
-        items_label = Label(self.main_frame, text='Measurement Items:', style='Summary.TLabel')
+        items_label = CTkLabel(self.main_frame, text='Measurement Items:', font=label_style)
         if len(items) >= 2:
-            items_input = Label(self.main_frame, text=items[:-2])
+            items_input = CTkLabel(self.main_frame, text=items[:-2])
         else:
-            items_input = Label(self.main_frame, text=items)
+            items_input = CTkLabel(self.main_frame, text=items)
         labels.append(items_label)
         inputs.append(items_input)
 
         animals = self.input.get_num_animals() + ' ' + self.input.get_species()
-        animal_label = Label(self.main_frame, text='Number of Animals:', style='Summary.TLabel')
-        animal_input = Label(self.main_frame, text=animals)
+        animal_label = CTkLabel(self.main_frame, text='Number of Animals:', font=label_style)
+        animal_input = CTkLabel(self.main_frame, text=animals)
         labels.append(animal_label)
         inputs.append(animal_input)
 
-        cage_label = Label(self.main_frame, text='Animals per Cage:', style='Summary.TLabel')
-        cage_input = Label(self.main_frame, text=self.input.get_max_animals())
+        cage_label = CTkLabel(self.main_frame, text='Animals per Cage:', font=label_style)
+        cage_input = CTkLabel(self.main_frame, text=self.input.get_max_animals())
         labels.append(cage_label)
         inputs.append(cage_input)
 
@@ -126,18 +126,19 @@ class SummaryUI(MouserPage): # pylint: disable=undefined-variable
         group_names = ''
         for group in groups:
             group_names += group + ',\n'
+            
+        group_label = CTkLabel(self.main_frame, text='Group Names:', font=label_style)
 
-        group_label = Label(self.main_frame, text='Group Names:', style='Summary.TLabel')
         if len(group_names) >= 2:
-            group_input = Label(self.main_frame, text=group_names[:-2])
+            group_input = CTkLabel(self.main_frame, text=group_names[:-2])
         else:
-            group_input = Label(self.main_frame, text=group_names)
+            group_input = CTkLabel(self.main_frame, text=group_names)
         labels.append(group_label)
         inputs.append(group_input)
 
         rfid = str(self.input.uses_rfid())
-        rfid_label = Label(self.main_frame, text='Uses RFID:', style='Summary.TLabel')
-        rfid_input = Label(self.main_frame, text=rfid)
+        rfid_label = CTkLabel(self.main_frame, text='Uses RFID:', font=label_style)
+        rfid_input = CTkLabel(self.main_frame, text=rfid)
         labels.append(rfid_label)
         inputs.append(rfid_input)
         # pylint: disable= consider-using-enumerate

@@ -1,6 +1,6 @@
 '''Contains cage configuration page and behaviour.'''
-from tkinter import *
-from tkinter.ttk import *
+from tkinter.ttk import Style
+from customtkinter import *
 from tk_models import *
 from tkcalendar import DateEntry
 from scrollable_frame import ScrolledFrame
@@ -10,7 +10,8 @@ from audio import AudioManager
 
 class CageConfigurationUI(MouserPage):
     '''The Frame that allows user to configure the cages.'''
-    def __init__(self, database, parent: Tk, prev_page: Frame = None):
+    def __init__(self, database, parent: CTk, prev_page: CTkFrame = None):
+
         super().__init__(parent, "Group Configuration", prev_page)
 
         self.prev_page = prev_page
@@ -19,18 +20,18 @@ class CageConfigurationUI(MouserPage):
         scroll_canvas = ScrolledFrame(self)
         scroll_canvas.place(relx=0.05, rely=0.20, relheight=0.75, relwidth=0.88)
 
-        input_frame = Frame(scroll_canvas)
-        self.config_frame = Frame(scroll_canvas, relief=RIDGE)
+        input_frame = CTkFrame(scroll_canvas)
+        self.config_frame = CTkFrame(scroll_canvas)
 
-        auto_button = Button(input_frame, text='Randomize', width=15,
+        auto_button = CTkButton(input_frame, text='Randomize', width=15, 
                             command= self.randomize)
-        save_button = Button(input_frame, text='Save', width=15,
+        save_button = CTkButton(input_frame, text='Save', width=15, 
                             command= self.save_to_database)
-        move_button = Button(input_frame, text='Move', width=15,
+        move_button = CTkButton(input_frame, text='Move', width=15, 
                             command= self.check_move_input)
 
-        self.id_input = Entry(input_frame, width=10)
-        self.cage_input = Entry(input_frame, width=10)
+        self.id_input = CTkEntry(input_frame, width=110)
+        self.cage_input = CTkEntry(input_frame, width=110)
 
         self.id_input.insert(END, 'animal id')
         self.cage_input.insert(END, 'cage id')
@@ -70,17 +71,11 @@ class CageConfigurationUI(MouserPage):
         '''Initializes group frames from information in database.'''
         groups = self.db.get_groups()
 
-        frame_style, label_style = Style(), Style()
-        frame_style.configure('GroupFrame.TFrame', background='#0097A7')
-        label_style.configure('GroupLabel.TLabel', background='#0097A7', font=('Arial', 12))
+        label_style = CTkFont("Arial", 12)
 
         for group in groups:
-            group_frame = Frame(self.config_frame,
-                          borderwidth=3,
-                          relief='groove',
-                          style='GroupFrame.TFrame')
-
-            label = Label(group_frame, text=group, style='GroupLabel.TLabel')
+            frame = CTkFrame(self.config_frame, border_width=3, border_color="#00e7ff", bg_color='#0097A7')
+            label = CTkLabel(frame, text=group, bg_color='#0097A7', font=label_style)
             label.pack(side=TOP, padx=self.pad_x, pady=self.pad_y, anchor='center')
 
             self.create_cage_frames(group, group_frame)
@@ -94,15 +89,17 @@ class CageConfigurationUI(MouserPage):
         cages = self.db.get_cages_in_group(group)
         meas_items = self.db.get_measurement_items()
 
-        for cage in cages:
-            cage_frame = Frame(group_frame, borderwidth=3, relief='groove')
-            Label(cage_frame, text='Cage ' + cage).pack(side=TOP, anchor='center')
 
-            id_weight_label_frame = Frame(cage_frame)
+        for i in range (0, len(cages)):
+            frame = CTkFrame(group_frame, border_width=3, border_color="#00e7ff")
+            CTkLabel(frame, text='Cage ' + cages[i]).pack(side=TOP, anchor='center')
+            
+            id_weight_label_frame = CTkFrame(frame)
 
-            Label(id_weight_label_frame, text='Animal ID').pack(side=LEFT, anchor='center')
+            CTkLabel(id_weight_label_frame, text='Animal ID').pack(side=LEFT, anchor='center')
             for item in meas_items:
-                Label(id_weight_label_frame, text=item).pack(side=LEFT, anchor='center')
+
+                CTkLabel(id_weight_label_frame, text=item).pack(side=LEFT, anchor='center')
 
             id_weight_label_frame.pack(side=TOP, expand=TRUE, fill=BOTH, anchor='center')
 
@@ -115,14 +112,16 @@ class CageConfigurationUI(MouserPage):
         animals = self.db.get_animals_in_cage(cage)
 
         for animal in animals:
-            animal_frame = Frame(cage_frame, borderwidth=3, relief='groove')
 
-            id_measurement_frame = Frame(animal_frame)
+            frame = CTkFrame(cage_frame, borderwidth=3, border_color="#00e7ff")
+            
+            id_measurement_frame = CTkFrame(frame)
 
-            Label(id_measurement_frame, text=animal, anchor='center').pack(
+            CTkLabel(id_measurement_frame, text=animal, anchor='center').pack(
                         side=LEFT, expand=TRUE, fill=BOTH, anchor='e')
-            Label(id_measurement_frame, text=self.db.get_animal_measurements(animal),
-                  anchor='center').pack(side=LEFT, expand=TRUE, fill=BOTH, anchor='center')
+
+            CTkLabel(id_measurement_frame, text=self.db.get_animal_measurements(animal), anchor='center').pack(
+                        side=LEFT, expand=TRUE, fill=BOTH, anchor='center')
 
             id_measurement_frame.pack(side=TOP, expand=TRUE, fill=BOTH, anchor='center')
 
@@ -161,27 +160,27 @@ class CageConfigurationUI(MouserPage):
 
     def raise_warning(self, option: int):
         '''Raises a warning page.'''
-        message = Tk()
+        message = CTk()
         message.title("WARNING")
         message.geometry('320x100')
         message.resizable(False, False)
 
         if option == 1:
-            label = Label(message, text='Animal ID and Cage ID must be integers.')
+            label = CTkLabel(message, text='Animal ID and Cage ID must be integers.')
 
         elif option == 2:
-            label = Label(message, text='Not a valid Animal ID.')
+            label = CTkLabel(message, text='Not a valid Animal ID.')
 
         elif option == 3:
-            label = Label(message, text='Not a valid Cage ID.')
+            label = CTkLabel(message, text='Not a valid Cage ID.')
 
         elif option == 4:
-            label = Label(message, text='Number of animals in a cage must not exceed '
-                          + str(self.db.get_cage_max()))
+
+            label = CTkLabel(message, text='Number of animals in a cage must not exceed '+ str(self.db.get_cage_max()))
 
         label.grid(row=0, column=0, padx=10, pady=10)
 
-        ok_button = Button(message, text="OK", width=10,
+        ok_button = CTkButton(message, text="OK", width=10, 
                         command= lambda: [message.destroy()])
         ok_button.grid(row=2, column=0, padx=10, pady=10)
 
@@ -225,7 +224,7 @@ class CageConfigurationUI(MouserPage):
         '''Saves updated values to database.'''
         if self.check_num_in_cage_allowed():
             self.db.update_experiment()
-            self.prev_page.tkraise()
+            raise_frame(self.prev_page)
         else:
             self.raise_warning(4)
 

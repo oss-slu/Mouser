@@ -1,21 +1,19 @@
 '''Scrollable frames for Mouser'''
-
-from tkinter import *
-from tkinter.ttk import *
-
+from customtkinter import *
+from tkinter.ttk import Widget
 
 class ScrolledFrame:
     '''A frome with horizontal and verticel scrollbars.'''
     def __init__(self, master):
-        self.outer_frame = Frame(master)
+        self.outer_frame = CTkFrame(master)
 
-        self.vert_scrollbar = Scrollbar(self.outer_frame, orient=VERTICAL)
-        self.horz_scrollbar = Scrollbar(self.outer_frame, orient=HORIZONTAL)
+        self.vert_scrollbar = CTkScrollbar(self.outer_frame, orientation=VERTICAL)
+        self.horz_scrollbar = CTkScrollbar(self.outer_frame, orientation=HORIZONTAL)
 
         self.vert_scrollbar.pack(fill=Y, side=RIGHT)
         self.horz_scrollbar.pack(fill=X, side=BOTTOM)
 
-        self.canvas = Canvas(self.outer_frame, highlightthickness=0)
+        self.canvas = CTkCanvas(self.outer_frame, highlightthickness=0)
         self.canvas.pack(side=LEFT, fill=BOTH, expand=True)
         self.canvas['yscrollcommand'] = self.vert_scrollbar.set
         self.canvas['xscrollcommand'] = self.horz_scrollbar.set
@@ -25,8 +23,8 @@ class ScrolledFrame:
         self.vert_scrollbar['command'] = self.canvas.yview
         self.horz_scrollbar['command'] = self.canvas.xview
 
-        self.inner = Frame(self.canvas)
-
+        self.inner = CTkFrame(self.canvas)
+        
         self.canvas.create_window(4, 4, window=self.inner, anchor='nw')
         self.inner.bind("<Configure>", self._on_frame_configure)
 

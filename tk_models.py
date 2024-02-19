@@ -1,24 +1,31 @@
 '''Contains shared tkinter models used througout the program.'''
-from tkinter import *
-from tkinter.ttk import *
+from tkinter import PhotoImage
+from customtkinter import *
 from abc import ABC, abstractmethod
 
-def raise_frame(raised_frame: Frame):
-    '''Raises the frame in the stacking order.'''
-    raised_frame.tkraise()
+current_frame: CTkFrame = None
+
+def raise_frame(frame: CTkFrame):
+    global current_frame
+    if current_frame:
+        current_frame.pack_forget()
+    current_frame = frame
+    current_frame.pack()
 
 
-def create_nav_button(parent: Frame, name: str, button_image: PhotoImage, raised_frame: Frame, relx: float, rely: float): #pylint: disable= line-too-long
-    '''Makes a navigation button to the various sub-menus of the program.'''
-    button = Button(parent, text=name, image=button_image,
-                    compound=TOP, width=25, command = lambda: raise_frame(raised_frame))
+def create_nav_button(parent: CTkFrame, name: str, button_image: PhotoImage, frame: CTkFrame, relx: float, rely: float): #pylint: disable= line-too-long
+  '''Makes a navigation button to the various sub-menus of the program.'''
+    button = CTkButton(parent, text=name, image=button_image,
+                    compound=TOP, width=25, command=lambda: raise_frame(frame))
     button.place(relx=relx, rely=rely, anchor=CENTER)
     button.image = button_image
 
 
-class MenuButton(Button):
-    '''A standard button that navigates backwards in the program.'''
-    def __init__(self, page: Frame, previous_page: Frame):
+
+class MenuButton(CTkButton):
+  '''A standard button that navigates backwards in the program.'''
+    def __init__(self, page: CTkFrame, previous_page: CTkFrame):
+
         super().__init__(page, text="Back to Menu", compound=TOP,
                          width=15, command = self.navigate)
         self.place(relx=0.15, rely=0.15, anchor=CENTER)
@@ -26,12 +33,12 @@ class MenuButton(Button):
 
     def navigate(self):
         '''Raises the previous_page in the stacking order.'''
-        self.previous_page.tkraise()
+        raise_frame(self.previous_page)
 
 
-class ChangePageButton(Button):
-    '''A standard button that navigates somewhere else in the program.'''
-    def __init__(self, page: Frame, next_page: Frame, previous: bool = True):
+class ChangePageButton(CTkButton):
+    def __init__(self, page: CTkFrame, next_page: CTkFrame, previous: bool = True):
+  '''A standard button that navigates somewhere else in the program.'''
         text = "Next"
         x = 0.75
         if previous:
@@ -44,23 +51,21 @@ class ChangePageButton(Button):
 
     def navigate(self):
         '''Raises the next_page in the stacking order.'''
-        self.next_page.tkraise()
+        raise_frame(self.next_page)
 
 
-class MouserPage(Frame):
-    '''Standard pageframe used throught the program.'''
-    def __init__(self, parent: Tk, title: str, menu_page: Frame = None):
+class MouserPage(CTkFrame):
+    def __init__(self, parent: CTk, title: str, menu_page: CTkFrame = None):
+        '''Standard pageframe used throught the program.'''
         super().__init__(parent)
+        self.root = parent
         self.title = title
 
-        self.canvas = Canvas(self, width=600, height=600)
+        self.canvas = CTkCanvas(self, width=600, height=600)
         self.canvas.grid(row=0, column=0, columnspan= 4)
         self.rectangle = self.canvas.create_rectangle(0, 0, 600, 50, fill='#0097A7')
         self.title_label = self.canvas.create_text(300, 13, anchor="n")
         self.canvas.itemconfig(self.title_label, text=title, font=("Arial", 18))
-        self.grid(row=0, column=0, sticky="NESW")
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
 
         self.canvas.grid_rowconfigure(0, weight=1)
         self.canvas.grid_columnconfigure(0, weight=1)
@@ -73,7 +78,7 @@ class MouserPage(Frame):
 
     def raise_frame(self):
         '''Raises the page frame in the stacking order.'''
-        self.tkraise()
+        raise_frame(self)
 
     def set_next_button(self, next_page):
         '''Sets next_button to be a ChangePageButton that naviages to next_page.'''
@@ -113,22 +118,19 @@ class MouserPage(Frame):
         '''Resizes page width.'''
         self.canvas.config(width=root_width)
 
-        x0, y0, _, y2 = self.canvas.coords(self.rectangle)
-        _, y3 = self.canvas.coords(self.title_label)
-        self.canvas.coords(self.rectangle, x0, y0, root_width, y2)
-        self.canvas.coords(self.title_label, (root_width/2), y3)
+        self.canvas.coords(self.rectangle, 0, 0, root_width, 50)
+        self.canvas.coords(self.title_label, (root_width/2), 13)
 
 
-class ChangeableFrame(ABC, Frame):
+class ChangeableFrame(ABC, CTkFrame):
     '''Abstract class.'''
-
     @abstractmethod
     def update_frame(self):
         '''Abstract update_frame.'''
         pass # pylint: disable= unnecessary-pass
 
 if __name__ == '__main__':
-    root = Tk()
+    root = CTk()
     root.title("Template Test")
     root.geometry('600x600')
 

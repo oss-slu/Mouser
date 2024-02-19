@@ -1,17 +1,17 @@
 '''Group configuration module.'''
-from tkinter import *
-from tkinter.ttk import *
+from customtkinter import *
 from tk_models import *
 from scrollable_frame import ScrolledFrame
 from experiment_pages.summary_ui import SummaryUI
 from experiment_pages.experiment import Experiment
 
-# pylint: disable= undefined-variable
-class GroupConfigUI(MouserPage):
+
+class GroupConfigUI(MouserPage): # pylint: disable= undefined-variable
     '''Group Congifuratin User Interface and Window.'''
-    def __init__(self, experiment: Experiment, parent:Tk, prev_page: Frame, menu_page: Frame):
+
+    def __init__(self, input: Experiment, parent: CTk, prev_page: CTkFrame, menu_page: CTkFrame):
+
         super().__init__(parent, "New Experiment - Group Configuration", prev_page)
-# pylint: disable= undefined-variable
         self.experiment = experiment
 
         self.next_page = SummaryUI(self.experiment, parent, self, menu_page)
@@ -20,11 +20,11 @@ class GroupConfigUI(MouserPage):
         scroll_canvas = ScrolledFrame(self)
         scroll_canvas.place(relx=0.1, rely=0.25, relheight=0.75, relwidth=0.88)
 
-        self.main_frame = Frame(scroll_canvas)
+        self.main_frame = CTkFrame(scroll_canvas)
         self.main_frame.grid(row=0, column=0, sticky='NESW')
 
-        self.group_frame = Frame(self.main_frame)
-        self.item_frame = Frame(self.main_frame)
+        self.group_frame = CTkFrame(self.main_frame)
+        self.item_frame = CTkFrame(self.main_frame)
 
         self.group_frame.pack(side=TOP)
         self.item_frame.pack(side=TOP)
@@ -51,10 +51,10 @@ class GroupConfigUI(MouserPage):
 
     def create_group_entries(self, num):
         '''Creates the widgit for group entries.'''
-        Label(self.group_frame, text="Group Name").grid(row=0, column=0, padx=10, pady=10)
+        CTkLabel(self.group_frame, text="Group Name").grid(row=0, column=0, padx=10, pady=10)
         self.group_input = []
         for i in range(0, num):
-            name = Entry(self.group_frame, width = 60)
+            name = CTkEntry(self.group_frame, width = 160)
             name.grid(row=i+1, column=0, padx=10, pady=10)
             self.group_input.append(name)
 
@@ -64,24 +64,23 @@ class GroupConfigUI(MouserPage):
         self.item_auto_buttons = []
         self.item_man_buttons = []
 
-        type_label = Label(self.item_frame, text="Input Method")
+        type_label = CTkLabel(self.item_frame, text="Input Method")
         type_label.grid(row=0, column=0, columnspan=3, pady=8)
 
-        # pylint: disable= consider-using-enumerate
-        for i in range(0, len(items)):
+        
+        for i in range(0, len(items)): # pylint: disable= consider-using-enumerate
             self.type = BooleanVar()
             self.button_vars.append(self.type)
-
-            Label(self.item_frame, text=items[i]).grid(row=i+1, column=0, padx=10, pady=10, sticky=W)
-            auto = Radiobutton(self.item_frame, text='Automatic', variable=self.type, val=True)
-            man = Radiobutton(self.item_frame, text='Manual', variable=self.type, val=False)
+            
+            CTkLabel(self.item_frame, text=items[i]).grid(row=i+1, column=0, padx=10, pady=10, sticky=W)
+            auto = CTkRadioButton(self.item_frame, text='Automatic', variable=self.type, value=1)
+            man = CTkRadioButton(self.item_frame, text='Manual', variable=self.type, value=0)
 
             auto.grid(row=i+1, column=1, padx=10, pady=10)
             man.grid(row=i+1, column=2, padx=10, pady=10)
 
             self.item_auto_buttons.append(auto)
             self.item_man_buttons.append(man)
-        # pylint: enable= consider-using-enumerate
 
     def update_page(self):
         '''Updates page to reflect current state of the experiment.'''
