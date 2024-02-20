@@ -6,8 +6,8 @@ from scrollable_frame import ScrolledFrame
 from database_controller import DatabaseController
 from audio import AudioManager
 
-
-class CageConfigurationUI(MouserPage): #pylint: disable= undefined-variable
+#pylint: disable= undefined-variable
+class CageConfigurationUI(MouserPage):
     '''The Frame that allows user to configure the cages.'''
     def __init__(self, database, parent: CTk, prev_page: CTkFrame = None):
 
