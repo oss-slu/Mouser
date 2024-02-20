@@ -9,7 +9,8 @@ from database_apis.experiment_database import ExperimentDatabase
 from database_apis.data_collection_database import DataCollectionDatabase
 from audio import AudioManager
 
-class DataCollectionUI(MouserPage): #pylint: disable= undefined-variable
+#pylint: disable= undefined-variable
+class DataCollectionUI(MouserPage):
     '''Page Frame for Data Collection.'''
 
     def __init__(self, parent: CTk, prev_page: CTkFrame = None, database_name = ""):
