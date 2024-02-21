@@ -1,31 +1,36 @@
-from tkinter import *
-from tkinter.ttk import *
+from tkinter import PhotoImage
+from customtkinter import *
 from abc import ABC, abstractmethod
 
-def raise_frame(frame: Frame):
-    frame.tkraise()
+current_frame: CTkFrame = None
 
+def raise_frame(frame: CTkFrame):
+    global current_frame
+    if current_frame:
+        current_frame.pack_forget()
+    current_frame = frame
+    current_frame.pack()
 
-def create_nav_button(parent: Frame, name: str, button_image: PhotoImage, frame: Frame, relx: float, rely: float):
-    button = Button(parent, text=name, image=button_image,
+def create_nav_button(parent: CTkFrame, name: str, button_image: PhotoImage, frame: CTkFrame, relx: float, rely: float):
+    button = CTkButton(parent, text=name, image=button_image,
                     compound=TOP, width=25, command=lambda: raise_frame(frame))
     button.place(relx=relx, rely=rely, anchor=CENTER)
     button.image = button_image
 
 
-class MenuButton(Button):
-    def __init__(self, page: Frame, previous_page: Frame):
+class MenuButton(CTkButton):
+    def __init__(self, page: CTkFrame, previous_page: CTkFrame):
         super().__init__(page, text="Back to Menu", compound=TOP,
                          width=15, command=lambda: self.navigate())
         self.place(relx=0.15, rely=0.15, anchor=CENTER)
         self.previous_page = previous_page
 
     def navigate(self):
-        self.previous_page.tkraise()
+        raise_frame(self.previous_page)
 
 
-class ChangePageButton(Button):
-    def __init__(self, page: Frame, next_page: Frame, previous: bool = True):
+class ChangePageButton(CTkButton):
+    def __init__(self, page: CTkFrame, next_page: CTkFrame, previous: bool = True):
         text = "Next"
         x = 0.75
         if previous:
@@ -37,22 +42,20 @@ class ChangePageButton(Button):
         self.next_page = next_page
 
     def navigate(self):
-        self.next_page.tkraise()
+        raise_frame(self.next_page)
 
 
-class MouserPage(Frame):
-    def __init__(self, parent: Tk, title: str, menu_page: Frame = None):
+class MouserPage(CTkFrame):
+    def __init__(self, parent: CTk, title: str, menu_page: CTkFrame = None):
         super().__init__(parent)
+        self.root = parent
         self.title = title
 
-        self.canvas = Canvas(self, width=600, height=600)
+        self.canvas = CTkCanvas(self, width=600, height=600)
         self.canvas.grid(row=0, column=0, columnspan= 4)
         self.rectangle = self.canvas.create_rectangle(0, 0, 600, 50, fill='#0097A7')
         self.title_label = self.canvas.create_text(300, 13, anchor="n")
         self.canvas.itemconfig(self.title_label, text=title, font=("Arial", 18))
-        self.grid(row=0, column=0, sticky="NESW")
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
 
         self.canvas.grid_rowconfigure(0, weight=1)
         self.canvas.grid_columnconfigure(0, weight=1)
@@ -64,7 +67,7 @@ class MouserPage(Frame):
         self.check_window_size()
 
     def raise_frame(self):
-        self.tkraise()
+        raise_frame(self)
 
     def set_next_button(self, next_page):
         if self.next_button:
@@ -96,13 +99,11 @@ class MouserPage(Frame):
     def resize_canvas_width(self, root_width):
         self.canvas.config(width=root_width)
 
-        x0, y0, x1, y2 = self.canvas.coords(self.rectangle)
-        x3, y3 = self.canvas.coords(self.title_label)
-        self.canvas.coords(self.rectangle, x0, y0, root_width, y2)
-        self.canvas.coords(self.title_label, (root_width/2), y3)
+        self.canvas.coords(self.rectangle, 0, 0, root_width, 50)
+        self.canvas.coords(self.title_label, (root_width/2), 13)
 
 
-class ChangeableFrame(ABC, Frame):
+class ChangeableFrame(ABC, CTkFrame):
 
     @abstractmethod
     def update_frame(self):
@@ -110,7 +111,7 @@ class ChangeableFrame(ABC, Frame):
 
 
 if __name__ == '__main__':
-    root = Tk()
+    root = CTk()
     root.title("Template Test")
     root.geometry('600x600')
 
