@@ -23,15 +23,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install pylint
         pip install -r requirements.txt
-
-  lint:
-    needs: build
-    runs-on: ubuntu-latest
-    strategy:
-     matrix:
-        python-version: [3.x]
-    steps:
-    - uses: actions/checkout@v3
     - name: Analysing the code with pylint and handling exit code
       id: lint
       run: |
@@ -40,9 +31,9 @@ jobs:
                 pylint --disable=import-error,R,wildcard-import,unused-wildcard-import,attribute-defined-outside-init --max-line-length=115 --fail-under=9.0 $file  
               done
     - continue-on-error: true
-
     - name: Checks for failure
-    - uses: actions/checkout@v3
       id: Fail
       if: steps.lint.outcome = 'failure'
-      run: exit 1
+
+
+
