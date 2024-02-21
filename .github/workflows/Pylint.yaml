@@ -17,20 +17,30 @@ jobs:
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
-        python-version: ${{ matrix.python-version }}
-
+        python-version: ${{ matrix.python-version }} 
     - name: Install Dependencies and Pylint
       run: |
         python -m pip install --upgrade pip
         pip install pylint
         pip install -r requirements.txt
- 
+  lint:
+      runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.x]
+    steps:
     - name: Analysing the code with pylint and handling exit code
+      id: lint
       run: |
               for file in $(git ls-files '*.py')
               do
                 pylint --disable=import-error,R,wildcard-import,unused-wildcard-import,attribute-defined-outside-init --max-line-length=115 --fail-under=9.0 $file  
               done
+    - continue-on-error: true
+    - name: Checks for failure
+      id: Fail
+      if: steps.lint.outcome = 'failure'
+      run: exit 1
 
 
 
