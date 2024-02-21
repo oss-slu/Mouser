@@ -37,6 +37,7 @@ jobs:
                 pylint --disable=import-error,R,wildcard-import,unused-wildcard-import,attribute-defined-outside-init --max-line-length=115 --fail-under=9.0 $file  
               done
     - continue-on-error: true
+
     - name: Checks for failure
       id: Fail
       if: steps.lint.outcome = 'failure'
