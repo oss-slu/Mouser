@@ -31,6 +31,7 @@ jobs:
      matrix:
         python-version: [3.x]
     steps:
+    - uses: actions/checkout@v3
     - name: Analysing the code with pylint and handling exit code
       id: lint
       run: |
