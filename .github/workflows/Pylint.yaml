@@ -33,6 +33,6 @@ jobs:
       continue-on-error: true
     - name: Checks for failure
       id: Fail
-      if: steps.lint.outcome == 'failure'git
+      if: steps.lint.outcome == 'failure'
       run: exit 1
 
