@@ -23,10 +23,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install pylint
         pip install -r requirements.txt
+
   lint:
-      runs-on: ubuntu-latest
+    needs: build
+    runs-on: ubuntu-latest
     strategy:
-      matrix:
+     matrix:
         python-version: [3.x]
     steps:
     - name: Analysing the code with pylint and handling exit code
@@ -42,6 +44,3 @@ jobs:
       id: Fail
       if: steps.lint.outcome = 'failure'
       run: exit 1
-
-
-
