@@ -94,6 +94,12 @@ class ExperimentMenuUI(MouserPage):
 
         # disconnect the file from the database
         self.disconnect_database()
+        print(name)
+        splitted = name.split("\\")
+        print(splitted[-1])
+        if ("Protected" in splitted[-1]):
+            name = "C:\\Users\\stanl\\capstone1\\mouser\\Mouser\\databases\\experiments\\" + splitted[-1]
+            
 
         try:
             os.remove(name)
