@@ -41,6 +41,6 @@ jobs:
       continue-on-error: true
     - name: Checks for failure
       id: Fail
-      if: step.lint.outcome == 'failed'
+      if: steps.lint.outcome == 'failed'
       run: exit 1
 
