@@ -33,6 +33,7 @@ jobs:
                 then
                   echo "Linting failed"
                   continue
+                fi
               done
       continue-on-error: true
     - name: Checks for failure
