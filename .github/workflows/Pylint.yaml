@@ -29,7 +29,7 @@ jobs:
               for file in $(git ls-files '*.py')
               do
                 pylint --disable=import-error,R,wildcard-import,unused-wildcard-import,attribute-defined-outside-init --max-line-length=115 --fail-under=9.0 $file || lint_failed = 1
-                if (${lint_failed} -eq 1})
+                if (${lint_failed:-0} -eq 1})
                 then
                   echo "Linting failed"
                 fi
