@@ -1,8 +1,8 @@
 '''Main functionality of Program.'''
 import tempfile
+from tkinter.filedialog import *
 from customtkinter import *
 from CTkMenuBar import *
-from tkinter.filedialog import *
 from CTkMessagebox import CTkMessagebox
 from login import LoginFrame
 from tk_models import *
@@ -52,7 +52,7 @@ def open_file():
 
                 except Exception as _:# pylint: disable= broad-exception-caught
                     CTkMessagebox(
-                        message=f"Incorrect password",
+                        message="Incorrect password",
                         title="Error",
                         icon="cancel"
                     )
@@ -62,7 +62,7 @@ def open_file():
         else:
             page = ExperimentMenuUI(root, file_path, experiments_frame)
             page.raise_frame()
-            
+
 # Command for 'New' option in menu bar
 def create_file():
     '''Command for the 'New' option in the menue bar.

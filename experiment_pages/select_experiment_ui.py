@@ -20,8 +20,9 @@ class NewExperimentButton(CTkButton):# pylint: disable= undefined-variable
         '''Raises next page.'''
         self.next_page.raise_frame()
 
-class ExperimentsUI(MouserPage):
+class ExperimentsUI(MouserPage): #pylint: disable= undefined-variable
     '''Experiments UI'''
     def __init__(self, parent: CTk, prev_page: CTkFrame = None):
         super().__init__(parent, "Mouser")
+        self.previous = prev_page
         self.parent = parent
