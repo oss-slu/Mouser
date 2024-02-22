@@ -1,4 +1,5 @@
 '''Serial Simulation.'''
+import shutil
 from customtkinter import *
 from tk_models import *
 from serial_port_controller import SerialPortController

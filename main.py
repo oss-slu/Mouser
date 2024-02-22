@@ -1,4 +1,5 @@
 '''Main functionality of Program.'''
+import tempfile
 from customtkinter import *
 from CTkMenuBar import *
 from tkinter.filedialog import *
@@ -83,7 +84,6 @@ file_dropdown.add_option(option="New", command = create_file)
 file_dropdown.add_option(option="Open", command = open_file)
 
 root.config(menu=menu_bar)
-
 
 main_frame = MouserPage(root, "Mouser")
 login_frame = LoginFrame(root, main_frame)

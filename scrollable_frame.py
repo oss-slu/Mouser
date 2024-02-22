@@ -1,6 +1,7 @@
 '''Scrollable frames for Mouser'''
-from customtkinter import *
 from tkinter.ttk import Widget
+from customtkinter import *
+
 
 class ScrolledFrame:
     '''A frome with horizontal and verticel scrollbars.'''
@@ -24,7 +25,7 @@ class ScrolledFrame:
         self.horz_scrollbar['command'] = self.canvas.xview
 
         self.inner = CTkFrame(self.canvas)
-        
+
         self.canvas.create_window(4, 4, window=self.inner, anchor='nw')
         self.inner.bind("<Configure>", self._on_frame_configure)
 
