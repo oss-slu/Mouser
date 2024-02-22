@@ -32,12 +32,15 @@ jobs:
                 if (${lint_failed:-0}=="failed"})
                 then
                   echo "Linting failed"
-                  
                 fi
               done
+              if (${lint_failed:-0}=="failed"})
+              then
+                exit 1
+              fi
       continue-on-error: true
     - name: Checks for failure
       id: Fail
-      if: ${lint_failed:-0}=="failed"}
+      if: step.lint.outcome == 'failed'
       run: exit 1
 
