@@ -34,7 +34,7 @@ jobs:
                   echo "Linting failed"
                 fi
               done
-              if [["$lint_failed"=="failed"]]
+              if [ "$lint_failed" = "failed" ]
               then
                 exit 1
               fi
