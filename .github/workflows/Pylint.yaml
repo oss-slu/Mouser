@@ -28,15 +28,16 @@ jobs:
       run: |
               for file in $(git ls-files '*.py')
               do
-                pylint --disable=import-error,R,wildcard-import,unused-wildcard-import,attribute-defined-outside-init --max-line-length=115 --fail-under=9.0 $file || lint_failed=1
-                if (${lint_failed:-0} -eq 1})
+                pylint --disable=import-error,R,wildcard-import,unused-wildcard-import,attribute-defined-outside-init --max-line-length=115 --fail-under=9.0 $file || lint_failed="failed"
+                if (${lint_failed:-0}=="failed"})
                 then
                   echo "Linting failed"
+                  
                 fi
               done
       continue-on-error: true
     - name: Checks for failure
       id: Fail
-      if: steps.lint.outcome == 'failure'
+      if: ${lint_failed:-0}=="failed"}
       run: exit 1
 
