@@ -32,7 +32,6 @@ jobs:
                 if (${lint_failed} -eq 1})
                 then
                   echo "Linting failed"
-                  continue
                 fi
               done
       continue-on-error: true
