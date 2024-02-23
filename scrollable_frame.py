@@ -1,7 +1,10 @@
-from customtkinter import *
+'''Scrollable frames for Mouser'''
 from tkinter.ttk import Widget
+from customtkinter import *
+
 
 class ScrolledFrame:
+    '''A frome with horizontal and verticel scrollbars.'''
     def __init__(self, master):
         self.outer_frame = CTkFrame(master)
 
@@ -15,14 +18,14 @@ class ScrolledFrame:
         self.canvas.pack(side=LEFT, fill=BOTH, expand=True)
         self.canvas['yscrollcommand'] = self.vert_scrollbar.set
         self.canvas['xscrollcommand'] = self.horz_scrollbar.set
-        
+
         self.canvas.bind("<Enter>", self._bind_mouse)
         self.canvas.bind("<Leave>", self._unbind_mouse)
         self.vert_scrollbar['command'] = self.canvas.yview
         self.horz_scrollbar['command'] = self.canvas.xview
 
         self.inner = CTkFrame(self.canvas)
-        
+
         self.canvas.create_window(4, 4, window=self.inner, anchor='nw')
         self.inner.bind("<Configure>", self._on_frame_configure)
 
@@ -33,22 +36,21 @@ class ScrolledFrame:
         if item in self.outer_attr:
             # geometry attributes etc (eg pack, destroy, tkraise) are passed on to self.outer
             return getattr(self.outer_frame, item)
-        else:
-            # all other attributes (_w, children, etc) are passed to self.inner
-            return getattr(self.inner, item)
+        # all other attributes (_w, children, etc) are passed to self.inner
+        return getattr(self.inner, item)
 
-    def _on_frame_configure(self, event=None):
-        x1, y1, x2, y2 = self.canvas.bbox("all")
+    def _on_frame_configure(self, _=None):
+        _, _, x2, y2 = self.canvas.bbox("all")
         height = self.canvas.winfo_height()
         width = self.canvas.winfo_width()
         self.canvas.config(scrollregion = (0,0, max(x2, width), max(y2, height)))
-        
-    def _bind_mouse(self, event=None):
+
+    def _bind_mouse(self, _=None):
         self.canvas.bind_all("<4>", self._on_mousewheel)
         self.canvas.bind_all("<5>", self._on_mousewheel)
         self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
 
-    def _unbind_mouse(self, event=None):
+    def _unbind_mouse(self, _=None):
         self.canvas.unbind_all("<4>")
         self.canvas.unbind_all("<5>")
         self.canvas.unbind_all("<MouseWheel>")
@@ -61,4 +63,3 @@ class ScrolledFrame:
 
     def __str__(self):
         return str(self.outer_frame)
-

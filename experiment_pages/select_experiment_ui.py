@@ -1,11 +1,10 @@
+'''Now unused select experiment ui'''
 from customtkinter import *
 from tk_models import *
-from scrollable_frame import ScrolledFrame
-import csv
 from experiment_pages.new_experiment_ui import NewExperimentUI
-from experiment_pages.experiment_menu_ui import ExperimentMenuUI
 
-class NewExperimentButton(CTkButton):
+class NewExperimentButton(CTkButton):# pylint: disable= undefined-variable
+    '''New Experiment Button widgit'''
     def __init__(self, parent: CTk, page: CTkFrame):
         super().__init__(page, text="Create New Experiment", compound=TOP,
                          width=22, command=lambda: [self.create_next_page(), self.navigate()])
@@ -14,13 +13,16 @@ class NewExperimentButton(CTkButton):
         self.page = page
 
     def create_next_page(self):
+        '''Sets next page to be a New Experiment UI page'''
         self.next_page = NewExperimentUI(self.parent, self.page)
 
     def navigate(self):
+        '''Raises next page.'''
         self.next_page.raise_frame()
 
-
-class ExperimentsUI(MouserPage):
+class ExperimentsUI(MouserPage): #pylint: disable= undefined-variable
+    '''Experiments UI'''
     def __init__(self, parent: CTk, prev_page: CTkFrame = None):
         super().__init__(parent, "Mouser")
+        self.previous = prev_page
         self.parent = parent

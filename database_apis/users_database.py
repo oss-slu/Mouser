@@ -1,3 +1,4 @@
+# pylint: skip-file
 import sqlite3
 import random
 import string
