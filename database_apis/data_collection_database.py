@@ -1,10 +1,11 @@
+# pylint: skip-file
 from pathlib import Path
 import pandas as pd
 import os
 
 class DataCollectionDatabase:
     def __init__(self, experiment: str = None, measurement_items: list = ["Weight", "Length"]):
-        
+
         #gets the name of the file from the file path
         experiment_name = os.path.basename(experiment)
         experiment_name = os.path.splitext(experiment_name)[0]

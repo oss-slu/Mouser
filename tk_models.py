@@ -25,11 +25,11 @@ def create_nav_button(parent: CTkFrame, name: str, button_image: PhotoImage, fra
 
 class MenuButton(CTkButton):
     '''A standard button that navigates backwards in the program.'''
-    def __init__(self, page: CTkFrame, previous_page: CTkFrame, include_button=False):
-        super().__init__(page, text="", compound=TOP,
-                         width=15, command=self.navigate)
-        if include_button:
-            self.place(relx=0.15, rely=0.15, anchor=CENTER)
+    def __init__(self, page: CTkFrame, previous_page: CTkFrame):
+
+        super().__init__(page, text="Back to Menu", compound=TOP,
+                         width=15, command = self.navigate)
+        self.place(relx=0.15, rely=0.15, anchor=CENTER)
         self.previous_page = previous_page
 
 
@@ -59,6 +59,7 @@ class ChangePageButton(CTkButton):
 
 
 class MouserPage(CTkFrame):
+
     '''Standard pageframe used throughout the program.'''
     def __init__(self, parent: CTk, title: str, menu_page: CTkFrame = None):
         super().__init__(parent)
@@ -88,6 +89,7 @@ class MouserPage(CTkFrame):
         raise_frame(self)
 
     def set_next_button(self, next_page):
+
         '''Sets next_button to be a ChangePageButton that navigates to next_page.'''
         if self.next_button:
             self.next_button.destroy()
@@ -106,9 +108,7 @@ class MouserPage(CTkFrame):
         self.menu_button = MenuButton(self, menu_page)
 
     def check_window_size(self):
-        '''Checks to see if the window size and page size match.
-        If they don't, resizes the page to match.
-        '''
+        '''Checks to see if the window size and page size match.If they don't, resizes the page to match'''
         window = self.winfo_toplevel()
         if window.winfo_height() != self.canvas.winfo_height():
             self.resize_canvas_height(window.winfo_height())

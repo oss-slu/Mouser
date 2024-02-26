@@ -1,3 +1,4 @@
+# pylint: skip-file
 from customtkinter import *
 from tk_models import *
 import copy

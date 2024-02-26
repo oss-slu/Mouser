@@ -1,28 +1,34 @@
+'''Map RFID module.'''
 from tkinter import Menu
 from tkinter.ttk import Style, Treeview
-from customtkinter import *
-from CTkMessagebox import CTkMessagebox
-from tk_models import *
 import tkinter.font as tkfont
 import random
-from playsound import playsound
 import threading
 import webbrowser
-from serial_port_controller import SerialPortController
+from customtkinter import *
+from CTkMessagebox import CTkMessagebox
+from playsound import playsound
 from serial import serialutil
+from tk_models import *
+from serial_port_controller import SerialPortController
 
 from database_apis.experiment_database import ExperimentDatabase
 from audio import AudioManager
 
 def get_random_rfid():
+    '''Returns a simulated rfid number'''
     return random.randint(1000000, 9999999)
 
 def play_sound_async(filename):
+    '''Plays the given filename.'''
     threading.Thread(target=playsound, args=(filename,), daemon=True).start()
 
-class MapRFIDPage(MouserPage):
+class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
+    '''Map RFID user interface and window.'''
     def __init__(self, database, parent: CTk, previous_page: CTkFrame = None):
+
         super().__init__(parent, "Map RFID", previous_page)
+
 
         file = database
         self.db = ExperimentDatabase(file)
@@ -40,7 +46,7 @@ class MapRFIDPage(MouserPage):
         animal_id_header.place(relx=0.28, rely=0.20, anchor=E)
 
         simulate_rfid_button = CTkButton(self, text="Simulate RFID", compound=TOP,
-                                      width=15, command=lambda: self.add_random_rfid())
+                                      width=15, command=self.add_random_rfid)
         simulate_rfid_button.place(relx=0.80, rely=0.20, anchor=CENTER)
 
 
@@ -48,7 +54,6 @@ class MapRFIDPage(MouserPage):
         self.table_frame.place(relx=0.15, rely=0.40, relheight= 0.40, relwidth=0.80)
         self.table_frame.grid_columnconfigure(0, weight= 1)
         self.table_frame.grid_rowconfigure(0, weight= 1)
-        
 
         heading_style = Style()
         heading_style.configure("Treeview.Heading", font=('Arial', 10))
@@ -108,13 +113,15 @@ class MapRFIDPage(MouserPage):
         self.set_menu_button(previous_page)
         self.menu_page = previous_page
 
-        self.menu_button.configure(command = lambda: self.press_back_to_menu_button())
+        self.menu_button.configure(command = self.press_back_to_menu_button)
         self.scroll_to_latest_entry()
-        
+
     def scroll_to_latest_entry(self):
+        '''Scrolls to the latest entry in the rfid table.'''
         self.table.yview_moveto(1)
 
     def right_click_menu(self, event):
+        '''Opens right-click menu.'''
         if len(self.table.selection()) != 0:
             try:
                 self.right_click.tk_popup(event.x_root, event.y_root)
@@ -122,9 +129,10 @@ class MapRFIDPage(MouserPage):
                 self.right_click.grab_release()
 
     def add_random_rfid(self):
-        if (len(self.animals) == self.db.get_number_animals()):
+        '''Adds a random rfid value to the next animal.'''
+        if len(self.animals) == self.db.get_number_animals():
             self.raise_warning()
-        elif(self.serial_port_controller.get_writer_port() != None):
+        elif self.serial_port_controller.get_writer_port() is not None:
             self.serial_port_controller.write_to("123")
             constant_rfid = self.serial_port_controller.read_info()
             rand_rfid = constant_rfid+str(random.randint(10000, 99999))
@@ -134,6 +142,7 @@ class MapRFIDPage(MouserPage):
             self.add_value(rfid)
 
     def add_value(self, rfid):
+        '''Adds rfid number and animal to the table and to the database.'''
         item_id = self.animal_id
         self.table.insert('', item_id-1, values=(item_id, rfid), tags='text_font')
         # self.animals.append((item_id, rfid))
@@ -144,18 +153,16 @@ class MapRFIDPage(MouserPage):
 
 
     def change_selected_value(self, rfid):
+        '''Changes the selected rfid value.'''
         item = self.table.item(self.changing_value)
         self.table.item(self.changing_value, values=(
             item['values'][0], rfid))
         self.change_rfid_button["state"] = "normal"
-        
+
         AudioManager.play("sounds/rfid_success.wav")
 
-
-
-        
-
-    def item_selected(self, event):
+    def item_selected(self, _):
+        '''On selecting an item in the table.'''
         selected = self.table.selection()
 
         if len(selected) != 1:
@@ -169,6 +176,7 @@ class MapRFIDPage(MouserPage):
             self.delete_button["state"] = "normal"
 
     def remove_selected_items(self):
+        '''Removes the selected item from a table,'''
         selected_items = self.table.selection()
 
         for item in selected_items:
@@ -177,10 +185,11 @@ class MapRFIDPage(MouserPage):
 
             # Update animal id
             self.animals = [(index, rfid) for (index, rfid) in self.animals if index != item_id]
-        
+
         self.change_entry_text()
 
     def change_entry_text(self):
+        '''Changes entry text for the table.'''
         # Update entry text after removal
         if self.animals:
             next_animal = self.get_next_animal()
@@ -188,8 +197,9 @@ class MapRFIDPage(MouserPage):
             self.animal_id = next_animal
         else:
             self.animal_id_entry_text.set("1")
-            
+
     def get_next_animal(self):
+        '''returns the next animal in our experiment.'''
         next_animal = self.animals[-1][0] + 1
         for i, animal in enumerate(self.animals):
             if i < len(self.animals) - 1 and animal[0] + 1 != self.animals[i+1][0]:
@@ -198,16 +208,19 @@ class MapRFIDPage(MouserPage):
         return next_animal
 
     def open_change_rfid(self):
+        '''Opens change rfid window.'''
         self.changing_value = self.table.selection()[0]
         self.change_rfid_button["state"] = "disabled"
         self.changer.open()
 
     def open_serial_port_selection(self):
+        '''Opens serial port selection.'''
         #self.serial_port_button["state"] = "disabled"
         self.serial_port_panel.open()
 
-
     def raise_warning(self, warning_message = 'Maximum number of animals reached'):
+        '''Raises an error window.'''
+
         message = CTk()
         message.title("WARNING")
         message.geometry('320x100')
@@ -216,33 +229,35 @@ class MapRFIDPage(MouserPage):
         label = CTkLabel(message, text= warning_message)
         label.grid(row=0, column=0, padx=10, pady=10)
 
-        ok_button = CTkButton(message, text="OK", width=10, 
+
+        ok_button = CTkButton(message, text="OK", width=10,
                         command= lambda: [message.destroy()])
         ok_button.grid(row=2, column=0, padx=10, pady=10)
 
-        AudioManager.play("sounds\error.wav")
+        AudioManager.play("sounds/error.wav")
 
         message.mainloop()
 
     def press_back_to_menu_button(self):
-        if (len(self.animals) != self.db.get_number_animals()):
+        '''On pressing of back to menu button.'''
+        if len(self.animals) != self.db.get_number_animals():
             self.raise_warning(warning_message= 'Not all animals have been mapped to RFIDs')
         else:
-            raise_frame(self.menu_page)
-    def close_connection(self):
-        self.db.close()
+            raise_frame(self.menu_page) #pylint: disable= undefined-variable
 
     def close_connection(self):
+        '''Closes database file.'''
         self.db.close()
-
 
 class ChangeRFIDDialog():
+    '''Change RFID user interface.'''
     def __init__(self, parent: CTk, map_rfid: MapRFIDPage):
         self.parent = parent
         self.map_rfid = map_rfid
 
     def open(self):
-        self.root = root = CTkToplevel(self.parent)
+        '''Opens the change rfid dialog.'''
+        self.root = root = CTkToplevel(self.parent) # pylint: disable=redefined-outer-name
         root.title("Change RFID")
         root.geometry('400x400')
         root.resizable(False, False)
@@ -250,36 +265,40 @@ class ChangeRFIDDialog():
         root.grid_columnconfigure(0, weight=1)
 
         simulate_rfid_button = CTkButton(root, text="Simulate RFID", compound=TOP,
-                                      width=15, command=lambda: self.add_random_rfid())
+                                      width=15, command= self.add_random_rfid)
         simulate_rfid_button.place(relx=0.50, rely=0.20, anchor=CENTER)
 
         self.root.mainloop()
 
     def add_random_rfid(self):
+        '''Adds a random frid number to selected value.'''
         rfid = get_random_rfid()
         self.map_rfid.change_selected_value(rfid)
         self.close()
 
     def close(self):
+        '''Closes change RFID dialog.'''
         self.root.destroy()
 
 class SerialPortSelection():
+    '''Serial port selection user interface.'''
     def __init__(self, parent: CTk, controller: SerialPortController, map_rfid: MapRFIDPage):
+
         self.parent = parent
         self.map_rfid = map_rfid
         self.id = None
 
-        self.portController = controller
+        self.port_controller = controller
 
         self.serial_simulator = SerialSimulator(self.parent)
-    
+
     def open(self):
+        '''Opens Serial Port Selection Dialog.'''
         self.root = CTkToplevel(self.parent)
         self.root.title("Serial Port Selection")
         self.root.geometry('400x400')
         columns = ('port', 'description')
         self.table = Treeview(self.root, columns=columns, show='headings')
-
 
         #headings
         self.table.heading('port', text='Port')
@@ -299,64 +318,81 @@ class SerialPortSelection():
 
         self.update_ports()
 
-        self.select_port = CTkButton(self.root, text = "Select Port", compound=TOP, width=15, command=self.conform_selection)
+
+        self.select_port = CTkButton(self.root,
+                                     text = "Select Port",
+                                     compound=TOP,
+                                     width=15,
+                                     command=self.conform_selection)
         self.select_port.place(relx=0.50, rely=0.85, anchor=CENTER)
 
-        self.run_simulate = CTkButton(self.root, text = "Run Simulation", compound=TOP, width=15, command=self.open_simulator)
+        self.run_simulate = CTkButton(self.root,
+                                      text = "Run Simulation",
+                                      compound=TOP,
+                                      width=15,
+                                      command=self.open_simulator)
+
         self.run_simulate.place(relx=0.75, rely=0.85, anchor=CENTER)
 
-
     def update_ports(self):
-        ports = self.portController.get_available_ports()
+        '''Updates the displayed ports to reflect available ports.'''
+        ports = self.port_controller.get_available_ports()
         self.table.tag_configure('TkTextFont', font=tkfont.nametofont('TkTextFont'))
         style = Style()
         style.configure('TkTextFont', font = (NONE,30))
         for line in ports:
             self.table.insert('', END, values = line, tags='TkTextFont')
-        
-    def item_selected(self, event):
+
+    def item_selected(self, _):
+        '''On selection of item in the table'''
         self.id = self.table.selection()[0]
 
-
     def conform_selection(self):
-        if (self.id != None):
+        '''Confirms the selected value.'''
+        if self.id is not None:
             item_details = self.table.item(self.id)      #port_info = ['port name', 'description']
             port_info = item_details.get("values")
-            virtual_ports = self.portController.get_virtual_port()
+            virtual_ports = self.port_controller.get_virtual_port()
 
-            if (self.portController.set_reader_port != None):
-                self.portController.close_reader_port()
-                self.portController.close_writer_port()      
+            if self.port_controller.set_reader_port is not None:
+                self.port_controller.close_reader_port()
+                self.port_controller.close_writer_port()
 
-            self.portController.set_reader_port(port_info[0])
+            self.port_controller.set_reader_port(port_info[0])
             description = port_info[1].split(" ")
 
-            if ("com0com" in description):
+            if "com0com" in description:
                 virtual_ports.remove(port_info[0])
-                self.portController.set_writer_port(virtual_ports[0])
+                self.port_controller.set_writer_port(virtual_ports[0])
 
             self.root.destroy()
-            # todo: allow user to choose a virtual port as reader_port and the other 
+            # todo: allow user to choose a virtual port as reader_port and the other
             # virtual port as writer port, when user selects any other ports that's not
             # virtual, raise warning
 
     def open_simulator(self):
+        '''Opens serial simuplator dialog.'''
         self.serial_simulator.open()
 
-
 class SerialSimulator():
+    '''Serial Simulator dialog.'''
     def __init__(self, parent: CTk):
         self.parent = parent
         self.serial_controller = SerialPortController()
         self.written_port = None
 
     def open(self):
-        if (len(self.serial_controller.get_virtual_port()) == 0):
-            warning = CTkMessagebox(title="Warning", message="Virtual ports missing, would you like to download the virtual ports?",
-                                    icon="warning", option_1="Cancel", option_2="Download")
+
+        '''Opens the serial simulator dialog.'''
+        if len(self.serial_controller.get_virtual_port()) == 0:
+            warning = CTkMessagebox(title="Warning",
+                                    message="Virtual ports missing, would you like to download the virtual ports?",
+                                    icon="warning",
+                                    option_1="Cancel",
+                                    option_2="Download")
             if warning.get() == "Download":
                 self.download_link()
-              
+
         else:
             self.root = CTkToplevel(self.parent)
             self.root.title("Serial Port Selection")
@@ -379,23 +415,18 @@ class SerialSimulator():
             self.sent_button.place(relx=0.80, rely = 0.80, anchor=CENTER)
             self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
-
     def sent(self):
-        if (self.written_port != None):
+        '''Writes to the appropriate port.'''
+        if self.written_port is not None:
             print(self.written_port)
             message = self.input_entry.get()
             self.serial_controller.write_to(message)
             self.read_and_display()
         else:
             self.raise_warning()
-            """
-            messagebox.showinfo(
-                message=f"Please select a serial port from the drop down list",
-                title="Warning"
-                )"""
-    
-    def setup_ports(self):
 
+    def setup_ports(self):
+        '''Sets up virtual ports.'''
         self.serial_controller.set_writer_port(self.written_port)
 
         available_port = self.serial_controller.get_virtual_port()
@@ -403,30 +434,32 @@ class SerialSimulator():
 
         self.serial_controller.set_reader_port(available_port[0])
 
-
     def read_and_display(self):
+        '''Reads from available port.'''
         available_port = self.serial_controller.get_virtual_port()
         available_port.remove(self.written_port)
-        if (len(available_port)==0):
+
+        if len(available_port)==0:
             CTkMessagebox(
-                message=f"There seems to be problem with the virtual port, please submit bug report.",
+                message="There seems to be problem with the virtual port, please submit bug report.",
                 title="Warning",
                 icon="cancel"
             )
+
         else:
             message = self.serial_controller.read_info()
             self.read_message.insert(END,message)
 
-
-
     def check_written_port(self):
-        if (self.written_port == None):
+        '''Returns if writting port is available.'''
+        if self.written_port is None:
             return False
         else:
             return True
 
-    
     def set_written_port(self):
+        '''Sets the writting port or raises an error if
+        it doesn't work.'''
         self.written_port = self.drop_down_ports.get()
         try:
             self.setup_ports()
@@ -434,14 +467,17 @@ class SerialSimulator():
             self.raise_warning()
 
     def download_link(self):
+        '''Opens download lint in webbrowser.'''
         webbrowser.open("https://softradar.com/com0com/")
 
     def on_closing(self):
+        '''Closes all ports and closes the window.'''
         self.serial_controller.close_all_port()
         self.written_port = None
         self.root.destroy()
 
     def raise_warning(self):
+        '''Raises a error window.'''
         message = CTkToplevel()
         message.geometry("320x100")
         message.title('Warning')
