@@ -6,8 +6,8 @@ from customtkinter import *
 from tk_models import *
 from scrollable_frame import ScrolledFrame
 from experiment_pages.experiment import Experiment
-from experiment_pages.experiment_menu_ui import ExperimentMenuUI
-from experiment_pages.password_utils import PasswordManager
+from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+from password_utils import PasswordManager
 
 class CreateExperimentButton(CTkButton):
     '''Button to save a new experiment.'''

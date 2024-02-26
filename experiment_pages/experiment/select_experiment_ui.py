@@ -1,7 +1,7 @@
 '''Now unused select experiment ui'''
 from customtkinter import *
-from tk_models import *
-from experiment_pages.new_experiment_ui import NewExperimentUI
+from shared.tk_models import *
+from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 
 class NewExperimentButton(CTkButton):# pylint: disable= undefined-variable
     '''New Experiment Button widgit'''
