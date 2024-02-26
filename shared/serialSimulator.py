@@ -1,8 +1,8 @@
 '''Serial Simulation.'''
 import shutil
 from customtkinter import *
-from tk_models import *
-from serial_port_controller import SerialPortController
+from shared.tk_models import *
+from shared.serial_port_controller import SerialPortController
 
 class SerialSimulator():
     '''Serial Simulator User Interface.'''

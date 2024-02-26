@@ -1,9 +1,9 @@
 '''Group configuration module.'''
 from customtkinter import *
-from tk_models import *
-from scrollable_frame import ScrolledFrame
-from experiment_pages.summary_ui import SummaryUI
-from experiment_pages.experiment import Experiment
+from shared.tk_models import *
+from shared.scrollable_frame import ScrolledFrame
+from experiment_pages.create_experiment.summary_ui import SummaryUI
+from shared.experiment import Experiment
 
 
 class GroupConfigUI(MouserPage): # pylint: disable= undefined-variable

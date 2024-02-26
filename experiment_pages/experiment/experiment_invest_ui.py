@@ -1,7 +1,7 @@
 #pylint: skip-file
 '''Experiement Investigator Module.'''
 from customtkinter import *
-from tk_models import *
+from shared.tk_models import *
 
 
 class InvestigatorsUI(MouserPage):

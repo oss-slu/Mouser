@@ -1,12 +1,11 @@
 '''New Experiment Module'''
 from os.path import *
 from customtkinter import *
-from tk_models import *
-from scrollable_frame import ScrolledFrame
-from experiment_pages.group_config_ui import GroupConfigUI
-from experiment_pages.experiment import Experiment
-from database_apis.users_database import UsersDatabase
-from audio import AudioManager
+from shared.tk_models import *
+from shared.scrollable_frame import ScrolledFrame
+from experiment_pages.experiment.group_config_ui import GroupConfigUI
+from shared.experiment import Experiment
+from shared.audio import AudioManager
 
 
 class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
@@ -15,7 +14,6 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
 
         super().__init__(parent, "New Experiment", menu_page)
         self.input = Experiment()
-        self.users_database = UsersDatabase()
 
         self.next_page = GroupConfigUI(self.input, parent, self, menu_page)
         self.set_next_button(self.next_page)

@@ -1,12 +1,12 @@
 '''Experiment Menu Module'''
 import os
 from customtkinter import *
-from tk_models import *
-from experiment_pages.data_collection_ui import DataCollectionUI
-from experiment_pages.data_analysis_ui import DataAnalysisUI
-from experiment_pages.map_rfid import MapRFIDPage
-from experiment_pages.cage_config_ui import CageConfigurationUI
-from experiment_pages.experiment_invest_ui import InvestigatorsUI
+from shared.tk_models import *
+from experiment_pages.experiment.data_collection_ui import DataCollectionUI
+from experiment_pages.experiment.data_analysis_ui import DataAnalysisUI
+from experiment_pages.experiment.map_rfid import MapRFIDPage
+from experiment_pages.experiment.cage_config_ui import CageConfigurationUI
+from experiment_pages.experiment.experiment_invest_ui import InvestigatorsUI
 
 
 class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable

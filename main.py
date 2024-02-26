@@ -4,12 +4,11 @@ from tkinter.filedialog import *
 from customtkinter import *
 from CTkMenuBar import *
 from CTkMessagebox import CTkMessagebox
-from login import LoginFrame
-from tk_models import *
-from experiment_pages.experiment_menu_ui import ExperimentMenuUI
-from experiment_pages.new_experiment_ui import NewExperimentUI
-from experiment_pages.select_experiment_ui import ExperimentsUI
-from experiment_pages.password_utils import PasswordManager
+from shared.tk_models import *
+from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
+from experiment_pages.experiment.select_experiment_ui import ExperimentsUI
+from shared.password_utils import PasswordManager
 
 
 def open_file():
@@ -86,7 +85,6 @@ file_dropdown.add_option(option="Open", command = open_file)
 root.config(menu=menu_bar)
 
 main_frame = MouserPage(root, "Mouser")
-login_frame = LoginFrame(root, main_frame)
 
 experiments_frame = ExperimentsUI(root, main_frame)
 
