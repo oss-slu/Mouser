@@ -1,11 +1,11 @@
 '''New Experiment Module'''
 from os.path import *
 from customtkinter import *
-from tk_models import *
-from scrollable_frame import ScrolledFrame
+from shared.tk_models import *
+from shared.scrollable_frame import ScrolledFrame
 from experiment_pages.experiment.group_config_ui import GroupConfigUI
-from experiment_pages.experiment import Experiment
-from audio import AudioManager
+from shared.experiment import Experiment
+from shared.audio import AudioManager
 
 
 class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable

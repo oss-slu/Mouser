@@ -9,11 +9,11 @@ from customtkinter import *
 from CTkMessagebox import CTkMessagebox
 from playsound import playsound
 from serial import serialutil
-from tk_models import *
-from serial_port_controller import SerialPortController
+from shared.tk_models import *
+from shared.serial_port_controller import SerialPortController
 
-from database_apis.experiment_database import ExperimentDatabase
-from audio import AudioManager
+from databases.experiment_database import ExperimentDatabase
+from shared.audio import AudioManager
 
 def get_random_rfid():
     '''Returns a simulated rfid number'''
