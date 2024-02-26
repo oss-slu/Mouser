@@ -3,11 +3,11 @@ from datetime import date
 from tkinter.ttk import Treeview, Style
 from customtkinter import *
 
-from tk_models import *
+from shared.tk_models import *
 
-from database_apis.experiment_database import ExperimentDatabase
-from database_apis.data_collection_database import DataCollectionDatabase
-from audio import AudioManager
+from databases.experiment_database import ExperimentDatabase
+from databases.data_collection_database import DataCollectionDatabase
+from shared.audio import AudioManager
 
 #pylint: disable= undefined-variable
 class DataCollectionUI(MouserPage):

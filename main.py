@@ -7,7 +7,7 @@ from CTkMessagebox import CTkMessagebox
 from shared.tk_models import *
 from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
-from experiment_pages.select_experiment_ui import ExperimentsUI
+from experiment_pages.experiment.select_experiment_ui import ExperimentsUI
 from shared.password_utils import PasswordManager
 
 

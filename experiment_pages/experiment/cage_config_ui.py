@@ -1,10 +1,10 @@
 '''Contains cage configuration page and behaviour.'''
 from customtkinter import *
 from tkcalendar import DateEntry
-from tk_models import *
-from scrollable_frame import ScrolledFrame
-from database_controller import DatabaseController
-from audio import AudioManager
+from shared.tk_models import *
+from shared.scrollable_frame import ScrolledFrame
+from databases.database_controller import DatabaseController
+from shared.audio import AudioManager
 
 #pylint: disable= undefined-variable
 class CageConfigurationUI(MouserPage):

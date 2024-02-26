@@ -3,11 +3,11 @@ import os
 import tempfile
 from tkinter.filedialog import *
 from customtkinter import *
-from tk_models import *
-from scrollable_frame import ScrolledFrame
-from experiment_pages.experiment import Experiment
+from shared.tk_models import *
+from shared.scrollable_frame import ScrolledFrame
+from shared.experiment import Experiment
 from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
-from password_utils import PasswordManager
+from shared.password_utils import PasswordManager
 
 class CreateExperimentButton(CTkButton):
     '''Button to save a new experiment.'''

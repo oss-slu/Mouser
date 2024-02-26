@@ -1,7 +1,7 @@
 #pylint: skip-file
 '''Page for analying data collected in database files.'''
 from customtkinter import *
-from tk_models import *
+from shared.tk_models import *
 
 
 class DataAnalysisUI(MouserPage):

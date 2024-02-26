@@ -1,6 +1,6 @@
 '''Contains DatabaseController Class'''
 import copy
-from database_apis.experiment_database import ExperimentDatabase
+from databases.experiment_database import ExperimentDatabase
 
 class DatabaseController():
     '''A controller that provides functions for manipulating the data within a .mouser file'''

@@ -6,6 +6,7 @@ from experiment_pages.experiment.data_collection_ui import DataCollectionUI
 from experiment_pages.experiment.data_analysis_ui import DataAnalysisUI
 from experiment_pages.experiment.map_rfid import MapRFIDPage
 from experiment_pages.experiment.cage_config_ui import CageConfigurationUI
+from experiment_pages.experiment.experiment_invest_ui import InvestigatorsUI
 
 
 class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
@@ -29,6 +30,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         self.analysis_page = DataAnalysisUI(parent, self)
         self.cage_page = CageConfigurationUI(name, parent, self)
         self.rfid_page = MapRFIDPage(name, parent, self)
+        self.invest_page = InvestigatorsUI(parent, self)
 
         button_size = 30
 
