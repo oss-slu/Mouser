@@ -63,7 +63,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
 
         self.exper_name = CTkEntry(self.main_frame, width=140)
         self.password = CTkEntry(self.main_frame,width=120,show="*")
-        self.investigators = CTkComboBox(self.main_frame, values=self.get_user_list(), width=137)
+        self.investigators = CTkEntry(self.main_frame, width=140)
         self.species = CTkEntry(self.main_frame, width=140)
         self.measure_items = CTkEntry(self.main_frame, width=140)
         self.animal_num = CTkEntry(self.main_frame, width=110)
@@ -86,12 +86,12 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         CTkRadioButton(self.rfid_frame, text='No', variable=self.rfid, value=0).grid(row=0, column=1,
                     padx=pad_x, pady=pad_y)
 
-        add_invest_button = CTkButton(self.main_frame, text='+', width=3,
-                            command= self.add_investigator)
+        add_invest_button = CTkButton(self.main_frame, text='+', width=3, 
+                              command=lambda: [self.add_investigator(), self.investigators.delete(0, END)])
         add_invest_button.grid(row=1, column=2, padx=pad_x, pady=pad_y)
 
-        add_item_button = CTkButton(self.main_frame, text='+', width=3,
-                            command= lambda: [self.add_measuremnt_item(), self.measure_items.delete(0, END)])
+        add_item_button = CTkButton(self.main_frame, text='+', width=3, 
+                            command= lambda: [self.add_measurement_item(), self.measure_items.delete(0, END)])
         add_item_button.grid(row=4, column=2, padx=pad_x, pady=pad_y)
 
         for i in range(0,10):
@@ -99,6 +99,32 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
                 self.main_frame.grid_columnconfigure(i, weight=1)
             self.main_frame.grid_rowconfigure(i, weight=1)
 
+
+    def bind_all_entries(self):
+        self.exper_name.bind("<KeyRelease>", self.all_entries)
+        self.password.bind("<KeyRelease>", self.all_entries)
+        self.species.bind("<KeyRelease>", self.all_entries)
+        self.measure_items.bind("<KeyRelease>", self.all_entries)
+        self.animal_num.bind("<KeyRelease>", self.all_entries)
+        self.group_num.bind("<KeyRelease>", self.all_entries)
+        self.num_per_cage.bind("<KeyRelease>", self.all_entries)
+
+    def enable_next_button(self):
+        if self.exper_name.get() and self.password.get() and self.species.get() \
+                and self.animal_num.get() and self.group_num.get() and self.num_per_cage.get() \
+                and ((self.added_invest or self.investigators.get()) and (self.items or self.measure_items.get())):
+            self.next_button.configure(state="normal")
+        else:
+            self.next_button.configure(state="disabled")
+
+    def all_entries(self, event=None):
+        if (self.exper_name.get() and self.password.get() and
+                self.species.get() and
+                self.animal_num.get() and self.group_num.get() and
+                self.num_per_cage.get()):
+            self.next_button.configure(state="normal")
+        else:
+            self.next_button.configure(state="disabled")
     def set_next_button(self, next_page):
         '''Sets what page the next button navigates to.'''
         if self.next_button:
@@ -158,10 +184,11 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         return user_list
 
     def add_investigator(self):
-        '''Adds investigator in text box to the investigator frame.'''
-        if self.investigators.get() not in self.added_invest and self.investigators.get() != '':
+        if self.investigators.get() and self.investigators.get() not in self.added_invest:
+
             self.added_invest.append(self.investigators.get())
             self.update_invest_frame()
+            self.enable_next_button() 
 
     def remove_investigator(self, person):
         '''Removes the passed investigator from the investigator frame.'''
@@ -169,12 +196,14 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
             self.added_invest.remove(person)
             self.update_invest_frame()
 
-    def add_measuremnt_item(self):
+
+
+    def add_measurement_item(self):
         '''Adds measurement item to the item frame.'''
-        if self.measure_items.get() not in self.items and self.measure_items.get() != '':
+        if self.measure_items.get() and self.measure_items.get() not in self.items:
             self.items.append(self.measure_items.get())
             self.update_items_frame()
-
+            self.enable_next_button()  
     def remove_measurment_item(self, item):
         '''Removes passed item from the item frame.'''
         if item in self.items:

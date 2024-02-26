@@ -32,9 +32,12 @@ class MenuButton(CTkButton):
         self.place(relx=0.15, rely=0.15, anchor=CENTER)
         self.previous_page = previous_page
 
+
+
     def navigate(self):
         '''Raises the previous_page in the stacking order.'''
         raise_frame(self.previous_page)
+
 
 
 class ChangePageButton(CTkButton):
@@ -56,7 +59,8 @@ class ChangePageButton(CTkButton):
 
 
 class MouserPage(CTkFrame):
-    '''Standard pageframe used throught the program.'''
+
+    '''Standard pageframe used throughout the program.'''
     def __init__(self, parent: CTk, title: str, menu_page: CTkFrame = None):
         super().__init__(parent)
         self.root = parent
@@ -71,9 +75,12 @@ class MouserPage(CTkFrame):
         self.canvas.grid_rowconfigure(0, weight=1)
         self.canvas.grid_columnconfigure(0, weight=1)
 
-        self.menu_button = MenuButton(self, menu_page) if menu_page else None
+        self.menu_button = None
         self.next_button = None
         self.previous_button = None
+
+        if menu_page:
+            self.menu_button = MenuButton(self, menu_page)
 
         self.check_window_size()
 
@@ -82,27 +89,26 @@ class MouserPage(CTkFrame):
         raise_frame(self)
 
     def set_next_button(self, next_page):
-        '''Sets next_button to be a ChangePageButton that naviages to next_page.'''
+
+        '''Sets next_button to be a ChangePageButton that navigates to next_page.'''
         if self.next_button:
             self.next_button.destroy()
         self.next_button = ChangePageButton(self, next_page, False)
 
     def set_previous_button(self, previous_page):
-        '''Sets previous_button to be a ChangePageButton that naviages to previous_page.'''
+        '''Sets previous_button to be a ChangePageButton that navigates to previous_page.'''
         if self.previous_button:
             self.previous_button.destroy()
-        self.previous_button = ChangePageButton(self, previous_page)
+        self.previous_button = ChangePageButton(self, previous_page, False)
 
     def set_menu_button(self, menu_page):
-        '''Sets menu_button to be a ChangePageButton that naviages to menu_page.'''
+        '''Sets menu_button to be a ChangePageButton that navigates to menu_page.'''
         if self.menu_button:
             self.menu_button.destroy()
         self.menu_button = MenuButton(self, menu_page)
 
     def check_window_size(self):
-        '''checks to see if the window size and page size match.
-        If they don't, resizes the page to match.
-        '''
+        '''Checks to see if the window size and page size match.If they don't, resizes the page to match'''
         window = self.winfo_toplevel()
         if window.winfo_height() != self.canvas.winfo_height():
             self.resize_canvas_height(window.winfo_height())
@@ -139,7 +145,7 @@ if __name__ == '__main__':
     frame = MouserPage(root, "Template")
 
     main_frame.set_next_button(frame)
-    frame.set_previous_button(main_frame)
+    frame.set_previous_button(frame)
 
     main_frame.raise_frame()
 
