@@ -43,13 +43,21 @@ def open_file():
                         os.remove(temp_file_path)
 
                     with open(temp_file_path, "wb") as temp_file:
-                        temp_file.write(decrypted_data)
+                        print(3.5)
+                        #print(decrypted_data)
+                        temp_file.write(decrypted_data) # error here
+                        print(3.75)
                         temp_file.seek(0)
+                        print(3.99)
                         page = ExperimentMenuUI(root, temp_file.name, experiments_frame)
+                        print(1)
                         page.raise_frame()
+                        print(4)
                     password_prompt.destroy()
+                    print(5)
 
-                except Exception as _:# pylint: disable= broad-exception-caught
+                except Exception as e:# pylint: disable= broad-exception-caught
+                    print(e)
                     CTkMessagebox(
                         message="Incorrect password",
                         title="Error",
