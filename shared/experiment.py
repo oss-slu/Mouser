@@ -155,6 +155,7 @@ class Experiment():
         db.setup_groups(self.group_names)
         db.setup_cages(self.num_animals, self.num_groups, self.max_per_cage)
         db.setup_measurement_items(self.data_collect_type)
+        db.setup_collected_data(self.items)
         if self.password:
             manager = PasswordManager(self.password)
             manager.encrypt_file(file)

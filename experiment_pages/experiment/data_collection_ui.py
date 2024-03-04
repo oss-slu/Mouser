@@ -105,7 +105,9 @@ class DataCollectionUI(MouserPage):
         for val in values:
             new_values.append(val)
         self.table.item(self.changing_value, values=tuple(new_values[1:]))
-        self.data_database.set_data_for_entry(tuple(new_values))
+
+        self.database.add_data_entry(date.today(), 1, values)
+
         if self.auto_inc_id >= 0 and self.auto_inc_id < len(self.table.get_children()) - 1:
             self.auto_inc_id += 1
             self.open_auto_increment_changer()

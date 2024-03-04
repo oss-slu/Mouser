@@ -32,8 +32,6 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.item_frame.grid(row=5, column=1, sticky='NESW')
         self.rfid_frame.grid(row=6, column=1, sticky='NESW')
 
-        self.next_button = None
-
         pad_x = 10
         pad_y = 10
 
@@ -108,12 +106,14 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.num_per_cage.bind("<KeyRelease>", self.all_entries)
 
     def enable_next_button(self):
-        if self.exper_name.get() and self.password.get() and self.species.get() \
+        if self.exper_name.get() and self.species.get() \
                 and self.animal_num.get() and self.group_num.get() and self.num_per_cage.get() \
                 and ((self.added_invest or self.investigators.get()) and (self.items or self.measure_items.get())):
             self.next_button.configure(state="normal")
+            print("Button enabled")
         else:
             self.next_button.configure(state="disabled")
+            print("Button disabled.")
 
     def all_entries(self, event=None):
         if (self.exper_name.get() and self.password.get() and

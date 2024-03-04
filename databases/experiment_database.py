@@ -39,6 +39,9 @@ class ExperimentDatabase:
             self._c.execute('''CREATE TABLE animal_rfid (
                                 animal_id INTEGER PRIMARY KEY,
                                 rfid TEXT UNIQUE);''')
+            self._c.execute('''CREATE TABLE collected_data (
+                                date TEXT,
+                                animal_id INTEGER);''')
             self._conn.commit()
         except sqlite3.OperationalError:
             pass
@@ -93,6 +96,51 @@ class ExperimentDatabase:
                                 VALUES (?, ?)''',
                                 (item[0], item[1]))
             self._conn.commit()
+
+    def setup_collected_data(self, measurement_items):
+        '''Configures the collected data table to include a column for
+        each measurement item.
+        
+        arg1 (list of measurement items) as strings
+        '''
+
+        for measurement_item in measurement_items:
+            query = f''' ALTER TABLE collected_data
+                                ADD COLUMN %s REAL''' % measurement_item
+            self._c.execute(query)
+            self._conn.commit()
+
+    def add_data_entry(self, date, animal_id, measurements):
+        '''Adds a data entry to the collected_data table with the given
+        date, animal_id and a list of measurments.'''
+        self._c.execute("SELECT item FROM measurement_items")
+        measurement_items = [item[0] for item in self._c.fetchall()]
+
+
+        insert_param = "(date,animal_id," + ",".join(measurement_items) + ")"
+
+        values_param = f"(%s, %s, %s)" % (str(date), str(animal_id), ','.join(map(str, measurements))) 
+
+        query = f"INSERT INTO collected_data %s VALUES %s" % (insert_param, values_param)
+
+        self._c.execute(query)
+        self._conn.commit()
+
+    def change_data_entry(self, date, animal_id, measurements):
+        '''Overwrites the data entry of a particular date and animal id
+        to the new measurements.'''
+
+        self._c.execute("SELECT item FROM measurement_items")
+        measurement_items = [item[0] for item in self._c.fetchall()]
+
+        set_query = "SET "
+
+        for i in range(0,len(measurements)):
+            if(i != 0): set_query = set_query +  ", "
+            set_query = set_query + measurement_items[i] + " = " + str(measurements[i])
+
+        self._c.execute((f"UPDATE collected_data %s WHERE date=(?), animal_id=(?)" % set_query), (date, animal_id))
+        self._conn.commit()
 
     def get_measurement_items(self):
         '''Returns the measurement items from the experiment.'''
