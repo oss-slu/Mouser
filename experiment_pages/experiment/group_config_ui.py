@@ -36,7 +36,6 @@ class GroupConfigUI(MouserPage): # pylint: disable= undefined-variable
             self.grid_columnconfigure(i, weight=1)
             self.grid_rowconfigure(i, weight=1)
 
-        self.next_button = None
 
     def set_next_button(self, next_page):
         '''Sets the page that the next button navigaties too.'''
