@@ -55,7 +55,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         group_button.grid(row=2, column=0, ipady=10, ipadx=10, pady=10, padx=10)
         rfid_button.grid(row=3, column=0, ipady=10, ipadx=10, pady=10, padx=10)
         invest_button.grid(row=4, column=0, ipadx=10, ipady=10, pady=10, padx=10)
-        delete_button.grid(row=5, column=0, ipadx=10, ipady=10, pady=10, padx=10)
+        delete_button.grid(row=5, column=0, ipadx=10, ipady=10, pady=10, padx=10)   
 
 
     def delete_warning(self, page: CTkFrame, name: str):
@@ -94,9 +94,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
 
         # disconnect the file from the database
         self.disconnect_database()
-        print(name)
         splitted = name.split("\\")
-        print(splitted[-1])
         if ("Protected" in splitted[-1]):
             name = "C:\\Users\\stanl\\capstone1\\mouser\\Mouser\\databases\\experiments\\" + splitted[-1]
             
