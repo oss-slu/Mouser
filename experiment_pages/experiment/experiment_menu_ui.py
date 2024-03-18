@@ -77,9 +77,9 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         yes_button.grid(row=2, column=0, padx=10, pady=10)
         no_button.grid(row=2, column=1, padx=10, pady=10)
 
-        for i in range(0,3):
-            message.grid_rowconfigure(i, 1)
-            message.grid_columnconfigure(i, 1)
+        #for i in range(0,3):
+        #    message.grid_rowconfigure(i, 1)
+        #    message.grid_columnconfigure(i, 1)
 
         message.mainloop()
 
@@ -96,7 +96,8 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         self.disconnect_database()
         splitted = name.split("\\")
         if ("Protected" in splitted[-1]):
-            name = "C:\\Users\\stanl\\capstone1\\mouser\\Mouser\\databases\\experiments\\" + splitted[-1]
+            path = os.getcwd()
+            name = path + "\\databases\\experiments\\" + splitted[-1]
             
 
         try:
