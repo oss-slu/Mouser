@@ -1,4 +1,5 @@
 '''Main functionality of Program.'''
+import shutil
 import tempfile
 from tkinter.filedialog import *
 from customtkinter import *
@@ -40,16 +41,17 @@ def open_file():
                     temp_file_name =  os.path.basename(file_path)
                     temp_file_path = os.path.join(temp_folder_path, temp_file_name)
                     if os.path.exists(temp_file_path):
-                        os.remove(temp_file_path)
-
-                    with open(temp_file_path, "wb") as temp_file:
-                        temp_file.write(decrypted_data)
-                        temp_file.seek(0)
-                        page = ExperimentMenuUI(root, temp_file.name, experiments_frame)
+                        page = ExperimentMenuUI(root, temp_file_name, experiments_frame)
                         page.raise_frame()
-                    password_prompt.destroy()
+                    else:
+                        with open(temp_file_path, "wb") as temp_file:
+                            temp_file.write(decrypted_data)
+                            temp_file.seek(0)
+                            page = ExperimentMenuUI(root, temp_file.name, experiments_frame)
+                            page.raise_frame()
+                        password_prompt.destroy()
 
-                except Exception as _:# pylint: disable= broad-exception-caught
+                except Exception as e:# pylint: disable= broad-exception-caught
                     CTkMessagebox(
                         message="Incorrect password",
                         title="Error",
@@ -69,6 +71,11 @@ def create_file():
     Navigates to the NewExperimentUI page.'''
     page = NewExperimentUI(root, experiments_frame)
     page.raise_frame()
+
+temp_folder_name = "Mouser"
+temp_folder_path = os.path.join(tempfile.gettempdir(), temp_folder_name)
+if os.path.exists(temp_folder_path):
+    shutil.rmtree(temp_folder_path)
 
 root = CTk()
 root.title("Mouser")
@@ -93,4 +100,6 @@ raise_frame(experiments_frame)
 root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)
 
+
 root.mainloop()
+
