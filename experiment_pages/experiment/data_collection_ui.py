@@ -106,7 +106,8 @@ class DataCollectionUI(MouserPage):
             new_values.append(val)
         self.table.item(self.changing_value, values=tuple(new_values[1:]))
 
-        self.database.add_data_entry(date.today(), 1, values)
+        animal_id = self.table.item(self.changing_value)["values"][0]
+        self.database.add_data_entry(date.today(), animal_id, values)
 
         if self.auto_inc_id >= 0 and self.auto_inc_id < len(self.table.get_children()) - 1:
             self.auto_inc_id += 1
@@ -114,13 +115,16 @@ class DataCollectionUI(MouserPage):
         AudioManager.play(filepath="sounds/rfid_success.wav") #play succsess sound
 
     def get_values_for_date(self, _):
-        '''Gets current date and gets the data for the current date.'''
+        '''Gets the data for the current date.'''
         self.current_date = str(date.today())
         self.date_label.destroy()
         date_text = "Current Date: " + self.current_date
         self.date_label = CTkLabel(self, text=date_text, font=("Arial", 18))
         self.date_label.place(relx=0.5, rely=0.25, anchor=CENTER)
-        values = self.data_database.get_data_for_date(self.current_date)
+
+        values = self.database.get_data_for_date(self.current_date)
+
+
         for child in self.table.get_children():
             animal_id = self.table.item(child)["values"][0]
             for val in values:

@@ -141,6 +141,13 @@ class ExperimentDatabase:
 
         self._c.execute((f"UPDATE collected_data %s WHERE date=(?), animal_id=(?)" % set_query), (date, animal_id))
         self._conn.commit()
+    
+    def get_data_for_date(self, date):
+        '''Gets all the measurement data for the given date.'''
+
+
+        self._c.execute("SELECT * FROM collected_data WHERE date = " + date)
+        return self._c.fetchall()
 
     def get_measurement_items(self):
         '''Returns the measurement items from the experiment.'''
