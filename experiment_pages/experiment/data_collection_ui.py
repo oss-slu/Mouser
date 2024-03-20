@@ -82,11 +82,8 @@ class DataCollectionUI(MouserPage):
 
     def open_changer(self):
         '''Opens the changer frame for the selected animal id.'''
-        print("here1")
         animal_id = self.table.item(self.changing_value)["values"][0]
-        print("here")
         self.changer.open(animal_id)
-        print("here 2")
 
     def auto_increment(self):
         '''Automatically increments changer to hit each animal.'''
@@ -99,15 +96,24 @@ class DataCollectionUI(MouserPage):
         self.open_changer()
 
     def change_selected_value(self, values):
-        '''Changes the selected value in the table.'''
+        '''Changes the selected value in the table and database.'''
         item = self.table.item(self.changing_value)
-        new_values = [self.current_date, item['values'][0]]
+
+        new_values = []
+
+        animal_id = item["values"][0]
+
+        old_measurements = item["values"][1:]
+
         for val in values:
             new_values.append(val)
-        self.table.item(self.changing_value, values=tuple(new_values[1:]))
+        self.table.item(self.changing_value, values=tuple([animal_id] + new_values))
 
-        animal_id = self.table.item(self.changing_value)["values"][0]
-        self.database.add_data_entry(date.today(), animal_id, values)
+
+        if("None" in old_measurements):
+            self.database.add_data_entry(date.today(), animal_id, new_values)
+        else:
+            self.database.change_data_entry(date.today(), animal_id, new_values)
 
         if self.auto_inc_id >= 0 and self.auto_inc_id < len(self.table.get_children()) - 1:
             self.auto_inc_id += 1
@@ -134,7 +140,7 @@ class DataCollectionUI(MouserPage):
             else:
                 new_values = [animal_id]
                 for _ in self.measurement_items:
-                    new_values.append(0)
+                    new_values.append(None)
                 self.table.item(child, values=tuple(new_values))
 
     def close_connection(self):

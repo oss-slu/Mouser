@@ -139,7 +139,9 @@ class ExperimentDatabase:
             if(i != 0): set_query = set_query +  ", "
             set_query = set_query + measurement_items[i] + " = " + str(measurements[i])
 
-        self._c.execute((f"UPDATE collected_data %s WHERE date=(?), animal_id=(?)" % set_query), (date, animal_id))
+        update_query = f"UPDATE collected_data %s WHERE date=(?) and animal_id=(?)" % set_query
+
+        self._c.execute(update_query, (date, animal_id))
         self._conn.commit()
     
     def get_data_for_date(self, date):
