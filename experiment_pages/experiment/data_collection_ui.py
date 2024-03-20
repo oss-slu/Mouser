@@ -91,11 +91,8 @@ class DataCollectionUI(MouserPage):
 
     def open_changer(self):
         '''Opens the changer frame for the selected animal id.'''
-        print("here1")
         animal_id = self.table.item(self.changing_value)["values"][0]
-        print("here")
         self.changer.open(animal_id)
-        print("here 2")
 
     def auto_increment(self):
         '''Automatically increments changer to hit each animal.'''
@@ -108,26 +105,41 @@ class DataCollectionUI(MouserPage):
         self.open_changer()
 
     def change_selected_value(self, values):
-        '''Changes the selected value in the table.'''
+        '''Changes the selected value in the table and database.'''
         item = self.table.item(self.changing_value)
-        new_values = [self.current_date, item['values'][0]]
+
+        new_values = []
+
+        animal_id = item["values"][0]
+
+        old_measurements = item["values"][1:]
+
         for val in values:
             new_values.append(val)
-        self.table.item(self.changing_value, values=tuple(new_values[1:]))
-        self.data_database.set_data_for_entry(tuple(new_values))
+        self.table.item(self.changing_value, values=tuple([animal_id] + new_values))
+
+
+        if("None" in old_measurements):
+            self.database.add_data_entry(date.today(), animal_id, new_values)
+        else:
+            self.database.change_data_entry(date.today(), animal_id, new_values)
+
         if self.auto_inc_id >= 0 and self.auto_inc_id < len(self.table.get_children()) - 1:
             self.auto_inc_id += 1
             self.open_auto_increment_changer()
         AudioManager.play(filepath="sounds/rfid_success.wav") #play succsess sound
 
     def get_values_for_date(self, _):
-        '''Gets current date and gets the data for the current date.'''
+        '''Gets the data for the current date.'''
         self.current_date = str(date.today())
         self.date_label.destroy()
         date_text = "Current Date: " + self.current_date
         self.date_label = CTkLabel(self, text=date_text, font=("Arial", 18))
         self.date_label.place(relx=0.5, rely=0.25, anchor=CENTER)
-        values = self.data_database.get_data_for_date(self.current_date)
+
+        values = self.database.get_data_for_date(self.current_date)
+
+
         for child in self.table.get_children():
             animal_id = self.table.item(child)["values"][0]
             for val in values:
@@ -137,7 +149,7 @@ class DataCollectionUI(MouserPage):
             else:
                 new_values = [animal_id]
                 for _ in self.measurement_items:
-                    new_values.append(0)
+                    new_values.append(None)
                 self.table.item(child, values=tuple(new_values))
 
     def close_connection(self):

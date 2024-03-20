@@ -112,7 +112,7 @@ class CageConfigurationUI(MouserPage):
 
         for animal in animals:
 
-            animal_frame = CTkFrame(cage_frame, borderwidth=3, border_color="#00e7ff")
+            animal_frame = CTkFrame(cage_frame, border_width=3, border_color="#00e7ff")
 
             id_measurement_frame = CTkFrame(animal_frame)
 
