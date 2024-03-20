@@ -11,6 +11,7 @@ from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment.select_experiment_ui import ExperimentsUI
 from shared.password_utils import PasswordManager
 
+TEMP_FOLDER_NAME = "Mouser"
 
 def open_file():
     '''Command for 'Open' option in menu bar.
@@ -35,8 +36,8 @@ def open_file():
                 try:
                     manager = PasswordManager(password)
                     decrypted_data = manager.decrypt_file(file_path)
-                    temp_folder_name = "Mouser"
-                    temp_folder_path = os.path.join(tempfile.gettempdir(), temp_folder_name)
+                    TEMP_FOLDER_NAME = "Mouser"
+                    temp_folder_path = os.path.join(tempfile.gettempdir(), TEMP_FOLDER_NAME)
                     os.makedirs(temp_folder_path, exist_ok=True)
                     temp_file_name =  os.path.basename(file_path)
                     temp_file_path = os.path.join(temp_folder_path, temp_file_name)
@@ -51,7 +52,7 @@ def open_file():
                             page.raise_frame()
                         password_prompt.destroy()
 
-                except Exception as e:# pylint: disable= broad-exception-caught
+                except Exception as _:# pylint: disable= broad-exception-caught
                     CTkMessagebox(
                         message="Incorrect password",
                         title="Error",
@@ -72,8 +73,8 @@ def create_file():
     page = NewExperimentUI(root, experiments_frame)
     page.raise_frame()
 
-temp_folder_name = "Mouser"
-temp_folder_path = os.path.join(tempfile.gettempdir(), temp_folder_name)
+TEMP_FOLDER_NAME = "Mouser"
+temp_folder_path = os.path.join(tempfile.gettempdir(), TEMP_FOLDER_NAME)
 if os.path.exists(temp_folder_path):
     shutil.rmtree(temp_folder_path)
 
@@ -102,4 +103,3 @@ root.grid_columnconfigure(0, weight=1)
 
 
 root.mainloop()
-

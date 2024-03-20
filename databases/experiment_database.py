@@ -106,7 +106,7 @@ class ExperimentDatabase:
 
         for measurement_item in measurement_items:
             query = f''' ALTER TABLE collected_data
-                                ADD COLUMN %s REAL''' % measurement_item
+                                ADD COLUMN {measurement_item} REAL'''
             self._c.execute(query)
             self._conn.commit()
 
@@ -119,9 +119,9 @@ class ExperimentDatabase:
 
         insert_param = "(date,animal_id," + ",".join(measurement_items) + ")"
 
-        values_param = f"(%s, %s, %s)" % (str(date), str(animal_id), ','.join(map(str, measurements))) 
+        values_param = f"({str(date)}, {str(animal_id)}, {','.join(map(str, measurements))})"
 
-        query = f"INSERT INTO collected_data %s VALUES %s" % (insert_param, values_param)
+        query = f"INSERT INTO collected_data {insert_param} VALUES {values_param}" % (insert_param, values_param)
 
         self._c.execute(query)
         self._conn.commit()
@@ -135,15 +135,17 @@ class ExperimentDatabase:
 
         set_query = "SET "
 
-        for i in range(0,len(measurements)):
-            if(i != 0): set_query = set_query +  ", "
+        for i in range(0,len(measurements)): #pylint: disable= consider-using-enumerate
+            if i != 0: 
+                set_query = set_query +  ", "
+
             set_query = set_query + measurement_items[i] + " = " + str(measurements[i])
 
-        update_query = f"UPDATE collected_data %s WHERE date=(?) and animal_id=(?)" % set_query
+        update_query = f"UPDATE collected_data {set_query} WHERE date=(?) and animal_id=(?)"
 
         self._c.execute(update_query, (date, animal_id))
         self._conn.commit()
-    
+
     def get_data_for_date(self, date):
         '''Gets all the measurement data for the given date.'''
 
