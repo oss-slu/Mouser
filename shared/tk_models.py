@@ -136,6 +136,18 @@ class ChangeableFrame(ABC, CTkFrame):
         '''Abstract update_frame.'''
         pass # pylint: disable= unnecessary-pass
 
+class SettingPage(CTk):
+    def __init__(self, title: str):
+        super().__init__()
+        # Selecting GUI theme - dark,  
+        # light , system (for system default) 
+        set_appearance_mode("light") 
+        # Selecting color theme-blue, green, dark-blue 
+        set_default_color_theme("dark-blue")
+        self.geometry("500x500")
+
+
+
 if __name__ == '__main__':
     root = CTk()
     root.title("Template Test")

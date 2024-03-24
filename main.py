@@ -10,6 +10,7 @@ from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment.select_experiment_ui import ExperimentsUI
 from shared.password_utils import PasswordManager
+from shared.serial_port_settings import serialPortSetting
 
 
 def open_file():
@@ -72,6 +73,9 @@ def create_file():
     page = NewExperimentUI(root, experiments_frame)
     page.raise_frame()
 
+def open_serial_port_setting():
+    serial_port_setting = serialPortSetting()
+
 temp_folder_name = "Mouser"
 temp_folder_path = os.path.join(tempfile.gettempdir(), temp_folder_name)
 if os.path.exists(temp_folder_path):
@@ -85,9 +89,14 @@ root.minsize(900,600)
 # Adds menu bar to root and binds the function to file_menu
 menu_bar = CTkMenuBar(root)
 file_menu = menu_bar.add_cascade("File")
+settings_menu = menu_bar.add_cascade("Settings")
+
 file_dropdown = CustomDropdownMenu(widget=file_menu)
 file_dropdown.add_option(option="New", command = create_file)
 file_dropdown.add_option(option="Open", command = open_file)
+
+settings_dropdown = CustomDropdownMenu(widget=settings_menu)
+settings_dropdown.add_option(option="Serial Port", command = open_serial_port_setting)
 
 root.config(menu=menu_bar)
 
