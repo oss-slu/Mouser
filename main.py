@@ -18,9 +18,9 @@ def open_file():
 
     Opens a .mouser file
     '''
-    file_path = askopenfilename(filetypes=[("Database files","*.mouser")])
+    file_path = askopenfilename(filetypes=[("Database files",".mouser .pmouser")])
     if file_path:
-        if "Protected" in file_path:
+        if ".pmouser" in file_path:
             password_prompt = CTkToplevel(root)
             password_prompt.title("Enter Password")
             password_prompt.geometry("300x100")

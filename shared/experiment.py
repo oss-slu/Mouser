@@ -146,7 +146,7 @@ class Experiment():
     def save_to_database(self, directory: str):
         '''Saves experiment object to a file.'''
         if self.password:
-            file = directory + '/' + self.name + '_Protected.mouser'
+            file = directory + '/' + self.name + '.pmouser'
         else:
             file = directory + '/' + self.name + '.mouser'
         db = ExperimentDatabase(file)
