@@ -11,7 +11,6 @@ from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment.select_experiment_ui import ExperimentsUI
 from shared.password_utils import PasswordManager
 
-TEMP_FOLDER_NAME = "Mouser"
 
 def open_file():
     '''Command for 'Open' option in menu bar.
@@ -36,8 +35,8 @@ def open_file():
                 try:
                     manager = PasswordManager(password)
                     decrypted_data = manager.decrypt_file(file_path)
-                    TEMP_FOLDER_NAME = "Mouser"
-                    temp_folder_path = os.path.join(tempfile.gettempdir(), TEMP_FOLDER_NAME)
+                    temp_folder_name = "Mouser"
+                    temp_folder_path = os.path.join(tempfile.gettempdir(), temp_folder_name)
                     os.makedirs(temp_folder_path, exist_ok=True)
                     temp_file_name =  os.path.basename(file_path)
                     temp_file_path = os.path.join(temp_folder_path, temp_file_name)
@@ -52,7 +51,7 @@ def open_file():
                             page.raise_frame()
                         password_prompt.destroy()
 
-                except Exception as _:# pylint: disable= broad-exception-caught
+                except Exception as e:# pylint: disable= broad-exception-caught
                     CTkMessagebox(
                         message="Incorrect password",
                         title="Error",
@@ -73,8 +72,8 @@ def create_file():
     page = NewExperimentUI(root, experiments_frame)
     page.raise_frame()
 
-TEMP_FOLDER_NAME = "Mouser"
-temp_folder_path = os.path.join(tempfile.gettempdir(), TEMP_FOLDER_NAME)
+temp_folder_name = "Mouser"
+temp_folder_path = os.path.join(tempfile.gettempdir(), temp_folder_name)
 if os.path.exists(temp_folder_path):
     shutil.rmtree(temp_folder_path)
 
@@ -92,14 +91,20 @@ file_dropdown.add_option(option="Open", command = open_file)
 
 root.config(menu=menu_bar)
 
+
 main_frame = MouserPage(root, "Mouser")
+
 
 experiments_frame = ExperimentsUI(root, main_frame)
 
 raise_frame(experiments_frame)
+mouse_image = CTk.CTkImage(file="./shared/images/MouseLogo.png")
+create_nav_button(main_frame, "Mouser", mouse_image,
+                  experiments_frame, size=(30,30))
 
 root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)
 
 
 root.mainloop()
+
