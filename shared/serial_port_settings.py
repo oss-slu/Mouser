@@ -14,8 +14,8 @@ class serialPortSetting(SettingPage):
 
         self.title("Serial Port")
 
-        self.template_name = StringVar(value="")
-        self.current_template_name = StringVar(value="")
+        self.configuration_name = StringVar(value="")
+        self.current_configuration_name = StringVar(value="")
 
         self.baud_rate_var = StringVar(value="9600")
         self.parity_var = StringVar(value="None")
@@ -33,29 +33,25 @@ class serialPortSetting(SettingPage):
         self.summary_page("Map RFID")
         self.summary_page("Data Collection")
 
-        self.port_setting_template_path = os.getcwd() + "\\settings\\serial ports"
-        #self.port_setting_template_path = "C:\\Users\\stanl\\capstone1\\mouser\\Mouser\\settings\\serial ports"
-        self.available_template = [file for file in listdir(self.port_setting_template_path) if isfile(join(self.port_setting_template_path, file))]
-
-        for x in self.available_template:
-            print(x)
+        self.port_setting_configuration_path = os.getcwd() + "\\settings\\serial ports"
+        self.available_configuration = [file for file in listdir(self.port_setting_configuration_path) if isfile(join(self.port_setting_configuration_path, file))]
 
     
     def edit_page(self, tab: str):
         # top region of the page
-        self.template_region = CTkFrame(master=self.tab_view.tab(tab), corner_radius=10, border_width=2, width=400, height=200)
-        self.region_title_label = CTkLabel(master = self.template_region, text="Template")
-        self.setting_template_label = CTkLabel(self.template_region, text="Existing Template", width=8, height=12)
-        self.import_file = CTkOptionMenu(self.template_region, values=self.available_template, variable=self.current_template_name, height=12, width = 274)
-        self.edit_template_button = CTkButton(self.template_region, text="Edit", width=2, height=14, command=self.edit_template)
-        self.set_preference_button = CTkButton(self.template_region, text="Set Preference", width=2, height=14, command=self.set_preference)
-        self.comfirm_button = CTkButton(self.template_region, text="Confirm", width=2, height=14, command=self.confirm_setting)
+        self.configuration_region = CTkFrame(master=self.tab_view.tab(tab), corner_radius=10, border_width=2, width=400, height=200)
+        self.region_title_label = CTkLabel(master = self.configuration_region, text="Configuration Selection")
+        self.setting_configuration_label = CTkLabel(self.configuration_region, text="Existing Configuration", width=8, height=12)
+        self.import_file = CTkOptionMenu(self.configuration_region, values=self.available_configuration, variable=self.current_configuration_name, height=12, width = 274)
+        self.edit_configuration_button = CTkButton(self.configuration_region, text="Edit", width=2, height=14, command=self.edit_configuration)
+        self.set_preference_button = CTkButton(self.configuration_region, text="Set Preference", width=2, height=14, command=self.set_preference)
+        self.comfirm_button = CTkButton(self.configuration_region, text="Confirm", width=2, height=14, command=self.confirm_setting)
 
-        self.template_region.grid(row=0, column=0, columnspan=5, padx=20, pady=5, sticky="ew")
+        self.configuration_region.grid(row=0, column=0, columnspan=5, padx=20, pady=5, sticky="ew")
         self.region_title_label.grid(row=0, column=0, padx=5, pady=3, sticky="ew")
-        self.setting_template_label.grid(row=1, column=0, padx=20, pady=10, sticky="ew")
+        self.setting_configuration_label.grid(row=1, column=0, padx=20, pady=10, sticky="ew")
         self.import_file.grid(row=1, column=1, columnspan=2, padx=18, pady=10, sticky="ew")
-        self.edit_template_button.grid(row=2, column=0, padx=20, pady=15, sticky="ew")
+        self.edit_configuration_button.grid(row=2, column=0, padx=20, pady=15, sticky="ew")
         self.set_preference_button.grid(row=2, column=2, padx=20, pady=15, sticky="ew")
         self.comfirm_button.grid(row=2, column=3, padx=20, pady=15, sticky="ew")
 
@@ -64,9 +60,9 @@ class serialPortSetting(SettingPage):
         self.edit_region.grid(row=1, column=0, columnspan=5, padx=20, pady=5, sticky="ew")
 
         # Naming section
-        self.new_template_label = CTkLabel(self.edit_region, text="New Template", width=8, height=12)
-        self.new_template_name_label = CTkLabel(self.edit_region, text="Template Name", width=8, height=12)
-        self.template_name_entry = CTkEntry(self.edit_region, textvariable=self.template_name)
+        self.new_configuration_label = CTkLabel(self.edit_region, text="New Configuration", width=8, height=12)
+        self.new_configuration_name_label = CTkLabel(self.edit_region, text="Configuration Name", width=8, height=12)
+        self.configuration_name_entry = CTkEntry(self.edit_region, textvariable=self.configuration_name)
 
         # Baud rate section
         self.baud_rate_label = CTkLabel(self.edit_region, text="Baud Rate", width=8, height=12)
@@ -74,9 +70,9 @@ class serialPortSetting(SettingPage):
                                             values=["100", "300", "600", "1200", "2400", "4800", "9600", "19200"], 
                                             variable=self.baud_rate_var)
         
-        self.new_template_label.grid(row=0, column=0, padx=20, pady=5, sticky="ew")
-        self.new_template_name_label.grid(row=1, column=0, padx=20, pady=5, sticky="ew")
-        self.template_name_entry.grid(row=1, column=1, columnspan=2, padx=20, pady=5, sticky="ew")
+        self.new_configuration_label.grid(row=0, column=0, padx=20, pady=5, sticky="ew")
+        self.new_configuration_name_label.grid(row=1, column=0, padx=20, pady=5, sticky="ew")
+        self.configuration_name_entry.grid(row=1, column=1, columnspan=2, padx=20, pady=5, sticky="ew")
         self.baud_rate_label.grid(row=2, column=0, padx=20, pady=5, sticky="ew")
         self.baud_rate_menu.grid(row=2, column=1, columnspan=2, padx=20, pady=5, sticky="ew")
 
@@ -166,7 +162,7 @@ class serialPortSetting(SettingPage):
 
     def save(self):
 
-        file_name = os.path.join(self.port_setting_template_path, self.template_name.get()+".csv")         
+        file_name = os.path.join(self.port_setting_configuration_path, self.configuration_name.get()+".csv")         
 
         file = open(file_name, "w")
         setting = self.baud_rate_menu.get()+","+self.parity_menu.get()+","+self.flow_control_menu.get()+","+self.data_bits_menu.get()+","+self.stop_bits_var.get()+","+self.input_bype_var.get()
@@ -190,11 +186,11 @@ class serialPortSetting(SettingPage):
         self.tab_view.add("Data Collection")
 
     def set_preference(self):
-        # TODO: save the name of current template file to the preference file in preference directory
+        # TODO: save the name of current configuration file to the preference file in preference directory
         pass
     
     def confirm_setting(self):
-        file_name = os.path.join(self.port_setting_template_path, self.current_template_name.get())
+        file_name = os.path.join(self.port_setting_configuration_path, self.current_configuration_name.get())
         file = open(file_name)
         csv_reader = reader(file)
         for line in csv_reader:
@@ -207,11 +203,11 @@ class serialPortSetting(SettingPage):
         file.close()
 
 
-    def edit_template(self):
-        #TODO: edit the selected template, possibly by opening a new window
-        self.template_name_entry.delete(0,END)
-        file_name= Path(self.current_template_name.get())
-        self.template_name_entry.insert(0, file_name.with_suffix(""))
+    def edit_configuration(self):
+        #TODO: edit the selected configuration, possibly by opening a new window
+        self.configuration_name_entry.delete(0,END)
+        file_name= Path(self.current_configuration_name.get())
+        self.configuration_name_entry.insert(0, file_name.with_suffix(""))
         self.confirm_setting()
         pass
 
