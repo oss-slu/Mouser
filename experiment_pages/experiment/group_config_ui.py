@@ -36,15 +36,13 @@ class GroupConfigUI(MouserPage): # pylint: disable= undefined-variable
             self.grid_columnconfigure(i, weight=1)
             self.grid_rowconfigure(i, weight=1)
 
-        self.next_button = None
 
     def set_next_button(self, next_page):
         '''Sets the page that the next button navigaties too.'''
-        if self.next_button:
-            self.next_button.destroy()
-        # pylint: disable= undefined-variable
-        self.next_button = ChangePageButton(self, next_page, False)
-        # pylint: enable= undefined-variable
+        if self.next_button: #pylint: disable= access-member-before-definition
+            self.next_button.destroy() #pylint: disable= access-member-before-definition
+
+        self.next_button = ChangePageButton(self, next_page, False)# pylint: disable= undefined-variable
         self.next_button.configure(command= lambda: [self.save_experiment(), self.next_button.navigate()])
         self.next_button.place(relx=0.85, rely=0.15)
 
