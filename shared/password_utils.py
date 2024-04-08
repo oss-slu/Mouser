@@ -28,12 +28,13 @@ class PasswordManager:
             dbfile.write(self.encrypted_data)
 
     def decrypt_file(self, file_path):
-        '''Decrypts passed file.'''
+        '''returns the decrypted data of the passed file.'''
         try:
             with open(file_path, "rb") as file:
                 encrypted_data = file.read()
             decrypted_data = self.fernet.decrypt(encrypted_data)
             return decrypted_data
 
-        except Exception as _: # pylint: disable= broad-exception-caught
+        except Exception as e: # pylint: disable= broad-exception-caught
+            print(e)
             return False
