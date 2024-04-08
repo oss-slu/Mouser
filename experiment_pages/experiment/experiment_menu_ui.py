@@ -30,6 +30,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         self.analysis_page = DataAnalysisUI(parent, self)
         self.cage_page = CageConfigurationUI(name, parent, self)
         self.rfid_page = MapRFIDPage(name, parent, self)
+        self.invest_page = InvestigatorsUI(parent, self)
 
         button_size = 30
 
@@ -44,8 +45,10 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
                                                   self.cage_page.update_config_frame()])
         rfid_button = CTkButton(main_frame, text='Map RFID', width=button_size,
                                 command=  self.rfid_page.raise_frame)
-        
-        
+        invest_button = CTkButton(main_frame, text='Investigators', width=button_size,
+                                command= self.invest_page.raise_frame)
+        delete_button = CTkButton(main_frame, text='Delete Experiment', width=button_size,
+                                command= lambda: self.delete_warning(prev_page, name))
 
         collection_button.grid(row=0, column=0, ipady=10, ipadx=10, pady=10, padx=10)
         analysis_button.grid(row=1, column=0, ipady=10, ipadx=10, pady=10, padx=10)
@@ -86,4 +89,21 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         self.cage_page.close_connection()
         self.rfid_page.close_connection()
 
+    def delete_experiment(self, page: CTkFrame, name: str):
+        '''Delete Experiment.'''
 
+        # disconnect the file from the database
+        self.disconnect_database()
+        splitted = name.split("\\")
+        if ("Protected" in splitted[-1]):
+            path = os.getcwd()
+            name = path + "\\databases\\experiments\\" + splitted[-1]
+            
+
+        try:
+            os.remove(name)
+        except OSError as error:
+            print("error from deleting experiment: ",error)
+            return
+
+        page.tkraise()
