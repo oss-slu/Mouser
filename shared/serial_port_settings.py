@@ -7,7 +7,7 @@ from shared.tk_models import SettingPage
 
 # pylint: disable=missing-module-docstring
 # pylint: disable=missing-class-docstring
-# pylint: disable=missing-function-dosctring
+# pylint: disable=missing-function-docstring
 
 
 class SerialPortSetting(SettingPage):
@@ -176,8 +176,7 @@ class SerialPortSetting(SettingPage):
         file_name = os.path.join(self.port_setting_configuration_path, self.configuration_name.get()+".csv")
 
         file = open(file_name, "w")
-        setting = self.baud_rate_menu.get()+","+self.parity_menu.get()+","+self.flow_control_menu.get()
-        +","+self.data_bits_menu.get()+","+self.stop_bits_var.get()+","+self.input_bype_var.get()
+        setting = self.baud_rate_menu.get()+","+self.parity_menu.get()+","+self.flow_control_menu.get()+","+self.data_bits_menu.get()+","+self.stop_bits_var.get()+","+self.input_bype_var.get()    # pylint: disable=line-too-long
         file.write(setting)
         file.close()
 
