@@ -5,7 +5,6 @@ from tkinter.filedialog import *
 from customtkinter import *
 from CTkMenuBar import *
 from CTkMessagebox import CTkMessagebox
-from PIL import Image
 from shared.tk_models import *
 import shared.file_utils as file_utils
 from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
@@ -13,7 +12,6 @@ from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment.select_experiment_ui import ExperimentsUI
 from shared.password_utils import PasswordManager
 from shared.serial_port_settings import SerialPortSetting
-
 
 TEMP_FOLDER_NAME = "Mouser"
 TEMP_FILE_PATH = None
@@ -129,20 +127,10 @@ main_frame = MouserPage(root, "Mouser")
 
 experiments_frame = ExperimentsUI(root, main_frame)
 
-
-def on_mouse_button_click():
-    create_file()  
-
-mouse_image = CTkImage(light_image=Image.open("./shared/images/MouseLogo.png"), size=(550, 200))
-mouse_button = CTkButton(experiments_frame, image=mouse_image, command=on_mouse_button_click)
-mouse_button.grid(row=1, column=0, pady=(20, 10))
-
-create_nav_button(experiments_frame, "Welcome to Mouser! Please click the File Drop Down option in the top left to create or open a new Experiment.\n", mouse_image, experiments_frame, 0.5, 0.33)
 raise_frame(experiments_frame)
+
 root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)
-main_frame.grid_rowconfigure(1, weight=1)
-main_frame.grid_columnconfigure(0, weight=1)
 
 
 root.mainloop()
