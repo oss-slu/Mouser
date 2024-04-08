@@ -4,8 +4,10 @@ from os.path import isfile, join
 from csv import *
 from customtkinter import *
 from shared.tk_models import SettingPage
-#from tk_models import SettingPage
 
+# pylint: disable=missing-module-docstring
+# pylint: disable=missing-class-docstring
+# pylint: disable=missing-function-dosctring
 
 
 class SerialPortSetting(SettingPage):
@@ -36,9 +38,9 @@ class SerialPortSetting(SettingPage):
         self.summary_page("Data Collection")
 
         self.port_setting_configuration_path = os.getcwd() + "\\settings\\serial ports"
-        self.available_configuration = [file for file in listdir(self.port_setting_configuration_path) 
+        self.available_configuration = [file for file in listdir(self.port_setting_configuration_path)
                                         if isfile(join(self.port_setting_configuration_path, file))]
-    
+
     def edit_page(self, tab: str):
         # top region of the page
 
@@ -73,7 +75,7 @@ class SerialPortSetting(SettingPage):
         self.baud_rate_menu = CTkOptionMenu(self.edit_region, height=12,
                                             values=["100", "300", "600", "1200", "2400", "4800", "9600", "19200"],
                                             variable=self.baud_rate_var)
-        
+
         self.new_configuration_label.grid(row=0, column=0, padx=20, pady=5, sticky="ew")
         self.new_configuration_name_label.grid(row=1, column=0, padx=20, pady=5, sticky="ew")
         self.configuration_name_entry.grid(row=1, column=1, columnspan=2, padx=20, pady=5, sticky="ew")
@@ -101,7 +103,7 @@ class SerialPortSetting(SettingPage):
                                             values=["Five", "Six", "Seven", "Eight"],
                                             variable=self.data_bits_var)
         self.data_bits_label.grid(row=5, column=0, padx=20, pady=5, sticky="ew")
-        self.data_bits_menu.grid(row=5, column=1, columnspan=2, padx=20, pady=5, sticky="ew") 
+        self.data_bits_menu.grid(row=5, column=1, columnspan=2, padx=20, pady=5, sticky="ew")
 
         # Stop bit section
         self.stop_bits_label = CTkLabel(self.edit_region, text="Stop Bits", height=12)
@@ -132,7 +134,7 @@ class SerialPortSetting(SettingPage):
         #pylint: disable=line-too-long
         self.baud_rate_label = CTkLabel(self.tab_view.tab(tab), text="Baud Rate")
         self.current_baud_rate = CTkLabel(self.tab_view.tab(tab), text=self.baud_rate_var.get())
-        
+
         self.baud_rate_label.grid(row=0, column=0, padx=20, pady=5, sticky="ew")
         self.current_baud_rate.grid(row=0, column=2, padx=20, pady=5, sticky="ew")
 
@@ -171,12 +173,13 @@ class SerialPortSetting(SettingPage):
 
     def save(self):
 
-        file_name = os.path.join(self.port_setting_configuration_path, self.configuration_name.get()+".csv")         
+        file_name = os.path.join(self.port_setting_configuration_path, self.configuration_name.get()+".csv")
 
         file = open(file_name, "w")
-        setting = self.baud_rate_menu.get()+","+self.parity_menu.get()+","+self.flow_control_menu.get()+","+self.data_bits_menu.get()+","+self.stop_bits_var.get()+","+self.input_bype_var.get()
+        setting = self.baud_rate_menu.get()+","+self.parity_menu.get()+","+self.flow_control_menu.get()
+        +","+self.data_bits_menu.get()+","+self.stop_bits_var.get()+","+self.input_bype_var.get()
         file.write(setting)
-        file.close() 
+        file.close()
 
         self.refresh_tabs()
         self.summary_page("Map RFID")
@@ -187,7 +190,7 @@ class SerialPortSetting(SettingPage):
         self.refresh_tabs()
         self.edit_page("Map RFID")
         self.edit_page("Data Collection")
-    
+
     def refresh_tabs(self):
         self.tab_view.delete("Map RFID")
         self.tab_view.delete("Data Collection")
@@ -195,10 +198,10 @@ class SerialPortSetting(SettingPage):
         self.tab_view.add("Data Collection")
 
     def set_preference(self):
-        # TODO: save the name of current configuration file 
+        # TODO: save the name of current configuration file     # pylint: disable=fixme
         # to the preference file in preference directory
         pass
-    
+
     def confirm_setting(self):
         file_name = os.path.join(self.port_setting_configuration_path, self.current_configuration_name.get())
         file = open(file_name)
@@ -223,9 +226,6 @@ class SerialPortSetting(SettingPage):
 
 
 
-  
-
-
 if __name__ == "__main__":
-    app = serialPortSetting()
+    app = SerialPortSetting()
     app.mainloop()
