@@ -13,7 +13,7 @@ from shared.password_utils import PasswordManager
 from experiment_pages.experiment.select_experiment_ui import ExperimentsUI
 from PIL import Image
 
-def open_file():
+def open_file(): 
     '''Command for 'Open' option in menu bar.
 
     Opens a .mouser file
@@ -50,6 +50,7 @@ def open_file():
                             temp_file.seek(0)
                             page = ExperimentMenuUI(root, temp_file.name, experiments_frame)
                             page.raise_frame()
+
                         password_prompt.destroy()
 
                 except Exception as e:# pylint: disable= broad-exception-caught
@@ -67,11 +68,14 @@ def open_file():
 
 # Command for 'New' option in menu bar
 def create_file():
-    '''Command for the 'New' option in the menue bar.
-    
-    Navigates to the NewExperimentUI page.'''
-    page = NewExperimentUI(root, experiments_frame)
-    page.raise_frame()
+    print("create_file is called")  # Debugging print statement
+    try:
+        page = NewExperimentUI(root, experiments_frame)
+        page.raise_frame()
+        print("NewExperimentUI should now be visible")  # Debugging print statement
+    except Exception as e:
+        print(f"Error in create_file: {e}")  # Print any error
+
 
 temp_folder_name = "Mouser"
 temp_folder_path = os.path.join(tempfile.gettempdir(), temp_folder_name)
@@ -95,20 +99,25 @@ root.config(menu=menu_bar)
 main_frame = MouserPage(root, "Mouser")
 experiments_frame = ExperimentsUI(root, main_frame)
 def on_mouse_button_click():
-    raise_frame(experiments_frame)
+    print("on_mouse_button_click is called")  # Debugging print statement
+    experiments_frame.raise_frame()
 
-# Display mouse image button on main frame
-mouse_image = CTkImage(light_image=Image.open("./shared/images/MouseLogo.png"), size=(550, 200))
+
+mouse_image = CTkImage(light_image=Image.open("./shared/images/MouserLogos.png"), size=(550, 200))
 mouse_button = CTkButton(main_frame, image=mouse_image, command=on_mouse_button_click)
-mouse_button.grid(row=1, column=0, pady=(20, 10)) 
-create_nav_button(main_frame, "Welcome to Mouser! Please click the Logo to open a new Experiment.\nSelect the File Button at the top left of the screen to open an existing experiment.", mouse_image,experiments_frame, 0.5, 0.33)
+mouse_button.grid(row=1, column=0, pady=(20, 10))
 
 
+# Update the command of mouse_button to use on_mouse_button_click
+mouse_button.configure(command=on_mouse_button_click)
+
+
+# Display mouse image button on main frame and set the command to on_mouse_button_click
+
+create_nav_button(main_frame, "Welcome to Mouser! Please click the File Drop Down option in the top left to create or open a new Experiment.\n", mouse_image,experiments_frame, 0.5, 0.33)
 raise_frame(main_frame)
 root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)
-
-
 # Ensure the main_frame widget expands to fill the grid cell it's in, which helps with alignment.
 main_frame.grid_rowconfigure(1, weight=1)  # Adjust '1' if other rows are used; make it expandable
 main_frame.grid_columnconfigure(0, weight=1)  # Make the column containing the label expandable
