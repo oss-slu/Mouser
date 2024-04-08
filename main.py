@@ -133,8 +133,12 @@ mouse_image = CTkImage(light_image=Image.open("./shared/images/MouseLogo.png"), 
 #mouse_button.grid(row=1, column=0, pady=(20, 10))
 mouse_label = CTkLabel(experiments_frame, image=mouse_image)
 mouse_label.grid(row=1, column=0, pady=(20, 10))
-create_nav_button(experiments_frame, "Welcome to Mouser! Please click the File Drop Down option in the top 
-left to create or open a new Experiment.\n",mouse_image, experiments_frame, 0.5, 0.33)
+create_nav_button(
+    experiments_frame,
+    ("Welcome to Mouser! Please click the File Drop Down option in the top "
+     "left to create or open a new Experiment.\n"),
+    mouse_image, experiments_frame, 0.5, 0.33
+)
 raise_frame(experiments_frame)
 root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)
