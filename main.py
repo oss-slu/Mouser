@@ -10,7 +10,7 @@ from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment.select_experiment_ui import ExperimentsUI
 from shared.password_utils import PasswordManager
-from shared.serial_port_settings import serialPortSetting
+from shared.serial_port_settings import SerialPortSetting
 
 
 def open_file():
@@ -74,7 +74,7 @@ def create_file():
     page.raise_frame()
 
 def open_serial_port_setting():
-    serial_port_setting = serialPortSetting()
+    serial_port_setting = SerialPortSetting()
 
 temp_folder_name = "Mouser"
 temp_folder_path = os.path.join(tempfile.gettempdir(), temp_folder_name)

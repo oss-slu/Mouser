@@ -1,12 +1,14 @@
+from pathlib import Path
+from os import listdir, getcwd
+from os.path import isfile, join
+from csv import *
 from customtkinter import *
 from shared.tk_models import SettingPage
 #from tk_models import SettingPage
-from csv import *
-from os import listdir, getcwd
-from os.path import isfile, join
-from pathlib import Path
-  
-class serialPortSetting(SettingPage):
+
+
+
+class SerialPortSetting(SettingPage):
 
     def __init__(self):
 
@@ -28,17 +30,19 @@ class serialPortSetting(SettingPage):
         self.tab_view = CTkTabview(master=self)
         self.tab_view.grid(padx=20, pady=20, sticky = "ew")
 
-        self.tab_view.add("Map RFID") 
-        self.tab_view.add("Data Collection") 
+        self.tab_view.add("Map RFID")
+        self.tab_view.add("Data Collection")
         self.summary_page("Map RFID")
         self.summary_page("Data Collection")
 
         self.port_setting_configuration_path = os.getcwd() + "\\settings\\serial ports"
-        self.available_configuration = [file for file in listdir(self.port_setting_configuration_path) if isfile(join(self.port_setting_configuration_path, file))]
-
+        self.available_configuration = [file for file in listdir(self.port_setting_configuration_path) 
+                                        if isfile(join(self.port_setting_configuration_path, file))]
     
     def edit_page(self, tab: str):
         # top region of the page
+
+        # pylint: disable=line-too-long
         self.configuration_region = CTkFrame(master=self.tab_view.tab(tab), corner_radius=10, border_width=2, width=400, height=200)
         self.region_title_label = CTkLabel(master = self.configuration_region, text="Configuration Selection")
         self.setting_configuration_label = CTkLabel(self.configuration_region, text="Existing Configuration", width=8, height=12)
@@ -66,8 +70,8 @@ class serialPortSetting(SettingPage):
 
         # Baud rate section
         self.baud_rate_label = CTkLabel(self.edit_region, text="Baud Rate", width=8, height=12)
-        self.baud_rate_menu = CTkOptionMenu(self.edit_region, height=12, 
-                                            values=["100", "300", "600", "1200", "2400", "4800", "9600", "19200"], 
+        self.baud_rate_menu = CTkOptionMenu(self.edit_region, height=12,
+                                            values=["100", "300", "600", "1200", "2400", "4800", "9600", "19200"],
                                             variable=self.baud_rate_var)
         
         self.new_configuration_label.grid(row=0, column=0, padx=20, pady=5, sticky="ew")
@@ -78,14 +82,14 @@ class serialPortSetting(SettingPage):
 
         # Parity section
         self.parity_label = CTkLabel(self.edit_region, text="Parity", height=12)
-        self.parity_menu = CTkOptionMenu(self.edit_region, height=12, 
+        self.parity_menu = CTkOptionMenu(self.edit_region, height=12,
                                          values=["None", "Odd", "Even", "Mark", "Space"],
                                          variable=self.parity_var)
         self.parity_label.grid(row=3, column=0, padx=20, pady=5, sticky="ew")
         self.parity_menu.grid(row=3, column=1, columnspan=2, padx=20, pady=5, sticky="ew")
 
         self.flow_control_label = CTkLabel(self.edit_region, text="Flow Control", height=12)
-        self.flow_control_menu = CTkOptionMenu(self.edit_region, height=12, 
+        self.flow_control_menu = CTkOptionMenu(self.edit_region, height=12,
                                                values=["None", "Xon/Xoff", "Hardware", "Opto-RS"],
                                                variable=self.flow_control_var)
         self.flow_control_label.grid(row=4, column=0, padx=20, pady=5, sticky="ew")
@@ -93,7 +97,7 @@ class serialPortSetting(SettingPage):
 
         # Data bits section
         self.data_bits_label = CTkLabel(self.edit_region, text="Data Bits", height=12)
-        self.data_bits_menu = CTkOptionMenu(self.edit_region, height=12, 
+        self.data_bits_menu = CTkOptionMenu(self.edit_region, height=12,
                                             values=["Five", "Six", "Seven", "Eight"],
                                             variable=self.data_bits_var)
         self.data_bits_label.grid(row=5, column=0, padx=20, pady=5, sticky="ew")
@@ -121,8 +125,11 @@ class serialPortSetting(SettingPage):
         self.save_button = CTkButton(self.edit_region, text="Save", command=self.save, height=14)
         self.save_button.grid(row=9, column=2, padx=20, pady=40, sticky="ns")
 
+        #pylint: enable=line-too-long
+
     def summary_page(self, tab: str):
 
+        #pylint: disable=line-too-long
         self.baud_rate_label = CTkLabel(self.tab_view.tab(tab), text="Baud Rate")
         self.current_baud_rate = CTkLabel(self.tab_view.tab(tab), text=self.baud_rate_var.get())
         
@@ -159,6 +166,8 @@ class serialPortSetting(SettingPage):
         self.edit_button = CTkButton(self.tab_view.tab(tab), text="Edit", command=self.edit)
         self.edit_button.grid(row=7, column=2, padx=20, pady=40, sticky="ns")
 
+        #pylint: enable=line-too-long
+
 
     def save(self):
 
@@ -186,7 +195,8 @@ class serialPortSetting(SettingPage):
         self.tab_view.add("Data Collection")
 
     def set_preference(self):
-        # TODO: save the name of current configuration file to the preference file in preference directory
+        # TODO: save the name of current configuration file 
+        # to the preference file in preference directory
         pass
     
     def confirm_setting(self):
@@ -204,7 +214,6 @@ class serialPortSetting(SettingPage):
 
 
     def edit_configuration(self):
-        #TODO: edit the selected configuration, possibly by opening a new window
         self.configuration_name_entry.delete(0,END)
         file_name= Path(self.current_configuration_name.get())
         self.configuration_name_entry.insert(0, file_name.with_suffix(""))
