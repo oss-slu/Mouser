@@ -20,6 +20,14 @@ def create_nav_button(parent: CTkFrame, name: str, button_image: PhotoImage, fra
                     compound=TOP, width=25, command=lambda: raise_frame(frame))
     button.place(relx=relx, rely=rely, anchor=CENTER)
     button.image = button_image
+class MenuButton(CTkButton):
+    '''A standard button that navigates backwards in the program.'''
+    def __init__(self, page: CTkFrame, previous_page: CTkFrame):
+
+        super().__init__(page, text="Back to Menu", compound=TOP,
+                         width=15, command = self.navigate)
+        self.place(relx=0.15, rely=0.15, anchor=CENTER)
+        self.previous_page = previous_page
 
 
 
