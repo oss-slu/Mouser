@@ -26,13 +26,13 @@ class CreateExperimentButton(CTkButton):
             self.experiment.save_to_database(directory)
             if self.experiment.get_password():
                 password = self.experiment.get_password()
-                file = directory + '/' + self.experiment.get_name() + '_Protected.mouser'
+                file = directory + '/' + self.experiment.get_name() + '.pmouser'
                 manager = PasswordManager(password)
                 decrypted_data = manager.decrypt_file(file)
                 temp_folder_name = "Mouser"
                 temp_folder_path = os.path.join(tempfile.gettempdir(), temp_folder_name)
                 os.makedirs(temp_folder_path, exist_ok=True)
-                temp_file_name = self.experiment.get_name() + '_Protected.mouser'
+                temp_file_name = self.experiment.get_name() + '.pmouser'
                 temp_file_path = os.path.join(temp_folder_path, temp_file_name)
                 if os.path.exists(temp_file_path):
                     os.remove(temp_file_path)
