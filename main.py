@@ -27,7 +27,7 @@ def open_file():
     file_path = askopenfilename(filetypes=[("Database files",".mouser .pmouser")])
     print(file_path)
     if file_path:
-        global CURRENT_FILE_PATH 
+        global CURRENT_FILE_PATH
         CURRENT_FILE_PATH = file_path
 
         if ".pmouser" in file_path:
@@ -70,7 +70,7 @@ def open_file():
             TEMP_FILE_PATH = temp_file
             page = ExperimentMenuUI(root, temp_file, experiments_frame)
             page.raise_frame()
-        
+
 
 # Command for 'New' option in menu bar
 def create_file():
@@ -82,7 +82,9 @@ def create_file():
 
 
 def open_serial_port_setting():
-    serial_port_setting = SerialPortSetting()
+    '''opens the serial port setting page'''
+    serial_port_setting = SerialPortSetting() # pylint: disable=unused-variable
+    
 
 def save_file():
     '''Command for the 'save file' option in menu bar.'''
