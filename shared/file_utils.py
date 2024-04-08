@@ -1,4 +1,6 @@
-import tempfile, os
+'''Contains functions to create and save from temporary files.'''
+import tempfile
+import os
 from shared.password_utils import PasswordManager
 
 
@@ -18,7 +20,7 @@ def create_temp_copy(filepath:str):
     with open(temp_file_path, 'wb') as file:
         file.write(data)
         file.seek(0)
-    
+
     return temp_file_path
 
 def create_temp_from_encrypted(filepath:str, password:str):
@@ -37,27 +39,26 @@ def create_temp_from_encrypted(filepath:str, password:str):
     with open(temp_file_path, 'wb') as file:
         file.write(data)
         file.seek(0)
-    
+
     return temp_file_path
 
 
 def save_temp_to_file(temp_file_path: str, permanent_file_path: str):
     '''Save data from temporary file to a permanent file'''
-    
+
     with open(temp_file_path, 'rb') as temp_file:
         data = temp_file.read()
-    
+
     with open(permanent_file_path, 'wb') as file:
         file.write(data)
-    
+
 def save_temp_to_encrypted(temp_file_path: str, permanent_file_path: str, password:str):
     '''Save data from temporary file to an encrypted file.'''
     manager = PasswordManager(password)
-    
+
     manager.encrypt_file(temp_file_path)
     with open(temp_file_path, 'rb') as encrypted:
         data = encrypted.read()
     
     with open(permanent_file_path, 'wb') as file:
         file.write(data)
-    
