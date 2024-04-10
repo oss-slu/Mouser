@@ -149,7 +149,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.animals.insert(item_id-1, (item_id, rfid))
         self.change_entry_text()
         self.db.add_animal(item_id, rfid)
-        AudioManager.play("sounds/rfid_success.wav")
+        AudioManager.play("shared/sounds/rfid_success.wav")
 
 
     def change_selected_value(self, rfid):
@@ -159,7 +159,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             item['values'][0], rfid))
         self.change_rfid_button["state"] = "normal"
 
-        AudioManager.play("sounds/rfid_success.wav")
+        AudioManager.play("shared/sounds/rfid_success.wav")
 
     def item_selected(self, _):
         '''On selecting an item in the table.'''
@@ -234,7 +234,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                         command= lambda: [message.destroy()])
         ok_button.grid(row=2, column=0, padx=10, pady=10)
 
-        AudioManager.play("sounds/error.wav")
+        AudioManager.play("shared/sounds/error.wav")
 
         message.mainloop()
 
@@ -484,4 +484,4 @@ class SerialSimulator():
         label = CTkLabel(message, text='Please select a serial port from the drop down list')
         label.grid(row=0, column=0, padx=10, pady=10)
 
-        AudioManager.play("sounds/error.wav")
+        AudioManager.play("shared/sounds/error.wav")

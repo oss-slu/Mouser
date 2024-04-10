@@ -160,8 +160,17 @@ class ExperimentDatabase:
 
     def add_animal_rfid(self, animal_id, rfid):
         '''Associates animal_id with an rfid number in experiment.'''
-        self._c.execute("INSERT INTO animal_rfid (animal_id, rfid) VALUES (?, ?)", (animal_id, rfid))
+        try:
+            self._c.execute("INSERT INTO animal_rfid (animal_id, rfid) VALUES (?, ?)", (animal_id, rfid))
+        except sqlite3.IntegrityError:
+            self._change_animal_rfid(animal_id, rfid)
+        
         self._conn.commit()
+
+    def _change_animal_rfid(self, animal_id, rfid):
+        '''Changes the rfid number of the animal to the passed rfid number'''
+
+        self._c.execute(f"UPDATE animal_rfid SET rfid = {rfid} WHERE animal_id = {animal_id}")
 
     def add_animal(self, animal_id, rfid, remarks=''):
         '''Adds animal to experiment.'''
