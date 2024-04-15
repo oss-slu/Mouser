@@ -6,27 +6,50 @@ from customtkinter import *
 from shared.tk_models import SettingPage
 
 # pylint: disable=missing-module-docstring
-# pylint: disable=missing-class-docstring
 # pylint: disable=missing-function-docstring
 
 
 class SerialPortSetting(SettingPage):
+    '''a class that implements methods and functions 
+    related to connecting serial port setting to the experiments '''
 
-    def __init__(self):
+    def __init__(self, preference = NONE):
+        ''' implement the constructor of the class object,
+        initializing the tab_view page with summary page'''
 
         super().__init__(self)
 
         self.title("Serial Port")
-
+        self.preference = None
         self.configuration_name = StringVar(value="")
         self.current_configuration_name = StringVar(value="")
 
-        self.baud_rate_var = StringVar(value="9600")
-        self.parity_var = StringVar(value="None")
-        self.flow_control_var = StringVar(value="None")
-        self.data_bits_var = StringVar(value="Eight")
-        self.stop_bits_var = StringVar(value="1")
-        self.input_bype_var = StringVar(value="Binary")
+        self.baud_rate_var = StringVar(value="")
+        self.parity_var = StringVar(value="")
+        self.flow_control_var = StringVar(value="")
+        self.data_bits_var = StringVar(value="")
+        self.stop_bits_var = StringVar(value="")
+        self.input_bype_var = StringVar(value="")
+        if preference:
+            try:
+                preference_path = os.getcwd() + "\\settings\\serial ports\\preference\\" + preference
+                print(preference_path)
+                file = open(preference_path, "r")
+                file_names = []
+                for line in file:
+                    file_names.append(line)
+                self.confirm_setting(file_names[0])
+                splitted = file_names[0].split("\\")
+                self.preference = splitted[-1] 
+            except Exception as e: # pylint: disable= broad-exception-caught
+                print("check if the file exist: serial_port_preference.csv", e)
+        else:
+            self.baud_rate_var = StringVar(value="9600")
+            self.parity_var = StringVar(value="None")
+            self.flow_control_var = StringVar(value="None")
+            self.data_bits_var = StringVar(value="Eight")
+            self.stop_bits_var = StringVar(value="1")
+            self.input_bype_var = StringVar(value="Binary")
 
 
         self.tab_view = CTkTabview(master=self)
@@ -42,6 +65,7 @@ class SerialPortSetting(SettingPage):
                                         if isfile(join(self.port_setting_configuration_path, file))]
 
     def edit_page(self, tab: str):
+        ''' page that allow user to edit/update serial port settings'''
         # top region of the page
 
         # pylint: disable=line-too-long
@@ -130,7 +154,7 @@ class SerialPortSetting(SettingPage):
         #pylint: enable=line-too-long
 
     def summary_page(self, tab: str):
-
+        ''' page that displays the setting of current configuration'''
         #pylint: disable=line-too-long
         self.baud_rate_label = CTkLabel(self.tab_view.tab(tab), text="Baud Rate")
         self.current_baud_rate = CTkLabel(self.tab_view.tab(tab), text=self.baud_rate_var.get())
@@ -172,7 +196,7 @@ class SerialPortSetting(SettingPage):
 
 
     def save(self):
-
+        '''saving the serial port setting to the new/existing file'''
         file_name = os.path.join(self.port_setting_configuration_path, self.configuration_name.get()+".csv")
 
         file = open(file_name, "w")
@@ -186,23 +210,35 @@ class SerialPortSetting(SettingPage):
 
 
     def edit(self):
+        '''Function for the edit button on summary page, brings user
+        to the edit page'''
         self.refresh_tabs()
         self.edit_page("Map RFID")
         self.edit_page("Data Collection")
 
     def refresh_tabs(self):
+        '''refreshes the page when updates are made'''
         self.tab_view.delete("Map RFID")
         self.tab_view.delete("Data Collection")
         self.tab_view.add("Map RFID")
         self.tab_view.add("Data Collection")
 
     def set_preference(self):
+        '''set preference to a configuration so that
+        the configuration is saved as the setting even
+        after the program is closed'''
         # TODO: save the name of current configuration file     # pylint: disable=fixme
         # to the preference file in preference directory
+        # absolute path: os.path.abspath(part of file path with the file)
         pass
 
-    def confirm_setting(self):
-        file_name = os.path.join(self.port_setting_configuration_path, self.current_configuration_name.get())
+    def confirm_setting(self, f = None):
+        '''select a configuration and use it as current serial
+        port setting'''
+        if f:
+            file_name = f
+        else:
+            file_name = os.path.join(self.port_setting_configuration_path, self.current_configuration_name.get())
         file = open(file_name)
         csv_reader = reader(file)
         for line in csv_reader:
@@ -216,6 +252,8 @@ class SerialPortSetting(SettingPage):
 
 
     def edit_configuration(self):
+        '''allow user to edit existing configuration by overwriting
+        the existing configuration csv file (paired with save)'''
         self.configuration_name_entry.delete(0,END)
         file_name= Path(self.current_configuration_name.get())
         self.configuration_name_entry.insert(0, file_name.with_suffix(""))

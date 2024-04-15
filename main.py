@@ -86,7 +86,7 @@ def create_file():
 
 def open_serial_port_setting():
     '''opens the serial port setting page'''
-    serial_port_setting = SerialPortSetting() # pylint: disable=unused-variable
+    serial_port_setting = SerialPortSetting("serial_port_preference.csv") # pylint: disable=unused-variable
 def save_file():
     '''Command for the 'save file' option in menu bar.'''
     print("Current", CURRENT_FILE_PATH)
