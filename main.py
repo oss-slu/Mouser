@@ -115,9 +115,9 @@ file_menu = menu_bar.add_cascade("File")
 settings_menu = menu_bar.add_cascade("Settings")
 
 file_dropdown = CustomDropdownMenu(widget=file_menu)
-file_dropdown.add_option(option="New", command = create_file)
-file_dropdown.add_option(option="Open", command = open_file)
-file_dropdown.add_option(option="Save", command = save_file)
+file_dropdown.add_option(option="New Experiment", command = create_file)
+file_dropdown.add_option(option="Open Experiment", command = open_file)
+file_dropdown.add_option(option="Save File", command = save_file)
 
 settings_dropdown = CustomDropdownMenu(widget=settings_menu)
 settings_dropdown.add_option(option="Serial Port", command = open_serial_port_setting)
