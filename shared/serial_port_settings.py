@@ -5,8 +5,7 @@ from csv import *
 from customtkinter import *
 from shared.tk_models import SettingPage
 
-# pylint: disable=missing-module-docstring
-# pylint: disable=missing-function-docstring
+
 
 
 class SerialPortSetting(SettingPage):
@@ -23,6 +22,7 @@ class SerialPortSetting(SettingPage):
         self.preference = None
         self.configuration_name = StringVar(value="")
         self.current_configuration_name = StringVar(value="")
+        self.preference_path = None
 
         self.baud_rate_var = StringVar(value="")
         self.parity_var = StringVar(value="")
@@ -32,9 +32,9 @@ class SerialPortSetting(SettingPage):
         self.input_bype_var = StringVar(value="")
         if preference:
             try:
-                preference_path = os.getcwd() + "\\settings\\serial ports\\preference\\" + preference
-                print(preference_path)
-                file = open(preference_path, "r")
+                self.preference_path = os.getcwd() + "\\settings\\serial ports\\preference\\" + preference
+                print(self.preference_path)
+                file = open(self.preference_path, "r")
                 file_names = []
                 for line in file:
                     file_names.append(line)
@@ -73,6 +73,8 @@ class SerialPortSetting(SettingPage):
         self.region_title_label = CTkLabel(master = self.configuration_region, text="Configuration Selection")
         self.setting_configuration_label = CTkLabel(self.configuration_region, text="Existing Configuration", width=8, height=12)
         self.import_file = CTkOptionMenu(self.configuration_region, values=self.available_configuration, variable=self.current_configuration_name, height=12, width = 274)
+        if self.preference:
+                self.import_file.set(self.preference)
         self.edit_configuration_button = CTkButton(self.configuration_region, text="Edit", width=2, height=14, command=self.edit_configuration)
         self.set_preference_button = CTkButton(self.configuration_region, text="Set Preference", width=2, height=14, command=self.set_preference)
         self.comfirm_button = CTkButton(self.configuration_region, text="Confirm", width=2, height=14, command=self.confirm_setting)
@@ -230,7 +232,25 @@ class SerialPortSetting(SettingPage):
         # TODO: save the name of current configuration file     # pylint: disable=fixme
         # to the preference file in preference directory
         # absolute path: os.path.abspath(part of file path with the file)
-        pass
+
+        if self.preference_path:
+            try:
+                # get the file name from the option menu, then open the preference file,
+                file_name= self.current_configuration_name.get()
+                file_path = os.getcwd() + "\\settings\\serial ports\\" + file_name
+                file = open(self.preference_path, "w")
+                file.write(file_path)
+                print(file_path)
+
+                file.close()
+
+            except Exception as e: # pylint: disable= broad-exception-caught
+                print("Error: file can't be set to preference: ", e)
+        else:
+            # give a error window that says preference_file not set up
+            print("Preference file missing")
+            pass
+
 
     def confirm_setting(self, f = None):
         '''select a configuration and use it as current serial
