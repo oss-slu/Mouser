@@ -81,6 +81,7 @@ class DataCollectionUI(MouserPage):
 
         self.changer = ChangeMeasurementsDialog(parent, self, self.measurement_strings)
 
+
     def item_selected(self, _):
         '''On item selection.
 

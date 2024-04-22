@@ -7,7 +7,6 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 class PasswordManager:
     '''Manages encrypted files with passwords.'''
     def __init__(self, password):
-        self.salt = b'\xc5\xd2\x1c\x85#\xa5\x95\xa1\t\xd4\x98\x1e\x154`\xd4'
         self.kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
