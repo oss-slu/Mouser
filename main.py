@@ -22,6 +22,7 @@ TEMP_FILE_PATH = None
 CURRENT_FILE_PATH = None
 PASSWORD = None
 
+#pylint: disable = global-statement
 def open_file():
     '''Command for 'Open' option in menu bar.
 
@@ -73,7 +74,7 @@ def open_file():
             TEMP_FILE_PATH = temp_file
             page = ExperimentMenuUI(root, temp_file, experiments_frame)
             page.raise_frame()
-
+#pylint:enable = global-statement
 
 # Command for 'New' option in menu bar
 def create_file():
@@ -145,4 +146,3 @@ main_frame.grid_rowconfigure(1, weight=1)
 main_frame.grid_columnconfigure(0, weight=1)
 
 root.mainloop()
-

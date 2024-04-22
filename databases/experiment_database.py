@@ -136,7 +136,7 @@ class ExperimentDatabase:
         set_query = "SET "
 
         for i in range(0,len(measurements)): #pylint: disable= consider-using-enumerate
-            if i != 0: 
+            if i != 0:
                 set_query = set_query +  ", "
 
             set_query = set_query + measurement_items[i] + " = " + str(measurements[i])
@@ -162,14 +162,14 @@ class ExperimentDatabase:
         '''Associates animal_id with an rfid number in experiment.'''
 
         self._c.execute("INSERT INTO animal_rfid (animal_id, rfid) VALUES (?, ?)", (animal_id, rfid))
-        
+
         self._conn.commit()
 
     def change_animal_rfid(self, animal_id, rfid):
         '''Changes the rfid number of the animal to the passed rfid number'''
 
         self._c.execute(f"UPDATE animal_rfid SET rfid = {rfid} WHERE animal_id = {animal_id}")
-    
+
     def remove_animal_rfid(self, animal_id):
         '''Removes the passed animal_id from the rfid table'''
 
@@ -189,7 +189,7 @@ class ExperimentDatabase:
                         (animal_id, group_id, cage_id, remarks))
         self._conn.commit()
         return self.get_animal_id(rfid)
-    
+
     def remove_animal(self, animal_id):
         '''Removes an animal from the experiment.'''
         self._c.execute(f"SELECT group_id, cage_id FROM animals WHERE animal_id = {animal_id}")
@@ -221,7 +221,7 @@ class ExperimentDatabase:
             raise LookupError(f"No cage id matches {cage_id}.")
 
     def remove_animal_from_group(self, group_id):
-        
+        '''Removes animal from a group.'''
         self._c.execute(f"SELECT num_animals FROM groups WHERE group_id = {group_id}")
 
         num_animals = self._c.fetchone()[0]
