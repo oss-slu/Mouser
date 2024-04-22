@@ -149,7 +149,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.animals.insert(item_id-1, (item_id, rfid))
         self.change_entry_text()
         self.db.add_animal(item_id, rfid)
-        AudioManager.play("sounds/rfid_success.wav")
+        AudioManager.play("shared/sounds/rfid_success.wav")
 
 
     def change_selected_value(self, rfid):
@@ -159,7 +159,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             item['values'][0], rfid))
         self.change_rfid_button["state"] = "normal"
 
-        AudioManager.play("sounds/rfid_success.wav")
+        AudioManager.play("shared/sounds/rfid_success.wav")
 
     def item_selected(self, _):
         '''On selecting an item in the table.'''
@@ -183,8 +183,11 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             item_id = int(self.table.item(item, 'values')[0])
             self.table.delete(item)
 
+            self.db.remove_animal(item_id)
+
             # Update animal id
             self.animals = [(index, rfid) for (index, rfid) in self.animals if index != item_id]
+
 
         self.change_entry_text()
 
@@ -197,15 +200,28 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             self.animal_id = next_animal
         else:
             self.animal_id_entry_text.set("1")
+            self.animal_id = 1
 
     def get_next_animal(self):
         '''returns the next animal in our experiment.'''
+
+        min_unused = 1
+
+        for animal in sorted(self.animals):
+            if animal[0] > min_unused: 
+                break
+            min_unused += 1
+
+        return min_unused
+
+        '''
         next_animal = self.animals[-1][0] + 1
         for i, animal in enumerate(self.animals):
             if i < len(self.animals) - 1 and animal[0] + 1 != self.animals[i+1][0]:
                 next_animal = animal[0] + 1
                 break
         return next_animal
+        '''
 
     def open_change_rfid(self):
         '''Opens change rfid window.'''
@@ -234,7 +250,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                         command= lambda: [message.destroy()])
         ok_button.grid(row=2, column=0, padx=10, pady=10)
 
-        AudioManager.play("sounds/error.wav")
+        AudioManager.play("shared/sounds/error.wav")
 
         message.mainloop()
 
@@ -484,4 +500,4 @@ class SerialSimulator():
         label = CTkLabel(message, text='Please select a serial port from the drop down list')
         label.grid(row=0, column=0, padx=10, pady=10)
 
-        AudioManager.play("sounds/error.wav")
+        AudioManager.play("shared/sounds/error.wav")

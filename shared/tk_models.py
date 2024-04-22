@@ -1,13 +1,13 @@
 '''Contains shared tkinter models used througout the program.'''
 from tkinter import PhotoImage
-from customtkinter import *
 from abc import ABC, abstractmethod
+from customtkinter import *
 
 current_frame: CTkFrame = None
 
 def raise_frame(frame: CTkFrame): #pylint: disable= redefined-outer-name
     '''Raises passed frame.'''
-    global current_frame
+    global current_frame #pylint: disable = global-statement
     if current_frame:
         current_frame.pack_forget()
     current_frame = frame
@@ -139,10 +139,10 @@ class ChangeableFrame(ABC, CTkFrame):
 class SettingPage(CTkToplevel):
     def __init__(self, title: str):
         super().__init__()
-        # Selecting GUI theme - dark,  
-        # light , system (for system default, useful if we need dark mode later on) 
-        set_appearance_mode("light") 
-        # Selecting color theme-blue, green, dark-blue 
+        # Selecting GUI theme - dark,
+        # light , system (for system default, useful if we need dark mode later on)
+        set_appearance_mode("light")
+        # Selecting color theme-blue, green, dark-blue
         set_default_color_theme("dark-blue")
         self.geometry("700x600")
 

@@ -136,7 +136,7 @@ class ExperimentDatabase:
         set_query = "SET "
 
         for i in range(0,len(measurements)): #pylint: disable= consider-using-enumerate
-            if i != 0: 
+            if i != 0:
                 set_query = set_query +  ", "
 
             set_query = set_query + measurement_items[i] + " = " + str(measurements[i])
@@ -160,15 +160,23 @@ class ExperimentDatabase:
 
     def add_animal_rfid(self, animal_id, rfid):
         '''Associates animal_id with an rfid number in experiment.'''
+
         self._c.execute("INSERT INTO animal_rfid (animal_id, rfid) VALUES (?, ?)", (animal_id, rfid))
+
         self._conn.commit()
+
+    def change_animal_rfid(self, animal_id, rfid):
+        '''Changes the rfid number of the animal to the passed rfid number'''
+
+        self._c.execute(f"UPDATE animal_rfid SET rfid = {rfid} WHERE animal_id = {animal_id}")
+
+    def remove_animal_rfid(self, animal_id):
+        '''Removes the passed animal_id from the rfid table'''
+
+        self._c.execute(f"DELETE from animal_rfid WHERE animal_id = {animal_id}")
 
     def add_animal(self, animal_id, rfid, remarks=''):
         '''Adds animal to experiment.'''
-        # Problem: There's never an animal ID added to animal_rfid along with the rfid
-
-        #self._c.execute("INSERT INTO animal_rfid (rfid) VALUES (?)", (rfid, ))
-        #self._conn.commit()
 
         self.add_animal_rfid(animal_id, rfid)
 
@@ -182,23 +190,70 @@ class ExperimentDatabase:
         self._conn.commit()
         return self.get_animal_id(rfid)
 
+    def remove_animal(self, animal_id):
+        '''Removes an animal from the experiment.'''
+        self._c.execute(f"SELECT group_id, cage_id FROM animals WHERE animal_id = {animal_id}")
+        info = self._c.fetchone()
+
+        if info:
+            group_id = info[0]
+            cage_id = info[1]
+            self.remove_animal_from_cage(cage_id)
+
+            self.remove_animal_from_group(group_id)
+            self.remove_animal_rfid(animal_id)
+
+            self._c.execute(f"DELETE from animals WHERE animal_id = {animal_id}")
+        else:
+            raise LookupError(f"No animal_id matches {animal_id}.")
+
+    def remove_animal_from_cage(self, cage_id):
+        '''Removes animal from cage.'''
+
+        self._c.execute(f"SELECT num_animals FROM cages WHERE cage_id = {cage_id}")
+
+        num_animals = self._c.fetchone()[0]
+        if num_animals:
+            num_animals -= 1
+
+            self._c.execute(f"UPDATE cages SET num_animals = {num_animals}, full = 0 WHERE cage_id = {cage_id}")
+        else:
+            raise LookupError(f"No cage id matches {cage_id}.")
+
+    def remove_animal_from_group(self, group_id):
+        '''Removes animal from a group.'''
+        self._c.execute(f"SELECT num_animals FROM groups WHERE group_id = {group_id}")
+
+        num_animals = self._c.fetchone()[0]
+
+        if num_animals:
+            num_animals -= 1
+
+            self._c.execute(f"UPDATE groups SET num_animals = {num_animals}, full = 0 WHERE group_id = {group_id}")
+        else:
+            raise LookupError(f"No group id matches {group_id}.")
+
+
     def _get_next_cage(self):
         '''Returns the cage_id of the next cage in experiment.'''
         self._c.execute("SELECT cage_id, num_animals FROM cages WHERE full=0")
         info = self._c.fetchone()
-        cage_id = info[0]
-        num_animals = info[1] + 1
+        if info:
+            cage_id = info[0]
+            num_animals = info[1] + 1
 
-        self._c.execute("SELECT cage_max FROM experiment")
-        cage_max = self._c.fetchone()[0]
+            self._c.execute("SELECT cage_max FROM experiment")
+            cage_max = self._c.fetchone()[0]
 
-        full = 0
-        if num_animals == cage_max:
-            full=1
-        self._c.execute("UPDATE cages SET num_animals=?, full=? WHERE cage_id=?", (num_animals, full, cage_id))
-        self._conn.commit()
+            full = 0
+            if num_animals == cage_max:
+                full=1
+            self._c.execute("UPDATE cages SET num_animals=?, full=? WHERE cage_id=?", (num_animals, full, cage_id))
+            self._conn.commit()
 
-        return cage_id
+            return cage_id
+        else:
+            raise LookupError("All cages are full")
 
     def _get_next_group(self):
         '''Returns the group_id of the next group in experiment.'''
