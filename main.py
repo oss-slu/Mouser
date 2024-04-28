@@ -8,6 +8,7 @@ from CTkMenuBar import *
 from CTkMessagebox import CTkMessagebox
 from shared.serial_port_settings import SerialPortSetting
 from shared.tk_models import *
+from shared.serial_port_controller import *
 import shared.file_utils as file_utils
 from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
@@ -21,6 +22,7 @@ TEMP_FILE_PATH = None
 
 CURRENT_FILE_PATH = None
 PASSWORD = None
+rfid_serial_port_controller = SerialPortController()
 
 #pylint: disable = global-statement
 def open_file():
@@ -87,7 +89,7 @@ def create_file():
 
 def open_serial_port_setting():
     '''opens the serial port setting page'''
-    SerialPortSetting("serial_port_preference.csv") # pylint: disable=unused-variable
+    SerialPortSetting("serial_port_preference.csv", rfid_serial_port_controller) # pylint: disable=unused-variable
 def save_file():
     '''Command for the 'save file' option in menu bar.'''
     print("Current", CURRENT_FILE_PATH)

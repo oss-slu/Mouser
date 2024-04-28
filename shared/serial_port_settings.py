@@ -4,6 +4,7 @@ from os.path import isfile, join
 from csv import *
 from customtkinter import *
 from shared.tk_models import SettingPage
+from shared.serial_port_controller import *
 
 
 
@@ -12,7 +13,7 @@ class SerialPortSetting(SettingPage):
     '''a class that implements methods and functions 
     related to connecting serial port setting to the experiments '''
 
-    def __init__(self, preference = NONE):
+    def __init__(self, preference = NONE, controller: SerialPortController = NONE):
         ''' implement the constructor of the class object,
         initializing the tab_view page with summary page'''
 
@@ -23,6 +24,7 @@ class SerialPortSetting(SettingPage):
         self.configuration_name = StringVar(value="")
         self.current_configuration_name = StringVar(value="")
         self.preference_path = None
+        self.serial_port_controller = None
 
         self.baud_rate_var = StringVar(value="")
         self.parity_var = StringVar(value="")
@@ -30,6 +32,10 @@ class SerialPortSetting(SettingPage):
         self.data_bits_var = StringVar(value="")
         self.stop_bits_var = StringVar(value="")
         self.input_bype_var = StringVar(value="")
+
+        if controller:
+            self.serial_port_controller = SerialPortController()
+
         if preference:
             try:
                 self.preference_path = os.getcwd() + "\\settings\\serial ports\\preference\\" + preference
@@ -250,7 +256,8 @@ class SerialPortSetting(SettingPage):
             # give a error window that says preference_file not set up
             print("Preference file missing")
             pass
-
+        if self.serial_port_controller:
+            self.serial_port_controller.update_setting()
 
     def confirm_setting(self, f = None):
         '''select a configuration and use it as current serial

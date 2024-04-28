@@ -97,3 +97,10 @@ class SerialPortController():
         '''Testing function for map_rfid serial port.'''
         message = rfid.encode()
         self.writer_port.write(message)
+
+    def update_setting(self):
+        # TODO: close the current reader port, open the reader port again from the new file
+        pass
+
+    def retrieve_setting(self, file_path):
+        pass
