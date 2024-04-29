@@ -51,18 +51,19 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
 
         self.table_frame = CTkFrame(self)
-        self.table_frame.place(relx=0.15, rely=0.40, relheight= 0.40, relwidth=0.80)
-        self.table_frame.grid_columnconfigure(0, weight= 1)
-        self.table_frame.grid_rowconfigure(0, weight= 1)
+        self.table_frame.place(relx=0.15, rely=0.40, relheight=0.50, relwidth=0.80)  
+        self.table_frame.grid_columnconfigure(0, weight=1)
+        self.table_frame.grid_rowconfigure(0, weight=1)
+
 
         heading_style = Style()
         heading_style.configure("Treeview.Heading", font=('Arial', 10))
 
         columns = ('animal_id', 'rfid')
         self.table = Treeview(
-            self.table_frame, columns=columns, show='headings', height=5, style='column.Treeview')
+            #Height raised
+            self.table_frame, columns=columns, show='headings', height=10, style='column.Treeview') 
 
-        self.table.heading('animal_id', text='Animal ID')
         self.table.heading('rfid', text='RFID')
 
         self.table.grid(row=0, column=0, sticky='nsew')
@@ -501,3 +502,4 @@ class SerialSimulator():
         label.grid(row=0, column=0, padx=10, pady=10)
 
         AudioManager.play("shared/sounds/error.wav")
+
