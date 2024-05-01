@@ -22,7 +22,7 @@ TEMP_FILE_PATH = None
 
 CURRENT_FILE_PATH = None
 PASSWORD = None
-rfid_serial_port_controller = SerialPortController()
+rfid_serial_port_controller = SerialPortController("serial_port_preference.csv")
 
 #pylint: disable = global-statement
 def open_file():

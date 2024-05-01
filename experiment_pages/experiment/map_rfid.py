@@ -35,7 +35,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         if controller:
             self.serial_port_controller = controller
         else:
-            self.serial_port_controller = SerialPortController()
+            self.serial_port_controller = SerialPortController("serial_port_preference.csv")
 
         self.animals = []
         self.animal_id = 1
