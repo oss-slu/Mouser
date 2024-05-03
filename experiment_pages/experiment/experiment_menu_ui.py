@@ -7,7 +7,7 @@ from experiment_pages.experiment.data_analysis_ui import DataAnalysisUI
 from experiment_pages.experiment.map_rfid import MapRFIDPage
 from experiment_pages.experiment.cage_config_ui import CageConfigurationUI
 from experiment_pages.experiment.experiment_invest_ui import InvestigatorsUI
-
+from databases.experiment_database import ExperimentDatabase
 
 class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
     '''Experiment Menu Page Frame'''
@@ -16,6 +16,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         #Get name of file from file path
         experiment_name = os.path.basename(name)
         experiment_name = os.path.splitext(experiment_name)[0]
+        self.experiment = ExperimentDatabase(name)
 
         super().__init__(parent, experiment_name, prev_page)
 
@@ -107,3 +108,10 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
             return
 
         page.tkraise()
+
+    def all_rfid_mapped(self):
+        '''Returns true if there is a mapped rfid for each animal in the experiment.'''
+        num_animals = self.experiment.get_number_animals()
+        num_mapped = len(self.experiment.get_all_animal_ids())
+
+        return (num_animals == num_mapped)
