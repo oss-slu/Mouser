@@ -2,6 +2,7 @@
 import os
 from customtkinter import *
 from shared.tk_models import *
+from shared.serial_port_controller import SerialPortController
 from experiment_pages.experiment.data_collection_ui import DataCollectionUI
 from experiment_pages.experiment.data_analysis_ui import DataAnalysisUI
 from experiment_pages.experiment.map_rfid import MapRFIDPage
@@ -11,7 +12,7 @@ from experiment_pages.experiment.experiment_invest_ui import InvestigatorsUI
 
 class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
     '''Experiment Menu Page Frame'''
-    def __init__(self, parent: CTk, name: str, prev_page: ChangeableFrame = None): #pylint: disable= undefined-variable
+    def __init__(self, parent: CTk, name: str, prev_page: ChangeableFrame = None, controller: SerialPortController = None): #pylint: disable= undefined-variable
 
         #Get name of file from file path
         experiment_name = os.path.basename(name)
@@ -29,7 +30,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         self.data_page = DataCollectionUI(parent, self, name)
         self.analysis_page = DataAnalysisUI(parent, self)
         self.cage_page = CageConfigurationUI(name, parent, self)
-        self.rfid_page = MapRFIDPage(name, parent, self)
+        self.rfid_page = MapRFIDPage(name, parent, self, controller)
         self.invest_page = InvestigatorsUI(parent, self)
 
         button_size = 30

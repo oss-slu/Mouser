@@ -25,14 +25,17 @@ def play_sound_async(filename):
 
 class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
     '''Map RFID user interface and window.'''
-    def __init__(self, database, parent: CTk, previous_page: CTkFrame = None):
+    def __init__(self, database, parent: CTk, previous_page: CTkFrame = None, controller: SerialPortController = None):
 
         super().__init__(parent, "Map RFID", previous_page)
 
 
         file = database
         self.db = ExperimentDatabase(file)
-        self.serial_port_controller = SerialPortController()
+        if controller:
+            self.serial_port_controller = controller
+        else:
+            self.serial_port_controller = SerialPortController("serial_port_preference.csv")
 
         self.animals = []
         self.animal_id = 1
