@@ -12,6 +12,7 @@ def raise_frame(frame: CTkFrame): #pylint: disable= redefined-outer-name
         current_frame.pack_forget()
     current_frame = frame
     current_frame.pack()
+   
 
 def create_nav_button(parent: CTkFrame, name: str, button_image: PhotoImage, frame: CTkFrame, relx: float, rely: float): #pylint: disable= line-too-long,redefined-outer-name
     '''Makes a navigation button to the various sub-menus of the program.'''
@@ -20,42 +21,6 @@ def create_nav_button(parent: CTkFrame, name: str, button_image: PhotoImage, fra
                     compound=TOP, width=25, command=lambda: raise_frame(frame))
     button.place(relx=relx, rely=rely, anchor=CENTER)
     button.image = button_image
-
-
-
-class MenuButton(CTkButton):
-    '''A standard button that navigates backwards in the program.'''
-    def __init__(self, page: CTkFrame, previous_page: CTkFrame):
-
-        super().__init__(page, text="Back to Menu", compound=TOP,
-                         width=15, command = self.navigate)
-        self.place(relx=0.15, rely=0.15, anchor=CENTER)
-        self.previous_page = previous_page
-
-
-
-    def navigate(self):
-        '''Raises the previous_page in the stacking order.'''
-        raise_frame(self.previous_page)
-
-
-
-class ChangePageButton(CTkButton):
-    '''A standard button that navigates somewhere else in the program.'''
-    def __init__(self, page: CTkFrame, next_page: CTkFrame, previous: bool = True):
-        text = "Next"
-        x = 0.75
-        if previous:
-            text = "Previous"
-            x = 0.25
-        super().__init__(page, text=text, compound=TOP,
-                         width=15, command = self.navigate)
-        self.place(relx=x, rely=0.85, anchor=CENTER)
-        self.next_page = next_page
-
-    def navigate(self):
-        '''Raises the next_page in the stacking order.'''
-        raise_frame(self.next_page)
 
 
 class MouserPage(CTkFrame):
@@ -146,7 +111,39 @@ class SettingPage(CTkToplevel):
         set_default_color_theme("dark-blue")
         self.geometry("700x600")
 
+class MenuButton(CTkButton):
+    '''A standard button that navigates backwards in the program.'''
+    def __init__(self, page: CTkFrame, previous_page: MouserPage):
 
+        super().__init__(page, text="Back to Menu", compound=TOP,
+                         width=15, command = self.navigate)
+        self.place(relx=0.15, rely=0.15, anchor=CENTER)
+        self.previous_page = previous_page
+
+
+
+    def navigate(self):
+        '''Raises the previous_page in the stacking order.'''
+        #raise_frame(self.previous_page)
+        self.previous_page.raise_frame()
+
+class ChangePageButton(CTkButton):
+    '''A standard button that navigates somewhere else in the program.'''
+    def __init__(self, page: CTkFrame, next_page: MouserPage, previous: bool = True):
+        text = "Next"
+        x = 0.75
+        if previous:
+            text = "Previous"
+            x = 0.25
+        super().__init__(page, text=text, compound=TOP,
+                         width=15, command = self.navigate)
+        self.place(relx=x, rely=0.85, anchor=CENTER)
+        self.next_page = next_page
+
+    def navigate(self):
+        '''Raises the next_page in the stacking order.'''
+        #raise_frame(self.next_page)
+        self.next_page.raise_frame()
 
 if __name__ == '__main__':
     root = CTk()

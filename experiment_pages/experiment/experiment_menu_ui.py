@@ -8,7 +8,7 @@ from experiment_pages.experiment.data_analysis_ui import DataAnalysisUI
 from experiment_pages.experiment.map_rfid import MapRFIDPage
 from experiment_pages.experiment.cage_config_ui import CageConfigurationUI
 from experiment_pages.experiment.experiment_invest_ui import InvestigatorsUI
-
+from databases.experiment_database import ExperimentDatabase
 
 class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
     '''Experiment Menu Page Frame'''
@@ -17,6 +17,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         #Get name of file from file path
         experiment_name = os.path.basename(name)
         experiment_name = os.path.splitext(experiment_name)[0]
+        self.experiment = ExperimentDatabase(name)
 
         super().__init__(parent, experiment_name, prev_page)
 
@@ -36,28 +37,30 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         button_size = 30
 
 
-        collection_button = CTkButton(main_frame, text='Data Collection', width=button_size,
+        self.collection_button = CTkButton(main_frame, text='Data Collection', width=button_size,
                                 command= self.data_page.raise_frame)
-        analysis_button = CTkButton(main_frame, text='Data Analysis', width=button_size,
+        self.analysis_button = CTkButton(main_frame, text='Data Analysis', width=button_size,
                                 command= self.analysis_page.raise_frame)
-        group_button = CTkButton(main_frame, text='Group Configuration', width=button_size,
+        self.group_button = CTkButton(main_frame, text='Group Configuration', width=button_size,
                                 command= lambda: [self.cage_page.raise_frame(),
                                                   self.cage_page.update_controller_attributes(),
                                                   self.cage_page.update_config_frame()])
-        rfid_button = CTkButton(main_frame, text='Map RFID', width=button_size,
+        self.rfid_button = CTkButton(main_frame, text='Map RFID', width=button_size,
                                 command=  self.rfid_page.raise_frame)
-        invest_button = CTkButton(main_frame, text='Investigators', width=button_size,
-                                command= self.invest_page.raise_frame)
-        delete_button = CTkButton(main_frame, text='Delete Experiment', width=button_size,
-                                command= lambda: self.delete_warning(prev_page, name))
 
-        collection_button.grid(row=0, column=0, ipady=10, ipadx=10, pady=10, padx=10)
-        analysis_button.grid(row=1, column=0, ipady=10, ipadx=10, pady=10, padx=10)
-        group_button.grid(row=2, column=0, ipady=10, ipadx=10, pady=10, padx=10)
-        rfid_button.grid(row=3, column=0, ipady=10, ipadx=10, pady=10, padx=10)
-        invest_button.grid(row=4, column=0, ipadx=10, ipady=10, pady=10, padx=10)
-        delete_button.grid(row=5, column=0, ipadx=10, ipady=10, pady=10, padx=10)   
+        self.collection_button.grid(row=0, column=0, ipady=10, ipadx=10, pady=10, padx=10)
+        self.analysis_button.grid(row=1, column=0, ipady=10, ipadx=10, pady=10, padx=10)
+        self.group_button.grid(row=2, column=0, ipady=10, ipadx=10, pady=10, padx=10)
+        self.rfid_button.grid(row=3, column=0, ipady=10, ipadx=10, pady=10, padx=10)
 
+        if self.menu_button:
+            self.menu_button.destroy()
+
+        self.bind("<<FrameRaised>>", self.on_show_frame)
+
+    def raise_frame(self):
+        self.on_show_frame()
+        super().raise_frame()
 
     def delete_warning(self, page: CTkFrame, name: str):
         '''Raises warning frame for deleting experiment.'''
@@ -108,3 +111,21 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
             return
 
         page.tkraise()
+
+    def all_rfid_mapped(self):
+        '''Returns true if there is a mapped rfid for each animal in the experiment.'''
+        num_animals = self.experiment.get_number_animals()
+        num_mapped = len(self.experiment.get_all_animal_ids())
+
+        print(f"Number of animals mapped = {num_mapped}\n Number of total animals = {num_animals}")
+
+        return (num_animals == num_mapped)
+
+    def on_show_frame(self):
+        button_state = DISABLED
+        if self.all_rfid_mapped():
+            button_state = NORMAL
+        self.collection_button.configure(state=button_state)
+        self.analysis_button.configure(state=button_state)
+        self.group_button.configure(state=button_state)
+        print("Page shown")

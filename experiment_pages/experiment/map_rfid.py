@@ -262,7 +262,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         if len(self.animals) != self.db.get_number_animals():
             self.raise_warning(warning_message= 'Not all animals have been mapped to RFIDs')
         else:
-            raise_frame(self.menu_page) #pylint: disable= undefined-variable
+            self.menu_button.navigate() #pylint: disable= undefined-variable
 
     def close_connection(self):
         '''Closes database file.'''
