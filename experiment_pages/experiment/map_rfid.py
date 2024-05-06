@@ -25,36 +25,30 @@ def play_sound_async(filename):
 
 class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
     '''Map RFID user interface and window.'''
-    def __init__(self, database, parent: CTk, previous_page: CTkFrame = None, controller: SerialPortController = None):
+    def __init__(self, database, parent: CTk, previous_page: CTkFrame = None):
 
         super().__init__(parent, "Map RFID", previous_page)
 
 
         file = database
         self.db = ExperimentDatabase(file)
-        if controller:
-            self.serial_port_controller = controller
-        else:
-            self.serial_port_controller = SerialPortController("serial_port_preference.csv")
+        self.serial_port_controller = SerialPortController("serial_port_preference.csv")
 
         self.animals = []
         self.animal_id = 1
 
         self.animal_id_entry_text = StringVar(value="1")
 
-        self.animal_id_entry = CTkEntry(
-            self, width=140, textvariable=self.animal_id_entry_text)
-        self.animal_id_entry.place(relx=0.50, rely=0.20, anchor=CENTER)
-        animal_id_header = CTkLabel(self, text="Animal ID:", font=("Arial", 12))
-        animal_id_header.place(relx=0.28, rely=0.20, anchor=E)
+        
+        
 
         simulate_rfid_button = CTkButton(self, text="Simulate RFID", compound=TOP,
                                       width=15, command=self.add_random_rfid)
-        simulate_rfid_button.place(relx=0.80, rely=0.20, anchor=CENTER)
+        simulate_rfid_button.place(relx=0.80, rely=0.17, anchor=CENTER)
 
 
         self.table_frame = CTkFrame(self)
-        self.table_frame.place(relx=0.15, rely=0.40, relheight= 0.40, relwidth=0.80)
+        self.table_frame.place(relx=0.15, rely=0.40, relheight=0.50, relwidth=0.80)
         self.table_frame.grid_columnconfigure(0, weight= 1)
         self.table_frame.grid_rowconfigure(0, weight= 1)
 
@@ -63,7 +57,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         columns = ('animal_id', 'rfid')
         self.table = Treeview(
-            self.table_frame, columns=columns, show='headings', height=5, style='column.Treeview')
+            self.table_frame, columns=columns, show='headings', height=10, style='column.Treeview')
 
         self.table.heading('animal_id', text='Animal ID')
         self.table.heading('rfid', text='RFID')
@@ -73,8 +67,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.table.grid_rowconfigure(0, weight = 1)
 
 
-        scrollbar = CTkScrollbar(
-            self.table_frame, orientation=VERTICAL, command=self.table.yview)
+        scrollbar = CTkScrollbar(self.table_frame, orientation=VERTICAL, command=self.table.yview)
         self.table.configure(yscroll=scrollbar.set)
         scrollbar.grid(row=0, column=1, sticky='ns')
 
@@ -90,15 +83,16 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         self.serial_port_button = CTkButton(self, text="Select Serial Port", compound=TOP,
                                       width=15, command=self.open_serial_port_selection)
-        self.serial_port_button.place(relx=0.10, rely=0.85, anchor=CENTER)
+        self.serial_port_button.place(relx=0.10, rely=0.95, anchor=CENTER)
 
         self.change_rfid_button = CTkButton(self, text="Change RFID", compound=TOP,
                                          width=15, command=self.open_change_rfid)
-        self.change_rfid_button.place(relx=0.40, rely=0.85, anchor=CENTER)
+        self.change_rfid_button.place(relx=0.40, rely=0.95, anchor=CENTER)
 
         self.delete_button = CTkButton(self, text="Remove Selection(s)", compound=TOP,
-                                    width=20, command=self.remove_selected_items)
-        self.delete_button.place(relx=0.70, rely=0.85, anchor=CENTER)
+                                       width=20, command=self.remove_selected_items,
+                                       state="normal")  # Initialize button as disabled
+        self.delete_button.place(relx=0.70, rely=0.95, anchor=CENTER)
 
         self.item_selected(None)
 
@@ -161,36 +155,45 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.table.item(self.changing_value, values=(
             item['values'][0], rfid))
         self.change_rfid_button["state"] = "normal"
+        
 
         AudioManager.play("shared/sounds/rfid_success.wav")
 
     def item_selected(self, _):
-        '''On selecting an item in the table.'''
         selected = self.table.selection()
+        print("Selection ", selected, " changed.") 
 
+    # Check if any selected item starts with 'I00'
+        enable_button = any(self.table.item(item_id, 'values')[0].startswith('I00') for item_id in selected)
+
+        if enable_button:
+            self.delete_button["state"] = "normal"
+        else:
+            self.delete_button["state"] = "disabled"
+
+    # Handling for change RFID button
         if len(selected) != 1:
             self.change_rfid_button["state"] = "disabled"
         else:
             self.change_rfid_button["state"] = "normal"
 
-        if len(selected) == 0:
-            self.delete_button["state"] = "disabled"
-        else:
-            self.delete_button["state"] = "normal"
 
     def remove_selected_items(self):
-        '''Removes the selected item from a table,'''
+        '''Removes the selected item from a table, warning if none selected.'''
         selected_items = self.table.selection()
+
+        # Check if any items are selected
+        if not selected_items:  # If no items are selected
+            self.raise_warning("No item selected. Please select an item to remove.")
+            return
 
         for item in selected_items:
             item_id = int(self.table.item(item, 'values')[0])
             self.table.delete(item)
-
             self.db.remove_animal(item_id)
 
-            # Update animal id
+            # Update animal list
             self.animals = [(index, rfid) for (index, rfid) in self.animals if index != item_id]
-
 
         self.change_entry_text()
 
@@ -227,8 +230,16 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         '''
 
     def open_change_rfid(self):
-        '''Opens change rfid window.'''
-        self.changing_value = self.table.selection()[0]
+        '''Opens change RFID window if an item is selected, otherwise shows a warning.'''
+        selected_items = self.table.selection()
+    
+        # Check if there is exactly one item selected (assuming RFID change is intended for single selections)
+        if len(selected_items) != 1:
+            self.raise_warning("No item selected. Please select a single item to change its RFID.")
+            return
+
+        # If an item is selected, proceed to open the RFID change dialog
+        self.changing_value = selected_items[0]
         self.change_rfid_button["state"] = "disabled"
         self.changer.open()
 
@@ -361,10 +372,6 @@ class SerialPortSelection():
         style.configure('TkTextFont', font = (NONE,30))
         for line in ports:
             self.table.insert('', END, values = line, tags='TkTextFont')
-
-    def item_selected(self, _):
-        '''On selection of item in the table'''
-        self.id = self.table.selection()[0]
 
     def conform_selection(self):
         '''Confirms the selected value.'''
@@ -504,3 +511,4 @@ class SerialSimulator():
         label.grid(row=0, column=0, padx=10, pady=10)
 
         AudioManager.play("shared/sounds/error.wav")
+
