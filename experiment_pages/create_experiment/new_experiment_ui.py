@@ -95,15 +95,16 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
                 self.main_frame.grid_columnconfigure(i, weight=1)
             self.main_frame.grid_rowconfigure(i, weight=1)
 
+        self.bind_all_entries()
 
     def bind_all_entries(self):
-        self.exper_name.bind("<KeyRelease>", self.all_entries)
-        self.password.bind("<KeyRelease>", self.all_entries)
-        self.species.bind("<KeyRelease>", self.all_entries)
-        self.measure_items.bind("<KeyRelease>", self.all_entries)
-        self.animal_num.bind("<KeyRelease>", self.all_entries)
-        self.group_num.bind("<KeyRelease>", self.all_entries)
-        self.num_per_cage.bind("<KeyRelease>", self.all_entries)
+        self.exper_name.bind("<KeyRelease>", lambda event: self.enable_next_button())
+        self.password.bind("<KeyRelease>", lambda event: self.enable_next_button())
+        self.species.bind("<KeyRelease>", lambda event: self.enable_next_button())
+        self.measure_items.bind("<KeyRelease>", lambda event: self.enable_next_button())
+        self.animal_num.bind("<KeyRelease>", lambda event: self.enable_next_button())
+        self.group_num.bind("<KeyRelease>", lambda event: self.enable_next_button())
+        self.num_per_cage.bind("<KeyRelease>", lambda event: self.enable_next_button())
 
     def enable_next_button(self):
         if self.exper_name.get() and self.species.get() \
@@ -115,14 +116,6 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
             self.next_button.configure(state="disabled")
             print("Button disabled.")
 
-    def all_entries(self, _=None):
-        if (self.exper_name.get() and self.password.get() and
-                self.species.get() and
-                self.animal_num.get() and self.group_num.get() and
-                self.num_per_cage.get()):
-            self.next_button.configure(state="normal")
-        else:
-            self.next_button.configure(state="disabled")
     def set_next_button(self, next_page):
         '''Sets what page the next button navigates to.'''
         #pylint: disable = access-member-before-definition
@@ -186,7 +179,6 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
 
             self.added_invest.append(self.investigators.get())
             self.update_invest_frame()
-            self.enable_next_button()
 
     def remove_investigator(self, person):
         '''Removes the passed investigator from the investigator frame.'''
@@ -201,7 +193,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         if self.measure_items.get() and self.measure_items.get() not in self.items:
             self.items.append(self.measure_items.get())
             self.update_items_frame()
-            self.enable_next_button()
+
     def remove_measurment_item(self, item):
         '''Removes passed item from the item frame.'''
         if item in self.items:
