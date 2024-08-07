@@ -1,6 +1,7 @@
 tkcalendar
 pandas
 getmac
+pyaudio
 pyserial
 pysound
 wave
@@ -8,3 +9,4 @@ cryptography
 customtkinter
 CTkMessagebox
 CTkMenuBar
+playsound
