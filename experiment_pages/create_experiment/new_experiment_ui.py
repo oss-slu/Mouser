@@ -123,7 +123,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
             self.next_button.destroy()
         self.next_button = ChangePageButton(self, next_page, False)#pylint: disable= undefined-variable
         #pylint: enable= access-member-before-definition
-        self.next_button.configure(command= lambda: [self.check_animals_divisible(), self.next_button.navigate()])
+        self.next_button.configure(command= lambda: [self.check_animals_divisible(), self.next_button.navigate()], state="disabled")
         self.next_button.place(relx=0.85, rely=0.15)
 
     def update_invest_frame(self):
