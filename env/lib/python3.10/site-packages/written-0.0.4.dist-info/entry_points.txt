@@ -1,0 +1,3 @@
+[console_scripts]
+written = written.__main__:main
+

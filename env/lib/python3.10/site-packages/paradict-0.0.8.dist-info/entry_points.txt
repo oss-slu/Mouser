@@ -1,0 +1,3 @@
+[console_scripts]
+paradict = paradict.__main__:main
+

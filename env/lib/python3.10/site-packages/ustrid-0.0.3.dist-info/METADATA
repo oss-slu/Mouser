@@ -1,0 +1,60 @@
+Metadata-Version: 2.1
+Name: ustrid
+Version: 0.0.3
+Summary: Uniquely generated string identifiers
+Home-page: https://github.com/pyrustic/ustrid
+Author: Pyrustic Evangelist
+Author-email: rusticalex@yahoo.com
+Maintainer: Pyrustic Evangelist
+Maintainer-email: rusticalex@yahoo.com
+License: MIT
+Keywords: application,pyrustic
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.5
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
+This package generates unique string identifiers.
+
+```python
+from ustrid import ustrid
+
+unique_string_id = ustrid()
+```
+
+Under the hood:
+
+```python
+import uuid
+import threading
+
+
+def ustrid():
+    """Generate a unique string identifier (thread-safe)"""
+    return Ustrid.run()
+
+
+class Ustrid:
+
+    """Private class to generate unique string identifiers (thread-safe)"""
+    _lock = threading.Lock()
+    _count = 0
+
+    @classmethod
+    def run(cls):
+        """Generate a unique string identifier (thread-safe)"""
+        with cls._lock:
+            cls._count += 1
+            return "{}-{}".format(cls._count, uuid.uuid4())
+```
+
+
+**Installation:**
+```bash
+pip install ustrid
+```
+
+

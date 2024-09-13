@@ -31,7 +31,10 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         self.data_page = DataCollectionUI(parent, self, name)
         self.analysis_page = DataAnalysisUI(parent, self)
         self.cage_page = CageConfigurationUI(name, parent, self)
-        self.rfid_page = MapRFIDPage(name, parent, self, controller)
+        if controller is None:
+            self.rfid_page = MapRFIDPage(name, parent, self)
+        else:
+            self.rfid_page = MapRFIDPage(name, parent, self, controller)
         self.invest_page = InvestigatorsUI(parent, self)
 
         button_size = 30
@@ -101,7 +104,10 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         splitted = name.split("\\")
         if ("Protected" in splitted[-1]):
             path = os.getcwd()
-            name = path + "\\databases\\experiments\\" + splitted[-1]
+            if os.name == 'posix':
+                name = path + "/databases/experiments/" + splitted[-1]
+            else:
+                name = path + "\\databases\\experiments\\" + splitted[-1]
             
 
         try:

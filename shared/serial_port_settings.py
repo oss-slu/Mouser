@@ -26,7 +26,10 @@ class SerialPortSetting(SettingPage):
         self.current_configuration_name = StringVar(value="")
         self.preference_path = None
         self.serial_port_controller = None
-        self.port_setting_configuration_path = os.getcwd() + "\\settings\\serial ports"
+        if os.name == 'posix':
+            self.port_setting_configuration_path = os.getcwd() + "/settings/serial ports"
+        else:
+            self.port_setting_configuration_path = os.getcwd() + "\\settings\\serial ports"
 
         # setting value element
         self.serial_port = StringVar(value = "")
@@ -43,7 +46,10 @@ class SerialPortSetting(SettingPage):
 
         if preference:
             try:
-                self.preference_path = os.getcwd() + "\\settings\\serial ports\\preference\\" + preference
+                if os.name == 'posix':
+                    self.preference_path = os.getcwd() + "/settings/serial ports/preference/" + preference
+                else:    
+                    self.preference_path = os.getcwd() + "\\settings\\serial ports\\preference\\" + preference
                 file = open(self.preference_path, "r")
                 file_names = []
                 for line in file:

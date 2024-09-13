@@ -1,0 +1,3 @@
+[console_scripts]
+ustrid = ustrid.__main__:main
+
