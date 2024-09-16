@@ -32,6 +32,10 @@ jobs:
               for file in $(git ls-files '*.py')
               do
                 pylint --disable=import-error,R,wildcard-import,unused-wildcard-import,attribute-defined-outside-init --max-line-length=115 --fail-under=9.0 $file || lint_failed="failed"
+                if [ $? -ne 0]; then
+                  echo "Linting failed for file: $file"
+                  lint_failed="failed"
+                fi
               done
               if [ "$lint_failed" = "failed" ]
               then
