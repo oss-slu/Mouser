@@ -1,15 +1,13 @@
-Fixes #issue_number
+Fixes #213
 
 **What was changed?**
 
-*Here, describe what part of the application you changed (e.g. login page, database, etc.). If possible, mention what specific components were added, removed, or modified.*
+Changes have been made as comments as the fix is not yet functioning. But changes include adding import sys and import os to support dynamic path resolution. The new helper function get_resource_path() was added to dynamically resolve resource paths. The path to the image "shared/images/MouseLogo.png" was changed to use the get_resource_path() function instead of a static path. 
 
 **Why was it changed?**
 
-*Here, describe the issue that you are fixing with this code, and why your code fixes it.*
+Adding import sys and import os to support dynamic path resolution for files, both in development and when the program is packaged as an executable. The new helper function was added to resolve resource paths, allowing the program to correctly locate assets whether its running as an executable or from source. The path was updated to use the new helper function instead of a static relative path, ensuring the image can be found regardless of how the program is run. 
 
 **How was it changed?**
 
-*Here, get into detail about what files you modified, and talk about the most important lines in regards to fixing the issue.*
-
-**Screenshots that show the changes (if applicable):**
+The file that was modified was main.py. Two lines were added at the beginning, a new function after the global variables, and a path change towards the end of the file. 
