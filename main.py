@@ -1,4 +1,5 @@
 '''Main functionality of Program.'''
+import os
 import shutil
 import tempfile
 from tkinter.filedialog import *

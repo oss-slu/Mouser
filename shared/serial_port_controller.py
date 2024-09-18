@@ -28,12 +28,18 @@ class SerialPortController():
         self.reader_port = None
 
         if setting_file:
-            file_path = os.getcwd() + "\\settings\\serial ports\\preference\\" + setting_file
+            if os.name == 'posix':
+                file_path = os.getcwd() + "/settings/serial ports/preference/" + setting_file
+            else:
+                file_path = os.getcwd() + "\\settings\\serial ports\\preference\\" + setting_file
             file = open(file_path, "r")
             file_names = []
             for line in file:
                 file_names.append(line)
-            setting_file_path = os.getcwd() + "\\settings\\serial ports\\" + file_names[0]
+            if os.name == 'posix':
+                setting_file_path = os.getcwd() + "/settings/serial ports/" + file_names[0]
+            else:
+                setting_file_path = os.getcwd() + "\\settings\\serial ports\\" + file_names[0]
             with open(setting_file_path, "r") as file:
                 for line in file:
                     self.retrieve_setting([line[0], line[3], line[1], line[4], line[2]])
