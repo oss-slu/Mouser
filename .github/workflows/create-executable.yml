@@ -14,8 +14,8 @@ jobs:
         os: ["windows-latest", "macos-latest"]
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: 3.11
       - run: brew install mysql pkg-config portaudio
@@ -32,7 +32,7 @@ jobs:
           robocopy images dist/main/images
           robocopy sounds dist/main/sounds
           ren dist\main\main.exe Mouser.exe
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: Mouser_${{ matrix.os }}
