@@ -2,7 +2,7 @@ on:
   push:
     branches:
       - main
-      - create-exe
+      - 219-executable-workflow-deprecated-version-fix
 
 jobs:
   build:
