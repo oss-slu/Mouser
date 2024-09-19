@@ -2,9 +2,7 @@
 from datetime import date
 from tkinter.ttk import Treeview, Style
 from customtkinter import *
-
 from shared.tk_models import *
-
 from databases.experiment_database import ExperimentDatabase
 from databases.data_collection_database import DataCollectionDatabase
 from shared.audio import AudioManager
@@ -96,8 +94,12 @@ class DataCollectionUI(MouserPage):
 
     def open_auto_increment_changer(self):
         '''Opens auto changer dialog.'''
-        self.changing_value = self.table.get_children()[self.auto_inc_id]
-        self.open_changer()
+        if self.table.get_children() :
+            self.changing_value = self.table.get_children()[self.auto_inc_id]
+            self.open_changer()
+        else:
+            print("No animals in databse!")
+        
 
     def change_selected_value(self, values):
         '''Changes the selected value in the table and database.'''
