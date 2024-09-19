@@ -56,15 +56,10 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         self.group_button.grid(row=2, column=0, ipady=10, ipadx=10, pady=10, padx=10)
         self.rfid_button.grid(row=3, column=0, ipady=10, ipadx=10, pady=10, padx=10)
 
-
         if self.menu_button:
             self.menu_button.destroy()
 
         self.bind("<<FrameRaised>>", self.on_show_frame)
-
-# Assume buttons are enabled initially- This allows for them to be disabled before RFID Mapping is done
-        self.disable_buttons_if_needed()
-
 
     def raise_frame(self):
         self.on_show_frame()
@@ -131,17 +126,6 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         print(f"Number of animals mapped = {num_mapped}\n Number of total animals = {num_animals}")
 
         return (num_animals == num_mapped)
-    
-    def disable_buttons_if_needed(self):
-    # This method disables all buttons except for the Map RFID button until all specimens have an associated RFID
-        if self.all_rfid_mapped:
-            self.collection_button.configure(state="disabled")
-            self.analysis_button.configure(state="disabled")
-            self.group_button.configure(state="disabled")
-        else:
-            self.collection_button.configure(state="normal")
-            self.analysis_button.configure(state="normal")
-            self.group_button.configure(state="normal")
 
     def on_show_frame(self):
         button_state = DISABLED
