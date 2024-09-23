@@ -31,7 +31,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         self.data_page = DataCollectionUI(parent, self, name)
         self.analysis_page = DataAnalysisUI(parent, self)
         self.cage_page = CageConfigurationUI(name, parent, self)
-        self.rfid_page = MapRFIDPage(name, parent, self, controller)
+        self.rfid_page = MapRFIDPage(name, parent, self)
         self.invest_page = InvestigatorsUI(parent, self)
 
         button_size = 30

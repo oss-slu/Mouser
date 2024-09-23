@@ -3,6 +3,7 @@ on:
     branches:
       - main
       - create-exe
+      - 213-executable
 
 jobs:
   build:
@@ -18,20 +19,42 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: 3.11
+          
+      # Only run this on macOS as brew isn't available on Windows
       - run: brew install mysql pkg-config portaudio
         if: ${{ matrix.os == 'macos-latest' }}
+        
       - run: python -m pip install --upgrade pip
       - run: pip install --upgrade wheel
       - run: pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
+      
+      # Uninstalling typing for compatibility with Python 3.11
       - run: pip uninstall -y typing
-      - run: pyinstaller --noconfirm --noconsole --onedir -c --copy-metadata tqdm --copy-metadata regex --copy-metadata sacremoses --copy-metadata requests --copy-metadata packaging --copy-metadata filelock --copy-metadata tokenizers --copy-metadata importlib_metadata --collect-data sv_ttk --hidden-import "babel.numbers" main.py
+      
+      # Modify PyInstaller command to include additional data
+      - run: |
+          pyinstaller --noconfirm --noconsole --onedir -c \
+            --copy-metadata tqdm \
+            --copy-metadata regex \
+            --copy-metadata sacremoses \
+            --copy-metadata requests \
+            --copy-metadata packaging \
+            --copy-metadata filelock \
+            --copy-metadata tokenizers \
+            --copy-metadata importlib_metadata \
+            --collect-data sv_ttk \
+            --hidden-import "babel.numbers" \
+            --add-data "shared/images/*:shared/images" \
+            --add-data "shared/sounds/*:shared/sounds" \
+            --add-data "settings/serial ports/*:settings/serial ports" \
+            main.py
+
+      # Rename the executable on Windows for clarity
       - shell: cmd
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
-          robocopy databases dist/main/databases
-          robocopy images dist/main/images
-          robocopy sounds dist/main/sounds
           ren dist\main\main.exe Mouser.exe
+
       - uses: actions/upload-artifact@v2
         if: always()
         with:
