@@ -35,7 +35,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         pad_x = 10
         pad_y = 10
 
-        self.items = []
+        self.items = ['Weight']
         self.added_invest = []
 
         CTkLabel(self.main_frame, text='Experiment Name').grid(
@@ -61,7 +61,11 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.password = CTkEntry(self.main_frame,width=120,show="*")
         self.investigators = CTkEntry(self.main_frame, width=140)
         self.species = CTkEntry(self.main_frame, width=140)
+
         self.measure_items = CTkEntry(self.main_frame, width=140)
+        self.measure_items.insert(0, 'Weight')
+        self.measure_items.configure(state='disabled')
+
         self.animal_num = CTkEntry(self.main_frame, width=110)
         self.group_num = CTkEntry(self.main_frame, width=110)
         self.num_per_cage = CTkEntry(self.main_frame, width=110)
@@ -86,9 +90,9 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
                               command=lambda: [self.add_investigator(), self.investigators.delete(0, END)])
         add_invest_button.grid(row=1, column=2, padx=pad_x, pady=pad_y)
 
-        add_item_button = CTkButton(self.main_frame, text='+', width=3,
-                            command= lambda: [self.add_measurement_item(), self.measure_items.delete(0, END)])
-        add_item_button.grid(row=4, column=2, padx=pad_x, pady=pad_y)
+        # add_item_button = CTkButton(self.main_frame, text='+', width=3,
+        #                     command= lambda: [self.add_measurement_item(), self.measure_items.delete(0, END)])
+        # add_item_button.grid(row=4, column=2, padx=pad_x, pady=pad_y)
 
         for i in range(0,10):
             if i < 3:
@@ -187,12 +191,11 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
             self.update_invest_frame()
 
 
-
-    def add_measurement_item(self):
-        '''Adds measurement item to the item frame.'''
-        if self.measure_items.get() and self.measure_items.get() not in self.items:
-            self.items.append(self.measure_items.get())
-            self.update_items_frame()
+    # def add_measurement_item(self):
+    #     '''Adds measurement item to the item frame.'''
+    #     if self.measure_items.get() and self.measure_items.get() not in self.items:
+    #         self.items.append(self.measure_items.get())
+    #         self.update_items_frame()
 
     def remove_measurment_item(self, item):
         '''Removes passed item from the item frame.'''
