@@ -26,23 +26,23 @@ class SerialPortController():
         self.reader_port = None
 
         if setting_file:
-            # Use os.path.join to construct the file path correctly
-            file_path = os.path.join(os.getcwd(), "settings", "serial ports", "preference", setting_file)
-            try:
-                with open(file_path, "r") as file:
-                    file_names = [line.strip() for line in file]
-                if file_names:
-                    # Assume the first line in file_names contains the relative path to another setting file
-                    setting_file_path = os.path.join(os.getcwd(), "settings", "serial ports", file_names[0])
-                    with open(setting_file_path, "r") as file:
-                        for line in file:
-                            settings = line.split(',')  # Assuming CSV format
-                            self.retrieve_setting(settings)
-            except FileNotFoundError as e:
-                print(f"File not found: {e}")
-            except Exception as e:
-                print(f"Error reading setting file: {e}")
-
+            if os.name == 'posix':
+                file_path = os.getcwd() + "/settings/serial ports/preference/" + setting_file
+            else:
+                file_path = os.getcwd() + "\\settings\\serial ports\\preference\\" + setting_file
+            file = open(file_path, "r")
+            file_names = []
+            for line in file:
+                file_names.append(line)
+            if os.name == 'posix':
+                setting_file_path = os.getcwd() + "/settings/serial ports/" + file_names[0]
+            else:
+                setting_file_path = os.getcwd() + "\\settings\\serial ports\\" + file_names[0]
+            with open(setting_file_path, "r") as file:
+                for line in file:
+                    self.retrieve_setting([line[0], line[3], line[1], line[4], line[2]])
+                    # Whenever automation is implemented, add the serial port here
+                    # self.set_reader_port(line[6])
 
             # settings = [baud rate, data bits/byte size, parity, stop bits, flow control option]
             # file format: baud rate, parity, flow control option, data bits, stop bits, input method (not needed), port

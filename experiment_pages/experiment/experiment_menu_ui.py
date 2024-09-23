@@ -31,7 +31,10 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         self.data_page = DataCollectionUI(parent, self, name)
         self.analysis_page = DataAnalysisUI(parent, self)
         self.cage_page = CageConfigurationUI(name, parent, self)
-        self.rfid_page = MapRFIDPage(name, parent, self)
+        if controller is None:
+            self.rfid_page = MapRFIDPage(name, parent, self)
+        else:
+            self.rfid_page = MapRFIDPage(name, parent, self, controller)
         self.invest_page = InvestigatorsUI(parent, self)
 
         button_size = 30
@@ -57,6 +60,10 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
             self.menu_button.destroy()
 
         self.bind("<<FrameRaised>>", self.on_show_frame)
+
+# Assume buttons are enabled initially- This allows for them to be disabled before RFID Mapping is done
+        self.disable_buttons_if_needed()
+
 
     def raise_frame(self):
         self.on_show_frame()
@@ -101,7 +108,10 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         splitted = name.split("\\")
         if ("Protected" in splitted[-1]):
             path = os.getcwd()
-            name = path + "\\databases\\experiments\\" + splitted[-1]
+            if os.name == 'posix':
+                name = path + "/databases/experiments/" + splitted[-1]
+            else:
+                name = path + "\\databases\\experiments\\" + splitted[-1]
             
 
         try:
@@ -120,6 +130,17 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         print(f"Number of animals mapped = {num_mapped}\n Number of total animals = {num_animals}")
 
         return (num_animals == num_mapped)
+    
+    def disable_buttons_if_needed(self):
+    # This method disables all buttons except for the Map RFID button until all specimens have an associated RFID
+        if self.all_rfid_mapped():
+            self.collection_button.configure(state="disabled")
+            self.analysis_button.configure(state="disabled")
+            self.group_button.configure(state="disabled")
+        else:
+            self.collection_button.configure(state="normal")
+            self.analysis_button.configure(state="normal")
+            self.group_button.configure(state="normal")
 
     def on_show_frame(self):
         button_state = DISABLED

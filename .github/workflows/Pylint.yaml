@@ -13,9 +13,9 @@ jobs:
       matrix:
         python-version: [3.x]
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install PortAudio
@@ -31,11 +31,9 @@ jobs:
       run: |
               for file in $(git ls-files '*.py')
               do
+              
                 pylint --disable=import-error,R,wildcard-import,unused-wildcard-import,attribute-defined-outside-init --max-line-length=115 --fail-under=9.0 $file || lint_failed="failed"
-                if [ $? -ne 0]; then
-                  echo "Linting failed for file: $file"
-                  lint_failed="failed"
-                fi
+                
               done
               if [ "$lint_failed" = "failed" ]
               then
