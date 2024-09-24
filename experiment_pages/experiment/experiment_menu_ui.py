@@ -133,7 +133,8 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
     
     def disable_buttons_if_needed(self):
     # This method disables all buttons except for the Map RFID button until all specimens have an associated RFID
-        if self.all_rfid_mapped():
+        self.group_button.configure(state="normal")
+        if not self.all_rfid_mapped():
             self.collection_button.configure(state="disabled")
             self.analysis_button.configure(state="disabled")
             self.group_button.configure(state="disabled")
@@ -141,6 +142,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
             self.collection_button.configure(state="normal")
             self.analysis_button.configure(state="normal")
             self.group_button.configure(state="normal")
+
 
     def on_show_frame(self):
         self.disable_buttons_if_needed()
