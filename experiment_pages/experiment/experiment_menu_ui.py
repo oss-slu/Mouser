@@ -143,10 +143,4 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
             self.group_button.configure(state="normal")
 
     def on_show_frame(self):
-        button_state = DISABLED
-        if self.all_rfid_mapped():
-            button_state = NORMAL
-        self.collection_button.configure(state=button_state)
-        self.analysis_button.configure(state=button_state)
-        self.group_button.configure(state=button_state)
-        print("Page shown")
+        self.disable_buttons_if_needed()
