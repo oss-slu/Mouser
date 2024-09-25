@@ -36,7 +36,7 @@ class SerialPortController():
             if os.name == 'posix':
                 setting_file_path = os.getcwd() + "/settings/serial ports/" + file_names[0]
             else:
-                setting_file_path = os.path.abspath(file_names[0])
+                setting_file_path = os.getcwd() + "\\settings\\serial ports\\" + file_names[0]
             with open(setting_file_path, "r") as file:
                 for line in file:
                     self.retrieve_setting([line[0], line[3], line[1], line[4], line[2]])
