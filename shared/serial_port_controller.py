@@ -26,8 +26,9 @@ class SerialPortController():
         self.reader_port = None
 
         if setting_file:
-            file_path = setting_file
+            file_path = os.path.abspath(setting_file)
             file = open(file_path, "r")
+
             file_names = []
             for line in file:
                 file_names.append(line)
