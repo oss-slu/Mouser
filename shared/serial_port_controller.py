@@ -26,10 +26,7 @@ class SerialPortController():
         self.reader_port = None
 
         if setting_file:
-            if os.name == 'posix':
-                file_path = os.getcwd() + "/settings/serial ports/preference/" + setting_file
-            else:
-                file_path = os.getcwd() + "\\settings\\serial ports\\preference\\" + setting_file
+            file_path = setting_file
             file = open(file_path, "r")
             file_names = []
             for line in file:
