@@ -38,6 +38,7 @@ def get_resource_path(relative_path):
 
 # Ensure we are passing only the correct path
 csv_file_path = get_resource_path("settings/serial ports/preference/serial_port_preference.csv")
+csv_file_path = os.path.normpath(csv_file_path)
 print(f"CSV file path: {csv_file_path}")  # Debugging: print the path to verify it's correct
 
 rfid_serial_port_controller = SerialPortController(csv_file_path)
