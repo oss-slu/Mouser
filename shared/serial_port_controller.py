@@ -27,7 +27,8 @@ class SerialPortController():
 
         if setting_file:
             file_path = os.path.abspath(setting_file)
-            file = open(file_path, "r")
+            # file = open(file_path, "r")
+            file = open('C:\\Users\\User\\Downloads\\Mouser_windows-latest\\_internal\\settings\\serial ports\\preference\\serial_port_preference.csv', 'r')
 
             file_names = []
             for line in file:
