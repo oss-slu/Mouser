@@ -5,6 +5,8 @@ from shared.tk_models import *
 
 
 class DataAnalysisUI(MouserPage):
-    '''Data Analysis UI.'''
+    '''Data Exporting UI.'''
     def __init__(self, parent: CTk, prev_page: CTkFrame = None):
-        super().__init__(parent, "Data Analysis", prev_page)
+        super().__init__(parent, "Data Exporting", prev_page)
+
+        

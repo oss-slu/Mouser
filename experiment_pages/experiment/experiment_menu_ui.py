@@ -42,7 +42,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
 
         self.collection_button = CTkButton(main_frame, text='Data Collection', width=button_size,
                                 command= self.data_page.raise_frame)
-        self.analysis_button = CTkButton(main_frame, text='Data Analysis', width=button_size,
+        self.analysis_button = CTkButton(main_frame, text='Data Exporting', width=button_size,
                                 command= self.analysis_page.raise_frame)
         self.group_button = CTkButton(main_frame, text='Group Configuration', width=button_size,
                                 command= lambda: [self.cage_page.raise_frame(),
