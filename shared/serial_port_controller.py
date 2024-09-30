@@ -10,10 +10,11 @@ nothing even if you write to writer port already
 '''
 
 import serial.tools.list_ports
-import serial
 import os
+import serial
 
 class SerialPortController():
+    '''Serial Port control functions.'''
     def __init__(self, setting_file=None):
         self.ports_in_used = []
         self.baud_rate = 9600
@@ -21,33 +22,17 @@ class SerialPortController():
         self.parity = None
         self.stop_bits = serial.STOPBITS_ONE
         self.flow_control = None
-
         self.writer_port = None
         self.reader_port = None
 
         if setting_file:
-            file_path = os.path.abspath(setting_file)
-            # file = open(file_path, "r")
-            file = open('C:\\Users\\User\\Downloads\\Mouser_windows-latest\\_internal\\settings\\serial ports\\serial_port_preference.csv', 'r')
-
-            file_names = []
-            for line in file:
-                file_names.append(line)
-            if os.name == 'posix':
-                setting_file_path = os.getcwd() + "/settings/serial ports/" + file_names[0]
-            else:
-                setting_file_path = os.getcwd() + "\\settings\\serial ports\\" + file_names[0]
-            with open(setting_file_path, "r") as file:
-                for line in file:
-                    self.retrieve_setting([line[0], line[3], line[1], line[4], line[2]])
-                    # Whenever automation is implemented, add the serial port here
-                    # self.set_reader_port(line[6])
-
-            # settings = [baud rate, data bits/byte size, parity, stop bits, flow control option]
-            # file format: baud rate, parity, flow control option, data bits, stop bits, input method (not needed), port
-
-
-
+            # Dynamically construct the file path
+            file_path = os.path.join(os.getcwd(), "settings", "serial ports", "preference", setting_file)
+            try:
+                with open(file_path, "r") as file:
+                    file_names = [line.strip() for line in file]
+            except FileNotFoundError:
+                print(f"Error: The file {file_path} was not found.")
 
     def get_available_ports(self):
         '''Returns a list of available system ports.'''
@@ -122,7 +107,7 @@ class SerialPortController():
         byte_message = message.encode()
         self.writer_port.write(byte_message)
 
-    def close_all_port(self):
+    def close_all_ports(self):
         '''Closes all ports in use.'''
         hold = self.ports_in_used
         for port_ in hold:
@@ -138,7 +123,9 @@ class SerialPortController():
 
     def get_writer_port(self):
         '''Returns the writer port.'''
+
         return self.writer_port
+
 
     def get_set_RFID(self, rfid: int): #pylint: disable= invalid-name
         '''Testing function for map_rfid serial port.'''
