@@ -29,7 +29,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         main_frame.grid_columnconfigure(0, weight = 1)
 
         self.data_page = DataCollectionUI(parent, self, name)
-        self.analysis_page = DataAnalysisUI(parent, self)
+        self.analysis_page = DataAnalysisUI(parent, self, os.path.abspath(name))
         self.cage_page = CageConfigurationUI(name, parent, self)
         if controller is None:
             self.rfid_page = MapRFIDPage(name, parent, self)
