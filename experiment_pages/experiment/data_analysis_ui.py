@@ -32,6 +32,8 @@ class DataAnalysisUI(MouserPage):
             db = ExperimentDatabase(self.db_file)
             db.export_all_tables_to_csv()
             print("Data exported successfully to CSV files.")
+            # Once export is done, show the success notification
+            self.show_success_notification()
         except Exception as e:
             print(f"An error occurred while exporting data: {e}")
 
@@ -39,3 +41,16 @@ class DataAnalysisUI(MouserPage):
         '''Raise the frame for this UI'''
         super().raise_frame()
 
+    def show_success_notification(self):
+        '''Displays a success notification when export is complete.'''
+        notification = CTk()  # Create a new window
+        notification.title("Export Successful")
+        notification.geometry("300x100")  # Set the window size
+
+        label = CTkLabel(notification, text="Export to CSV was successful!", pady=20)
+        label.pack()
+
+        ok_button = CTkButton(notification, text="OK", command=notification.destroy)
+        ok_button.pack(pady=10)
+
+        notification.mainloop()
