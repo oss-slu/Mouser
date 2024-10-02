@@ -2,7 +2,6 @@
 import sqlite3
 import os
 import csv
-from customtkinter import CTk, CTkLabel, CTkButton
 
 class ExperimentDatabase:
     '''SQLite Database Object for Experiments.'''
@@ -494,19 +493,5 @@ class ExperimentDatabase:
 
         print("All tables have been exported successfully.")
 
-        # Once export is done, show the success notification
-        self.show_success_notification()
 
-    def show_success_notification(self):
-        '''Displays a success notification when export is complete.'''
-        notification = CTk()  # Create a new window
-        notification.title("Export Successful")
-        notification.geometry("300x100")  # Set the window size
 
-        label = CTkLabel(notification, text="Export to CSV was successful!", pady=20)
-        label.pack()
-
-        ok_button = CTkButton(notification, text="OK", command=notification.destroy)
-        ok_button.pack(pady=10)
-
-        notification.mainloop()
