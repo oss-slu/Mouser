@@ -2,6 +2,8 @@
 import os
 import shutil
 import tempfile
+import sys
+import os
 from tkinter.filedialog import *
 from PIL import Image
 from customtkinter import *
@@ -15,6 +17,33 @@ from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment.select_experiment_ui import ExperimentsUI
 
+# Function to resolve resource paths (must be defined before usage)
+def get_resource_path(relative_path):
+    ''' Get the absolute path to a resource. Works for development and PyInstaller executables. '''
+    try:
+        # Check if we're running as a PyInstaller bundle
+        if hasattr(sys, '_MEIPASS'):
+            # PyInstaller places all bundled files in _MEIPASS
+            return os.path.join(sys._MEIPASS, relative_path)
+        else:
+            # Return the absolute path when in development mode
+            return os.path.abspath(relative_path)  # Use absolute path in development mode
+    except Exception as e:
+        print(f"Error accessing resource: {relative_path}")
+        raise e
+
+
+
+
+
+# Ensure we are passing only the correct path
+csv_file_path = get_resource_path("settings/serial ports/serial_port_preference.csv")
+csv_file_path = os.path.normpath(csv_file_path)
+print(f"CSV file path: {csv_file_path}")  # Debugging: print the path to verify it's correct
+
+rfid_serial_port_controller = SerialPortController(csv_file_path)
+
+
 
 
 
@@ -23,7 +52,6 @@ TEMP_FILE_PATH = None
 
 CURRENT_FILE_PATH = None
 PASSWORD = None
-rfid_serial_port_controller = SerialPortController("serial_port_preference.csv")
 
 #pylint: disable = global-statement
 def open_file():
@@ -137,7 +165,9 @@ root.config(menu=menu_bar)
 main_frame = MouserPage(root, "Mouser")
 
 experiments_frame = ExperimentsUI(root, main_frame)
-mouse_image = CTkImage(light_image=Image.open("./shared/images/MouseLogo.png"), size=(550, 200))
+
+mouse_image = CTkImage(light_image=Image.open(get_resource_path("shared/images/MouseLogo.png")), size=(550, 200))
+
 mouse_label = CTkLabel(experiments_frame, image=mouse_image)
 mouse_label.grid(row=1, column=0, pady=(20, 10))
 

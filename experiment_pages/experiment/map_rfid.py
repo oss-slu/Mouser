@@ -32,7 +32,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         file = database
         self.db = ExperimentDatabase(file)
-        self.serial_port_controller = SerialPortController("serial_port_preference.csv")
+        self.serial_port_controller = SerialPortController("settings/serial ports/serial_port_preference.csv")
 
         self.animals = []
         self.animal_id = 1

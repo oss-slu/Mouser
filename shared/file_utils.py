@@ -8,6 +8,8 @@ TEMP_FOLDER_NAME = "Mouser"
 
 def create_temp_copy(filepath:str):
     '''Creates a new temporary file and returns the file path of the temporary file.'''
+    filepath = os.path.abspath(filepath)
+
 
     temp_folder_path = os.path.join(tempfile.gettempdir(), TEMP_FOLDER_NAME)
     os.makedirs(temp_folder_path, exist_ok=True)
@@ -25,6 +27,7 @@ def create_temp_copy(filepath:str):
 
 def create_temp_from_encrypted(filepath:str, password:str):
     '''Creates a new decrypted copy of a file.'''
+    filepath = os.path.abspath(filepath)
 
     print(filepath)
     temp_folder_path = os.path.join(tempfile.gettempdir(), TEMP_FOLDER_NAME)
@@ -45,6 +48,9 @@ def create_temp_from_encrypted(filepath:str, password:str):
 
 def save_temp_to_file(temp_file_path: str, permanent_file_path: str):
     '''Save data from temporary file to a permanent file'''
+    # Ensure paths are absolute and properly resolved
+    temp_file_path = os.path.abspath(temp_file_path)
+    permanent_file_path = os.path.abspath(permanent_file_path)
 
     with open(temp_file_path, 'rb') as temp_file:
         data = temp_file.read()
@@ -54,6 +60,10 @@ def save_temp_to_file(temp_file_path: str, permanent_file_path: str):
 
 def save_temp_to_encrypted(temp_file_path: str, permanent_file_path: str, password:str):
     '''Save data from temporary file to an encrypted file.'''
+    # Ensure paths are absolute and properly resolved
+    temp_file_path = os.path.abspath(temp_file_path)
+    permanent_file_path = os.path.abspath(permanent_file_path)
+    
     manager = PasswordManager(password)
 
     manager.encrypt_file(temp_file_path)
