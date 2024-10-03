@@ -36,6 +36,7 @@ class DataAnalysisUI(MouserPage):
             self.show_success_notification()
         except Exception as e:
             print(f"An error occurred while exporting data: {e}")
+            self.show_failure_notification()
 
     def raise_frame(self):
         '''Raise the frame for this UI'''
@@ -48,6 +49,20 @@ class DataAnalysisUI(MouserPage):
         notification.geometry("300x100")  # Set the window size
 
         label = CTkLabel(notification, text="Export to CSV was successful!", pady=20)
+        label.pack()
+
+        ok_button = CTkButton(notification, text="OK", command=notification.destroy)
+        ok_button.pack(pady=10)
+
+        notification.mainloop()
+
+    def show_failure_notification(self):
+        '''Displays a failure notification when export is complete.'''
+        notification = CTk()  # Create a new window
+        notification.title("Export Failed")
+        notification.geometry("300x100")  # Set the window size
+
+        label = CTkLabel(notification, text="Export to CSV failed.", pady=20)
         label.pack()
 
         ok_button = CTkButton(notification, text="OK", command=notification.destroy)
