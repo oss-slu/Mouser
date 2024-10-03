@@ -60,6 +60,7 @@ def open_file():
                         TEMP_FILE_PATH = temp_file_path
                         page = ExperimentMenuUI(root, temp_file_path, experiments_frame)
                         page.raise_frame()
+                        password_prompt.destroy()
 
                 except Exception as e:# pylint: disable= broad-exception-caught
                     print(e)
@@ -108,9 +109,14 @@ temp_folder_path = os.path.join(tempfile.gettempdir(), TEMP_FOLDER_NAME)
 if os.path.exists(temp_folder_path):
     shutil.rmtree(temp_folder_path)
 
+
 root = CTk()
+
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+
 root.title("Mouser")
-root.geometry('900x600')
+root.geometry(f"{screen_width}x{screen_height}+0+0")
 root.minsize(900,600)
 
 # Adds menu bar to root and binds the function to file_menu
@@ -132,16 +138,27 @@ main_frame = MouserPage(root, "Mouser")
 
 experiments_frame = ExperimentsUI(root, main_frame)
 mouse_image = CTkImage(light_image=Image.open("./shared/images/MouseLogo.png"), size=(550, 200))
-#mouse_button = CTkButton(main_frame, image=mouse_image, command=on_mouse_button_click)
-#mouse_button.grid(row=1, column=0, pady=(20, 10))
 mouse_label = CTkLabel(experiments_frame, image=mouse_image)
 mouse_label.grid(row=1, column=0, pady=(20, 10))
-create_nav_button(
-    experiments_frame,
-    ("Welcome to Mouser! Please click the File Drop Down option in the top "
-     "left to create or open a new Experiment.\n"),
-    mouse_image, experiments_frame, 0.5, 0.33
-)
+
+welcome_frame = CTkFrame(experiments_frame)
+welcome_frame.place(relx=0.5, rely=0.33, anchor="center")
+
+# Create and place the image
+image_label = CTkLabel(welcome_frame, image=mouse_image, text="")
+image_label.pack(pady=(20, 10))
+
+# Create and place the welcome text
+welcome_text = "Welcome to Mouser!"
+text_label = CTkLabel(welcome_frame, text=welcome_text, wraplength=400, font=("Georgia", 32))
+text_label.pack(padx=20, pady=10)
+
+new_file_button = CTkButton(welcome_frame, text="New Experiment", command=create_file, width=200, height=50)
+open_file_button = CTkButton(welcome_frame, text="Open Experiment", command=open_file, width=200, height=50)
+
+new_file_button.pack(pady=(10, 5), padx=20, fill='x', expand=True)
+open_file_button.pack(pady=(5, 10), padx=20, fill='x', expand=True)
+
 raise_frame(experiments_frame)
 root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)
