@@ -40,7 +40,7 @@ def open_file():
         if ".pmouser" in file_path:
             password_prompt = CTkToplevel(root)
             password_prompt.title("Enter Password")
-            password_prompt.geometry("300x100")
+            password_prompt.geometry("300x150")
 
             password_label = CTkLabel(password_prompt, text="Enter password:")
             password_label.pack(pady=10)
