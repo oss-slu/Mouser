@@ -1,9 +1,12 @@
 '''SQLite Database module for Mouser.'''
 import sqlite3
+import os
+import csv
 
 class ExperimentDatabase:
     '''SQLite Database Object for Experiments.'''
     def __init__(self, file=":memory:"):  #call with file name as argument or no args to use memory
+        self.db_file = file
         self._conn = sqlite3.connect(file)
         self._c = self._conn.cursor()
         try:
@@ -443,3 +446,52 @@ class ExperimentDatabase:
     def close(self):
         '''Closes database file.'''
         self._conn.close()
+
+    def export_all_tables_to_csv(self, export_dir="exports"):
+        '''Exports all tables in the database to separate CSV files.'''
+        # Create directory to save CSV files if it doesn't exist
+        if not os.path.exists(export_dir):
+            os.makedirs(export_dir)
+
+        # Get the base name of the database file (without extension)
+        db_name = os.path.splitext(os.path.basename(self.db_file))[0]
+
+        # Create a directory with the database name to save CSV files
+        export_dir = os.path.join("exports", db_name)
+        if not os.path.exists(export_dir):
+            os.makedirs(export_dir)
+
+        # The variable `export_dir` now holds the path to the folder where the CSVs will be saved
+
+        # Get all table names from the database
+        self._c.execute("SELECT name FROM sqlite_master WHERE type='table';")
+        tables = self._c.fetchall()
+
+        # Export each table to a CSV file
+        for table_name in tables:
+            table_name = table_name[0]  # Extract table name from tuple
+            csv_file_path = os.path.join(export_dir, f"{table_name}.csv")
+
+            # Fetch all data from the table
+            self._c.execute(f"SELECT * FROM {table_name}")
+            rows = self._c.fetchall()
+
+            # Get column names for the table
+            self._c.execute(f"PRAGMA table_info({table_name})")
+            column_info = self._c.fetchall()
+            column_names = [col[1] for col in column_info]  # Column names are in the second position
+
+            # Write data to CSV
+            with open(csv_file_path, mode='w', newline='') as file:
+                csv_writer = csv.writer(file)
+                # Write the header
+                csv_writer.writerow(column_names)
+                # Write the rows
+                csv_writer.writerows(rows)
+
+            print(f"Table '{table_name}' exported to {csv_file_path}")
+
+        print("All tables have been exported successfully.")
+
+
+

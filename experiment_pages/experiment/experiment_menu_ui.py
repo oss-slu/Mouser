@@ -29,7 +29,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         main_frame.grid_columnconfigure(0, weight = 1)
 
         self.data_page = DataCollectionUI(parent, self, name)
-        self.analysis_page = DataAnalysisUI(parent, self)
+        self.analysis_page = DataAnalysisUI(parent, self, os.path.abspath(name))
         self.cage_page = CageConfigurationUI(name, parent, self)
         if controller is None:
             self.rfid_page = MapRFIDPage(name, parent, self)
@@ -42,7 +42,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
 
         self.collection_button = CTkButton(main_frame, text='Data Collection', width=button_size,
                                 command= self.data_page.raise_frame)
-        self.analysis_button = CTkButton(main_frame, text='Data Analysis', width=button_size,
+        self.analysis_button = CTkButton(main_frame, text='Data Exporting', width=button_size,
                                 command= self.analysis_page.raise_frame)
         self.group_button = CTkButton(main_frame, text='Group Configuration', width=button_size,
                                 command= lambda: [self.cage_page.raise_frame(),
