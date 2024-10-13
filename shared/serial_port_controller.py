@@ -17,9 +17,9 @@ class SerialPortController():
     '''Serial Port control functions.'''
     def __init__(self, setting_file=None):
         self.ports_in_used = []
-        self.baud_rate = 9600
-        self.byte_size = None
-        self.parity = None
+        self.baud_rate = 4800
+        self.byte_size = serial.SEVENBITS
+        self.parity = serial.PARITY_NONE
         self.stop_bits = serial.STOPBITS_ONE
         self.flow_control = None
         self.writer_port = None
@@ -96,10 +96,48 @@ class SerialPortController():
         if self.reader_port is not None:
             self.reader_port.close()
 
-    def read_info(self):
+    def open_reader_port(self, port_name):
+        '''Open the reader port with the specified settings.'''
+        try:
+            self.reader_port = serial.Serial(
+                port=port_name,
+                baudrate=self.baud_rate,
+                bytesize=self.byte_size,
+                parity=self.parity,
+                stopbits=self.stop_bits,
+                timeout=1
+            )
+            print(f"Reader port {port_name} opened successfully.")
+        except serial.SerialException as e:
+            print(f"Failed to open reader port {port_name}: {e}")
+
+    def read_data(self):
         '''Returns the data read from the reader port as a string.'''
-        info = self.reader_port.readline().decode('ascii')
-        return info
+        # OLD CODE
+        # info = self.reader_port.readline().decode('ascii')
+        # return info
+
+        # # Open the serial port
+        # ser = serial.Serial(port = self.reader_port, baudrate = self.baud_rate, bytesize = self.byte_size, parity = self.parity, stopbits = self.stop_bits)
+
+        # # Read data from the port
+        # data = ser.read(9) #Try different values between 7-10 per measurement
+
+        # print(data)
+        # return data
+
+        if self.reader_port:
+            try:
+                data = self.reader_port.read(100)  # Adjust read length as needed
+                decoded_data = data.decode('ascii')  # Decode the bytes to a string
+                print(f"Data read from reader port: {decoded_data}")
+                return decoded_data
+            except serial.SerialException as e:
+                print(f"Error reading from the reader port: {e}")
+                return None
+        else:
+            print("Reader port is not open or not initialized.")
+            return None
 
 
     def write_to(self, message: str):
@@ -188,6 +226,11 @@ class SerialPortController():
                 self.flow_control = 2
             case _:
                 self.flow_control = None
-    
+
+
+if __name__ == "__main__":
+    controller = SerialPortController()
+    controller.open_reader_port('COM1')  # Replace 'COM3' with the actual reader port name
+    data = controller.read_data()
 
 

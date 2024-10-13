@@ -3,6 +3,7 @@ from os import listdir, getcwd
 from os.path import isfile, join
 from csv import *
 from customtkinter import *
+from tkinter import messagebox
 from shared.tk_models import SettingPage
 from shared.serial_port_controller import *
 
@@ -20,6 +21,7 @@ class SerialPortSetting(SettingPage):
         super().__init__(self)
 
         # GUI element
+
         self.title("Serial Port")
         self.preference = None
         self.configuration_name = StringVar(value="")
@@ -66,7 +68,6 @@ class SerialPortSetting(SettingPage):
             self.data_bits_var = StringVar(value="Eight")
             self.stop_bits_var = StringVar(value="1")
             self.input_bype_var = StringVar(value="Binary")
-
 
         self.tab_view = CTkTabview(master=self)
         self.tab_view.grid(padx=20, pady=20, sticky = "ew")
@@ -178,7 +179,21 @@ class SerialPortSetting(SettingPage):
 
         # button
         self.save_button = CTkButton(self.edit_region, text="Save", command=self.save, height=14)
-        self.save_button.grid(row=11, column=2, padx=20, pady=40, sticky="ns")
+        self.save_button.grid(row=11, column=2, padx=20, pady=5, sticky="ns")
+
+        self.test_button = CTkButton(self.edit_region, text="Test Read", command=self.test_read, height=14)
+        self.test_button.grid(row=12, column=2, padx=20, pady=5, sticky="ns")
+
+        self.data_text = CTkLabel(self.edit_region, height=25, width=50, text="Waiting for Data...")
+        self.data_text.grid(row=13, column=2, columnspan=3, padx=20, pady=3, sticky="ew")
+
+        self.serial_port_controller = SerialPortController()
+
+    def update_label(self, data):
+        # Update the label with data from the test_read method
+        print(data)
+        self.data_text.configure(text=data)
+        self.master.update_idletasks()
 
         #pylint: enable=line-too-long
 
@@ -319,9 +334,31 @@ class SerialPortSetting(SettingPage):
         self.confirm_setting()
         pass
 
+    def test_read(self):
+        '''Reads data from the serial port using the current settings on screen'''
+        if self.serial_port_controller:
+            try:
+                self.serial_port_controller.retrieve_setting([self.baud_rate_var.get(), self.data_bits_var.get(),
+                                                              self.parity_var.get(), self.stop_bits_var.get(),
+                                                              self.flow_control_var.get()])
+                self.serial_port_controller.update_setting(self.serial_port.get())
+                data = self.serial_port_controller.read_data()
+                print("Data read from serial port:" + str(data))
+                self.update_label("Data read from serial port: " + str(data))
+                return ("Data read from serial port: " + str(data))
+
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                print("Error reading from serial port:", e)
+                return None
+        else:
+            print("Serial port controller not initialized")
+            return None
+        
+
 
 
 
 if __name__ == "__main__":
-    app = SerialPortSetting()
-    app.mainloop()
+    root = CTk()
+    app = SerialPortSettings(root)
+    root.mainloop()
