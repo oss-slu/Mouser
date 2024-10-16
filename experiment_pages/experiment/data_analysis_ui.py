@@ -27,10 +27,15 @@ class DataAnalysisUI(MouserPage):
         if not self.db_file or not os.path.exists(self.db_file):
             print(f"Database file {self.db_file} not found.")
             return
+        
+        # Ask user for the directory to save CSV files
+        save_dir = filedialog.askdirectory(title="Select Directory to Save CSV Files")
+        if not save_dir:  # User cancelled the dialog
+            return
 
         try:
             db = ExperimentDatabase(self.db_file)
-            db.export_all_tables_to_csv()
+            db.export_all_tables_to_csv(save_dir)
             print("Data exported successfully to CSV files.")
             # Once export is done, show the success notification
             self.show_notification("Success", "Export to CSV successful")
