@@ -46,6 +46,27 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                                       width=15, command=self.add_random_rfid)
         simulate_rfid_button.place(relx=0.80, rely=0.17, anchor=CENTER)
 
+        # New Simulate All RFID Button
+        simulate_all_rfid_button = CTkButton(self, text="Simulate All RFID", compound=TOP,
+                                     width=15, command=self.simulate_all_rfid)
+            simulate_all_rfid_button.place(relx=0.80, rely=0.27, anchor=CENTER)
+
+        def simulate_all_rfid(self):
+        '''Simulates RFID values for all unmapped animals.'''
+        unmapped_count = self.db.get_number_animals() - len(self.animals)
+
+    if unmapped_count <= 0:
+        self.raise_warning("All animals are already mapped.")
+        return
+
+    for _ in range(unmapped_count):
+        self.add_random_rfid()  # Use the existing RFID logic
+
+    CTkMessagebox(
+        message=f"{unmapped_count} animals mapped successfully.",
+        title="Simulation Complete", icon="info"
+    )
+
 
         self.table_frame = CTkFrame(self)
         self.table_frame.place(relx=0.15, rely=0.40, relheight=0.50, relwidth=0.80)
