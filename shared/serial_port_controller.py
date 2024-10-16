@@ -128,7 +128,7 @@ class SerialPortController():
 
         if self.reader_port:
             try:
-                data = self.reader_port.read(100)  # Adjust read length as needed
+                data = self.reader_port.read(9)  # Adjust read length as needed
                 decoded_data = data.decode('ascii')  # Decode the bytes to a string
                 print(f"Data read from reader port: {decoded_data}")
                 return decoded_data
@@ -230,7 +230,7 @@ class SerialPortController():
 
 if __name__ == "__main__":
     controller = SerialPortController()
-    controller.open_reader_port('COM1')  # Replace 'COM3' with the actual reader port name
+    controller.open_reader_port('COM1')
     data = controller.read_data()
 
 
