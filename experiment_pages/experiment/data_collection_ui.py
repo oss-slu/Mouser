@@ -8,6 +8,8 @@ from databases.data_collection_database import DataCollectionDatabase
 from shared.audio import AudioManager
 from shared.scrollable_frame import ScrolledFrame
 
+from serial_listener import read_serial_data
+
 #pylint: disable= undefined-variable
 class DataCollectionUI(MouserPage):
     '''Page Frame for Data Collection.'''
@@ -188,6 +190,7 @@ class ChangeMeasurementsDialog():
             header.place(relx=0.28, rely=pos_y, anchor=E)
 
             if i == 1:
+                entry.insert(0, read_serial_data())
                 entry.focus()
 
         self.error_text = CTkLabel(root, text="One or more values are not a number")
