@@ -360,5 +360,5 @@ class SerialPortSetting(SettingPage):
 
 if __name__ == "__main__":
     root = CTk()
-    app = SerialPortSettings(root)
+    app = SerialPortSetting(root)
     root.mainloop()
