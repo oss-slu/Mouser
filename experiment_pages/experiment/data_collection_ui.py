@@ -190,8 +190,8 @@ class ChangeMeasurementsDialog():
             header.place(relx=0.28, rely=pos_y, anchor=E)
 
             if i == 1:
-                entry.insert(0, read_serial_data())
                 entry.focus()
+                entry.insert(0, read_serial_data())
 
         self.error_text = CTkLabel(root, text="One or more values are not a number")
         self.submit_button = CTkButton(root, text="Submit", compound=TOP, width=15, command= self.finish)
