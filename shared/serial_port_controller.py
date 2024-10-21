@@ -9,9 +9,9 @@ you write to a port, else reading from the reader port will return
 nothing even if you write to writer port already
 '''
 
-import serial.tools.list_ports
 import os
 import serial
+import serial.tools.list_ports
 
 class SerialPortController():
     '''Serial Port control functions.'''
@@ -24,16 +24,12 @@ class SerialPortController():
         self.flow_control = None
         self.writer_port = None
         self.reader_port = None
-
         self.retrieve_setting(setting_file)
-
-        
 
     def get_available_ports(self):
         '''Returns a list of available system ports.'''
         available_ports = []
         ports = list(serial.tools.list_ports.comports())
-
         for port_ in ports:
             if port_ in self.ports_in_used:       #prevention
                 pass
@@ -49,7 +45,6 @@ class SerialPortController():
             words = port_.description.split(" ")
             if "com0com" in words:
                 virtual_ports.append(port_.device)
-
         return virtual_ports
 
     def set_writer_port(self, port: str):
@@ -85,7 +80,6 @@ class SerialPortController():
         if self.writer_port is not None:
             self.writer_port.close()
 
-
     def close_reader_port(self):
         '''Closes the reader port if it exists.'''
         if self.reader_port is not None:
@@ -107,6 +101,7 @@ class SerialPortController():
             print(f"Failed to open reader port {port_name}: {e}")
 
     def get_port(self, settings_list):
+        '''Returns the port from the settings list.'''
         if settings_list[6] is not None:
             return settings_list[6]
         else:
@@ -114,7 +109,6 @@ class SerialPortController():
 
     def read_data(self):
         '''Returns the data read from the reader port as a string.'''
-       
         port = self.reader_port
         baudrate = self.baud_rate
         bytesize = self.byte_size
@@ -137,7 +131,6 @@ class SerialPortController():
             finally:
                 ser.close()
 
-
     def write_to(self, message: str):
         '''Writes message to the writer port as bytes.'''
         byte_message = message.encode()
@@ -149,7 +142,6 @@ class SerialPortController():
         for port_ in hold:
             port_.close()
             self.ports_in_used.remove(port_)
-
         self.close_reader_port()
         self.close_writer_port()
 
@@ -159,9 +151,7 @@ class SerialPortController():
 
     def get_writer_port(self):
         '''Returns the writer port.'''
-
         return self.writer_port
-
 
     def get_set_RFID(self, rfid: int): #pylint: disable= invalid-name
         '''Testing function for map_rfid serial port.'''
@@ -175,19 +165,16 @@ class SerialPortController():
             self.set_reader_port(port)
         except Exception as e:
             print(e)
-        
 
     def retrieve_setting(self, setting_file):
         '''Sets the setting of the serial port opened by converting the 
         setting from csv file to actual setting used'''
-        
         if setting_file:
             preference_path = os.path.join(os.getcwd(), "settings", "serial ports", "preference", setting_file)
 
             try:
                 with open(preference_path, "r") as file:
                     settings_file_name = file.readline().strip()  # Read the first line
-
                     settings_path = os.path.join(os.getcwd(), "settings", "serial ports", settings_file_name)
 
                     with open(settings_path, "r") as settings_file:
@@ -256,8 +243,6 @@ class SerialPortController():
                 print(f"Error: {e}")
             except Exception as e:
                 print(f"An error occurred: {e}")
-
-
 
 if __name__ == "__main__":
     controller = SerialPortController('serial_port_preference.csv')
