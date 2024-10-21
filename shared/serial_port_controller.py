@@ -106,34 +106,28 @@ class SerialPortController():
         except serial.SerialException as e:
             print(f"Failed to open reader port {port_name}: {e}")
 
-    def get_port(self, settings):
-        if settings[6] != None:
-            return settings[6]
+    def get_port(self, settings_list):
+        if settings_list[6] is not None:
+            return settings_list[6]
         else:
             return None
 
     def read_data(self):
         '''Returns the data read from the reader port as a string.'''
-        # OLD CODE
-        # info = self.reader_port.readline().decode('ascii')
-        # return info
-
-        # # Open the serial port
-        # ser = serial.Serial(port = self.reader_port, baudrate = self.baud_rate, bytesize = self.byte_size, parity = self.parity, stopbits = self.stop_bits)
-
-        # # Read data from the port
-        # data = ser.read(9) #Try different values between 7-10 per measurement
-
-        # print(data)
-        # return data
-        ser = serial.Serial(port = self.reader_port, baudrate = self.baud_rate, bytesize = self.byte_size, parity = self.parity, stopbits = self.stop_bits)
+       
+        port = self.reader_port
+        baudrate = self.baud_rate
+        bytesize = self.byte_size
+        parity = self.parity
+        stopbits = self.stop_bits
+        ser = serial.Serial(port, baudrate, bytesize, parity, stopbits)
 
         if self.reader_port:
             try:
-                data = ser.read(19)
-                second_measurement = data[10:20]
+                reader_data = ser.read(19)
+                second_measurement = reader_data[10:20]
                 decoded_second_measurement = second_measurement.decode('ascii')
-                print(data)
+                print(reader_data)
                 print(second_measurement)
                 print(decoded_second_measurement)
                 return decoded_second_measurement
@@ -268,9 +262,6 @@ class SerialPortController():
 if __name__ == "__main__":
     controller = SerialPortController('serial_port_preference.csv')
     
-    # data = controller.read_data()
-    # print(controller.get_port(settings))
-    # print(f"Loaded settings: {settings}")
     settings = controller.retrieve_setting('serial_port_preference.csv')
     print(controller.get_port(settings))
 
