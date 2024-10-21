@@ -8,7 +8,7 @@ from databases.data_collection_database import DataCollectionDatabase
 from shared.audio import AudioManager
 from shared.scrollable_frame import ScrolledFrame
 
-from serial_listener import read_serial_data
+from listenTest import SerialDataHandler
 
 #pylint: disable= undefined-variable
 class DataCollectionUI(MouserPage):
@@ -74,7 +74,6 @@ class DataCollectionUI(MouserPage):
         self.table.bind('<<TreeviewSelect>>', self.item_selected)
 
         self.changer = ChangeMeasurementsDialog(parent, self, self.measurement_strings)
-
 
     def item_selected(self, _):
         '''On item selection.
@@ -191,7 +190,6 @@ class ChangeMeasurementsDialog():
 
             if i == 1:
                 entry.focus()
-                entry.insert(0, read_serial_data())
 
         self.error_text = CTkLabel(root, text="One or more values are not a number")
         self.submit_button = CTkButton(root, text="Submit", compound=TOP, width=15, command= self.finish)
