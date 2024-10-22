@@ -64,9 +64,9 @@ class MapRFIDPage(MouserPage):  # pylint: disable=undefined-variable
         self.table.configure(yscroll=scrollbar.set)
 
         # Add right-click menu functionality
-        self.right_click = Menu(self, tearoff=0)
-        self.right_click.add_command(label="Remove Selection(s)", command=self.remove_selected_items)
-        self.table.bind("<Button-3>", self.right_click_menu)
+        # self.right_click = Menu(self, tearoff=0)
+        # self.right_click.add_command(label="Remove Selection(s)", command=self.remove_selected_items)
+        # self.table.bind("<Button-3>", self.right_click_menu)
 
 
         self.serial_port_button = CTkButton(self, text="Select Serial Port", compound=TOP,
