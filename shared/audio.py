@@ -59,6 +59,6 @@ class AudioManager:
     def play(filepath):
         """Play audio asynchronously in a separate thread."""
         if os.path.exists(filepath):
-            Thread(target=AudioManager.__play, args=(filepath,), daemon=True).start()
+            Thread(target=AudioManager._play, args=(filepath,), daemon=True).start()
         else:
             print(f"Error: Audio file {filepath} does not exist.")
