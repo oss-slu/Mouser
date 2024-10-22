@@ -8,7 +8,7 @@ import os
 
 class AudioManager:
     @staticmethod
-    def __play(filepath):
+    def _play(filepath):
         chunk = 1024
         out_stream = None
         audio_file = None
