@@ -429,11 +429,11 @@ class ChangeRFIDDialog():
 
         self.root.mainloop()
 
-    def add_random_rfid(self):
-        '''Adds a random frid number to selected value.'''
-        rfid = get_random_rfid()
-        self.map_rfid.change_selected_value(rfid)
-        self.close()
+    # def add_random_rfid(self):
+    #     '''Adds a random frid number to selected value.'''
+    #     rfid = get_random_rfid()
+    #     self.map_rfid.change_selected_value(rfid)
+    #     self.close()
 
     def close(self):
         '''Closes change RFID dialog.'''
