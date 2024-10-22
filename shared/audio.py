@@ -10,6 +10,9 @@ class AudioManager:
     @staticmethod
     def __play(filepath):
         chunk = 1024
+        out_stream = None
+        audio_file = None
+        out_p = None
         try:
             # Ensure the file exists before opening
             if not os.path.exists(filepath):
@@ -41,10 +44,13 @@ class AudioManager:
         finally:
             # Ensure resources are properly closed
             try:
-                out_stream.stop_stream()
-                out_stream.close()
-                out_p.terminate()
-                audio_file.close()
+                if out_stream:
+                    out_stream.stop_stream()
+                    out_stream.close()
+                if out_p:
+                    out_p.terminate()
+                if audio_file:
+                    audio_file.close()
                 print(f"Audio {filepath} has ended.")
             except Exception as cleanup_error:
                 print(f"Error during audio cleanup: {cleanup_error}")
