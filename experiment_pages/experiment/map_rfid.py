@@ -234,14 +234,14 @@ class MapRFIDPage(MouserPage):  # pylint: disable=undefined-variable
                 self.right_click.grab_release()
         
 
-    def add_value(self, rfid):
-        '''Adds an RFID value to the table and database.'''
-        item_id = self.animal_id
-        self.table.insert('', item_id - 1, values=(item_id, rfid), tags='text_font')
-        self.animals.insert(item_id - 1, (item_id, rfid))
-        self.change_entry_text()
-        self.db.add_animal(item_id, rfid)
-        AudioManager.play("shared/sounds/rfid_success.wav")
+    # def add_value(self, rfid):
+    #     '''Adds an RFID value to the table and database.'''
+    #     item_id = self.animal_id
+    #     self.table.insert('', item_id - 1, values=(item_id, rfid), tags='text_font')
+    #     self.animals.insert(item_id - 1, (item_id, rfid))
+    #     self.change_entry_text()
+    #     self.db.add_animal(item_id, rfid)
+    #     AudioManager.play("shared/sounds/rfid_success.wav")
 
     def open_change_rfid(self):
         '''Opens the change RFID dialog.'''
