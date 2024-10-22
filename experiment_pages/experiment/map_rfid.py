@@ -358,44 +358,44 @@ class MapRFIDPage(MouserPage):  # pylint: disable=undefined-variable
         return next_animal
         '''
 
-    def open_change_rfid(self):
-        '''Opens change RFID window if an item is selected, otherwise shows a warning.'''
-        selected_items = self.table.selection()
+    # def open_change_rfid(self):
+    #     '''Opens change RFID window if an item is selected, otherwise shows a warning.'''
+    #     selected_items = self.table.selection()
     
-        # Check if there is exactly one item selected (assuming RFID change is intended for single selections)
-        if len(selected_items) != 1:
-            self.raise_warning("No item selected. Please select a single item to change its RFID.")
-            return
+    #     # Check if there is exactly one item selected (assuming RFID change is intended for single selections)
+    #     if len(selected_items) != 1:
+    #         self.raise_warning("No item selected. Please select a single item to change its RFID.")
+    #         return
 
-        # If an item is selected, proceed to open the RFID change dialog
-        self.changing_value = selected_items[0]
-        self.change_rfid_button["state"] = "disabled"
-        self.changer.open()
+    #     # If an item is selected, proceed to open the RFID change dialog
+    #     self.changing_value = selected_items[0]
+    #     self.change_rfid_button["state"] = "disabled"
+    #     self.changer.open()
 
     def open_serial_port_selection(self):
         '''Opens serial port selection.'''
         #self.serial_port_button["state"] = "disabled"
         self.serial_port_panel.open()
 
-    def raise_warning(self, warning_message = 'Maximum number of animals reached'):
-        '''Raises an error window.'''
+    # def raise_warning(self, warning_message = 'Maximum number of animals reached'):
+    #     '''Raises an error window.'''
 
-        message = CTk()
-        message.title("WARNING")
-        message.geometry('320x100')
-        message.resizable(False, False)
+    #     message = CTk()
+    #     message.title("WARNING")
+    #     message.geometry('320x100')
+    #     message.resizable(False, False)
 
-        label = CTkLabel(message, text= warning_message)
-        label.grid(row=0, column=0, padx=10, pady=10)
+    #     label = CTkLabel(message, text= warning_message)
+    #     label.grid(row=0, column=0, padx=10, pady=10)
 
 
-        ok_button = CTkButton(message, text="OK", width=10,
-                        command= lambda: [message.destroy()])
-        ok_button.grid(row=2, column=0, padx=10, pady=10)
+    #     ok_button = CTkButton(message, text="OK", width=10,
+    #                     command= lambda: [message.destroy()])
+    #     ok_button.grid(row=2, column=0, padx=10, pady=10)
 
-        AudioManager.play("shared/sounds/error.wav")
+    #     AudioManager.play("shared/sounds/error.wav")
 
-        message.mainloop()
+    #     message.mainloop()
 
     def press_back_to_menu_button(self):
         '''On pressing of back to menu button.'''
