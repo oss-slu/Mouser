@@ -326,16 +326,16 @@ class MapRFIDPage(MouserPage):  # pylint: disable=undefined-variable
 
         self.change_entry_text()
 
-    def change_entry_text(self):
-        '''Changes entry text for the table.'''
-        # Update entry text after removal
-        if self.animals:
-            next_animal = self.get_next_animal()
-            self.animal_id_entry_text.set(str(next_animal))
-            self.animal_id = next_animal
-        else:
-            self.animal_id_entry_text.set("1")
-            self.animal_id = 1
+    # def change_entry_text(self):
+    #     '''Changes entry text for the table.'''
+    #     # Update entry text after removal
+    #     if self.animals:
+    #         next_animal = self.get_next_animal()
+    #         self.animal_id_entry_text.set(str(next_animal))
+    #         self.animal_id = next_animal
+    #     else:
+    #         self.animal_id_entry_text.set("1")
+    #         self.animal_id = 1
 
     def get_next_animal(self):
         '''returns the next animal in our experiment.'''
@@ -372,10 +372,10 @@ class MapRFIDPage(MouserPage):  # pylint: disable=undefined-variable
     #     self.change_rfid_button["state"] = "disabled"
     #     self.changer.open()
 
-    def open_serial_port_selection(self):
-        '''Opens serial port selection.'''
-        #self.serial_port_button["state"] = "disabled"
-        self.serial_port_panel.open()
+    # def open_serial_port_selection(self):
+    #     '''Opens serial port selection.'''
+    #     #self.serial_port_button["state"] = "disabled"
+    #     self.serial_port_panel.open()
 
     # def raise_warning(self, warning_message = 'Maximum number of animals reached'):
     #     '''Raises an error window.'''
