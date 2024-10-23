@@ -63,11 +63,6 @@ class MapRFIDPage(MouserPage):  # pylint: disable=undefined-variable
         self.table.grid(row=0, column=0, sticky='nsew')
         self.table.configure(yscroll=scrollbar.set)
 
-        # Add right-click menu functionality
-        self.right_click = Menu(self, tearoff=0)
-        self.right_click.add_command(label="Remove Selection(s)", command=self.remove_selected_items)
-        self.table.bind("<Button-3>", self.right_click_menu)
-
 
         self.serial_port_button = CTkButton(self, text="Select Serial Port", compound=TOP,
                                             width=15, command=self.open_serial_port_selection)
@@ -234,15 +229,6 @@ class MapRFIDPage(MouserPage):  # pylint: disable=undefined-variable
                 self.right_click.grab_release()
         
 
-    def add_value(self, rfid):
-        '''Adds an RFID value to the table and database.'''
-        item_id = self.animal_id
-        self.table.insert('', item_id - 1, values=(item_id, rfid), tags='text_font')
-        self.animals.insert(item_id - 1, (item_id, rfid))
-        self.change_entry_text()
-        self.db.add_animal(item_id, rfid)
-        AudioManager.play("shared/sounds/rfid_success.wav")
-
     def open_change_rfid(self):
         '''Opens the change RFID dialog.'''
         selected_items = self.table.selection()
@@ -326,17 +312,6 @@ class MapRFIDPage(MouserPage):  # pylint: disable=undefined-variable
 
         self.change_entry_text()
 
-    def change_entry_text(self):
-        '''Changes entry text for the table.'''
-        # Update entry text after removal
-        if self.animals:
-            next_animal = self.get_next_animal()
-            self.animal_id_entry_text.set(str(next_animal))
-            self.animal_id = next_animal
-        else:
-            self.animal_id_entry_text.set("1")
-            self.animal_id = 1
-
     def get_next_animal(self):
         '''returns the next animal in our experiment.'''
 
@@ -357,45 +332,6 @@ class MapRFIDPage(MouserPage):  # pylint: disable=undefined-variable
                 break
         return next_animal
         '''
-
-    def open_change_rfid(self):
-        '''Opens change RFID window if an item is selected, otherwise shows a warning.'''
-        selected_items = self.table.selection()
-    
-        # Check if there is exactly one item selected (assuming RFID change is intended for single selections)
-        if len(selected_items) != 1:
-            self.raise_warning("No item selected. Please select a single item to change its RFID.")
-            return
-
-        # If an item is selected, proceed to open the RFID change dialog
-        self.changing_value = selected_items[0]
-        self.change_rfid_button["state"] = "disabled"
-        self.changer.open()
-
-    def open_serial_port_selection(self):
-        '''Opens serial port selection.'''
-        #self.serial_port_button["state"] = "disabled"
-        self.serial_port_panel.open()
-
-    def raise_warning(self, warning_message = 'Maximum number of animals reached'):
-        '''Raises an error window.'''
-
-        message = CTk()
-        message.title("WARNING")
-        message.geometry('320x100')
-        message.resizable(False, False)
-
-        label = CTkLabel(message, text= warning_message)
-        label.grid(row=0, column=0, padx=10, pady=10)
-
-
-        ok_button = CTkButton(message, text="OK", width=10,
-                        command= lambda: [message.destroy()])
-        ok_button.grid(row=2, column=0, padx=10, pady=10)
-
-        AudioManager.play("shared/sounds/error.wav")
-
-        message.mainloop()
 
     def press_back_to_menu_button(self):
         '''On pressing of back to menu button.'''
@@ -428,12 +364,6 @@ class ChangeRFIDDialog():
         simulate_rfid_button.place(relx=0.50, rely=0.20, anchor=CENTER)
 
         self.root.mainloop()
-
-    def add_random_rfid(self):
-        '''Adds a random frid number to selected value.'''
-        rfid = get_random_rfid()
-        self.map_rfid.change_selected_value(rfid)
-        self.close()
 
     def close(self):
         '''Closes change RFID dialog.'''
