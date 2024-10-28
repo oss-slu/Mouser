@@ -127,6 +127,19 @@ class DataCollectionUI(MouserPage):
             self.open_auto_increment_changer()
         AudioManager.play(filepath="shared/sounds/rfid_success.wav") #play succsess sound
 
+        # Potential modify to ensure it interacts with the DataCollectionDatabase properly
+        # if "None" in old_measurements:
+        #     # Save new entry using DataCollectionDatabase
+        #     self.data_database.set_data_for_entry(
+        #         (str(date.today()), animal_id) + tuple(new_values)
+        #     )
+        # else:
+        #     # Update existing entry
+        #     self.data_database.set_data_for_entry(
+        #         (str(date.today()), animal_id) + tuple(new_values)
+        #     )
+
+
     def get_values_for_date(self, _):
         '''Gets the data for the current date.'''
         self.current_date = str(date.today())
@@ -136,6 +149,8 @@ class DataCollectionUI(MouserPage):
         self.date_label.place(relx=0.5, rely=0.25, anchor=CENTER)
 
         values = self.database.get_data_for_date(self.current_date)
+        # values = self.data_database.get_data_for_date(self.current_date)  updated code
+
 
 
         for child in self.table.get_children():

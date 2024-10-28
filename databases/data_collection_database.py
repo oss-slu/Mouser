@@ -33,6 +33,15 @@ class DataCollectionDatabase:
         
     #     self.measurement_items = measurement_items
       
+        # Updated to ensure the file creation logic works if the file doesn’t exist
+        # path = Path(self.filename)
+        # if not path.is_file():
+        #     with open(self.filename, 'w') as f:
+        #         headers = "Date,Animal ID," + ",".join(self.measurement_items) + "\n"
+        #         f.write(headers)
+
+
+
     def get_all_data(self):
     #     data_file = pd.read_csv(self.filename)
     #     list_of_csv = [tuple(row) for row in data_file.values]
@@ -59,3 +68,22 @@ class DataCollectionDatabase:
                 
     #     data_file.to_csv(self.filename, index=False)
         data = []
+
+    # updated the set_data_for_entry method so it can properly write data to the CSV file
+    # def set_data_for_entry(self, values: tuple):
+    #     """Sets or updates data entries in the CSV file."""
+    #     data_file = pd.read_csv(self.filename)
+
+    #     # Check if entry already exists
+    #     for i, entry in data_file.iterrows():
+    #         if entry['Date'] == values[0] and entry['Animal ID'] == values[1]:
+    #             # Update existing entry
+    #             for x, item in enumerate(self.measurement_items):
+    #                 data_file.loc[i, item] = values[x + 2]
+    #             break
+    #     else:
+    #         # Add new entry if it doesn't exist
+    #         new_row = pd.Series(values, index=data_file.columns)
+    #         data_file = data_file.append(new_row, ignore_index=True)
+
+    #     data_file.to_csv(self.filename, index=False)
