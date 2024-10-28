@@ -140,8 +140,10 @@ if os.path.exists(temp_folder_path):
 
 root = CTk()
 
-screen_width = root.winfo_screenwidth()
-screen_height = root.winfo_screenheight()
+screen_width = 900
+screen_height = 600
+# screen_width = root.winfo_screenwidth()
+# screen_height = root.winfo_screenheight()
 
 root.title("Mouser")
 root.geometry(f"{screen_width}x{screen_height}+0+0")
