@@ -124,7 +124,7 @@ class ExperimentDatabase:
 
         values_param = f"({str(date)}, {str(animal_id)}, {','.join(map(str, measurements))})"
 
-        query = f"INSERT INTO collected_data {insert_param} VALUES {values_param}" % (insert_param, values_param)
+        query = f"INSERT INTO collected_data {insert_param} VALUES {values_param}"
 
         self._c.execute(query)
         self._conn.commit()
