@@ -127,18 +127,6 @@ class DataCollectionUI(MouserPage):
             self.open_auto_increment_changer()
         AudioManager.play(filepath="shared/sounds/rfid_success.wav") #play succsess sound
 
-        # Potential modify to ensure it interacts with the DataCollectionDatabase properly
-        # if "None" in old_measurements:
-        #     # Save new entry using DataCollectionDatabase
-        #     self.data_database.set_data_for_entry(
-        #         (str(date.today()), animal_id) + tuple(new_values)
-        #     )
-        # else:
-        #     # Update existing entry
-        #     self.data_database.set_data_for_entry(
-        #         (str(date.today()), animal_id) + tuple(new_values)
-        #     )
-
 
     def get_values_for_date(self, _):
         '''Gets the data for the current date.'''
@@ -149,7 +137,7 @@ class DataCollectionUI(MouserPage):
         self.date_label.place(relx=0.5, rely=0.25, anchor=CENTER)
 
         values = self.database.get_data_for_date(self.current_date)
-        # values = self.data_database.get_data_for_date(self.current_date)  updated code
+        # values = self.data_database.get_data_for_date(self.current_date)  updated
 
 
 
@@ -172,11 +160,17 @@ class DataCollectionUI(MouserPage):
 class ChangeMeasurementsDialog():
     '''Change Measurement Dialog window.'''
     def __init__(self, parent: CTk, data_collection: DataCollectionUI, measurement_items: list):
-
         self.serial_controller = SerialPortController('serial_port_preference.csv')
         self.parent = parent
         self.data_collection = data_collection
         self.measurement_items = measurement_items
+
+    def finish(self):
+        """Finalizes weight entry and saves data."""
+        values = self.get_all_values()
+        self.data_collection.set_data_for_entry(values)
+        self.close()
+        # Any additional UI updates can follow
 
     def open(self, animal_id):
         '''Opens the change measurement dialog window.'''
@@ -187,6 +181,9 @@ class ChangeMeasurementsDialog():
         root.grid_rowconfigure(0, weight=1)
         root.grid_columnconfigure(0, weight=1)
 
+        # Binding the Enter key to the finish function
+        root.bind('<Return>', lambda event: self.finish())
+
         id_label = CTkLabel(root, text="Animal ID: "+str(animal_id), font=("Arial", 18))
         id_label.place(relx=0.5, rely=0.1, anchor=CENTER)
 
@@ -194,7 +191,6 @@ class ChangeMeasurementsDialog():
         count = len(self.measurement_items) + 1
 
         for i in range(1, count):
-
             pos_y = i / count
             entry = CTkEntry(root, width=40)
             entry.place(relx=0.60, rely=pos_y, anchor=CENTER)
@@ -210,13 +206,12 @@ class ChangeMeasurementsDialog():
                 entry.insert(0, second_measurement)
 
         self.error_text = CTkLabel(root, text="One or more values are not a number")
-        self.submit_button = CTkButton(root, text="Submit", compound=TOP, width=15, command= self.finish)
-        self.submit_button.place(relx=0.97, rely=0.97, anchor=SE)
-
+        # No need for a submit button here since we binded Enter
         self.root.mainloop()
 
+
     def check_if_num(self, _):
-        '''Checks if the values are numbers.'''
+        """Checks if values are numbers and displays an error if they are not."""
         errors = 0
         values = self.get_all_values()
         for value in values:
@@ -225,9 +220,10 @@ class ChangeMeasurementsDialog():
             except ValueError:
                 self.show_error()
                 errors += 1
-        if errors == 0:
+        if errors == 0 and hasattr(self, 'error_text'):
             self.error_text.place_forget()
             self.submit_button["state"] = "normal"
+
 
     def show_error(self):
         '''Displays an error window.'''
