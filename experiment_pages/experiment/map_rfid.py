@@ -541,5 +541,4 @@ class SerialSimulator():
         message.title('Warning')
         label = CTkLabel(message, text='Please select a serial port from the drop down list')
         label.grid(row=0, column=0, padx=10, pady=10)
-
         AudioManager.play("shared/sounds/error.wav")

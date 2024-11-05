@@ -447,21 +447,15 @@ class ExperimentDatabase:
         '''Closes database file.'''
         self._conn.close()
 
-    def export_all_tables_to_csv(self, export_dir="exports"):
+    def export_all_tables_to_csv(self, export_dir):
         '''Exports all tables in the database to separate CSV files.'''
-        # Create directory to save CSV files if it doesn't exist
-        if not os.path.exists(export_dir):
-            os.makedirs(export_dir)
-
         # Get the base name of the database file (without extension)
         db_name = os.path.splitext(os.path.basename(self.db_file))[0]
 
         # Create a directory with the database name to save CSV files
-        export_dir = os.path.join("exports", db_name)
+        export_dir = os.path.join(export_dir, db_name)
         if not os.path.exists(export_dir):
             os.makedirs(export_dir)
-
-        # The variable `export_dir` now holds the path to the folder where the CSVs will be saved
 
         # Get all table names from the database
         self._c.execute("SELECT name FROM sqlite_master WHERE type='table';")

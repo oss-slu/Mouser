@@ -1,12 +1,15 @@
 '''Data collection ui module.'''
 from datetime import date
 from tkinter.ttk import Treeview, Style
+import time
 from customtkinter import *
 from shared.tk_models import *
 from databases.experiment_database import ExperimentDatabase
 from databases.data_collection_database import DataCollectionDatabase
 from shared.audio import AudioManager
 from shared.scrollable_frame import ScrolledFrame
+from shared.serial_handler import SerialDataHandler
+import threading
 
 #pylint: disable= undefined-variable
 class DataCollectionUI(MouserPage):
@@ -189,6 +192,18 @@ class ChangeMeasurementsDialog():
 
             if i == 1:
                 entry.focus()
+                data_handler = SerialDataHandler()
+                
+                # Start the data handler in a separate thread to prevent blocking
+                data_thread = threading.Thread(target=data_handler.start)
+                data_thread.start()
+                listening = True
+                while listening:
+                    if len(data_handler.received_data) >= 2:
+                        entry.insert(0, data_handler.get_stored_data())
+                        data_handler.stop()
+                        listening = False
+
 
         self.error_text = CTkLabel(root, text="One or more values are not a number")
         self.submit_button = CTkButton(root, text="Submit", compound=TOP, width=15, command= self.finish)
