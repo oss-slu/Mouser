@@ -115,19 +115,20 @@ class ExperimentDatabase:
 
     def add_data_entry(self, date, animal_id, measurements):
         '''Adds a data entry to the collected_data table with the given
-        date, animal_id and a list of measurments.'''
+        date, animal_id, and a list of measurements.'''
+        # Get measurement items from the database
         self._c.execute("SELECT item FROM measurement_items")
         measurement_items = [item[0] for item in self._c.fetchall()]
 
+        # Construct column and value strings
+        insert_param = "(date, animal_id, " + ", ".join(measurement_items) + ")"
+        values_param = f"('{date}', '{animal_id}', " + ", ".join(f"'{m}'" for m in measurements) + ")"
 
-        insert_param = "(date,animal_id," + ",".join(measurement_items) + ")"
-
-        values_param = f"({str(date)}, {str(animal_id)}, {','.join(map(str, measurements))})"
-
-        query = f"INSERT INTO collected_data {insert_param} VALUES {values_param}" % (insert_param, values_param)
-
+        # Construct and execute the SQL query
+        query = f"INSERT INTO collected_data {insert_param} VALUES {values_param}"
         self._c.execute(query)
         self._conn.commit()
+
 
     def change_data_entry(self, date, animal_id, measurements):
         '''Overwrites the data entry of a particular date and animal id
