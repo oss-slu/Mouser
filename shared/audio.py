@@ -7,11 +7,14 @@ import pyaudio
 import os
 
 class AudioManager:
+    '''
+    Contains the helper function play(String:filepath)
+    '''
     _lock = Lock()
     _is_playing = False 
 
     @staticmethod
-    def __play(filepath):
+    def __play(filepath): #pylint: disable= no-self-argument
         chunk = 1024
         try:
             # Ensure the file exists before opening
