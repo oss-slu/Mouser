@@ -15,6 +15,8 @@ from shared.serial_port_controller import SerialPortController
 from databases.experiment_database import ExperimentDatabase
 from shared.audio import AudioManager
 
+import shared.file_utils as file_utils
+
 def get_random_rfid():
     '''Returns a simulated rfid number'''
     return random.randint(1000000, 9999999)
@@ -29,6 +31,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         super().__init__(parent, "Map RFID", previous_page)
 
+        # Store the parent reference
+        self.parent = parent
 
         file = database
         self.db = ExperimentDatabase(file)
@@ -39,20 +43,14 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         self.animal_id_entry_text = StringVar(value="1")
 
-        
-        
-
         simulate_rfid_button = CTkButton(self, text="Simulate RFID", compound=TOP,
                                       width=15, command=self.add_random_rfid)
         simulate_rfid_button.place(relx=0.80, rely=0.17, anchor=CENTER)
 
         # Simulate All RFID Button
-        simulate_all_rfid_button = CTkButton(
-            self, text="Simulate All RFID", compound=TOP, width=15, 
-            command=self.simulate_all_rfid
-        )
-        simulate_all_rfid_button.place(relx=0.80, rely=0.27, anchor=CENTER)
-
+        simulate_all_rfid_button = CTkButton(self, text="Simulate ALL RFID", compound=TOP,
+                                      width=15, command=self.simulate_all_rfid)
+        simulate_all_rfid_button.place(relx=0.80, rely=0.17, anchor=CENTER)
 
         self.table_frame = CTkFrame(self)
         self.table_frame.place(relx=0.15, rely=0.40, relheight=0.50, relwidth=0.80)
@@ -285,7 +283,19 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         if len(self.animals) != self.db.get_number_animals():
             self.raise_warning(warning_message= 'Not all animals have been mapped to RFIDs')
         else:
-            self.menu_button.navigate() #pylint: disable= undefined-variable
+            # Get the current file path before closing
+            current_file = self.db.db_file  # Changed from file_path to db_file
+            # Close the current database connection
+            self.close_connection()
+            
+            # Local import to avoid circular dependency
+            from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+        
+            # Create new ExperimentMenuUI instance with the same file
+            temp_file = file_utils.create_temp_copy(current_file)
+            new_page = ExperimentMenuUI(self.parent, temp_file, self.menu_page)
+            new_page.raise_frame()
+
 
     def close_connection(self):
         '''Closes database file.'''
