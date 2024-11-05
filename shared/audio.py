@@ -2,11 +2,14 @@
 Module that contains methods and classes that are used for the audio in our program.
 '''
 import wave
-from threading import Thread
+from threading import Thread, Lock
 import pyaudio
 import os
 
 class AudioManager:
+    _lock = Lock()
+    _is_playing = False 
+
     @staticmethod
     def __play(filepath):
         chunk = 1024
@@ -16,16 +19,17 @@ class AudioManager:
                 print(f"Error: Audio file {filepath} not found.")
                 return
 
-            audio_file = wave.open(filepath, "rb")
-            out_p = pyaudio.PyAudio()
+            with AudioManager._lock:
+                AudioManager._is_playing = True
+                audio_file = wave.open(filepath, "rb")
+                out_p = pyaudio.PyAudio()
 
-            # Create an output stream
-            out_stream = out_p.open(
-                format=out_p.get_format_from_width(audio_file.getsampwidth()),
-                channels=audio_file.getnchannels(),
-                rate=audio_file.getframerate(),
-                output=True
-            )
+                out_stream = out_p.open(
+                    format=out_p.get_format_from_width(audio_file.getsampwidth()),
+                    channels=audio_file.getnchannels(),
+                    rate=audio_file.getframerate(),
+                    output=True
+                )
 
             print(f"Playing Audio: {filepath}")
             data = audio_file.readframes(chunk)
@@ -45,6 +49,7 @@ class AudioManager:
                 out_stream.close()
                 out_p.terminate()
                 audio_file.close()
+                AudioManager._is_playing = False
                 print(f"Audio {filepath} has ended.")
             except Exception as cleanup_error:
                 print(f"Error during audio cleanup: {cleanup_error}")
@@ -53,6 +58,9 @@ class AudioManager:
     def play(filepath):
         """Play audio asynchronously in a separate thread."""
         if os.path.exists(filepath):
-            Thread(target=AudioManager.__play, args=(filepath,), daemon=True).start()
+            if not AudioManager._is_playing:
+                Thread(target=AudioManager.__play, args=(filepath,), daemon=True).start()
+            else:
+                print("Audio is already playing. Please wait.")
         else:
             print(f"Error: Audio file {filepath} does not exist.")
