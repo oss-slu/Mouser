@@ -1,13 +1,15 @@
 '''Data collection ui module.'''
 from datetime import date
 from tkinter.ttk import Treeview, Style
+import time
 from customtkinter import *
 from shared.tk_models import *
 from databases.experiment_database import ExperimentDatabase
 from databases.data_collection_database import DataCollectionDatabase
 from shared.audio import AudioManager
 from shared.scrollable_frame import ScrolledFrame
-from shared.serial_port_controller import SerialPortController
+from shared.serial_handler import SerialDataHandler
+import threading
 
 #pylint: disable= undefined-variable
 class DataCollectionUI(MouserPage):
@@ -158,7 +160,6 @@ class ChangeMeasurementsDialog():
     '''Change Measurement Dialog window.'''
     def __init__(self, parent: CTk, data_collection: DataCollectionUI, measurement_items: list):
 
-        self.serial_controller = SerialPortController('serial_port_preference.csv')
         self.parent = parent
         self.data_collection = data_collection
         self.measurement_items = measurement_items
@@ -191,8 +192,18 @@ class ChangeMeasurementsDialog():
 
             if i == 1:
                 entry.focus()
-                second_measurement = self.serial_controller.read_data()  # Read the second measurement only
-                entry.insert(0, second_measurement)
+                data_handler = SerialDataHandler()
+                
+                # Start the data handler in a separate thread to prevent blocking
+                data_thread = threading.Thread(target=data_handler.start)
+                data_thread.start()
+                listening = True
+                while listening:
+                    if len(data_handler.received_data) >= 2:
+                        entry.insert(0, data_handler.get_stored_data())
+                        data_handler.stop()
+                        listening = False
+
 
         self.error_text = CTkLabel(root, text="One or more values are not a number")
         self.submit_button = CTkButton(root, text="Submit", compound=TOP, width=15, command= self.finish)
