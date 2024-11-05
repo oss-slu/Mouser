@@ -43,13 +43,14 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         self.animal_id_entry_text = StringVar(value="1")
 
-        
-        
-
         simulate_rfid_button = CTkButton(self, text="Simulate RFID", compound=TOP,
                                       width=15, command=self.add_random_rfid)
         simulate_rfid_button.place(relx=0.80, rely=0.17, anchor=CENTER)
 
+        # Simulate All RFID Button
+        simulate_all_rfid_button = CTkButton(self, text="Simulate ALL RFID", compound=TOP,
+                                      width=15, command=self.simulate_all_rfid)
+        simulate_all_rfid_button.place(relx=0.80, rely=0.17, anchor=CENTER)
 
         self.table_frame = CTkFrame(self)
         self.table_frame.place(relx=0.15, rely=0.40, relheight=0.50, relwidth=0.80)
@@ -116,6 +117,11 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         self.menu_button.configure(command = self.press_back_to_menu_button)
         self.scroll_to_latest_entry()
+
+    def simulate_all_rfid(self):
+        while len(self.animals) != self.db.get_number_animals():
+            self.add_random_rfid()
+
 
     def scroll_to_latest_entry(self):
         '''Scrolls to the latest entry in the rfid table.'''
@@ -314,7 +320,17 @@ class ChangeRFIDDialog():
                                       width=15, command= self.add_random_rfid)
         simulate_rfid_button.place(relx=0.50, rely=0.20, anchor=CENTER)
 
+        # Simulate All RFID Button
+        simulate_all_rfid_button = CTkButton(
+            self, text="Simulate All RFID", compound=TOP, width=15, 
+            command=self.simulate_all_rfid)
+        simulate_all_rfid_button.place(relx=0.80, rely=0.27, anchor=CENTER)
+
         self.root.mainloop()
+
+    def simulate_all_rfid(self):
+        while len(self.animals) != self.db.get_number_animals():
+            self.add_random_rfid()
 
     def add_random_rfid(self):
         '''Adds a random frid number to selected value.'''
@@ -525,5 +541,4 @@ class SerialSimulator():
         message.title('Warning')
         label = CTkLabel(message, text='Please select a serial port from the drop down list')
         label.grid(row=0, column=0, padx=10, pady=10)
-
         AudioManager.play("shared/sounds/error.wav")
