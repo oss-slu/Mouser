@@ -307,13 +307,14 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.db.close()
 
     def sacrifice_selected_items(self):
-        '''Completely removes selected animals from the database and UI'''
+        '''Decreases the maximum number of animals in the experiment by 1'''
         selected_items = self.table.selection()
 
-        if not selected_items:  # Only check for selection when button is clicked
+        if not selected_items:
             self.raise_warning("No items selected. Please select animals to sacrifice.")
             return
 
+        # First remove the selected animals like the remove button
         for item in selected_items:
             animal_id = int(self.table.item(item, 'values')[0])
             self.table.delete(item)
@@ -321,6 +322,15 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             self.animals = [(index, rfid) for (index, rfid) in self.animals if index != animal_id]
 
         self.change_entry_text()
+
+        # Then decrease the maximum number of animals
+        current_max = self.db.get_number_animals()
+        if current_max <= 0:
+            self.raise_warning("Cannot reduce animal count below 0")
+            return
+            
+        # Decrease the maximum number of animals by 1
+        self.db.set_number_animals(current_max - 1)
 
 class ChangeRFIDDialog():
     '''Change RFID user interface.'''
