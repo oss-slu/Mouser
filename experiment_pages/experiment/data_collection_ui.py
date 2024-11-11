@@ -9,6 +9,7 @@ from databases.data_collection_database import DataCollectionDatabase
 from shared.audio import AudioManager
 from shared.scrollable_frame import ScrolledFrame
 from shared.serial_handler import SerialDataHandler
+from experiment_pages.experiment.experiment_buttons import DataCollectionButtons
 import threading
 
 #pylint: disable= undefined-variable

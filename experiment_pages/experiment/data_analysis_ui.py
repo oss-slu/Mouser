@@ -5,6 +5,7 @@ import os
 from customtkinter import *
 from shared.tk_models import *
 from databases.experiment_database import ExperimentDatabase
+from experiment_pages.experiment.experiment_buttons import DataExportButtons
 
 
 class DataAnalysisUI(MouserPage):

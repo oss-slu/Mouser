@@ -11,6 +11,7 @@ from playsound import playsound
 from serial import serialutil
 from shared.tk_models import *
 from shared.serial_port_controller import SerialPortController
+from experiment_pages.experiment.experiment_buttons import RFIDButtons
 
 from databases.experiment_database import ExperimentDatabase
 from shared.audio import AudioManager
