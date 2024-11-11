@@ -487,5 +487,10 @@ class ExperimentDatabase:
 
         print("All tables have been exported successfully.")
 
+    def set_number_animals(self, number):
+        '''Sets the maximum number of animals for the experiment'''
+        self._c.execute("UPDATE experiment SET num_animals = ?", (number,))
+        self._conn.commit()
+
 
 
