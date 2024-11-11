@@ -46,17 +46,21 @@ def create_temp_from_encrypted(filepath:str, password:str):
     return temp_file_path
 
 
-def save_temp_to_file(temp_file_path: str, permanent_file_path: str):
-    '''Save data from temporary file to a permanent file'''
+def save_temp_to_file(temp_file_path: str, permanent_file_path: str, weight: float):
+    '''Save data from temporary file to a permanent file and include weight'''
     # Ensure paths are absolute and properly resolved
     temp_file_path = os.path.abspath(temp_file_path)
     permanent_file_path = os.path.abspath(permanent_file_path)
 
+    # Read the data from the temp file
     with open(temp_file_path, 'rb') as temp_file:
         data = temp_file.read()
 
+    # Write the modified data to the permanent file
     with open(permanent_file_path, 'wb') as file:
         file.write(data)
+
+
 
 def save_temp_to_encrypted(temp_file_path: str, permanent_file_path: str, password:str):
     '''Save data from temporary file to an encrypted file.'''

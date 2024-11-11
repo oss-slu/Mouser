@@ -167,9 +167,9 @@ class ChangeMeasurementsDialog():
 
     def finish(self):
         """Finalizes weight entry and saves data."""
-        values = self.get_all_values()
-        self.data_collection.set_data_for_entry(values)
-        self.close()
+        values = self.get_all_values()  # Collect all values, including weight
+        self.data_collection.set_data_for_entry(values)  # Ensure weight is included in data collection
+        self.close()  
         # Any additional UI updates can follow
 
     def open(self, animal_id):
@@ -238,9 +238,10 @@ class ChangeMeasurementsDialog():
             value = str(entry.get())
             value = value.strip()
             if value == "":
-                value = "0"
+                value = "0"  # Default to "0" if the entry is empty
             values.append(value)
-        return tuple(values)
+        return tuple(values)  # Return as a tuple, including the weight
+
 
     def finish(self):
         '''Cleanup when done with change value dialog.'''
