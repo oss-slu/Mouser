@@ -17,16 +17,16 @@ class CageConfigurationUI(MouserPage):
         self.db = DatabaseController(database)
 
         scroll_canvas = ScrolledFrame(self)
-        scroll_canvas.place(relx=0.05, rely=0.20, relheight=0.75, relwidth=0.88)
+        scroll_canvas.place(relx=.25, rely=.25, relheight=1, relwidth=1)
 
         input_frame = CTkFrame(scroll_canvas)
         self.config_frame = CTkFrame(scroll_canvas)
 
-        auto_button = CTkButton(input_frame, text='Randomize', width=15,
+        auto_button = CTkButton(input_frame, text='Randomize', width=45,
                             command= self.randomize)
-        save_button = CTkButton(input_frame, text='Save', width=15,
+        save_button = CTkButton(input_frame, text='Save', width=45,
                             command= self.save_to_database)
-        move_button = CTkButton(input_frame, text='Move', width=15,
+        move_button = CTkButton(input_frame, text='Move', width=45,
                             command= self.check_move_input)
 
         self.id_input = CTkEntry(input_frame, width=110)
@@ -53,16 +53,21 @@ class CageConfigurationUI(MouserPage):
         input_frame.grid_rowconfigure(0, weight=1)
 
         input_frame.pack(side=TOP, fill=X, anchor='center')
-        self.config_frame.pack(side=TOP, fill=BOTH, anchor ='center')
+        self.config_frame.pack(side=TOP, fill=BOTH, expand=True, anchor ='center')
 
 
         self.update_config_frame()
 
-
     def update_config_frame(self):
-        '''updates the config frame to reflect new information.'''
+        '''Updates the configuration frame with the latest data.'''
+        # Clear the existing widgets in the config_frame
         for widget in self.config_frame.winfo_children():
             widget.destroy()
+
+        # Add new widgets to the config_frame
+        # Example: Adding a label
+        label = CTkLabel(self.config_frame, text="Configuration Data")
+        label.pack(padx=10, pady=10)
         self.create_group_frames()
 
 

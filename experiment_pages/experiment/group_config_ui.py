@@ -4,8 +4,6 @@ from shared.tk_models import *
 from shared.scrollable_frame import ScrolledFrame
 from experiment_pages.create_experiment.summary_ui import SummaryUI
 from shared.experiment import Experiment
-from experiment_pages.experiment.experiment_buttons import GroupConfigButtons
-
 
 class GroupConfigUI(MouserPage): # pylint: disable= undefined-variable
     '''Group Congifuratin User Interface and Window.'''

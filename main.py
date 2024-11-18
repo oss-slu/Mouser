@@ -144,7 +144,7 @@ screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 
 root.title("Mouser")
-root.geometry(f"{screen_width}x{screen_height}+0+0")
+root.geometry(f"{screen_width}x{screen_height-90}+0+0")
 root.minsize(900,600)
 
 # Adds menu bar to root and binds the function to file_menu

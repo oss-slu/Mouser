@@ -24,7 +24,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         main_frame = CTkFrame(self) # pylint: disable=redefined-outer-name
 
         main_frame.grid(row=6, column=1, sticky='NESW')
-        main_frame.place(relx=0.3, rely=0.20, relwidth= 0.40, relheight = 0.75)
+        main_frame.place(relx=0, rely=0.20, relwidth= 1.0, relheight = 0.75)
 
         main_frame.grid_columnconfigure(0, weight = 1)
 
@@ -37,24 +37,24 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
             self.rfid_page = MapRFIDPage(name, parent, self, controller)
         self.invest_page = InvestigatorsUI(parent, self)
 
-        button_size = 30
+        button_size = 100
 
 
-        self.collection_button = CTkButton(main_frame, text='Data Collection', width=button_size,
-                                command= self.data_page.raise_frame)
-        self.analysis_button = CTkButton(main_frame, text='Data Exporting', width=button_size,
+        self.collection_button = CTkButton(main_frame, text='Data Collection', width=button_size, font=("Arial", 50),
+                    command= self.data_page.raise_frame)
+        self.analysis_button = CTkButton(main_frame, text='Data Exporting', width=button_size, font=("Arial", 50),
                                 command= self.analysis_page.raise_frame)
-        self.group_button = CTkButton(main_frame, text='Group Configuration', width=button_size,
+        self.group_button = CTkButton(main_frame, text='Group Configuration', width=button_size, font=("Arial", 50),
                                 command= lambda: [self.cage_page.raise_frame(),
                                                   self.cage_page.update_controller_attributes(),
                                                   self.cage_page.update_config_frame()])
-        self.rfid_button = CTkButton(main_frame, text='Map RFID', width=button_size,
+        self.rfid_button = CTkButton(main_frame, text='Map RFID', width=button_size, font=("Arial", 50),
                                 command=  self.rfid_page.raise_frame)
 
-        self.collection_button.grid(row=0, column=0, ipady=10, ipadx=10, pady=10, padx=10)
-        self.analysis_button.grid(row=1, column=0, ipady=10, ipadx=10, pady=10, padx=10)
-        self.group_button.grid(row=2, column=0, ipady=10, ipadx=10, pady=10, padx=10)
-        self.rfid_button.grid(row=3, column=0, ipady=10, ipadx=10, pady=10, padx=10)
+        self.collection_button.grid(row=0, column=0, ipady=50, ipadx=150, pady=10, padx=10)
+        self.analysis_button.grid(row=1, column=0, ipady=50, ipadx=150, pady=10, padx=10)
+        self.group_button.grid(row=2, column=0, ipady=50, ipadx=150, pady=10, padx=10)
+        self.rfid_button.grid(row=3, column=0, ipady=50, ipadx=150, pady=10, padx=10)
 
         if self.menu_button:
             self.menu_button.destroy()

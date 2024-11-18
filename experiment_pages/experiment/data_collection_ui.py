@@ -9,7 +9,6 @@ from databases.data_collection_database import DataCollectionDatabase
 from shared.audio import AudioManager
 from shared.scrollable_frame import ScrolledFrame
 from shared.serial_handler import SerialDataHandler
-from experiment_pages.experiment.experiment_buttons import DataCollectionButtons
 import threading
 
 #pylint: disable= undefined-variable
@@ -32,15 +31,17 @@ class DataCollectionUI(MouserPage):
 
         self.auto_increment_button = CTkButton(self,
                                                text="Start",
+                                               font=("Arial", 36),
                                                compound=TOP,
-                                               width=15,
+                                               width=250,
+                                               height=100,
                                                command= self.auto_increment)
-        self.auto_increment_button.place(relx=0.5, rely=0.4, anchor=CENTER)
+        self.auto_increment_button.place(relx=0.5, rely=0.3, anchor=CENTER)
         self.auto_inc_id = -1
 
         self.animals = self.database.get_animals()
         self.table_frame = CTkFrame(self)
-        self.table_frame.place(relx=0.50, rely=0.65, anchor=CENTER)
+        self.table_frame.place(relx=0.50, rely=0.65, anchor=CENTER, relwidth=0.5, relheight=0.5)
         
 
 
@@ -63,7 +64,16 @@ class DataCollectionUI(MouserPage):
             self.table.heading(column, text=text)
             print(text)
 
-        self.table.grid(row=0, column=0, sticky='nsew')
+        self.table.grid(row=0, column=0, sticky='nsew', padx=10, pady=10)
+
+        # Configure the grid layout of the table_frame
+        self.table_frame.grid_columnconfigure(0, weight=1)
+        self.table_frame.grid_rowconfigure(0, weight=1)
+
+        # Add a scrollbar
+        scrollbar = CTkScrollbar(self.table_frame, orientation=VERTICAL, command=self.table.yview)
+        self.table.configure(yscroll=scrollbar.set)
+        scrollbar.grid(row=0, column=1, sticky='ns')
 
         self.date_label = CTkLabel(self)
 
@@ -136,7 +146,7 @@ class DataCollectionUI(MouserPage):
         self.date_label.destroy()
         date_text = "Current Date: " + self.current_date
         self.date_label = CTkLabel(self, text=date_text, font=("Arial", 18))
-        self.date_label.place(relx=0.5, rely=0.25, anchor=CENTER)
+        self.date_label.place(relx=0.5, rely=0.2, anchor=CENTER)
 
         values = self.database.get_data_for_date(self.current_date)
 

@@ -11,7 +11,7 @@ from playsound import playsound
 from serial import serialutil
 from shared.tk_models import *
 from shared.serial_port_controller import SerialPortController
-from experiment_pages.experiment.experiment_buttons import RFIDButtons
+# from experiment_pages.experiment.experiment_buttons import Navbar
 
 from databases.experiment_database import ExperimentDatabase
 from shared.audio import AudioManager
@@ -37,7 +37,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         file = database
         self.db = ExperimentDatabase(file)
-        self.serial_port_controller = SerialPortController("settings/serial ports/serial_port_preference.csv")
+        self.serial_port_controller = SerialPortController("serial_port_preference.csv")
 
         self.animals = []
         self.animal_id = 1
@@ -45,16 +45,16 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.animal_id_entry_text = StringVar(value="1")
 
         simulate_rfid_button = CTkButton(self, text="Simulate RFID", compound=TOP,
-                                      width=15, command=self.add_random_rfid)
+                          width=150, height=50, command=self.add_random_rfid)
         simulate_rfid_button.place(relx=0.80, rely=0.17, anchor=CENTER)
 
         # Simulate All RFID Button
         simulate_all_rfid_button = CTkButton(self, text="Simulate ALL RFID", compound=TOP,
-                                      width=15, command=self.simulate_all_rfid)
-        simulate_all_rfid_button.place(relx=0.80, rely=0.17, anchor=CENTER)
+                          width=150, height=50, command=self.simulate_all_rfid)
+        simulate_all_rfid_button.place(relx=0.90, rely=0.17, anchor=CENTER)
 
         self.table_frame = CTkFrame(self)
-        self.table_frame.place(relx=0.15, rely=0.40, relheight=0.50, relwidth=0.80)
+        self.table_frame.place(relx=0.15, rely=0.25, relheight=0.50, relwidth=0.80)
         self.table_frame.grid_columnconfigure(0, weight= 1)
         self.table_frame.grid_rowconfigure(0, weight= 1)
 
@@ -88,17 +88,17 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.serial_port_panel = SerialPortSelection(parent,self.serial_port_controller, self)
 
         self.serial_port_button = CTkButton(self, text="Select Serial Port", compound=TOP,
-                                      width=15, command=self.open_serial_port_selection)
-        self.serial_port_button.place(relx=0.10, rely=0.95, anchor=CENTER)
+                                      width=250, height=100, command=self.open_serial_port_selection)
+        self.serial_port_button.place(relx=0.20, rely=0.85, anchor=CENTER)
 
         self.change_rfid_button = CTkButton(self, text="Change RFID", compound=TOP,
-                                         width=15, command=self.open_change_rfid)
-        self.change_rfid_button.place(relx=0.40, rely=0.95, anchor=CENTER)
+                                         width=250, height=100, command=self.open_change_rfid)
+        self.change_rfid_button.place(relx=0.50, rely=0.85, anchor=CENTER)
 
         self.delete_button = CTkButton(self, text="Remove Selection(s)", compound=TOP,
-                                       width=20, command=self.remove_selected_items,
-                                       state="normal")  # Initialize button as disabled
-        self.delete_button.place(relx=0.70, rely=0.95, anchor=CENTER)
+                                       width=250, height=100, command=self.remove_selected_items,
+                                       state="normal", fg_color='red')  # Initialize button as disabled
+        self.delete_button.place(relx=0.80, rely=0.85, anchor=CENTER)
 
         self.item_selected(None)
 

@@ -5,7 +5,6 @@ import os
 from customtkinter import *
 from shared.tk_models import *
 from databases.experiment_database import ExperimentDatabase
-from experiment_pages.experiment.experiment_buttons import DataExportButtons
 
 
 class DataAnalysisUI(MouserPage):
@@ -20,7 +19,7 @@ class DataAnalysisUI(MouserPage):
         main_frame.place(relx=0.3, rely=0.2, relwidth=0.4, relheight=0.75)
 
         # Add a button to export the database to CSV
-        self.export_button = CTkButton(main_frame, text="Export Data to CSV", command=self.export_to_csv)
+        self.export_button = CTkButton(main_frame, width=150, height=75, text="Export Data to CSV", font=('Arial', 30), command=self.export_to_csv)
         self.export_button.grid(row=0, column=0, padx=20, pady=20)
 
     def export_to_csv(self):

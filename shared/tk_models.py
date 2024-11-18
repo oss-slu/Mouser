@@ -116,7 +116,7 @@ class MenuButton(CTkButton):
     def __init__(self, page: CTkFrame, previous_page: MouserPage):
 
         super().__init__(page, text="Back to Menu", compound=TOP,
-                         width=15, command = self.navigate)
+                         width=150, height=75, command = self.navigate)
         self.place(relx=0.15, rely=0.15, anchor=CENTER)
         self.previous_page = previous_page
 
