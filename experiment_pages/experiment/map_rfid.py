@@ -99,6 +99,12 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                                        state="normal")  # Initialize button as disabled
         self.delete_button.place(relx=0.70, rely=0.95, anchor=CENTER)
 
+        # Add Sacrifice button with normal state
+        self.sacrifice_button = CTkButton(self, text="Sacrifice Selected", compound=TOP,
+                                      width=20, command=self.sacrifice_selected_items,
+                                      state="normal")  # Initialize as enabled
+        self.sacrifice_button.place(relx=0.90, rely=0.95, anchor=CENTER)
+
         self.item_selected(None)
 
         animals_setup = self.db.get_all_animal_ids()
@@ -173,7 +179,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         selected = self.table.selection()
         print("Selection ", selected, " changed.") 
 
-    # Check if any selected item starts with 'I00'
+        # Check if any selected item starts with 'I00'
         enable_button = any(self.table.item(item_id, 'values')[0].startswith('I00') for item_id in selected)
 
         if enable_button:
@@ -181,12 +187,11 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         else:
             self.delete_button["state"] = "disabled"
 
-    # Handling for change RFID button
+        # Handling for change RFID button
         if len(selected) != 1:
             self.change_rfid_button["state"] = "disabled"
         else:
             self.change_rfid_button["state"] = "normal"
-
 
     def remove_selected_items(self):
         '''Removes the selected item from a table, warning if none selected.'''
@@ -300,6 +305,32 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
     def close_connection(self):
         '''Closes database file.'''
         self.db.close()
+
+    def sacrifice_selected_items(self):
+        '''Decreases the maximum number of animals in the experiment by 1'''
+        selected_items = self.table.selection()
+
+        if not selected_items:
+            self.raise_warning("No items selected. Please select animals to sacrifice.")
+            return
+
+        # First remove the selected animals like the remove button
+        for item in selected_items:
+            animal_id = int(self.table.item(item, 'values')[0])
+            self.table.delete(item)
+            self.db.remove_animal(animal_id)
+            self.animals = [(index, rfid) for (index, rfid) in self.animals if index != animal_id]
+
+        self.change_entry_text()
+
+        # Then decrease the maximum number of animals
+        current_max = self.db.get_number_animals()
+        if current_max <= 0:
+            self.raise_warning("Cannot reduce animal count below 0")
+            return
+            
+        # Decrease the maximum number of animals by 1
+        self.db.set_number_animals(current_max - 1)
 
 class ChangeRFIDDialog():
     '''Change RFID user interface.'''
