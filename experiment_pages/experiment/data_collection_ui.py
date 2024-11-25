@@ -168,12 +168,12 @@ class ChangeMeasurementsDialog():
         '''Opens the change measurement dialog window.'''
         self.root = root = CTkToplevel(self.parent)
         root.title("Modify Measurements")
-        root.geometry('600x600')
+        root.geometry('700x700')
         root.resizable(False, False)
         root.grid_rowconfigure(0, weight=1)
         root.grid_columnconfigure(0, weight=1)
 
-        id_label = CTkLabel(root, text="Animal ID: "+str(animal_id), font=("Arial", 18))
+        id_label = CTkLabel(root, text="Animal ID: "+str(animal_id), font=("Arial", 20))
         id_label.place(relx=0.5, rely=0.1, anchor=CENTER)
 
         self.textboxes = []
@@ -187,7 +187,7 @@ class ChangeMeasurementsDialog():
             entry.bind("<KeyRelease>", self.check_if_num)
             self.textboxes.append(entry)
 
-            header = CTkLabel(root, text=self.measurement_items[i-1]+": ", font=("Arial", 18))
+            header = CTkLabel(root, text=self.measurement_items[i-1]+": ", font=("Arial", 20))
             header.place(relx=0.28, rely=pos_y, anchor=E)
 
             if i == 1:
@@ -206,7 +206,7 @@ class ChangeMeasurementsDialog():
 
 
         self.error_text = CTkLabel(root, text="One or more values are not a number")
-        self.submit_button = CTkButton(root, text="Submit", compound=TOP, width=15, command= self.finish)
+        self.submit_button = CTkButton(root, text="Submit", compound=TOP, width=20, command= self.finish)
         self.submit_button.place(relx=0.97, rely=0.97, anchor=SE)
 
         self.root.mainloop()

@@ -37,7 +37,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
             self.rfid_page = MapRFIDPage(name, parent, self, controller)
         self.invest_page = InvestigatorsUI(parent, self)
 
-        button_size = 30
+        button_size = 40
 
 
         self.collection_button = CTkButton(main_frame, text='Data Collection', width=button_size,
@@ -51,10 +51,10 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         self.rfid_button = CTkButton(main_frame, text='Map RFID', width=button_size,
                                 command=  self.rfid_page.raise_frame)
 
-        self.collection_button.grid(row=0, column=0, ipady=10, ipadx=10, pady=10, padx=10)
-        self.analysis_button.grid(row=1, column=0, ipady=10, ipadx=10, pady=10, padx=10)
-        self.group_button.grid(row=2, column=0, ipady=10, ipadx=10, pady=10, padx=10)
-        self.rfid_button.grid(row=3, column=0, ipady=10, ipadx=10, pady=10, padx=10)
+        self.collection_button.grid(row=0, column=0, ipady=15, ipadx=15, pady=10, padx=10)
+        self.analysis_button.grid(row=1, column=0, ipady=15, ipadx=15, pady=10, padx=10)
+        self.group_button.grid(row=2, column=0, ipady=15, ipadx=15, pady=10, padx=10)
+        self.rfid_button.grid(row=3, column=0, ipady=15, ipadx=15, pady=10, padx=10)
 
         if self.menu_button:
             self.menu_button.destroy()
@@ -73,7 +73,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         '''Raises warning frame for deleting experiment.'''
         message = CTk()
         message.title("WARNING")
-        message.geometry('300x100')
+        message.geometry('450x250')
         message.resizable(False, False)
 
         label1 = CTkLabel(message, text='This will delete the experiment and all its data')
