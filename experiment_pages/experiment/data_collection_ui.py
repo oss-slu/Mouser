@@ -165,7 +165,7 @@ class ChangeMeasurementsDialog():
         self.measurement_items = measurement_items
 
     def open(self, animal_id):
-        '''Opens the change measurement dialog window.'''
+        '''Opens the change measurement dialog window and handles automated submission.'''
         self.root = root = CTkToplevel(self.parent)
         root.title("Modify Measurements")
         root.geometry('600x600')
@@ -173,41 +173,42 @@ class ChangeMeasurementsDialog():
         root.grid_rowconfigure(0, weight=1)
         root.grid_columnconfigure(0, weight=1)
 
-        id_label = CTkLabel(root, text="Animal ID: "+str(animal_id), font=("Arial", 18))
+        id_label = CTkLabel(root, text="Animal ID: " + str(animal_id), font=("Arial", 18))
         id_label.place(relx=0.5, rely=0.1, anchor=CENTER)
 
         self.textboxes = []
         count = len(self.measurement_items) + 1
 
         for i in range(1, count):
-
             pos_y = i / count
             entry = CTkEntry(root, width=40)
             entry.place(relx=0.60, rely=pos_y, anchor=CENTER)
-            entry.bind("<KeyRelease>", self.check_if_num)
             self.textboxes.append(entry)
 
-            header = CTkLabel(root, text=self.measurement_items[i-1]+": ", font=("Arial", 18))
+            header = CTkLabel(root, text=self.measurement_items[i - 1] + ": ", font=("Arial", 18))
             header.place(relx=0.28, rely=pos_y, anchor=E)
 
             if i == 1:
                 entry.focus()
+
+                # Start data handling in a separate thread
                 data_handler = SerialDataHandler()
-                
-                # Start the data handler in a separate thread to prevent blocking
                 data_thread = threading.Thread(target=data_handler.start)
                 data_thread.start()
-                listening = True
-                while listening:
-                    if len(data_handler.received_data) >= 2:
-                        entry.insert(0, data_handler.get_stored_data())
-                        data_handler.stop()
-                        listening = False
 
+                # Automated handling of data input
+                def check_for_data():
+                    while True:
+                        if len(data_handler.received_data) >= 2:  # Customize condition
+                            received_data = data_handler.get_stored_data()
+                            entry.insert(0, received_data)
+                            data_handler.stop()
+                            self.finish()  # Automatically call the finish method
+                            break
 
-        self.error_text = CTkLabel(root, text="One or more values are not a number")
-        self.submit_button = CTkButton(root, text="Submit", compound=TOP, width=15, command= self.finish)
-        self.submit_button.place(relx=0.97, rely=0.97, anchor=SE)
+                threading.Thread(target=check_for_data, daemon=True).start()
+
+        self.error_text = CTkLabel(root, text="One or more values are not a number", fg_color="red")
 
         self.root.mainloop()
 
