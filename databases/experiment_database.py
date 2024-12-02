@@ -487,6 +487,55 @@ class ExperimentDatabase:
 
         print("All tables have been exported successfully.")
 
+    def export_all_tables_to_single_csv(self, output_file):
+        import pandas as pd
+
+        db_name = os.path.splitext(os.path.basename(self.db_file))[0]
+
+        # Create a directory with the database name to save CSV files
+        export_dir = os.path.join(output_file, db_name)
+        if not os.path.exists(export_dir):
+            os.makedirs(export_dir)
+
+        # Get all table names from the database
+        self._c.execute("SELECT name FROM sqlite_master WHERE type='table';")
+        tables = self._c.fetchall()
+
+        animal_rfid_df = pd.DataFrame()
+        collected_data_df = pd.DataFrame()
+        animals_df = pd.DataFrame()
+        cages_df = pd.DataFrame()
+        groups_df = pd.DataFrame()
+
+        for table_name in tables:
+            table_name = table_name[0]  # Extract table name from tuple
+            if table_name == 'animal_rfid':
+                animal_rfid_df = pd.read_sql_query(f"SELECT * FROM {table_name}", self._conn)
+            elif table_name == 'collected_data':
+                collected_data_df = pd.read_sql_query(f"SELECT * FROM {table_name}", self._conn)
+            elif table_name == 'animals':
+                animals_df = pd.read_sql_query(f"SELECT * FROM {table_name}", self._conn)
+            elif table_name == 'cages':
+                cages_df = pd.read_sql_query(f"SELECT * FROM {table_name}", self._conn)
+            elif table_name == 'groups':
+                groups_df = pd.read_sql_query(f"SELECT * FROM {table_name}", self._conn)
+
+        # Merge DataFrames
+        merged_df = animal_rfid_df.merge(collected_data_df, on='animal_id', how='outer')
+        merged_df = merged_df.merge(animals_df, on='animal_id', how='outer')
+
+        merged_cages_df = cages_df.merge(groups_df, on='group_id', how='inner')
+
+        # Write the merged DataFrames to a single CSV file
+        csv_file_path = os.path.join(export_dir, f"experiment_data.csv")
+        merged_df.to_csv(csv_file_path, index=False)
+
+
+        # Write the merged_cages_df DataFrame to a CSV file
+        csv_file_path = os.path.join(export_dir, f"cage_setup.csv")
+        merged_cages_df.to_csv(csv_file_path, index=False)
+
+    
     def set_number_animals(self, number):
         '''Sets the maximum number of animals for the experiment'''
         self._c.execute("UPDATE experiment SET num_animals = ?", (number,))
