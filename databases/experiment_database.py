@@ -497,14 +497,28 @@ class ExperimentDatabase:
         if not os.path.exists(export_dir):
             os.makedirs(export_dir)
 
-        # Read each CSV file into a DataFrame
-        animal_rfid_df = pd.read_csv('sample_output/animal_rfid.csv')
-        collected_data_df = pd.read_csv('sample_output/collected_data.csv')
-        cages_df = pd.read_csv('sample_output/cages.csv')
-        experiment_df = pd.read_csv('sample_output/experiment.csv')
-        groups_df = pd.read_csv('sample_output/groups.csv')
-        measurement_items_df = pd.read_csv('sample_output/measurement_items.csv')
-        animals_df = pd.read_csv('sample_output/animals.csv')
+        # Get all table names from the database
+        self._c.execute("SELECT name FROM sqlite_master WHERE type='table';")
+        tables = self._c.fetchall()
+
+        animal_rfid_df = pd.DataFrame()
+        collected_data_df = pd.DataFrame()
+        animals_df = pd.DataFrame()
+        cages_df = pd.DataFrame()
+        groups_df = pd.DataFrame()
+
+        for table_name in tables:
+            table_name = table_name[0]  # Extract table name from tuple
+            if table_name == 'animal_rfid':
+                animal_rfid_df = pd.read_sql_query(f"SELECT * FROM {table_name}", self._conn)
+            elif table_name == 'collected_data':
+                collected_data_df = pd.read_sql_query(f"SELECT * FROM {table_name}", self._conn)
+            elif table_name == 'animals':
+                animals_df = pd.read_sql_query(f"SELECT * FROM {table_name}", self._conn)
+            elif table_name == 'cages':
+                cages_df = pd.read_sql_query(f"SELECT * FROM {table_name}", self._conn)
+            elif table_name == 'groups':
+                groups_df = pd.read_sql_query(f"SELECT * FROM {table_name}", self._conn)
 
         # Merge DataFrames
         merged_df = animal_rfid_df.merge(collected_data_df, on='animal_id', how='outer')
