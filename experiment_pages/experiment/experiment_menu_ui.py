@@ -73,7 +73,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         '''Raises warning frame for deleting experiment.'''
         message = CTk()
         message.title("WARNING")
-        message.geometry('450x250')
+        message.geometry('750x550')
         message.resizable(False, False)
 
         label1 = CTkLabel(message, text='This will delete the experiment and all its data')

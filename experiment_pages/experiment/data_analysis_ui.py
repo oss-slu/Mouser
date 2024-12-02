@@ -87,7 +87,7 @@ class DataAnalysisUI(MouserPage):
             text="OK", 
             command=notification.destroy, 
             width=100, 
-            height=50, 
+            height=100, 
             font=("Arial", 18)
         )
         ok_button.pack(pady=20)
