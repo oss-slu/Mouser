@@ -224,12 +224,12 @@ class ChangeMeasurementsDialog():
                 errors += 1
         if errors == 0:
             self.error_text.place_forget()
-            self.submit_button["state"] = "normal"
+            # self.submit_button["state"] = "normal"
 
     def show_error(self):
         '''Displays an error window.'''
         self.error_text.place(relx=0.5, rely=0.85, anchor=CENTER)
-        self.submit_button["state"] = "disabled"
+        # self.submit_button["state"] = "disabled"
         AudioManager.play(filepath="shared/sounds/error.wav")
 
     def get_all_values(self):
