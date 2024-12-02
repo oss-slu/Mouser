@@ -490,6 +490,13 @@ class ExperimentDatabase:
     def export_all_tables_to_single_csv(self, output_file):
         import pandas as pd
 
+        db_name = os.path.splitext(os.path.basename(self.db_file))[0]
+
+        # Create a directory with the database name to save CSV files
+        export_dir = os.path.join(output_file, db_name)
+        if not os.path.exists(export_dir):
+            os.makedirs(export_dir)
+
         # Read each CSV file into a DataFrame
         animal_rfid_df = pd.read_csv('sample_output/animal_rfid.csv')
         collected_data_df = pd.read_csv('sample_output/collected_data.csv')
@@ -499,44 +506,22 @@ class ExperimentDatabase:
         measurement_items_df = pd.read_csv('sample_output/measurement_items.csv')
         animals_df = pd.read_csv('sample_output/animals.csv')
 
-        # Ensure all DataFrames have the necessary columns
-        required_columns = {
-            'animal_rfid': ['animal_id', 'rfid'],
-            'collected_data': ['date', 'animal_id', 'Weight'],
-            'cages': ['cage_id', 'group_id', 'num_animals', 'full'],
-            'groups': ['group_id', 'name', 'num_animals', 'full'],
-            'measurement_items': ['measurement_id', 'item', 'auto'],
-            'animals': ['animal_id', 'group_id', 'cage_id', 'remarks', 'active', 'weight']
-        }
-
-        # Fill missing columns with NaN
-        for df_name, cols in required_columns.items():
-            df = locals()[f"{df_name}_df"]
-            for col in cols:
-                if col not in df.columns:
-                    df[col] = pd.NA
-
-        # Ensure 'group_id' is present in cages_df and animals_df
-        for df_name in ['cages_df', 'animals_df']:
-            df = locals()[df_name]
-            if 'group_id' not in df.columns:
-                df['group_id'] = pd.NA  # Fill with NaN if missing
-
         # Merge DataFrames
         merged_df = animal_rfid_df.merge(collected_data_df, on='animal_id', how='outer')
-        merged_animals_cages = animals_df.merge(cages_df, on='cage_id', how='outer')
-        merged_df = merged_df.merge(merged_animals_cages, on='animal_id', how='outer')
+        merged_df = merged_df.merge(animals_df, on='animal_id', how='outer')
 
-        if 'group_id' in groups_df.columns:
-            merged_df = merged_df.merge(groups_df, on='group_id', how='outer')
-        else:
-            print("Warning: 'group_id' not found in groups DataFrame.")
+        merged_cages_df = cages_df.merge(groups_df, on='group_id', how='inner')
 
-        merged_df = merged_df.merge(measurement_items_df, on='measurement_id', how='outer')
+        # Write the merged DataFrames to a single CSV file
+        csv_file_path = os.path.join(export_dir, f"experiment_data.csv")
+        merged_df.to_csv(csv_file_path, index=False)
 
-        # Write the merged DataFrame to a single CSV file
-        merged_df.to_csv(output_file, index=False)
 
+        # Write the merged_cages_df DataFrame to a CSV file
+        csv_file_path = os.path.join(export_dir, f"cage_setup.csv")
+        merged_cages_df.to_csv(csv_file_path, index=False)
+
+    
     def set_number_animals(self, number):
         '''Sets the maximum number of animals for the experiment'''
         self._c.execute("UPDATE experiment SET num_animals = ?", (number,))
