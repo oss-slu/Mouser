@@ -428,6 +428,12 @@ class ExperimentDatabase:
         self._c.execute("SELECT rfid FROM animal_rfid")
         return self._c.fetchall()
 
+    def experiment_uses_rfid(self):
+        self._c.execute("SELECT uses_rfid FROM experiment")
+        do_we_use_rfid = self._c.fetchone()[0]  # Fetch the first result and get the integer value
+        return do_we_use_rfid
+        
+
     def get_all_experiment_info(self):
         '''Prints all experiment info to terminal.'''
         self._c.execute("SELECT name, species, uses_rfid, num_animals, num_groups, cage_max FROM experiment")
