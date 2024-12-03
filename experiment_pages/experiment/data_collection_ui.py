@@ -168,12 +168,13 @@ class ChangeMeasurementsDialog():
         '''Opens the change measurement dialog window and handles automated submission.'''
         self.root = root = CTkToplevel(self.parent)
         root.title("Modify Measurements")
-        root.geometry('600x600')
+        root.geometry('700x700')
         root.resizable(False, False)
         root.grid_rowconfigure(0, weight=1)
         root.grid_columnconfigure(0, weight=1)
 
         id_label = CTkLabel(root, text="Animal ID: " + str(animal_id), font=("Arial", 18))
+
         id_label.place(relx=0.5, rely=0.1, anchor=CENTER)
 
         self.textboxes = []
@@ -208,6 +209,7 @@ class ChangeMeasurementsDialog():
 
                 threading.Thread(target=check_for_data, daemon=True).start()
 
+
         self.error_text = CTkLabel(root, text="One or more values are not a number", fg_color="red")
 
         self.root.mainloop()
@@ -229,7 +231,7 @@ class ChangeMeasurementsDialog():
     def show_error(self):
         '''Displays an error window.'''
         self.error_text.place(relx=0.5, rely=0.85, anchor=CENTER)
-        # self.submit_button["state"] = "disabled"
+
         AudioManager.play(filepath="shared/sounds/error.wav")
 
     def get_all_values(self):
