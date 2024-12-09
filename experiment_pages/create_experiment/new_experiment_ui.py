@@ -203,13 +203,22 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
             self.items.remove(item)
             self.update_items_frame()
 
+
     def raise_warning(self, option: int):
-        '''Raises error window.'''
+        '''Raises an error window that can be dismissed with any key or mouse press.'''
+
+        def dismiss_warning(event=None):
+            '''Destroy the warning window when triggered.'''
+            print(f"Event triggered: {event}")  # Debugging to confirm key press is detected
+            message.destroy()
+
+        # Create the warning window
         message = CTk()
         message.title("WARNING")
-        message.geometry('320x100')
+        message.geometry('320x180')
         message.resizable(True, True)
 
+        # Add the appropriate warning message based on the option
         if option == 1:
             label = CTkLabel(message, text='Number of animals must be divisible by number groups.')
             label.grid(row=0, column=0, padx=10, pady=10)
@@ -219,23 +228,31 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
             label1.grid(row=0, column=0, padx=10)
             label2.grid(row=1, column=0, padx=10)
         elif option == 3:
-            label3 = CTkLabel(message, text='Experiment name used. Please use other name.')
+            label3 = CTkLabel(message, text='Experiment name used. Please use another name.')
             label3.grid(row=0, column=0, padx=10, pady=10)
         elif option == 4:
-
             label4 = CTkLabel(message, text='''Unequal Group Size: Please allow the total number of animals to be
             less than or equal to the total number of
             animals allowed in all combined cages''')
             label4.grid(row=0, column=0, padx=10, pady=10)
 
+        # Play the error sound
         AudioManager.play("sounds/error.wav")
 
+        # Bind key and mouse events to dismiss the warning
+        message.bind("<KeyPress>", dismiss_warning)  # Captures any key press
+        message.bind("<Button>", dismiss_warning)   # Captures any mouse click
 
-        ok_button = CTkButton(message, text="OK", width=10,
-                        command= lambda: [message.destroy()])
+        # Add an OK button for manual dismissal (as fallback)
+        ok_button = CTkButton(message, text="OK", width=10, command=dismiss_warning)
         ok_button.grid(row=2, column=0, padx=10, pady=10)
 
+        # Ensure the warning window grabs focus
+        message.focus_force()
+
+        # Start the event loop
         message.mainloop()
+
 
     def check_animals_divisible(self):
         '''If the total number of animals is greater than the total number

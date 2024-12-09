@@ -565,11 +565,36 @@ class SerialSimulator():
         self.written_port = None
         self.root.destroy()
 
-    def raise_warning(self):
-        '''Raises a error window.'''
-        message = CTkToplevel()
-        message.geometry("320x100")
-        message.title('Warning')
-        label = CTkLabel(message, text='Please select a serial port from the drop down list')
+    def raise_warning(self, warning_message='Maximum number of animals reached'):
+        '''Raises an error window that can be dismissed with any key or mouse press.'''
+
+        def dismiss_warning(event=None):
+            '''Destroy the warning window when triggered.'''
+            print(f"Event triggered: {event}")  # Debugging to confirm key press is detected
+            message.destroy()
+
+        message = CTk()
+        message.title("WARNING")
+        message.geometry('320x100')
+        message.resizable(False, False)
+        root = CTk()
+        root.bind("<KeyPress>", dismiss_warning)
+
+
+        label = CTkLabel(message, text=warning_message)
         label.grid(row=0, column=0, padx=10, pady=10)
+
+        # Ensure the pop-up window grabs focus
+        message.focus_force()
+
+        # Bind key and mouse events to dismiss the window
+        message.bind("<KeyPress>", dismiss_warning)  # Captures any key press
+        message.bind("<Button>", dismiss_warning)   # Captures any mouse click
+
+        # Add an OK button for manual dismissal
+        ok_button = CTkButton(message, text="OK", width=10, command=dismiss_warning)
+        ok_button.grid(row=2, column=0, padx=10, pady=10)
+
         AudioManager.play("shared/sounds/error.wav")
+
+        message.mainloop()
