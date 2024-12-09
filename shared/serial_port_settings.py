@@ -6,7 +6,6 @@ from customtkinter import *
 from tkinter import messagebox
 from shared.tk_models import SettingPage
 from shared.serial_port_controller import *
-import customtkinter
 
 
 
@@ -15,12 +14,12 @@ class SerialPortSetting(SettingPage):
     '''a class that implements methods and functions 
     related to connecting serial port setting to the experiments '''
 
-    def __init__(self, menu_page, preference = NONE, controller: SerialPortController = NONE):
+    def __init__(self, preference = NONE, controller: SerialPortController = NONE):
         ''' implement the constructor of the class object,
         initializing the tab_view page with summary page'''
 
         super().__init__(self)
-        self.menu_page = menu_page
+
         # GUI element
 
         self.title("Serial Port")
@@ -77,7 +76,6 @@ class SerialPortSetting(SettingPage):
         self.tab_view.add("Data Collection")
         self.summary_page("Map RFID")
         self.summary_page("Data Collection")
-        
 
         self.available_configuration = [file for file in listdir(self.port_setting_configuration_path)
                                         if isfile(join(self.port_setting_configuration_path, file))]
@@ -105,7 +103,6 @@ class SerialPortSetting(SettingPage):
         self.set_preference_button.grid(row=2, column=2, padx=20, pady=15, sticky="ew")
         self.comfirm_button.grid(row=2, column=3, padx=20, pady=15, sticky="ew")
 
-        
         # bottom region of the page
         self.edit_region = CTkFrame(master=self.tab_view.tab(tab), corner_radius=10, border_width=2, width=400, height=400)
         self.edit_region.grid(row=1, column=0, columnspan=5, padx=20, pady=5, sticky="ew")
@@ -190,11 +187,10 @@ class SerialPortSetting(SettingPage):
         self.data_text = CTkLabel(self.edit_region, height=25, width=50, text="Waiting for Data...")
         self.data_text.grid(row=13, column=2, columnspan=3, padx=20, pady=3, sticky="ew")
 
+        self.back_to_summary_button = CTkButton(self.edit_region, text="Back to Summary", command=self.go_to_summary_page, height=14)
+        self.back_to_summary_button.grid(row=12, column=1, padx=20, pady=5, sticky="ns")
+
         self.serial_port_controller = SerialPortController()
-
-
-
-
 
     def update_label(self, data):
         # Update the label with data from the test_read method
@@ -250,10 +246,6 @@ class SerialPortSetting(SettingPage):
         self.edit_button = CTkButton(self.summary_section, text="Edit", command=self.edit)
         self.edit_button.grid(row=8, column=2, padx=20, pady=40, sticky="ns")
 
-        # Back button
-        self.back_button = CTkButton(self.summary_section, text="Back", command=self.menu_page)
-        self.back_button.grid(row=8, column=1, padx=20, pady=40, sticky="ns")
-
         #pylint: enable=line-too-long
 
 
@@ -278,6 +270,12 @@ class SerialPortSetting(SettingPage):
         self.edit_page("Map RFID")
         self.edit_page("Data Collection")
 
+    def go_to_summary_page(self):
+        '''Refresh tabs and display the summary page'''
+        self.refresh_tabs()
+        self.summary_page("Map RFID")
+        self.summary_page("Data Collection")
+    
     def refresh_tabs(self):
         '''refreshes the page when updates are made'''
         self.tab_view.delete("Map RFID")
@@ -365,7 +363,8 @@ class SerialPortSetting(SettingPage):
             print("Serial port controller not initialized")
             return None
         
-        
+
+
 
 
 if __name__ == "__main__":
