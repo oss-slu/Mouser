@@ -187,6 +187,9 @@ class SerialPortSetting(SettingPage):
         self.data_text = CTkLabel(self.edit_region, height=25, width=50, text="Waiting for Data...")
         self.data_text.grid(row=13, column=2, columnspan=3, padx=20, pady=3, sticky="ew")
 
+        self.back_to_summary_button = CTkButton(self.edit_region, text="Back to Summary", command=self.go_to_summary_page, height=14)
+        self.back_to_summary_button.grid(row=12, column=1, padx=20, pady=5, sticky="ns")
+
         self.serial_port_controller = SerialPortController()
 
     def update_label(self, data):
@@ -267,6 +270,12 @@ class SerialPortSetting(SettingPage):
         self.edit_page("Map RFID")
         self.edit_page("Data Collection")
 
+    def go_to_summary_page(self):
+        '''Refresh tabs and display the summary page'''
+        self.refresh_tabs()
+        self.summary_page("Map RFID")
+        self.summary_page("Data Collection")
+    
     def refresh_tabs(self):
         '''refreshes the page when updates are made'''
         self.tab_view.delete("Map RFID")
