@@ -1,10 +1,11 @@
 
-from experiment_pages.create_experiment.summary_ui import SummaryUI
-from customtkinter import *
-from tkinter import filedialog
-from shared.tk_models import *
-from databases.experiment_database import ExperimentDatabase
-from shared.experiment import Experiment
+from experiment_pages.create_experiment.summary_ui import *
+
+class ReviewSummaryUI(SummaryUI):
+    '''Summary User Interface for the review page (without the create button).'''
+    def __init__(self, experiment: Experiment, parent: CTk, prev_page: CTkFrame, menu_page: CTkFrame):
+        # Pass `show_create_button=False` to disable the button
+        super().__init__(experiment, parent, prev_page, menu_page)
 
 class ReviewUI(MouserPage):
     '''Review User Interface for experiment summary.'''
@@ -14,12 +15,15 @@ class ReviewUI(MouserPage):
         self.input = experiment
         self.menu = menu_page
 
-        # Create the SummaryUI
-        self.summary_ui = SummaryUI(experiment, self, prev_page, menu_page)
+        # Use ReviewSummaryUI for the review page
+        self.summary_ui = ReviewSummaryUI(experiment, self, prev_page, menu_page)
         
-        #return to menu button
-        review_button = CTkButton(self, text="Back to Menu", command=self.go_back)
-        review_button.place(relx=0.5, rely=0.9, anchor="center")
+        # Add the summary UI to the grid layout of ReviewUI
+        self.summary_ui.grid(row=0, column=0, sticky="nsew")
+
+        # Configure the grid so it expands properly
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
 
     def go_back(self):
         # Logic to go back to the previous page

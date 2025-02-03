@@ -56,7 +56,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         self.rfid_button = CTkButton(main_frame, text='Map RFID', width=button_size,
                                 command=  self.rfid_page.raise_frame)
         self.summary_button = CTkButton(main_frame, text='Summary View', width=button_size,
-                                command= self.data_page.raise_frame)
+                                command= self.summary_page.raise_frame)
 
         self.collection_button.grid(row=0, column=0, ipady=15, ipadx=15, pady=10, padx=10)
         self.analysis_button.grid(row=1, column=0, ipady=15, ipadx=15, pady=10, padx=10)
