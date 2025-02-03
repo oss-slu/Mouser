@@ -122,6 +122,23 @@ def open_serial_port_setting():
     SerialPortSetting("serial_port_preference.csv", rfid_serial_port_controller) # pylint: disable=unused-variable
 def save_file():
     '''Command for the 'save file' option in menu bar.'''
+    global CURRENT_FILE_PATH, TEMP_FILE_PATH
+    
+    if CURRENT_FILE_PATH is None:
+        # If no file path is set (new experiment), prompt for save location
+        file_path = asksaveasfilename(
+            defaultextension=".mouser",
+            filetypes=[("Database files", ".mouser .pmouser")]
+        )
+        if file_path:  # Only proceed if user didn't cancel
+            CURRENT_FILE_PATH = file_path
+        else:
+            return
+    
+    # If TEMP_FILE_PATH is None, use CURRENT_FILE_PATH
+    if TEMP_FILE_PATH is None:
+        TEMP_FILE_PATH = CURRENT_FILE_PATH
+    
     print("Current", CURRENT_FILE_PATH)
     print("Temp", TEMP_FILE_PATH)
 

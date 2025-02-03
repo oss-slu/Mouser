@@ -15,6 +15,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
     def __init__(self, parent: CTk, name: str, prev_page: ChangeableFrame = None, controller: SerialPortController = None): #pylint: disable= undefined-variable
 
         #Get name of file from file path
+        self.file_path = name  # Store the full file path
         experiment_name = os.path.basename(name)
         experiment_name = os.path.splitext(experiment_name)[0]
         self.experiment = ExperimentDatabase(name)
@@ -99,7 +100,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         self.data_page.close_connection()
         self.cage_page.close_connection()
         self.rfid_page.close_connection()
-
+        
     def delete_experiment(self, page: CTkFrame, name: str):
         '''Delete Experiment.'''
 

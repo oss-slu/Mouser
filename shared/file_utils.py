@@ -2,6 +2,7 @@
 import tempfile
 import os
 from shared.password_utils import PasswordManager
+from datetime import datetime
 
 
 TEMP_FOLDER_NAME = "Mouser"
@@ -47,10 +48,21 @@ def create_temp_from_encrypted(filepath:str, password:str):
 
 
 def save_temp_to_file(temp_file_path: str, permanent_file_path: str):
-    '''Save data from temporary file to a permanent file'''
+    '''
+    Save data from temporary file to a permanent file.
+    Automatically appends a timestamp to the filename before the extension.
+    '''
     # Ensure paths are absolute and properly resolved
     temp_file_path = os.path.abspath(temp_file_path)
     permanent_file_path = os.path.abspath(permanent_file_path)
+
+    # Split the path into base and extension
+    base, ext = os.path.splitext(permanent_file_path)
+    # Take only the part before the first underscore if it exists
+    base = base.split('_')[0]
+    # Add timestamp before the extension
+    timestamp_str = datetime.now().strftime("_%Y%m%d_%H%M%S")
+    permanent_file_path = f"{base}{timestamp_str}{ext}"
 
     with open(temp_file_path, 'rb') as temp_file:
         data = temp_file.read()
@@ -63,6 +75,14 @@ def save_temp_to_encrypted(temp_file_path: str, permanent_file_path: str, passwo
     # Ensure paths are absolute and properly resolved
     temp_file_path = os.path.abspath(temp_file_path)
     permanent_file_path = os.path.abspath(permanent_file_path)
+    
+    # Split the path into base and extension
+    base, ext = os.path.splitext(permanent_file_path)
+    # Take only the part before the first underscore if it exists
+    base = base.split('_')[0]
+    # Add timestamp before the extension
+    timestamp_str = datetime.now().strftime("_%Y%m%d_%H%M%S")
+    permanent_file_path = f"{base}{timestamp_str}{ext}"
     
     manager = PasswordManager(password)
 

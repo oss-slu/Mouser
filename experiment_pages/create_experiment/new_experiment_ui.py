@@ -63,8 +63,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.species = CTkEntry(self.main_frame, width=140)
 
         self.measure_items = CTkEntry(self.main_frame, width=140)
-        self.measure_items.insert(0, 'Weight')
-        self.measure_items.configure(state='disabled')
+        self.measure_items.configure(state='normal')
 
         self.animal_num = CTkEntry(self.main_frame, width=110)
         self.group_num = CTkEntry(self.main_frame, width=110)

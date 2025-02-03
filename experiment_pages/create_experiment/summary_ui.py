@@ -26,7 +26,7 @@ class CreateExperimentButton(CTkButton):
             self.experiment.save_to_database(directory)
             if self.experiment.get_password():
                 password = self.experiment.get_password()
-                file = directory + '/' + self.experiment.get_name() + '.pmouser'
+                file = os.path.normpath(os.path.join(directory, self.experiment.get_name() + '.pmouser'))
                 manager = PasswordManager(password)
                 decrypted_data = manager.decrypt_file(file)
                 temp_folder_name = "Mouser"
@@ -40,14 +40,26 @@ class CreateExperimentButton(CTkButton):
                 with open(temp_file_path, "wb") as temp_file:
                     temp_file.write(decrypted_data)
                     temp_file.seek(0)
-                    root= self.winfo_toplevel() #pylint: disable= redefined-outer-name
+                    root = self.winfo_toplevel() #pylint: disable= redefined-outer-name
+                    # Set the global variables for file paths
+                    import sys
+                    module = sys.modules['__main__']
+                    setattr(module, 'CURRENT_FILE_PATH', file)
+                    setattr(module, 'TEMP_FILE_PATH', temp_file.name)
                     page = ExperimentMenuUI(root, temp_file.name)
+                    raise_frame(page)
 
             else:
-                file = directory + '/' + self.experiment.get_name() + '.mouser'
-                root= self.winfo_toplevel()
+                file = os.path.normpath(os.path.join(directory, self.experiment.get_name() + '.mouser'))
+                print("FULL FILE NAME + DIRECTORY: " + file)
+                root = self.winfo_toplevel()
+                # Set the global variables for file paths
+                import sys
+                module = sys.modules['__main__']
+                setattr(module, 'CURRENT_FILE_PATH', file)
+                setattr(module, 'TEMP_FILE_PATH', file)
                 page = ExperimentMenuUI(root, file)
-                raise_frame(page) #pylint: disable=undefined-variable
+                raise_frame(page) #pylint: disable=undefined-variable 
 
 class SummaryUI(MouserPage):# pylint: disable=undefined-variable
     '''Summary User Interface.'''
