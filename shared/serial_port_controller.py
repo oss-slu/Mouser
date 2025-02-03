@@ -36,6 +36,21 @@ class SerialPortController():
             else:
                 available_ports.append((f'{port_.device}', f'{port_.description}'))
         return available_ports
+    
+    def get_available_ports_name(self):
+        '''Returns a list of available system ports.'''
+        available_ports = []
+        ports = list(serial.tools.list_ports.comports())
+        for port_ in ports:
+            if port_ in self.ports_in_used:       #prevention
+                pass
+            else:
+                available_ports.append(f'{port_.device}')
+        return available_ports
+    
+    def get_num_ports(self):
+        '''Returns the number of available ports.'''
+        return len(list(serial.tools.list_ports.comports()))
 
     def get_virtual_port(self):
         '''Returns a list of available virtual ports.'''
@@ -168,89 +183,100 @@ class SerialPortController():
 
     def retrieve_setting(self, setting_file):
         '''Sets the setting of the serial port opened by converting the 
-        setting from csv file to actual setting used'''
+        setting from csv file to actual setting used.'''
         if setting_file:
-            preference_path = os.path.join(os.getcwd(), "settings", "serial ports", "preference", setting_file)
+            preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference")
+            preference_path = os.path.join(preference_dir, setting_file)
+
+            if not os.path.exists(preference_path):
+                print(f"Preference file {preference_path} not found.")
+                return
 
             try:
                 with open(preference_path, "r") as file:
-                    settings_file_name = file.readline().strip()  # Read the first line
-                    settings_path = os.path.join(os.getcwd(), "settings", "serial ports", settings_file_name)
-
-                    with open(settings_path, "r") as settings_file:
-                        line = settings_file.readline().strip()  
-                        settings = line.split(',')  # Split the line into a list
-
-                        if len(settings) < 7:
-                            print("Error: settings must have at least 7 elements.")
-                            return
-
-                        self.baud_rate = int(settings[0])  # Convert baud rate to int
-
-                        # Handle byte size
-                        match settings[3]:  # Adjusted index for byte size
-                            case "Five":
-                                self.byte_size = serial.FIVEBITS
-                            case "Six":
-                                self.byte_size = serial.SIXBITS
-                            case "Seven":
-                                self.byte_size = serial.SEVENBITS
-                            case "Eight":
-                                self.byte_size = serial.EIGHTBITS
-                            case _:
-                                self.byte_size = serial.EIGHTBITS  # Default to 8 if unspecified
-
-                        # Handle parity
-                        match settings[1]:
-                            case "Space":
-                                self.parity = serial.PARITY_SPACE
-                            case "Odd":
-                                self.parity = serial.PARITY_ODD
-                            case "Even":
-                                self.parity = serial.PARITY_EVEN
-                            case "Mark":
-                                self.parity = serial.PARITY_MARK
-                            case _:
-                                self.parity = serial.PARITY_NONE  # Default if unspecified
-
-                        # Handle flow control
-                        match settings[2]:
-                            case "Xon/Xoff":
-                                self.flow_control = 1
-                            case "Hardware":
-                                self.flow_control = 2
-                            case _:
-                                self.flow_control = None
+                    for line in file:
+                        settings_file_name = line.strip()
+                        print("file name: ", file, "line name: ", line)
+                        print(f"Settings file name: {settings_file_name}")
+                        settings_path = os.path.join(os.getcwd(), "settings", "serial ports", setting_file)
+                        print(f"Settings path: {settings_path}")
                         
-                        # Handle stop bits
-                        match settings[4]:  # Stop bits are at index 4
-                            case "1":
-                                self.stop_bits = serial.STOPBITS_ONE
-                            case "1.5":
-                                self.stop_bits = serial.STOPBITS_ONE_POINT_FIVE
-                            case "2":
-                                self.stop_bits = serial.STOPBITS_TWO
-                            case _:
-                                self.stop_bits = serial.STOPBITS_ONE  # Default to 1 if unspecified
+                        if not os.path.exists(settings_path):
+                            print(f"Settings file {settings_path} not found.")
+                            continue
+                        
+                        with open(settings_path, "r") as settings_file:
+                            line = settings_file.readline().strip()
+                            settings = line.split(',')
+                            print("Successfully retrieved settings.")
 
-                        # Input byte
-                        input_byte = settings[5]  # Assuming this is a valid input byte value
-                        self.reader_port = settings[6]
+                            if len(settings) < 7:
+                                print("Error: settings must have at least 7 elements.")
+                                continue
 
-                        return settings
+                            self.baud_rate = int(settings[0])
 
-            except FileNotFoundError as e:
-                print(f"Error: {e}")
+                            match settings[3]:
+                                case "Five":
+                                    self.byte_size = serial.FIVEBITS
+                                case "Six":
+                                    self.byte_size = serial.SIXBITS
+                                case "Seven":
+                                    self.byte_size = serial.SEVENBITS
+                                case "Eight":
+                                    self.byte_size = serial.EIGHTBITS
+                                case _:
+                                    self.byte_size = serial.EIGHTBITS
+
+                            match settings[1]:
+                                case "Space":
+                                    self.parity = serial.PARITY_SPACE
+                                case "Odd":
+                                    self.parity = serial.PARITY_ODD
+                                case "Even":
+                                    self.parity = serial.PARITY_EVEN
+                                case "Mark":
+                                    self.parity = serial.PARITY_MARK
+                                case _:
+                                    self.parity = serial.PARITY_NONE
+
+                            match settings[2]:
+                                case "Xon/Xoff":
+                                    self.flow_control = 1
+                                case "Hardware":
+                                    self.flow_control = 2
+                                case _:
+                                    self.flow_control = None
+
+                            match settings[4]:
+                                case "1":
+                                    self.stop_bits = serial.STOPBITS_ONE
+                                case "1.5":
+                                    self.stop_bits = serial.STOPBITS_ONE_POINT_FIVE
+                                case "2":
+                                    self.stop_bits = serial.STOPBITS_TWO
+                                case _:
+                                    self.stop_bits = serial.STOPBITS_ONE
+
+                            self.reader_port = settings[6]
             except Exception as e:
-                print(f"An error occurred: {e}")
+                print(f"An error occurred while retrieving settings: {e}")
+
 
 if __name__ == "__main__":
     controller = SerialPortController('serial_port_preference.csv')
     
-    settings = controller.retrieve_setting('serial_port_preference.csv')
-    print(controller.get_port(settings))
+    # settings = controller.retrieve_setting('serial_port_preference.csv')
+    # print(controller.get_port(settings))
 
-    data = controller.read_data()
-    print(data)
+    # data = controller.read_data()
+    # print(data)
+
+    available_ports = controller.get_available_ports_name()
+    number_of_ports = controller.get_num_ports()
+    print("Available system ports:")
+    for port in available_ports:
+        print(f"{port}")
+    print(f"Number of ports: {number_of_ports}")
 
 

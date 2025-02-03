@@ -16,6 +16,7 @@ import shared.file_utils as file_utils
 from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment.select_experiment_ui import ExperimentsUI
+from experiment_pages.experiment.test_screen import TestScreen
 
 # Function to resolve resource paths (must be defined before usage)
 def get_resource_path(relative_path):
@@ -116,6 +117,10 @@ def create_file():
     page = NewExperimentUI(root, experiments_frame)
     page.raise_frame()
 
+def open_test():
+    '''Command for 'Test Serials' button in the welcome screen.'''
+    page = TestScreen(root, experiments_frame)
+    page.raise_frame()
 
 def open_serial_port_setting():
     '''opens the serial port setting page'''
@@ -185,9 +190,11 @@ text_label.pack(padx=20, pady=10)
 
 new_file_button = CTkButton(welcome_frame, text="New Experiment", command=create_file, width=200, height=50)
 open_file_button = CTkButton(welcome_frame, text="Open Experiment", command=open_file, width=200, height=50)
+test_screen_button = CTkButton(welcome_frame, text="Test Serials", command= open_test, width=200, height=50)
 
 new_file_button.pack(pady=(10, 5), padx=20, fill='x', expand=True)
 open_file_button.pack(pady=(5, 10), padx=20, fill='x', expand=True)
+test_screen_button.pack(pady=(5, 10), padx=20, fill='x', expand=True)
 
 raise_frame(experiments_frame)
 root.grid_rowconfigure(0, weight=1)

@@ -7,9 +7,6 @@ from tkinter import messagebox
 from shared.tk_models import SettingPage
 from shared.serial_port_controller import *
 
-
-
-
 class SerialPortSetting(SettingPage):
     '''a class that implements methods and functions 
     related to connecting serial port setting to the experiments '''
@@ -27,7 +24,11 @@ class SerialPortSetting(SettingPage):
         self.configuration_name = StringVar(value="")
         self.current_configuration_name = StringVar(value="")
         self.preference_path = None
-        self.serial_port_controller = None
+        if isinstance(controller, SerialPortController):
+            self.serial_port_controller = controller
+        else:
+            self.serial_port_controller = SerialPortController()
+
         if os.name == 'posix':
             self.port_setting_configuration_path = os.getcwd() + "/settings/serial ports"
         else:
@@ -42,25 +43,21 @@ class SerialPortSetting(SettingPage):
         self.stop_bits_var = StringVar(value="")
         self.input_bype_var = StringVar(value="")
 
-
-        if controller:
-            self.serial_port_controller = controller
-
         if preference:
-            try:
-                if os.name == 'posix':
-                    self.preference_path = os.getcwd() + "/settings/serial ports/preference/" + preference
-                else:    
-                    self.preference_path = os.getcwd() + "\\settings\\serial ports\\preference\\" + preference
-                file = open(self.preference_path, "r")
-                file_names = []
-                for line in file:
-                    file_names.append(line)
-                self.confirm_setting(file_names[0])
-                #splitted = file_names[0].split("\\")
-                self.preference = file_names[0]
-            except Exception as e: # pylint: disable= broad-exception-caught
-                print("error from reaching preferenced file: ", e)
+            self.preference_path = os.path.join(os.getcwd(), "settings", "serial ports", "preference", preference)
+            
+            if os.path.exists(self.preference_path):
+                try:
+                    with open(self.preference_path, "r") as file:
+                        file_names = file.readlines()
+                        if file_names:
+                            self.confirm_setting(file_names[0].strip())
+                            self.preference = file_names[0].strip()
+                except Exception as e:
+                    print("Error opening preference file:", e)
+            else:
+                print(f"Preference file {self.preference_path} not found. Using default settings.")
+
         else:
             self.baud_rate_var = StringVar(value="9600")
             self.parity_var = StringVar(value="None")
@@ -92,7 +89,17 @@ class SerialPortSetting(SettingPage):
         if self.preference:
                 self.import_file.set(self.preference)
         self.edit_configuration_button = CTkButton(self.configuration_region, text="Edit", width=2, height=14, command=self.edit_configuration)
-        self.set_preference_button = CTkButton(self.configuration_region, text="Set Preference", width=2, height=14, command=self.set_preference)
+        
+        self.set_preference_button = CTkButton(
+            self.configuration_region, text="Set as Meausurement Device", width=2, height=14,
+            command=lambda: self.set_preference(self.serial_port.get(), self.current_configuration_name.get())
+        )
+        
+        self.set_rfid_button = CTkButton(
+            self.configuration_region, text="Set as RFID Reader", width=2, height=14,
+            command=lambda: self.set_rfid(self.serial_port.get(), self.current_configuration_name.get())
+        )
+
         self.comfirm_button = CTkButton(self.configuration_region, text="Confirm", width=2, height=14, command=self.confirm_setting)
 
         self.configuration_region.grid(row=0, column=0, columnspan=5, padx=20, pady=5, sticky="ew")
@@ -101,6 +108,7 @@ class SerialPortSetting(SettingPage):
         self.import_file.grid(row=1, column=1, columnspan=2, padx=18, pady=10, sticky="ew")
         self.edit_configuration_button.grid(row=2, column=0, padx=20, pady=15, sticky="ew")
         self.set_preference_button.grid(row=2, column=2, padx=20, pady=15, sticky="ew")
+        self.set_rfid_button.grid(row=3, column=2, padx=20, pady=15, sticky="ew")
         self.comfirm_button.grid(row=2, column=3, padx=20, pady=15, sticky="ew")
 
         # bottom region of the page
@@ -249,18 +257,17 @@ class SerialPortSetting(SettingPage):
         #pylint: enable=line-too-long
 
 
-    def save(self):
-        '''saving the serial port setting to the new/existing file'''
-        file_name = os.path.join(self.port_setting_configuration_path, self.configuration_name.get()+".csv")
+    def save(self, configuration_name, settings):
+        '''Save a new or existing configuration.'''
+        settings_path = os.path.join(os.getcwd(), "settings", "serial ports", f"{configuration_name}.csv")
+        
+        try:
+            with open(settings_path, "w") as file:
+                file.write(",".join(settings))
+            print(f"Settings saved for {configuration_name}")
+        except Exception as e:
+            print(f"Error saving settings: {e}")
 
-        with open(file_name, "w") as file:
-            setting = self.baud_rate_menu.get()+","+self.parity_menu.get()+","+self.flow_control_menu.get()+","+self.data_bits_menu.get()+","+self.stop_bits_var.get()+","+self.input_bype_var.get()+","+self.serial_port.get()    # pylint: disable=line-too-long
-            file.write(setting)
-        file.close()
-
-        self.refresh_tabs()
-        self.summary_page("Map RFID")
-        self.summary_page("Data Collection")
 
 
     def edit(self):
@@ -283,36 +290,31 @@ class SerialPortSetting(SettingPage):
         self.tab_view.add("Map RFID")
         self.tab_view.add("Data Collection")
 
-    def set_preference(self):
-        '''set preference to a configuration so that
-        the configuration is saved as the setting even
-        after the program is closed'''
-        # TODO: save the name of current configuration file     # pylint: disable=fixme
-        # to the preference file in preference directory
-        # absolute path: os.path.abspath(part of file path with the file)
+    def set_preference(self, port, file_name):
+        '''Save a specific configuration for a given port in its own preference folder.'''
+        preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference", "device")
+        os.makedirs(preference_dir, exist_ok=True)
+        preference_path = os.path.join(preference_dir, "preferred_config.txt")
+        
+        try:
+            with open(preference_path, "w") as file:
+                file.write(file_name + "\n")
+            print(f"Preference for {port} set to {file_name}")
+        except Exception as e:
+            print(f"Error saving preference for {port}: {e}")
 
-        if self.preference_path:
-            try:
-                # get the file name from the option menu, then open the preference file,
-                file_name= self.current_configuration_name.get()
-                file = open(self.preference_path, "w")
-                file.write(file_name)
-
-                file.close()
-
-            except Exception as e: # pylint: disable= broad-exception-caught
-                print("Error: file can't be set to preference: ", e)
-        else:
-            # give a error window that says preference_file not set up
-            print("Preference file missing")
-
-        if self.serial_port_controller:
-            print("controller in setting")
-            self.serial_port_controller.retrieve_setting([self.baud_rate_var.get(), self.data_bits_var.get(),
-                                                          self.parity_var.get(), self.stop_bits_var.get(),
-                                                          self.flow_control_var.get()])
-
-            self.serial_port_controller.update_setting(self.serial_port.get())
+    def set_rfid(self, port, file_name):
+        '''Save a specific configuration for a given port in its own preference folder.'''
+        preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference", "reader")
+        os.makedirs(preference_dir, exist_ok=True)
+        preference_path = os.path.join(preference_dir, "rfid_config.txt")
+        
+        try:
+            with open(preference_path, "w") as file:
+                file.write(file_name + "\n")
+            print(f"RFID Reader for {port} set to {file_name}")
+        except Exception as e:
+            print(f"Error saving RFID Reader for {port}: {e}")
 
     def confirm_setting(self, f = None):
         '''select a configuration and use it as current serial
@@ -364,10 +366,45 @@ class SerialPortSetting(SettingPage):
             return None
         
 
-
-
-
 if __name__ == "__main__":
     root = CTk()
-    app = SerialPortSetting(root)
+    app = SerialPortSetting()
+
+    # TEST 1: Print Available Serial Ports
+    if app.serial_port_controller:
+        print("Available Serial Ports:", app.serial_port_controller.get_available_ports())
+    else:
+        print("ERROR: SerialPortController is not initialized!")
+
+    # TEST 2: Set a preference for a port and retrieve it
+    test_port = "COM3"  # Replace with an actual port on your system
+    test_config = "test_config.csv"
+
+    print(f"\nSetting preference for {test_port} to {test_config}...")
+    app.set_preference(test_port, test_config)
+
+    # Verify that preference is saved
+    preference_path = os.path.join(os.getcwd(), "settings", "serial ports", "preference", test_port, "preferred_config.txt")
+    if os.path.exists(preference_path):
+        with open(preference_path, "r") as file:
+            saved_config = file.read().strip()
+            print(f"Retrieved Preference: {saved_config}")
+            assert saved_config == test_config, "ERROR: Preference was not saved correctly!"
+
+    # TEST 3: Save a new configuration
+    test_settings = ["9600", "None", "None", "Eight", "1", "Binary", test_port]
+    print("\nSaving configuration...")
+    app.save("test_config", test_settings)
+
+    # Verify that configuration is saved
+    settings_path = os.path.join(os.getcwd(), "settings", "serial ports", "test_config.csv")
+    if os.path.exists(settings_path):
+        with open(settings_path, "r") as file:
+            saved_settings = file.read().strip()
+            print(f"Saved Configuration: {saved_settings}")
+            assert saved_settings == ",".join(test_settings), "ERROR: Configuration was not saved correctly!"
+
+    print("\nAll tests passed successfully!")
+
     root.mainloop()
+
