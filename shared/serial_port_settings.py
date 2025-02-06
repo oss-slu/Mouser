@@ -198,24 +198,10 @@ class SerialPortSetting(SettingPage):
         self.save_button = CTkButton(self.edit_region, text="Save", command=self.save, height=14)
         self.save_button.grid(row=11, column=2, padx=20, pady=5, sticky="ns")
 
-        self.test_button = CTkButton(self.edit_region, text="Test Read", command=self.test_read, height=14)
-        self.test_button.grid(row=12, column=2, padx=20, pady=5, sticky="ns")
-
-        self.data_text = CTkLabel(self.edit_region, height=25, width=50, text="Waiting for Data...")
-        self.data_text.grid(row=13, column=2, columnspan=3, padx=20, pady=3, sticky="ew")
-
         self.back_to_summary_button = CTkButton(self.edit_region, text="Back to Summary", command=self.go_to_summary_page, height=14)
-        self.back_to_summary_button.grid(row=12, column=1, padx=20, pady=5, sticky="ns")
+        self.back_to_summary_button.grid(row=11, column=1, padx=20, pady=5, sticky="ns")
 
         self.serial_port_controller = SerialPortController(self.preference)
-
-    def update_label(self, data):
-        # Update the label with data from the test_read method
-        print(data)
-        self.data_text.configure(text=data)
-        self.master.update_idletasks()
-
-        #pylint: enable=line-too-long
 
     def summary_page(self, tab: str):
         ''' page that displays the setting of current configuration'''
@@ -367,67 +353,3 @@ class SerialPortSetting(SettingPage):
         self.configuration_name_entry.insert(0, file_name.with_suffix(""))
         self.confirm_setting()
         pass
-
-    def test_read(self):
-        '''Reads data from the serial port using the current settings on screen'''
-        if self.serial_port_controller:
-            try:
-                self.serial_port_controller.retrieve_setting([self.baud_rate_var.get(), self.data_bits_var.get(),
-                                                              self.parity_var.get(), self.stop_bits_var.get(),
-                                                              self.flow_control_var.get()])
-                self.serial_port_controller.update_setting(self.serial_port.get())
-                data = self.serial_port_controller.read_data()
-                print("Data read from serial port:" + str(data))
-                self.update_label("Data read from serial port: " + str(data))
-                return ("Data read from serial port: " + str(data))
-
-            except Exception as e:  # pylint: disable=broad-exception-caught
-                print("Error reading from serial port:", e)
-                return None
-        else:
-            print("Serial port controller not initialized")
-            return None
-        
-
-if __name__ == "__main__":
-    root = CTk()
-    app = SerialPortSetting()
-
-    # TEST 1: Print Available Serial Ports
-    if app.serial_port_controller:
-        print("Available Serial Ports:", app.serial_port_controller.get_available_ports())
-    else:
-        print("ERROR: SerialPortController is not initialized!")
-
-    # TEST 2: Set a preference for a port and retrieve it
-    test_port = "COM3"  # Replace with an actual port on your system
-    test_config = "test_config.csv"
-
-    print(f"\nSetting preference for {test_port} to {test_config}...")
-    app.set_preference(test_port, test_config)
-
-    # Verify that preference is saved
-    preference_path = os.path.join(os.getcwd(), "settings", "serial ports", "preference", test_port, "preferred_config.txt")
-    if os.path.exists(preference_path):
-        with open(preference_path, "r") as file:
-            saved_config = file.read().strip()
-            print(f"Retrieved Preference: {saved_config}")
-            assert saved_config == test_config, "ERROR: Preference was not saved correctly!"
-
-    # TEST 3: Save a new configuration
-    test_settings = ["9600", "None", "None", "Eight", "1", "Binary", test_port]
-    print("\nSaving configuration...")
-    app.save("test_config", test_settings)
-
-    # Verify that configuration is saved
-    settings_path = os.path.join(os.getcwd(), "settings", "serial ports", "test_config.csv")
-    if os.path.exists(settings_path):
-        with open(settings_path, "r") as file:
-            saved_settings = file.read().strip()
-            print(f"Saved Configuration: {saved_settings}")
-            assert saved_settings == ",".join(test_settings), "ERROR: Configuration was not saved correctly!"
-
-    print("\nAll tests passed successfully!")
-
-    root.mainloop()
-
