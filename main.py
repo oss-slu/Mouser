@@ -1,4 +1,4 @@
-'''Main functionality of Program. Main Screen!'''
+'''Main functionality of Program.'''
 import os
 import shutil
 import tempfile
