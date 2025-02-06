@@ -13,7 +13,6 @@ def raise_frame(frame: CTkFrame): #pylint: disable= redefined-outer-name
     current_frame = frame
     current_frame.pack()
    
-
 def create_nav_button(parent: CTkFrame, name: str, button_image: PhotoImage, frame: CTkFrame, relx: float, rely: float): #pylint: disable= line-too-long,redefined-outer-name
     '''Makes a navigation button to the various sub-menus of the program.'''
 
@@ -21,7 +20,6 @@ def create_nav_button(parent: CTkFrame, name: str, button_image: PhotoImage, fra
                     compound=TOP, width=25, command=lambda: raise_frame(frame))
     button.place(relx=relx, rely=rely, anchor=CENTER)
     button.image = button_image
-
 
 class MouserPage(CTkFrame):
 
@@ -102,6 +100,7 @@ class ChangeableFrame(ABC, CTkFrame):
         pass # pylint: disable= unnecessary-pass
 
 class SettingPage(CTkToplevel):
+    '''Initializes the SettingPage.'''
     def __init__(self, title: str):
         super().__init__()
         # Selecting GUI theme - dark,
@@ -109,6 +108,7 @@ class SettingPage(CTkToplevel):
         set_appearance_mode("light")
         # Selecting color theme-blue, green, dark-blue
         set_default_color_theme("dark-blue")
+        self.title(title)
         self.geometry("700x600")
 
 class MenuButton(CTkButton):

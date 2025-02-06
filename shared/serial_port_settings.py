@@ -1,3 +1,4 @@
+'''Serial Port Settings is the page that allows user to set up serial port settings.'''
 import csv
 from pathlib import Path
 from os import listdir, getcwd
@@ -94,7 +95,7 @@ class SerialPortSetting(SettingPage):
         self.setting_configuration_label = CTkLabel(self.configuration_region, text="Existing Configuration", width=8, height=12)
         self.import_file = CTkOptionMenu(self.configuration_region, values=self.available_configuration, variable=self.current_configuration_name, height=12, width = 274)
         if self.preference:
-                self.import_file.set(self.preference)
+            self.import_file.set(self.preference)
         self.edit_configuration_button = CTkButton(self.configuration_region, text="Edit", width=2, height=14, command=self.edit_configuration)
         
         self.set_preference_button = CTkButton(
@@ -231,7 +232,6 @@ class SerialPortSetting(SettingPage):
         self.baud_rate_label.grid(row=1, column=0, padx=20, pady=5, sticky="ew")
         self.current_baud_rate.grid(row=1, column=2, padx=20, pady=5, sticky="ew")
 
-
         self.parity_label = CTkLabel(self.summary_section, text="Parity")
         self.current_parity = CTkLabel(self.summary_section, text=self.parity_var.get())
         self.parity_label.grid(row=2, column=0, padx=20, pady=5, sticky="ew")
@@ -241,7 +241,6 @@ class SerialPortSetting(SettingPage):
         self.current_flow_control = CTkLabel(self.summary_section, text=self.flow_control_var.get())
         self.flow_control_label.grid(row=3, column=0, padx=20, pady=5, sticky="ew")
         self.current_flow_control.grid(row=3, column=2, padx=20, pady=5, sticky="ew")
-
 
         self.data_bits_label = CTkLabel(self.summary_section, text="Data Bits")
         self.current_data_bits = CTkLabel(self.summary_section, text=self.data_bits_var.get())
@@ -262,7 +261,6 @@ class SerialPortSetting(SettingPage):
         self.edit_button.grid(row=8, column=2, padx=20, pady=40, sticky="ns")
 
         #pylint: enable=line-too-long
-
 
     def save(self):
         '''Save the current settings as a new or existing configuration.'''
