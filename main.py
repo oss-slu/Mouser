@@ -3,7 +3,6 @@ import os
 import shutil
 import tempfile
 import sys
-import os
 from tkinter.filedialog import *
 from PIL import Image
 from customtkinter import *
@@ -106,7 +105,7 @@ def create_file():
 
 def open_test():
     '''Command for 'Test Serials' button in the welcome screen.'''
-    global test_screen_instance  # Store reference so it isn't garbage collected
+    
     test_screen_instance = TestScreen(root)
     test_screen_instance.grab_set()
 
@@ -172,8 +171,7 @@ image_label = CTkLabel(welcome_frame, image=mouse_image, text="")
 image_label.pack(pady=(20, 10))
 
 # Create and place the welcome text
-welcome_text = "Welcome to Mouser!"
-text_label = CTkLabel(welcome_frame, text=welcome_text, wraplength=400, font=("Georgia", 32))
+text_label = CTkLabel(welcome_frame, text="Welcome to Mouser!", wraplength=400, font=("Georgia", 32))
 text_label.pack(padx=20, pady=10)
 
 new_file_button = CTkButton(welcome_frame, text="New Experiment", command=create_file, width=200, height=50)
