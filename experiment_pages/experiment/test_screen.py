@@ -1,92 +1,132 @@
 import os
+import time
 from customtkinter import *
 from shared.tk_models import *
 from shared.serial_handler import SerialDataHandler
 import threading
 
-class TestScreen(MouserPage):
-    '''Test Screen UI'''
+class TestScreen(CTkToplevel):
     def __init__(self, parent: CTk, prev_page: CTkFrame = None):
-        super().__init__(parent, "Test Screen", prev_page)
-        
+        super().__init__(parent)
+        self.title("Test Screen")
+        self.geometry("600x500")
+
         # Dictionary to track reading labels
         self.reading_labels = {}
 
-        # Create the main frame
-        main_frame = CTkFrame(self, corner_radius=15)
-        main_frame.grid(row=0, column=0, sticky="nsew")
-        main_frame.place(relx=0.3, rely=0.2, relwidth=0.4, relheight=0.75)
-
         # Add a title label
         title_label = CTkLabel(
-            main_frame, 
+            self, 
             text="Test Screen", 
             font=("Arial", 22, "bold"),  
             pady=20
         )
         title_label.grid(row=0, column=0, columnspan=4, padx=20, pady=20)
 
-        # Header Row
-        headers = ["Test", "COM Port", "Device Name", "Reading"]
-        for col, header in enumerate(headers):
-            header_label = CTkLabel(main_frame, text=header, font=("Arial", 14, "bold"), padx=10, pady=5)
-            header_label.grid(row=1, column=col, padx=10, pady=5, sticky="ew")
+        # Separate sections for RFID Readers and Serial Devices
+        self.setup_rfid_section()
+        self.setup_device_section()
+    
+    '''Test Screen UI'''
+    def setup_rfid_section(self):
+        '''Set up RFID Reader testing section.'''
+        rfid_label = CTkLabel(self, text="RFID Readers", font=("Arial", 16, "bold"))
+        rfid_label.grid(row=1, column=0, columnspan=2, pady=10)
 
-        # Read preferred devices (COM folders)
         preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference")
-        preferred_devices = [d for d in os.listdir(preference_dir) if os.path.isdir(os.path.join(preference_dir, d))]
-
-        for index, com_port in enumerate(preferred_devices, start=2):
-            config_path = os.path.join(preference_dir, com_port, "preferred_config.txt")
-            rfid_path = os.path.join(preference_dir, com_port, "rfid_config.txt")
-            device_name = "Unknown"
-
-            if os.path.exists(config_path):
-                with open(config_path, "r") as file:
-                    device_name = file.readline().strip()
-
-            elif os.path.exists(rfid_path):
-                device_name = "RFID Reader"
-
-            # Test Button
-            test_button = CTkButton(main_frame, text="Test", command=lambda p=com_port: self.test_serial(p))
+        rfid_readers = [d for d in os.listdir(preference_dir) if os.path.exists(os.path.join(preference_dir, d, "rfid_config.txt"))]
+        
+        for index, com_port in enumerate(rfid_readers, start=2):
+            test_button = CTkButton(self, text="Test RFID", command=lambda p=com_port: self.test_reader(p))
             test_button.grid(row=index, column=0, padx=10, pady=5, sticky="ew")
 
-            # COM Port Label
-            com_label = CTkLabel(main_frame, text=com_port, padx=10, pady=5)
+            com_label = CTkLabel(self, text=com_port, padx=10, pady=5)
             com_label.grid(row=index, column=1, sticky="ew")
 
-            # Device Name Label
-            device_label = CTkLabel(main_frame, text=device_name, padx=10, pady=5)
-            device_label.grid(row=index, column=2, sticky="ew")
-
-            # Default Reading Placeholder
-            reading_label = CTkLabel(main_frame, text="-----", padx=10, pady=5)
-            reading_label.grid(row=index, column=3, sticky="ew")
-
-            # Store reference to label for later updates
+            reading_label = CTkLabel(self, text="-----", padx=10, pady=5)
+            reading_label.grid(row=index, column=2, sticky="ew")
+            
             self.reading_labels[com_port] = reading_label
 
-    def test_serial(self, com_port):
+    def setup_device_section(self):
+        '''Set up Serial Device testing section.'''
+        device_label = CTkLabel(self, text="Serial Devices", font=("Arial", 16, "bold"))
+        device_label.grid(row=10, column=0, columnspan=2, pady=10)
+
+        preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference")
+        serial_devices = [d for d in os.listdir(preference_dir) if os.path.exists(os.path.join(preference_dir, d, "preferred_config.txt"))]
+
+        for index, com_port in enumerate(serial_devices, start=11):
+            test_button = CTkButton(self, text="Test Device", command=lambda p=com_port: self.test_device(p))
+            test_button.grid(row=index, column=0, padx=10, pady=5, sticky="ew")
+
+            com_label = CTkLabel(self, text=com_port, padx=10, pady=5)
+            com_label.grid(row=index, column=1, sticky="ew")
+
+            reading_label = CTkLabel(self, text="-----", padx=10, pady=5)
+            reading_label.grid(row=index, column=2, sticky="ew")
+            
+            self.reading_labels[com_port] = reading_label
+
+
+    def test_device(self, com_port):
         '''Placeholder function to test serial devices'''
         print(f"Testing serial device on {com_port}...")
 
-        # Placeholder for actual serial reading logic
-        test_value = "123.45"  # Replace with actual reading
+        # Start the serial data handler
         data_handler = SerialDataHandler("device")
-        data_thread = threading.Thread(target=data_handler.start)
+        data_thread = threading.Thread(target=data_handler.start, daemon=True)
         data_thread.start()
 
-        # Automated handling of data input
         def check_for_data():
-            while True:
-                if len(data_handler.received_data) >= 2:  # Customize condition
+            retries = 10  # Limit retries to prevent infinite loops
+            while retries > 0:
+                time.sleep(0.5)  # Wait a bit for data to arrive
+                if len(data_handler.received_data) > 0:
                     received_data = data_handler.get_stored_data()
-                    self.reading_labels[com_port].configure(text=received_data)
-                    data_handler.stop()
-                    self.finish()  # Automatically call the finish method
-                    break
+                    
+                    # Ensure UI update runs in the main thread
+                    self.after(0, lambda: self.reading_labels[com_port].configure(text=received_data))
 
+                    data_handler.stop()
+                    print(f"Received data: {received_data}")
+                    return
+                
+                retries -= 1  # Decrease retries count
+
+            print("No data received after retries. Stopping.")
+
+        # Run in a background thread
+        threading.Thread(target=check_for_data, daemon=True).start()
+    
+    def test_reader(self, com_port):
+        '''Function to test serial device reading.'''
+        print(f"Testing serial device on {com_port}...")
+
+        # Start the serial data handler
+        data_handler = SerialDataHandler("reader")
+        data_thread = threading.Thread(target=data_handler.start, daemon=True)
+        data_thread.start()
+
+        def check_for_data():
+            retries = 10  # Limit retries to prevent infinite loops
+            while retries > 0:
+                time.sleep(0.5)  # Wait a bit for data to arrive
+                if len(data_handler.received_data) > 0:
+                    received_data = data_handler.get_stored_data()
+                    
+                    # Ensure UI update runs in the main thread
+                    self.after(0, lambda: self.reading_labels[com_port].configure(text=received_data))
+
+                    data_handler.stop()
+                    print(f"Received data: {received_data}")
+                    return
+                
+                retries -= 1  # Decrease retries count
+
+            print("No data received after retries. Stopping.")
+
+        # Run in a background thread
         threading.Thread(target=check_for_data, daemon=True).start()
 
         # Update corresponding label

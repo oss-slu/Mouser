@@ -1,3 +1,4 @@
+import csv
 from pathlib import Path
 from os import listdir, getcwd
 from os.path import isfile, join
@@ -18,7 +19,7 @@ class SerialPortSetting(SettingPage):
         super().__init__(self)
 
         # GUI element
-
+        print(f"🔍 SerialPortSetting initialized with preference: {preference}")
         self.title("Serial Port")
         self.preference = None
         self.configuration_name = StringVar(value="")
@@ -27,7 +28,7 @@ class SerialPortSetting(SettingPage):
         if isinstance(controller, SerialPortController):
             self.serial_port_controller = controller
         else:
-            self.serial_port_controller = SerialPortController()
+            self.serial_port_controller = SerialPortController(self.preference)
 
         if os.name == 'posix':
             self.port_setting_configuration_path = os.getcwd() + "/settings/serial ports"
@@ -44,7 +45,13 @@ class SerialPortSetting(SettingPage):
         self.input_bype_var = StringVar(value="")
 
         if preference:
-            self.preference_path = os.path.join(os.getcwd(), "settings", "serial ports", "preference", preference)
+            if preference == "device":
+                self.preference_path = os.path.join(os.getcwd(), "settings", "serial ports", "preference", "device", "preferred_config.txt")
+            elif preference == "reader":
+                self.preference_path = os.path.join(os.getcwd(), "settings", "serial ports", "preference", "reader", "rfid_config.txt")
+            else:
+                self.preference_path = None  # Fallback if no valid type
+
             
             if os.path.exists(self.preference_path):
                 try:
@@ -198,7 +205,7 @@ class SerialPortSetting(SettingPage):
         self.back_to_summary_button = CTkButton(self.edit_region, text="Back to Summary", command=self.go_to_summary_page, height=14)
         self.back_to_summary_button.grid(row=12, column=1, padx=20, pady=5, sticky="ns")
 
-        self.serial_port_controller = SerialPortController()
+        self.serial_port_controller = SerialPortController(self.preference)
 
     def update_label(self, data):
         # Update the label with data from the test_read method
@@ -257,18 +264,35 @@ class SerialPortSetting(SettingPage):
         #pylint: enable=line-too-long
 
 
-    def save(self, configuration_name, settings):
-        '''Save a new or existing configuration.'''
-        settings_path = os.path.join(os.getcwd(), "settings", "serial ports", f"{configuration_name}.csv")
+    def save(self):
+        '''Save the current settings as a new or existing configuration.'''
+        configuration_name = self.configuration_name.get().strip()
         
+        if not configuration_name:
+            messagebox.showerror("Error", "Configuration name cannot be empty.")
+            return
+        
+        settings = [
+            self.baud_rate_var.get(),
+            self.parity_var.get(),
+            self.flow_control_var.get(),
+            self.data_bits_var.get(),
+            self.stop_bits_var.get(),
+            self.input_bype_var.get(),
+            self.serial_port.get()
+        ]
+
+        settings_path = os.path.join(os.getcwd(), "settings", "serial ports", f"{configuration_name}.csv")
+
         try:
-            with open(settings_path, "w") as file:
-                file.write(",".join(settings))
+            with open(settings_path, "w", newline="", encoding="utf-8") as file:
+                writer = csv.writer(file)
+                writer.writerow(settings)
             print(f"Settings saved for {configuration_name}")
+            messagebox.showinfo("Success", f"Configuration '{configuration_name}' saved successfully!\n Set it as a preffered device to use it.")
         except Exception as e:
             print(f"Error saving settings: {e}")
-
-
+            messagebox.showerror("Error", f"Failed to save settings: {e}")
 
     def edit(self):
         '''Function for the edit button on summary page, brings user

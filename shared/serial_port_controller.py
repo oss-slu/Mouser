@@ -15,7 +15,7 @@ import serial.tools.list_ports
 
 class SerialPortController():
     '''Serial Port control functions.'''
-    def __init__(self, setting_file=None):
+    def __init__(self, setting_type=None):
         self.ports_in_used = []
         self.baud_rate = None
         self.byte_size = None
@@ -24,7 +24,8 @@ class SerialPortController():
         self.flow_control = None
         self.writer_port = None
         self.reader_port = None
-        self.retrieve_setting(setting_file)
+        print(f"🔍 Initializing SerialPortController with setting type: {setting_type}")
+        self.retrieve_setting(setting_type)
 
     def get_available_ports(self):
         '''Returns a list of available system ports.'''
@@ -181,102 +182,52 @@ class SerialPortController():
         except Exception as e:
             print(e)
 
-    def retrieve_setting(self, setting_file):
+    def retrieve_setting(self, setting_type):
         '''Sets the setting of the serial port opened by converting the 
         setting from csv file to actual setting used.'''
-        if setting_file:
-            preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference")
-            preference_path = os.path.join(preference_dir, setting_file)
+        preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference")
+        
+        if setting_type == "reader":
+            setting_file = "rfid_config.txt"
+            setting_folder = "reader"
+        elif setting_type == "device":
+            setting_file = "preferred_config.txt"
+            setting_folder = "device"
+        else:
+            print("Invalid setting type. Must be 'reader' or 'device'.")
+            return
+        
+        preference_path = os.path.join(preference_dir, setting_folder, setting_file)
+        print(f"🔍 Looking for settings in: {preference_path}")
+        
+        if not os.path.exists(preference_path):
+            print(f"Preference file {preference_path} not found.")
+            return
+        
+        try:
+            with open(preference_path, "r") as file:
+                settings_file_name = file.readline().strip()
+                settings_path = os.path.join(os.getcwd(), "settings", "serial ports", settings_file_name)
+                
+                if not os.path.exists(settings_path):
+                    print(f"Settings file {settings_path} not found.")
+                    return
+                
+                with open(settings_path, "r") as settings_file:
+                    settings = settings_file.readline().strip().split(',')
+                    print("Successfully retrieved settings:", settings)
+                    
+                    if len(settings) < 7:
+                        print("Error: settings must have at least 7 elements.")
+                        return
+                    
+                    self.baud_rate = int(settings[0])
+                    self.byte_size = getattr(serial, f"{settings[3].upper()}BITS", serial.EIGHTBITS)
+                    self.parity = getattr(serial, f"PARITY_{settings[1].upper()}", serial.PARITY_NONE)
+                    self.flow_control = 1 if settings[2] == "Xon/Xoff" else 2 if settings[2] == "Hardware" else None
+                    self.stop_bits = getattr(serial, f"STOPBITS_{settings[4].replace('.', '_').upper()}", serial.STOPBITS_ONE)
+                    self.reader_port = settings[6]
+                    return settings
 
-            if not os.path.exists(preference_path):
-                print(f"Preference file {preference_path} not found.")
-                return
-
-            try:
-                with open(preference_path, "r") as file:
-                    for line in file:
-                        settings_file_name = line.strip()
-                        print("file name: ", file, "line name: ", line)
-                        print(f"Settings file name: {settings_file_name}")
-                        settings_path = os.path.join(os.getcwd(), "settings", "serial ports", setting_file)
-                        print(f"Settings path: {settings_path}")
-                        
-                        if not os.path.exists(settings_path):
-                            print(f"Settings file {settings_path} not found.")
-                            continue
-                        
-                        with open(settings_path, "r") as settings_file:
-                            line = settings_file.readline().strip()
-                            settings = line.split(',')
-                            print("Successfully retrieved settings.")
-
-                            if len(settings) < 7:
-                                print("Error: settings must have at least 7 elements.")
-                                continue
-
-                            self.baud_rate = int(settings[0])
-
-                            match settings[3]:
-                                case "Five":
-                                    self.byte_size = serial.FIVEBITS
-                                case "Six":
-                                    self.byte_size = serial.SIXBITS
-                                case "Seven":
-                                    self.byte_size = serial.SEVENBITS
-                                case "Eight":
-                                    self.byte_size = serial.EIGHTBITS
-                                case _:
-                                    self.byte_size = serial.EIGHTBITS
-
-                            match settings[1]:
-                                case "Space":
-                                    self.parity = serial.PARITY_SPACE
-                                case "Odd":
-                                    self.parity = serial.PARITY_ODD
-                                case "Even":
-                                    self.parity = serial.PARITY_EVEN
-                                case "Mark":
-                                    self.parity = serial.PARITY_MARK
-                                case _:
-                                    self.parity = serial.PARITY_NONE
-
-                            match settings[2]:
-                                case "Xon/Xoff":
-                                    self.flow_control = 1
-                                case "Hardware":
-                                    self.flow_control = 2
-                                case _:
-                                    self.flow_control = None
-
-                            match settings[4]:
-                                case "1":
-                                    self.stop_bits = serial.STOPBITS_ONE
-                                case "1.5":
-                                    self.stop_bits = serial.STOPBITS_ONE_POINT_FIVE
-                                case "2":
-                                    self.stop_bits = serial.STOPBITS_TWO
-                                case _:
-                                    self.stop_bits = serial.STOPBITS_ONE
-
-                            self.reader_port = settings[6]
-            except Exception as e:
-                print(f"An error occurred while retrieving settings: {e}")
-
-
-if __name__ == "__main__":
-    controller = SerialPortController('serial_port_preference.csv')
-    
-    # settings = controller.retrieve_setting('serial_port_preference.csv')
-    # print(controller.get_port(settings))
-
-    # data = controller.read_data()
-    # print(data)
-
-    available_ports = controller.get_available_ports_name()
-    number_of_ports = controller.get_num_ports()
-    print("Available system ports:")
-    for port in available_ports:
-        print(f"{port}")
-    print(f"Number of ports: {number_of_ports}")
-
-
+        except Exception as e:
+            print(f"An error occurred while retrieving settings: {e}")

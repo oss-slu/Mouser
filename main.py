@@ -33,20 +33,7 @@ def get_resource_path(relative_path):
         print(f"Error accessing resource: {relative_path}")
         raise e
 
-
-
-
-
-# Ensure we are passing only the correct path
-csv_file_path = get_resource_path("settings/serial ports/serial_port_preference.csv")
-csv_file_path = os.path.normpath(csv_file_path)
-print(f"CSV file path: {csv_file_path}")  # Debugging: print the path to verify it's correct
-
-rfid_serial_port_controller = SerialPortController(csv_file_path)
-
-
-
-
+rfid_serial_port_controller = SerialPortController("reader")
 
 TEMP_FOLDER_NAME = "Mouser"
 TEMP_FILE_PATH = None
@@ -119,12 +106,13 @@ def create_file():
 
 def open_test():
     '''Command for 'Test Serials' button in the welcome screen.'''
-    page = TestScreen(root, experiments_frame)
-    page.raise_frame()
+    global test_screen_instance  # Store reference so it isn't garbage collected
+    test_screen_instance = TestScreen(root)
+    test_screen_instance.grab_set()
 
 def open_serial_port_setting():
     '''opens the serial port setting page'''
-    SerialPortSetting("serial_port_preference.csv", rfid_serial_port_controller) # pylint: disable=unused-variable
+    SerialPortSetting("device", rfid_serial_port_controller) # pylint: disable=unused-variable
 def save_file():
     '''Command for the 'save file' option in menu bar.'''
     print("Current", CURRENT_FILE_PATH)

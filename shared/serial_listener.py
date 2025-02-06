@@ -12,13 +12,9 @@ class SerialReader:
         self.timeout = timeout
         self.data_queue = Queue()   # A queue to hold the incoming data from the serial port
         self.running = True         # Flag to control the thread
-        self.device_file = self.find_device_config(port)
-        if not self.device_file:
-            print(f"ERROR: No configuration file found for {port}.")
-            self.running = False
-            return
-        self.port_controller = SerialPortController(self.device_file)
-        self.settings = self.port_controller.retrieve_setting(self.device_file)
+        self.port_controller = SerialPortController(port)
+        self.settings = self.port_controller.retrieve_setting(port)
+        print(f"Settings: {self.settings}")
         
         if self.settings:
             try:
@@ -60,8 +56,7 @@ class SerialReader:
                 with open(config_path, "r") as file:
                     device_file_name = file.readline().strip()
                     print(f"Meaurement Device config file found: {device_file_name}")
-                    device_file =  file.readline()
-                    print(f"Measurement Device config file found: {device_file}")
+
                     csv_path = os.path.join(os.getcwd(), "settings", "serial ports", device_file_name)
                     if os.path.exists(csv_path):
                         print(f"Device config file found: {device_file_name}")
@@ -74,8 +69,7 @@ class SerialReader:
                 with open(rfid_path, "r") as file:
                     device_file_name = file.readline().strip()
                     print(f"RFID Device config file found: {device_file_name}")
-                    device_file =  file.readline()
-                    print(f"RFID Device config file found: {device_file}")
+                    
                     csv_path = os.path.join(os.getcwd(), "settings", "serial ports", device_file_name)
                     if os.path.exists(csv_path):
                         print(f"Device config file found: {device_file_name}")
