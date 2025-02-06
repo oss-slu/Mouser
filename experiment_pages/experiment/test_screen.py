@@ -1,11 +1,13 @@
+'''Screen for testing functionality of RFID Readers and Serial Devices.'''
 import os
 import time
+import threading
 from customtkinter import *
 from shared.tk_models import *
 from shared.serial_handler import SerialDataHandler
-import threading
 
 class TestScreen(CTkToplevel):
+    '''Screen for testing functionality of RFID Readers and Serial Devices.'''
     def __init__(self, parent: CTk, prev_page: CTkFrame = None):
         super().__init__(parent)
         self.title("Test Screen")
@@ -16,9 +18,9 @@ class TestScreen(CTkToplevel):
 
         # Add a title label
         title_label = CTkLabel(
-            self, 
-            text="Test Screen", 
-            font=("Arial", 22, "bold"),  
+            self,
+            text="Test Screen",
+            font=("Arial", 22, "bold"),
             pady=20
         )
         title_label.grid(row=0, column=0, columnspan=4, padx=20, pady=20)
@@ -27,10 +29,9 @@ class TestScreen(CTkToplevel):
         self.setup_rfid_section()
         self.setup_device_section()
     
-    '''Test Screen UI'''
     def setup_rfid_section(self):
         '''Set up RFID Reader testing section.'''
-        rfid_label = CTkLabel(self, text="RFID Readers", font=("Arial", 16, "bold"))
+        rfid_label = CTkLabel(self, text="RFID Reader", font=("Arial", 16, "bold"))
         rfid_label.grid(row=1, column=0, columnspan=2, pady=10)
 
         preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference")
@@ -50,7 +51,7 @@ class TestScreen(CTkToplevel):
 
     def setup_device_section(self):
         '''Set up Serial Device testing section.'''
-        device_label = CTkLabel(self, text="Serial Devices", font=("Arial", 16, "bold"))
+        device_label = CTkLabel(self, text="Serial Device", font=("Arial", 16, "bold"))
         device_label.grid(row=10, column=0, columnspan=2, pady=10)
 
         preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference")
@@ -128,7 +129,3 @@ class TestScreen(CTkToplevel):
 
         # Run in a background thread
         threading.Thread(target=check_for_data, daemon=True).start()
-
-        # Update corresponding label
-        if com_port in self.reading_labels:
-            self.reading_labels[com_port].configure(text=test_value)
