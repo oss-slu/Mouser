@@ -1,4 +1,5 @@
 '''Serial Port Settings is the page that allows user to set up serial port settings.'''
+# pylint: skip-file
 import csv
 from pathlib import Path
 from os import listdir, getcwd

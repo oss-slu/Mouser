@@ -8,7 +8,6 @@ writing. In order to do so, you must have both port established before
 you write to a port, else reading from the reader port will return
 nothing even if you write to writer port already
 '''
-
 import os
 import serial
 import serial.tools.list_ports
@@ -196,31 +195,31 @@ class SerialPortController():
         else:
             print("Invalid setting type. Must be 'reader' or 'device'.")
             return
-        
+
         preference_path = os.path.join(preference_dir, setting_folder, setting_file)
         print(f"🔍 Looking for settings in: {preference_path}")
-        
+
         if not os.path.exists(preference_path):
             print(f"Preference file {preference_path} not found.")
             return
-        
+
         try:
             with open(preference_path, "r") as file:
                 settings_file_name = file.readline().strip()
                 settings_path = os.path.join(os.getcwd(), "settings", "serial ports", settings_file_name)
-                
+
                 if not os.path.exists(settings_path):
                     print(f"Settings file {settings_path} not found.")
                     return
-                
+
                 with open(settings_path, "r") as settings_file:
                     settings = settings_file.readline().strip().split(',')
                     print("Successfully retrieved settings:", settings)
-                    
+
                     if len(settings) < 7:
                         print("Error: settings must have at least 7 elements.")
                         return
-                    
+
                     self.baud_rate = int(settings[0])
                     self.byte_size = getattr(serial, f"{settings[3].upper()}BITS", serial.EIGHTBITS)
                     self.parity = getattr(serial, f"PARITY_{settings[1].upper()}", serial.PARITY_NONE)

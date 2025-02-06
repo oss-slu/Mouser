@@ -8,8 +8,9 @@ from shared.serial_handler import SerialDataHandler
 
 class TestScreen(CTkToplevel):
     '''Screen for testing functionality of RFID Readers and Serial Devices.'''
-    def __init__(self, parent: CTk, prev_page: CTkFrame = None):
+    def __init__(self, parent: CTk):
         super().__init__(parent)
+
         self.title("Test Screen")
         self.geometry("600x500")
 
@@ -28,7 +29,7 @@ class TestScreen(CTkToplevel):
         # Separate sections for RFID Readers and Serial Devices
         self.setup_rfid_section()
         self.setup_device_section()
-    
+
     def setup_rfid_section(self):
         '''Set up RFID Reader testing section.'''
         rfid_label = CTkLabel(self, text="RFID Reader", font=("Arial", 16, "bold"))
@@ -66,9 +67,8 @@ class TestScreen(CTkToplevel):
 
             reading_label = CTkLabel(self, text="-----", padx=10, pady=5)
             reading_label.grid(row=index, column=2, sticky="ew")
-            
-            self.reading_labels[com_port] = reading_label
 
+            self.reading_labels[com_port] = reading_label
 
     def test_device(self, com_port):
         '''Placeholder function to test serial devices'''
@@ -85,21 +85,21 @@ class TestScreen(CTkToplevel):
                 time.sleep(0.5)  # Wait a bit for data to arrive
                 if len(data_handler.received_data) > 0:
                     received_data = data_handler.get_stored_data()
-                    
+
                     # Ensure UI update runs in the main thread
                     self.after(0, lambda: self.reading_labels[com_port].configure(text=received_data))
 
                     data_handler.stop()
                     print(f"Received data: {received_data}")
                     return
-                
+
                 retries -= 1  # Decrease retries count
 
             print("No data received after retries. Stopping.")
 
         # Run in a background thread
         threading.Thread(target=check_for_data, daemon=True).start()
-    
+
     def test_reader(self, com_port):
         '''Function to test serial device reading.'''
         print(f"Testing serial device on {com_port}...")
@@ -115,14 +115,14 @@ class TestScreen(CTkToplevel):
                 time.sleep(0.5)  # Wait a bit for data to arrive
                 if len(data_handler.received_data) > 0:
                     received_data = data_handler.get_stored_data()
-                    
+
                     # Ensure UI update runs in the main thread
                     self.after(0, lambda: self.reading_labels[com_port].configure(text=received_data))
 
                     data_handler.stop()
                     print(f"Received data: {received_data}")
                     return
-                
+
                 retries -= 1  # Decrease retries count
 
             print("No data received after retries. Stopping.")
