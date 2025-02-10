@@ -23,8 +23,7 @@ class ExperimentDatabase:
                                 group_id INTEGER,
                                 cage_id INTEGER,
                                 remarks TEXT,
-                                active INTEGER,
-                                weight INTEGER);''')
+                                active INTEGER);''')
             self._c.execute('''CREATE TABLE groups (
                                 group_id INTEGER PRIMARY KEY,
                                 name TEXT,
@@ -44,7 +43,8 @@ class ExperimentDatabase:
                                 rfid TEXT UNIQUE);''')
             self._c.execute('''CREATE TABLE collected_data (
                                 date TEXT,
-                                animal_id INTEGER);''')
+                                animal_id INTEGER,
+                                weight FLOAT);''')
             self._conn.commit()
         except sqlite3.OperationalError:
             pass

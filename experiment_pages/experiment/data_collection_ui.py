@@ -118,8 +118,11 @@ class DataCollectionUI(MouserPage):
             new_values.append(val)
         self.table.item(self.changing_value, values=tuple([animal_id] + new_values))
 
+        # Check if there's existing data for this date and animal
+        existing_data = self.database.get_data_for_date(str(date.today()))
+        has_existing_data = any(str(entry[1]) == str(animal_id) for entry in existing_data)
 
-        if("None" in old_measurements):
+        if not has_existing_data:
             self.database.add_data_entry(date.today(), animal_id, new_values)
         else:
             self.database.change_data_entry(date.today(), animal_id, new_values)
@@ -127,7 +130,7 @@ class DataCollectionUI(MouserPage):
         if self.auto_inc_id >= 0 and self.auto_inc_id < len(self.table.get_children()) - 1:
             self.auto_inc_id += 1
             self.open_auto_increment_changer()
-        AudioManager.play(filepath="shared/sounds/rfid_success.wav") #play succsess sound
+        AudioManager.play(filepath="shared/sounds/rfid_success.wav") #play success sound
 
     def get_values_for_date(self, _):
         '''Gets the data for the current date.'''
@@ -139,14 +142,16 @@ class DataCollectionUI(MouserPage):
 
         values = self.database.get_data_for_date(self.current_date)
 
-
         for child in self.table.get_children():
             animal_id = self.table.item(child)["values"][0]
+            found_data = False
             for val in values:
                 if str(val[1]) == str(animal_id):
-                    self.table.item(child, values=tuple(val[1:]))
+                    # Skip date and animal_id columns by using val[2:]
+                    self.table.item(child, values=tuple([animal_id] + list(val[2:])))
+                    found_data = True
                     break
-            else:
+            if not found_data:
                 new_values = [animal_id]
                 for _ in self.measurement_items:
                     new_values.append(None)

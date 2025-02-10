@@ -5,11 +5,23 @@ import os
 
 class DataCollectionDatabase:
     def __init__(self, experiment: str = None, measurement_items: list = ["Weight", "Length"]):
-
-        #gets the name of the file from the file path
-        experiment_name = os.path.basename(experiment)
-        experiment_name = os.path.splitext(experiment_name)[0]
-
+        # Since we're now using the experiment database's collected_data table
+        # we can simplify this class significantly
+        self.measurement_items = measurement_items
+        self.experiment = experiment
+      
+    def get_all_data(self):
+        # This should now pull from the experiment database's collected_data table
+        # For now, returning empty list as it might not be needed anymore
+        return []
+          
+    def get_data_for_date(self, date: str):
+        # This functionality is now handled by ExperimentDatabase
+        return []
+    
+    def set_data_for_entry(self, values: tuple):
+        # This functionality is now handled by ExperimentDatabase
+        return
 
     #     if not experiment_name:
     #         self.filename = "data.csv"
@@ -33,20 +45,20 @@ class DataCollectionDatabase:
         
     #     self.measurement_items = measurement_items
       
-    def get_all_data(self):
+    # def get_all_data(self):
     #     data_file = pd.read_csv(self.filename)
     #     list_of_csv = [tuple(row) for row in data_file.values]
-        return []
+    #     return list_of_csv
           
-    def get_data_for_date(self, date: str):
+    # def get_data_for_date(self, date: str):
     #     data = self.get_all_data()
     #     new_data = []
     #     for entry in data:
     #         if entry[0] == date:
     #             new_data.append(entry)
-        return []
+    #     return new_data
     
-    def set_data_for_entry(self, values: tuple):
+    # def set_data_for_entry(self, values: tuple):
     #     data_file = pd.read_csv(self.filename)
     #     data = self.get_all_data()
     #     for i, entry in enumerate(data):
@@ -58,4 +70,3 @@ class DataCollectionDatabase:
     #         data_file.loc[len(data_file.index)] = values
                 
     #     data_file.to_csv(self.filename, index=False)
-        data = []
