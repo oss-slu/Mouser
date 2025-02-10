@@ -152,6 +152,29 @@ class DataCollectionUI(MouserPage):
                     new_values.append(None)
                 self.table.item(child, values=tuple(new_values))
 
+    def setup_auto_data_collection(self):
+        # Setup to automatically handle data collection
+        data_handler = SerialDataHandler()
+        data_thread = threading.Thread(target=data_handler.start)
+        data_thread.start()
+
+        def auto_save_data():
+            # This loop will handle the automatic saving of data as it is received
+            while True:
+                if data_handler.has_new_data():  # Checks for new data
+                    received_data = data_handler.get_data()
+                    self.auto_save_received_data(received_data)
+                    time.sleep(0.5)  # Adjust timing based on the expected data reception rate
+
+        threading.Thread(target=auto_save_data, daemon=True).start()
+
+    def auto_save_received_data(self, data):
+        # Save received data to the database automatically
+        animal_id = self.get_next_animal_id()  # This needs to accurately get the next or current animal ID
+        self.database.add_data_entry(date.today(), animal_id, data)
+        self.update_table_with_new_data(animal_id, data)
+
+
     def close_connection(self):
         '''Closes database file.'''
         self.database.close()
