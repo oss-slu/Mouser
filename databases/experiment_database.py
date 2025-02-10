@@ -100,18 +100,30 @@ class ExperimentDatabase:
                                 (item[0], item[1]))
             self._conn.commit()
 
-    def setup_collected_data(self, measurement_items):
-        '''Configures the collected data table to include a column for
-        each measurement item.
+    def setup_collected_data(self, items):
+        '''Sets up the collected data table with the measurement items.'''
+        # First, check if table exists
+        self._c.execute(''' SELECT count(name) FROM sqlite_master WHERE type='table' AND name='collected_data' ''')
         
-        arg1 (list of measurement items) as strings
-        '''
-
-        for measurement_item in measurement_items:
-            query = f''' ALTER TABLE collected_data
-                                ADD COLUMN {measurement_item} REAL'''
-            self._c.execute(query)
-            self._conn.commit()
+        if self._c.fetchone()[0] == 0:
+            # Table doesn't exist, create it with date and animal_id columns
+            self._c.execute('''CREATE TABLE collected_data (
+                                date TEXT,
+                                animal_id INTEGER
+                            )''')
+        
+        # Get existing columns
+        self._c.execute('PRAGMA table_info(collected_data)')
+        existing_columns = [column[1] for column in self._c.fetchall()]
+        
+        # Add new columns only if they don't exist
+        for item in items:
+            column_name = item[1]
+            if column_name not in existing_columns:
+                query = f'ALTER TABLE collected_data ADD COLUMN "{column_name}" TEXT'
+                self._c.execute(query)
+        
+        self._conn.commit()
 
     def add_data_entry(self, date, animal_id, measurements):
         '''Adds a data entry to the collected_data table with the given
@@ -409,8 +421,8 @@ class ExperimentDatabase:
 
 
     def get_animals(self):
-        '''Returns a list of tuples representing each animal in experiment.'''
-        self._c.execute("SELECT animal_id, group_id, cage_id, weight, active FROM animals")
+        '''Gets all animals from database.'''
+        self._c.execute("SELECT animal_id, group_id, cage_id, active FROM animals")
         return self._c.fetchall()
 
     def get_animal_id(self, rfid):
