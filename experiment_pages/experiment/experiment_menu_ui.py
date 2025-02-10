@@ -9,13 +9,14 @@ from experiment_pages.experiment.map_rfid import MapRFIDPage
 from experiment_pages.experiment.cage_config_ui import CageConfigurationUI
 from experiment_pages.experiment.experiment_invest_ui import InvestigatorsUI
 from databases.experiment_database import ExperimentDatabase
+from experiment_pages.experiment.review_ui import ReviewUI
 
 class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
     '''Experiment Menu Page Frame'''
     def __init__(self, parent: CTk, name: str, prev_page: ChangeableFrame = None, controller: SerialPortController = None): #pylint: disable= undefined-variable
 
         #review imported here to prevent a reference loop from occuring
-        from experiment_pages.experiment.review_ui import ReviewUI
+
 
         #Get name of file from file path
         experiment_name = os.path.basename(name)
