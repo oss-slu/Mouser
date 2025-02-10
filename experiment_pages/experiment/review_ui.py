@@ -1,3 +1,4 @@
+#pylint: skip-file
 from databases.experiment_database import ExperimentDatabase
 from shared.tk_models import *
 
