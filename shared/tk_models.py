@@ -1,4 +1,3 @@
-
 '''Contains shared tkinter models used througout the program.'''
 from tkinter import PhotoImage
 from abc import ABC, abstractmethod
