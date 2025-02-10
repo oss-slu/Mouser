@@ -20,6 +20,9 @@ class DataCollectionUI(MouserPage):
         super().__init__(parent, "Data Collection", prev_page)
 
         self.database = ExperimentDatabase(database_name)
+
+        self.database.setup_measurement_items()
+
         self.measurement_items = self.database.get_measurement_items()
         self.measurement_strings = []
         self.measurement_ids = []
