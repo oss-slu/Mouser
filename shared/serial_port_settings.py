@@ -1,3 +1,6 @@
+'''Serial Port Settings is the page that allows user to set up serial port settings.'''
+# pylint: skip-file
+import csv
 from pathlib import Path
 from os import listdir, getcwd
 from os.path import isfile, join
@@ -6,9 +9,6 @@ from customtkinter import *
 from tkinter import messagebox
 from shared.tk_models import SettingPage
 from shared.serial_port_controller import *
-
-
-
 
 class SerialPortSetting(SettingPage):
     '''a class that implements methods and functions 
@@ -21,13 +21,17 @@ class SerialPortSetting(SettingPage):
         super().__init__(self)
 
         # GUI element
-
+        print(f"🔍 SerialPortSetting initialized with preference: {preference}")
         self.title("Serial Port")
         self.preference = None
         self.configuration_name = StringVar(value="")
         self.current_configuration_name = StringVar(value="")
         self.preference_path = None
-        self.serial_port_controller = None
+        if isinstance(controller, SerialPortController):
+            self.serial_port_controller = controller
+        else:
+            self.serial_port_controller = SerialPortController(self.preference)
+
         if os.name == 'posix':
             self.port_setting_configuration_path = os.getcwd() + "/settings/serial ports"
         else:
@@ -42,25 +46,27 @@ class SerialPortSetting(SettingPage):
         self.stop_bits_var = StringVar(value="")
         self.input_bype_var = StringVar(value="")
 
-
-        if controller:
-            self.serial_port_controller = controller
-
         if preference:
-            try:
-                if os.name == 'posix':
-                    self.preference_path = os.getcwd() + "/settings/serial ports/preference/" + preference
-                else:    
-                    self.preference_path = os.getcwd() + "\\settings\\serial ports\\preference\\" + preference
-                file = open(self.preference_path, "r")
-                file_names = []
-                for line in file:
-                    file_names.append(line)
-                self.confirm_setting(file_names[0])
-                #splitted = file_names[0].split("\\")
-                self.preference = file_names[0]
-            except Exception as e: # pylint: disable= broad-exception-caught
-                print("error from reaching preferenced file: ", e)
+            if preference == "device":
+                self.preference_path = os.path.join(os.getcwd(), "settings", "serial ports", "preference", "device", "preferred_config.txt")
+            elif preference == "reader":
+                self.preference_path = os.path.join(os.getcwd(), "settings", "serial ports", "preference", "reader", "rfid_config.txt")
+            else:
+                self.preference_path = None  # Fallback if no valid type
+
+            
+            if os.path.exists(self.preference_path):
+                try:
+                    with open(self.preference_path, "r") as file:
+                        file_names = file.readlines()
+                        if file_names:
+                            self.confirm_setting(file_names[0].strip())
+                            self.preference = file_names[0].strip()
+                except Exception as e:
+                    print("Error opening preference file:", e)
+            else:
+                print(f"Preference file {self.preference_path} not found. Using default settings.")
+
         else:
             self.baud_rate_var = StringVar(value="9600")
             self.parity_var = StringVar(value="None")
@@ -90,9 +96,19 @@ class SerialPortSetting(SettingPage):
         self.setting_configuration_label = CTkLabel(self.configuration_region, text="Existing Configuration", width=8, height=12)
         self.import_file = CTkOptionMenu(self.configuration_region, values=self.available_configuration, variable=self.current_configuration_name, height=12, width = 274)
         if self.preference:
-                self.import_file.set(self.preference)
+            self.import_file.set(self.preference)
         self.edit_configuration_button = CTkButton(self.configuration_region, text="Edit", width=2, height=14, command=self.edit_configuration)
-        self.set_preference_button = CTkButton(self.configuration_region, text="Set Preference", width=2, height=14, command=self.set_preference)
+        
+        self.set_preference_button = CTkButton(
+            self.configuration_region, text="Set as Meausurement Device", width=2, height=14,
+            command=lambda: self.set_preference(self.serial_port.get(), self.current_configuration_name.get())
+        )
+        
+        self.set_rfid_button = CTkButton(
+            self.configuration_region, text="Set as RFID Reader", width=2, height=14,
+            command=lambda: self.set_rfid(self.serial_port.get(), self.current_configuration_name.get())
+        )
+
         self.comfirm_button = CTkButton(self.configuration_region, text="Confirm", width=2, height=14, command=self.confirm_setting)
 
         self.configuration_region.grid(row=0, column=0, columnspan=5, padx=20, pady=5, sticky="ew")
@@ -101,6 +117,7 @@ class SerialPortSetting(SettingPage):
         self.import_file.grid(row=1, column=1, columnspan=2, padx=18, pady=10, sticky="ew")
         self.edit_configuration_button.grid(row=2, column=0, padx=20, pady=15, sticky="ew")
         self.set_preference_button.grid(row=2, column=2, padx=20, pady=15, sticky="ew")
+        self.set_rfid_button.grid(row=3, column=2, padx=20, pady=15, sticky="ew")
         self.comfirm_button.grid(row=2, column=3, padx=20, pady=15, sticky="ew")
 
         # bottom region of the page
@@ -181,24 +198,10 @@ class SerialPortSetting(SettingPage):
         self.save_button = CTkButton(self.edit_region, text="Save", command=self.save, height=14)
         self.save_button.grid(row=11, column=2, padx=20, pady=5, sticky="ns")
 
-        self.test_button = CTkButton(self.edit_region, text="Test Read", command=self.test_read, height=14)
-        self.test_button.grid(row=12, column=2, padx=20, pady=5, sticky="ns")
-
-        self.data_text = CTkLabel(self.edit_region, height=25, width=50, text="Waiting for Data...")
-        self.data_text.grid(row=13, column=2, columnspan=3, padx=20, pady=3, sticky="ew")
-
         self.back_to_summary_button = CTkButton(self.edit_region, text="Back to Summary", command=self.go_to_summary_page, height=14)
-        self.back_to_summary_button.grid(row=12, column=1, padx=20, pady=5, sticky="ns")
+        self.back_to_summary_button.grid(row=11, column=1, padx=20, pady=5, sticky="ns")
 
-        self.serial_port_controller = SerialPortController()
-
-    def update_label(self, data):
-        # Update the label with data from the test_read method
-        print(data)
-        self.data_text.configure(text=data)
-        self.master.update_idletasks()
-
-        #pylint: enable=line-too-long
+        self.serial_port_controller = SerialPortController(self.preference)
 
     def summary_page(self, tab: str):
         ''' page that displays the setting of current configuration'''
@@ -216,7 +219,6 @@ class SerialPortSetting(SettingPage):
         self.baud_rate_label.grid(row=1, column=0, padx=20, pady=5, sticky="ew")
         self.current_baud_rate.grid(row=1, column=2, padx=20, pady=5, sticky="ew")
 
-
         self.parity_label = CTkLabel(self.summary_section, text="Parity")
         self.current_parity = CTkLabel(self.summary_section, text=self.parity_var.get())
         self.parity_label.grid(row=2, column=0, padx=20, pady=5, sticky="ew")
@@ -226,7 +228,6 @@ class SerialPortSetting(SettingPage):
         self.current_flow_control = CTkLabel(self.summary_section, text=self.flow_control_var.get())
         self.flow_control_label.grid(row=3, column=0, padx=20, pady=5, sticky="ew")
         self.current_flow_control.grid(row=3, column=2, padx=20, pady=5, sticky="ew")
-
 
         self.data_bits_label = CTkLabel(self.summary_section, text="Data Bits")
         self.current_data_bits = CTkLabel(self.summary_section, text=self.data_bits_var.get())
@@ -248,20 +249,35 @@ class SerialPortSetting(SettingPage):
 
         #pylint: enable=line-too-long
 
-
     def save(self):
-        '''saving the serial port setting to the new/existing file'''
-        file_name = os.path.join(self.port_setting_configuration_path, self.configuration_name.get()+".csv")
+        '''Save the current settings as a new or existing configuration.'''
+        configuration_name = self.configuration_name.get().strip()
+        
+        if not configuration_name:
+            messagebox.showerror("Error", "Configuration name cannot be empty.")
+            return
+        
+        settings = [
+            self.baud_rate_var.get(),
+            self.parity_var.get(),
+            self.flow_control_var.get(),
+            self.data_bits_var.get(),
+            self.stop_bits_var.get(),
+            self.input_bype_var.get(),
+            self.serial_port.get()
+        ]
 
-        with open(file_name, "w") as file:
-            setting = self.baud_rate_menu.get()+","+self.parity_menu.get()+","+self.flow_control_menu.get()+","+self.data_bits_menu.get()+","+self.stop_bits_var.get()+","+self.input_bype_var.get()+","+self.serial_port.get()    # pylint: disable=line-too-long
-            file.write(setting)
-        file.close()
+        settings_path = os.path.join(os.getcwd(), "settings", "serial ports", f"{configuration_name}.csv")
 
-        self.refresh_tabs()
-        self.summary_page("Map RFID")
-        self.summary_page("Data Collection")
-
+        try:
+            with open(settings_path, "w", newline="", encoding="utf-8") as file:
+                writer = csv.writer(file)
+                writer.writerow(settings)
+            print(f"Settings saved for {configuration_name}")
+            messagebox.showinfo("Success", f"Configuration '{configuration_name}' saved successfully!\n Set it as a preffered device to use it.")
+        except Exception as e:
+            print(f"Error saving settings: {e}")
+            messagebox.showerror("Error", f"Failed to save settings: {e}")
 
     def edit(self):
         '''Function for the edit button on summary page, brings user
@@ -283,36 +299,31 @@ class SerialPortSetting(SettingPage):
         self.tab_view.add("Map RFID")
         self.tab_view.add("Data Collection")
 
-    def set_preference(self):
-        '''set preference to a configuration so that
-        the configuration is saved as the setting even
-        after the program is closed'''
-        # TODO: save the name of current configuration file     # pylint: disable=fixme
-        # to the preference file in preference directory
-        # absolute path: os.path.abspath(part of file path with the file)
+    def set_preference(self, port, file_name):
+        '''Save a specific configuration for a given port in its own preference folder.'''
+        preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference", "device")
+        os.makedirs(preference_dir, exist_ok=True)
+        preference_path = os.path.join(preference_dir, "preferred_config.txt")
+        
+        try:
+            with open(preference_path, "w") as file:
+                file.write(file_name + "\n")
+            print(f"Preference for {port} set to {file_name}")
+        except Exception as e:
+            print(f"Error saving preference for {port}: {e}")
 
-        if self.preference_path:
-            try:
-                # get the file name from the option menu, then open the preference file,
-                file_name= self.current_configuration_name.get()
-                file = open(self.preference_path, "w")
-                file.write(file_name)
-
-                file.close()
-
-            except Exception as e: # pylint: disable= broad-exception-caught
-                print("Error: file can't be set to preference: ", e)
-        else:
-            # give a error window that says preference_file not set up
-            print("Preference file missing")
-
-        if self.serial_port_controller:
-            print("controller in setting")
-            self.serial_port_controller.retrieve_setting([self.baud_rate_var.get(), self.data_bits_var.get(),
-                                                          self.parity_var.get(), self.stop_bits_var.get(),
-                                                          self.flow_control_var.get()])
-
-            self.serial_port_controller.update_setting(self.serial_port.get())
+    def set_rfid(self, port, file_name):
+        '''Save a specific configuration for a given port in its own preference folder.'''
+        preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference", "reader")
+        os.makedirs(preference_dir, exist_ok=True)
+        preference_path = os.path.join(preference_dir, "rfid_config.txt")
+        
+        try:
+            with open(preference_path, "w") as file:
+                file.write(file_name + "\n")
+            print(f"RFID Reader for {port} set to {file_name}")
+        except Exception as e:
+            print(f"Error saving RFID Reader for {port}: {e}")
 
     def confirm_setting(self, f = None):
         '''select a configuration and use it as current serial
@@ -342,32 +353,3 @@ class SerialPortSetting(SettingPage):
         self.configuration_name_entry.insert(0, file_name.with_suffix(""))
         self.confirm_setting()
         pass
-
-    def test_read(self):
-        '''Reads data from the serial port using the current settings on screen'''
-        if self.serial_port_controller:
-            try:
-                self.serial_port_controller.retrieve_setting([self.baud_rate_var.get(), self.data_bits_var.get(),
-                                                              self.parity_var.get(), self.stop_bits_var.get(),
-                                                              self.flow_control_var.get()])
-                self.serial_port_controller.update_setting(self.serial_port.get())
-                data = self.serial_port_controller.read_data()
-                print("Data read from serial port:" + str(data))
-                self.update_label("Data read from serial port: " + str(data))
-                return ("Data read from serial port: " + str(data))
-
-            except Exception as e:  # pylint: disable=broad-exception-caught
-                print("Error reading from serial port:", e)
-                return None
-        else:
-            print("Serial port controller not initialized")
-            return None
-        
-
-
-
-
-if __name__ == "__main__":
-    root = CTk()
-    app = SerialPortSetting(root)
-    root.mainloop()

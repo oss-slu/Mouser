@@ -193,7 +193,7 @@ class ChangeMeasurementsDialog():
                 entry.focus()
 
                 # Start data handling in a separate thread
-                data_handler = SerialDataHandler()
+                data_handler = SerialDataHandler("device")
                 data_thread = threading.Thread(target=data_handler.start)
                 data_thread.start()
 

@@ -3,7 +3,6 @@ import os
 import shutil
 import tempfile
 import sys
-import os
 from tkinter.filedialog import *
 from PIL import Image
 from customtkinter import *
@@ -16,6 +15,7 @@ import shared.file_utils as file_utils
 from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment.select_experiment_ui import ExperimentsUI
+from experiment_pages.experiment.test_screen import TestScreen
 
 # Function to resolve resource paths (must be defined before usage)
 def get_resource_path(relative_path):
@@ -32,20 +32,7 @@ def get_resource_path(relative_path):
         print(f"Error accessing resource: {relative_path}")
         raise e
 
-
-
-
-
-# Ensure we are passing only the correct path
-csv_file_path = get_resource_path("settings/serial ports/serial_port_preference.csv")
-csv_file_path = os.path.normpath(csv_file_path)
-print(f"CSV file path: {csv_file_path}")  # Debugging: print the path to verify it's correct
-
-rfid_serial_port_controller = SerialPortController(csv_file_path)
-
-
-
-
+rfid_serial_port_controller = SerialPortController("reader")
 
 TEMP_FOLDER_NAME = "Mouser"
 TEMP_FILE_PATH = None
@@ -116,10 +103,15 @@ def create_file():
     page = NewExperimentUI(root, experiments_frame)
     page.raise_frame()
 
+def open_test():
+    '''Command for 'Test Serials' button in the welcome screen.'''
+    
+    test_screen_instance = TestScreen(root)
+    test_screen_instance.grab_set()
 
 def open_serial_port_setting():
     '''opens the serial port setting page'''
-    SerialPortSetting("serial_port_preference.csv", rfid_serial_port_controller) # pylint: disable=unused-variable
+    SerialPortSetting("device", rfid_serial_port_controller) # pylint: disable=unused-variable
 def save_file():
     '''Command for the 'save file' option in menu bar.'''
     print("Current", CURRENT_FILE_PATH)
@@ -179,15 +171,16 @@ image_label = CTkLabel(welcome_frame, image=mouse_image, text="")
 image_label.pack(pady=(20, 10))
 
 # Create and place the welcome text
-welcome_text = "Welcome to Mouser!"
-text_label = CTkLabel(welcome_frame, text=welcome_text, wraplength=400, font=("Georgia", 32))
+text_label = CTkLabel(welcome_frame, text="Welcome to Mouser!", wraplength=400, font=("Georgia", 32))
 text_label.pack(padx=20, pady=10)
 
 new_file_button = CTkButton(welcome_frame, text="New Experiment", command=create_file, width=200, height=50)
 open_file_button = CTkButton(welcome_frame, text="Open Experiment", command=open_file, width=200, height=50)
+test_screen_button = CTkButton(welcome_frame, text="Test Serials", command= open_test, width=200, height=50)
 
 new_file_button.pack(pady=(10, 5), padx=20, fill='x', expand=True)
 open_file_button.pack(pady=(5, 10), padx=20, fill='x', expand=True)
+test_screen_button.pack(pady=(5, 10), padx=20, fill='x', expand=True)
 
 raise_frame(experiments_frame)
 root.grid_rowconfigure(0, weight=1)

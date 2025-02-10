@@ -4,9 +4,10 @@ from shared.serial_listener import SerialReader  # Adjust this to your actual im
 
 class SerialDataHandler:
     '''Class to handle storing received data.'''
-    def __init__(self):
+    def __init__(self, port=None):
         # Initialize SerialReader and an empty list to store the data
-        self.reader = SerialReader(timeout=1)
+        print(f"Initializing SerialDataHandler with port: {port}")
+        self.reader = SerialReader(timeout=1, port=port)
         self.received_data = []
 
     def poll_serial_data(self):

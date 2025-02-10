@@ -1,17 +1,20 @@
 # pylint: skip-file
+import os
 import serial
 import threading
 from queue import Queue
 from shared.serial_port_controller import SerialPortController
 
 class SerialReader:
-    def __init__(self, timeout=1):
+    def __init__(self, timeout=1, port=None):
         '''Initializes the serial reader, opens the connection, and starts the listening thread.'''
+        print(f"Initializing SerialReader with port: {port}")
         self.timeout = timeout
         self.data_queue = Queue()   # A queue to hold the incoming data from the serial port
         self.running = True         # Flag to control the thread
-        self.port_controller = SerialPortController("serial_port_preference.csv")
-        self.settings = self.port_controller.retrieve_setting("serial_port_preference.csv")
+        self.port_controller = SerialPortController(port)
+        self.settings = self.port_controller.retrieve_setting(port)
+        print(f"Settings: {self.settings}")
         
         if self.settings:
             try:
@@ -36,6 +39,51 @@ class SerialReader:
         else:
             print("Error: Serial settings could not be loaded.")
             self.ser = None
+        
+    def find_device_config(self, port):
+        '''Find the corresponding .csv file for the given port.'''
+        preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference", port)
+        
+        if not os.path.exists(preference_dir):
+            print(f"ERROR: Preference folder for {port} not found.")
+            return None
+
+        try:
+            # Read the preferred configuration file
+            config_path = os.path.join(preference_dir, "preferred_config.txt")
+            rfid_path = os.path.join(preference_dir, "rfid_config.txt")
+            if os.path.exists(config_path):
+                with open(config_path, "r") as file:
+                    device_file_name = file.readline().strip()
+                    print(f"Meaurement Device config file found: {device_file_name}")
+
+                    csv_path = os.path.join(os.getcwd(), "settings", "serial ports", device_file_name)
+                    if os.path.exists(csv_path):
+                        print(f"Device config file found: {device_file_name}")
+                        return csv_path
+                    else:
+                        print(f"ERROR: Device config file {device_file_name} not found.")
+                        return None
+                    
+            elif os.path.exists(rfid_path):
+                with open(rfid_path, "r") as file:
+                    device_file_name = file.readline().strip()
+                    print(f"RFID Device config file found: {device_file_name}")
+                    
+                    csv_path = os.path.join(os.getcwd(), "settings", "serial ports", device_file_name)
+                    if os.path.exists(csv_path):
+                        print(f"Device config file found: {device_file_name}")
+                        return csv_path
+                    else:
+                        print(f"ERROR: Device config file {device_file_name} not found.")
+
+            else:
+                print(f"ERROR: preferred_config.txt missing for {port}.")
+                return None
+        except Exception as e:
+            print(f"Error reading device config: {e}")
+            return None
+
 
     def read_from_serial(self):
         '''Runs in a background thread to read from the serial port.'''
