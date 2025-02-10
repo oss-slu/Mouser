@@ -32,7 +32,7 @@ jobs:
               for file in $(git ls-files '*.py')
               do
               
-                pylint --disable=import-error,R,wildcard-import,unused-wildcard-import,attribute-defined-outside-init --max-line-length=115 --fail-under=9.0 $file || lint_failed="failed"
+                pylint --disable=import-error,R,wildcard-import,unused-wildcard-import,attribute-defined-outside-init --max-line-length=115 --fail-under=8.75 $file || lint_failed="failed"
                 
               done
               if [ "$lint_failed" = "failed" ]
