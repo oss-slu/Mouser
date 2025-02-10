@@ -408,6 +408,11 @@ class ExperimentDatabase:
         return cages_by_group
 
 
+    def get_name(self):
+        '''Returns a string of the experiment name.'''
+        self._c.execute("SELECT name FROM experiment")
+        return self._c.fetchall()
+    
     def get_animals(self):
         '''Returns a list of tuples representing each animal in experiment.'''
         self._c.execute("SELECT animal_id, group_id, cage_id, weight, active FROM animals")

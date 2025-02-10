@@ -9,10 +9,14 @@ from experiment_pages.experiment.map_rfid import MapRFIDPage
 from experiment_pages.experiment.cage_config_ui import CageConfigurationUI
 from experiment_pages.experiment.experiment_invest_ui import InvestigatorsUI
 from databases.experiment_database import ExperimentDatabase
+from experiment_pages.experiment.review_ui import ReviewUI
 
 class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
     '''Experiment Menu Page Frame'''
     def __init__(self, parent: CTk, name: str, prev_page: ChangeableFrame = None, controller: SerialPortController = None): #pylint: disable= undefined-variable
+
+        #review imported here to prevent a reference loop from occuring
+
 
         #Get name of file from file path
         experiment_name = os.path.basename(name)
@@ -31,6 +35,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         self.data_page = DataCollectionUI(parent, self, name)
         self.analysis_page = DataAnalysisUI(parent, self, os.path.abspath(name))
         self.cage_page = CageConfigurationUI(name, parent, self)
+        self.summary_page = ReviewUI(parent, self, name)
         if controller is None:
             self.rfid_page = MapRFIDPage(name, parent, self)
         else:
@@ -50,11 +55,14 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
                                                   self.cage_page.update_config_frame()])
         self.rfid_button = CTkButton(main_frame, text='Map RFID', width=button_size,
                                 command=  self.rfid_page.raise_frame)
+        self.summary_button = CTkButton(main_frame, text='Summary View', width=button_size,
+                                command= self.summary_page.raise_frame)
 
         self.collection_button.grid(row=0, column=0, ipady=15, ipadx=15, pady=10, padx=10)
         self.analysis_button.grid(row=1, column=0, ipady=15, ipadx=15, pady=10, padx=10)
         self.group_button.grid(row=2, column=0, ipady=15, ipadx=15, pady=10, padx=10)
         self.rfid_button.grid(row=3, column=0, ipady=15, ipadx=15, pady=10, padx=10)
+        self.summary_button.grid(row=4, column=0, ipady=15, ipadx=15, pady=10, padx=10)
 
         if self.menu_button:
             self.menu_button.destroy()
