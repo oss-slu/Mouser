@@ -1,11 +1,20 @@
-
 from experiment_pages.create_experiment.summary_ui import *
 
 class ReviewSummaryUI(SummaryUI):
     '''Summary User Interface for the review page (without the create button).'''
     def __init__(self, experiment: Experiment, parent: CTk, prev_page: CTkFrame, menu_page: CTkFrame):
-        # Pass `show_create_button=False` to disable the button
-        super().__init__(experiment, parent, prev_page, menu_page)
+        # Override the parent's title by calling MouserPage's init directly
+        MouserPage.__init__(self, parent, "Review Experiment - Summary", prev_page)
+        
+        self.input = experiment
+        self.menu = menu_page
+
+        # Skip the CreateExperimentButton that's in SummaryUI
+        scroll_canvas = ScrolledFrame(self)
+        scroll_canvas.place(relx=0.10, rely=0.25, relheight=0.7, relwidth=0.8)
+
+        self.main_frame = CTkFrame(scroll_canvas)
+        self.main_frame.pack(side=LEFT, expand=True)
 
 class ReviewUI(MouserPage):
     '''Review User Interface for experiment summary.'''
