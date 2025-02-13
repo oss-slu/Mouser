@@ -181,6 +181,8 @@ class ExperimentDatabase:
     def add_animal(self, animal_id, rfid, remarks=''):
         '''Adds animal to experiment.'''
 
+        print(f"📡 DEBUG: Adding animal {animal_id} with RFID {rfid}")  # ✅ ADD THIS
+
         self.add_animal_rfid(animal_id, rfid)
 
         animal_id = self.get_animal_id(rfid)
@@ -191,7 +193,12 @@ class ExperimentDatabase:
                         VALUES (?, ?, ?, ?, True)''',
                         (animal_id, group_id, cage_id, remarks))
         self._conn.commit()
-        return self.get_animal_id(rfid)
+
+        inserted_id = self.get_animal_id(rfid)
+        print(f"📡 DEBUG: Inserted Animal ID: {inserted_id}")  # ✅ ADD THIS
+
+        return inserted_id
+
 
     def remove_animal(self, animal_id):
         '''Removes an animal from the experiment.'''

@@ -43,7 +43,7 @@ class DataCollectionUI(MouserPage):
         
 
 
-        columns = ['animal_id']
+        columns = ['animal_id', 'rfid']
         for measurement_id in self.measurement_ids:
             columns.append(measurement_id)
 
@@ -56,19 +56,30 @@ class DataCollectionUI(MouserPage):
         style.configure("Treeview.Heading", font=("Arial", 18))
 
         for i, column in enumerate(columns):
-            text = "Animal ID"
-            if i != 0:
-                text = self.measurement_strings[i-1]
+            if i == 0:
+                text = "Animal ID"
+            elif i == 1:
+                text = "RFID"
+            else:
+                if i-2 < len(self.measurement_strings):  # Ensure index is in range
+                    text = self.measurement_strings[i-2]
+                else:
+                    text = f"Measurement {i-1}"  # Default placeholder for missing items
+            
             self.table.heading(column, text=text)
-            print(text)
+
 
         self.table.grid(row=0, column=0, sticky='nsew')
 
         self.date_label = CTkLabel(self)
 
+        self.animals = self.database.get_animals()  # Fetches Animal ID and RFID
         for animal in self.animals:
-            value = (animal[0], 0, 0)
+            animal_id = animal[0]
+            rfid = self.database.get_animal_rfid(animal_id)  # Fetch RFID from database
+            value = (animal_id, rfid, 0, 0)  # Include RFID in each row
             self.table.insert('', END, values=value)
+
 
         self.get_values_for_date(None)
 
@@ -139,15 +150,17 @@ class DataCollectionUI(MouserPage):
 
         values = self.database.get_data_for_date(self.current_date)
 
-
         for child in self.table.get_children():
             animal_id = self.table.item(child)["values"][0]
+            rfid = self.database.get_animal_rfid(animal_id)  # Fetch RFID
+            found_data = False
             for val in values:
                 if str(val[1]) == str(animal_id):
-                    self.table.item(child, values=tuple(val[1:]))
+                    self.table.item(child, values=tuple([animal_id, rfid] + list(val[2:])))
+                    found_data = True
                     break
-            else:
-                new_values = [animal_id]
+            if not found_data:
+                new_values = [animal_id, rfid]
                 for _ in self.measurement_items:
                     new_values.append(None)
                 self.table.item(child, values=tuple(new_values))
@@ -167,14 +180,16 @@ class ChangeMeasurementsDialog():
     def open(self, animal_id):
         '''Opens the change measurement dialog window and handles automated submission.'''
         self.root = root = CTkToplevel(self.parent)
-        root.title("Modify Measurements")
+
+        title_text = "Modify Measurements for: " + str(animal_id)
+        root.title(title_text)
+        
         root.geometry('700x700')
         root.resizable(False, False)
         root.grid_rowconfigure(0, weight=1)
         root.grid_columnconfigure(0, weight=1)
 
         id_label = CTkLabel(root, text="Animal ID: " + str(animal_id), font=("Arial", 18))
-
         id_label.place(relx=0.5, rely=0.1, anchor=CENTER)
 
         self.textboxes = []

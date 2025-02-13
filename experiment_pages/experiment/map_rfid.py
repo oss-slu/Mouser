@@ -11,6 +11,7 @@ from playsound import playsound
 from serial import serialutil
 from shared.tk_models import *
 from shared.serial_port_controller import SerialPortController
+from shared.serial_handler import SerialDataHandler
 
 from databases.experiment_database import ExperimentDatabase
 from shared.audio import AudioManager
@@ -19,7 +20,7 @@ import shared.file_utils as file_utils
 
 def get_random_rfid():
     '''Returns a simulated rfid number'''
-    return random.randint(1000000, 9999999)
+    return random.randint(1000000000, 9999999999)
 
 def play_sound_async(filename):
     '''Plays the given filename.'''
@@ -36,7 +37,6 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         file = database
         self.db = ExperimentDatabase(file)
-        self.serial_port_controller = SerialPortController("settings/serial ports/serial_port_preference.csv")
 
         self.animals = []
         self.animal_id = 1
@@ -45,15 +45,19 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         simulate_rfid_button = CTkButton(self, text="Simulate RFID", compound=TOP,
                                       width=15, command=self.add_random_rfid)
-        simulate_rfid_button.place(relx=0.80, rely=0.17, anchor=CENTER)
+        simulate_rfid_button.place(relx=0.60, rely=0.17, anchor=CENTER)
 
         # Simulate All RFID Button
         simulate_all_rfid_button = CTkButton(self, text="Simulate ALL RFID", compound=TOP,
                                       width=15, command=self.simulate_all_rfid)
         simulate_all_rfid_button.place(relx=0.80, rely=0.17, anchor=CENTER)
 
+        self.start_rfid = CTkButton(self, text="Start Scanning", compound=TOP,
+                                         width=15, command=self.rfid_listen)
+        self.start_rfid.place(relx=0.40, rely=0.17, anchor=CENTER)
+
         self.table_frame = CTkFrame(self)
-        self.table_frame.place(relx=0.15, rely=0.40, relheight=0.50, relwidth=0.80)
+        self.table_frame.place(relx=0.15, rely=0.30, relheight=0.40, relwidth=0.80)
         self.table_frame.grid_columnconfigure(0, weight= 1)
         self.table_frame.grid_rowconfigure(0, weight= 1)
 
@@ -84,26 +88,20 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.table.bind("<Button-3>", self.right_click_menu)
 
         self.changer = ChangeRFIDDialog(parent, self)
-        self.serial_port_panel = SerialPortSelection(parent,self.serial_port_controller, self)
-
-        self.serial_port_button = CTkButton(self, text="Select Serial Port", compound=TOP,
-                                      width=15, command=self.open_serial_port_selection)
-        self.serial_port_button.place(relx=0.10, rely=0.95, anchor=CENTER)
-
         self.change_rfid_button = CTkButton(self, text="Change RFID", compound=TOP,
                                          width=15, command=self.open_change_rfid)
-        self.change_rfid_button.place(relx=0.40, rely=0.95, anchor=CENTER)
+        self.change_rfid_button.place(relx=0.40, rely=0.75, anchor=CENTER)
 
         self.delete_button = CTkButton(self, text="Remove Selection(s)", compound=TOP,
                                        width=20, command=self.remove_selected_items,
                                        state="normal")  # Initialize button as disabled
-        self.delete_button.place(relx=0.70, rely=0.95, anchor=CENTER)
+        self.delete_button.place(relx=0.70, rely=0.75, anchor=CENTER)
 
         # Add Sacrifice button with normal state
         self.sacrifice_button = CTkButton(self, text="Sacrifice Selected", compound=TOP,
                                       width=20, command=self.sacrifice_selected_items,
                                       state="normal")  # Initialize as enabled
-        self.sacrifice_button.place(relx=0.90, rely=0.95, anchor=CENTER)
+        self.sacrifice_button.place(relx=0.90, rely=0.75, anchor=CENTER)
 
         self.item_selected(None)
 
@@ -123,6 +121,31 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         self.menu_button.configure(command = self.press_back_to_menu_button)
         self.scroll_to_latest_entry()
+
+    def rfid_listen(self):
+        rfid_reader = SerialDataHandler("reader")
+
+        data_thread = threading.Thread(target=rfid_reader.start)
+        data_thread.start()
+
+        # Automated handling of data input
+        def check_for_data():
+            local_db = ExperimentDatabase(self.db.db_file)
+            while True:
+                if len(rfid_reader.received_data) > 0:  # Customize condition
+                    received_data = rfid_reader.get_stored_data()
+                    print("DB RFID:", received_data)
+                    self.add_value(received_data, local_db)
+                    rfid_reader.stop()
+                    self.stop_listening()
+                    local_db.close()
+                    return
+             
+        threading.Thread(target=check_for_data, daemon=True).start()
+
+    def stop_listening(self):
+        self.on_page = False
+        return self.on_page
 
     def simulate_all_rfid(self):
         while len(self.animals) != self.db.get_number_animals():
@@ -145,23 +168,28 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         '''Adds a random rfid value to the next animal.'''
         if len(self.animals) == self.db.get_number_animals():
             self.raise_warning()
-        elif self.serial_port_controller.get_writer_port() is not None:
-            self.serial_port_controller.write_to("123")
-            constant_rfid = self.serial_port_controller.read_info()
-            rand_rfid = constant_rfid+str(random.randint(10000, 99999))
-            self.add_value(int(rand_rfid))
+        # KEEPING JUST IN CASE
+        # elif self.serial_port_controller.get_writer_port() is not None:
+        #     self.serial_port_controller.write_to("123")
+        #     constant_rfid = self.serial_port_controller.read_info()
+        #     rand_rfid = constant_rfid+str(random.randint(10000, 99999))
+        #     self.add_value(int(rand_rfid))
         else:
             rfid = get_random_rfid()
             self.add_value(rfid)
 
-    def add_value(self, rfid):
+    def add_value(self, rfid, db= None):
         '''Adds rfid number and animal to the table and to the database.'''
+
+        if db is None:
+            db = self.db
+        
         item_id = self.animal_id
         self.table.insert('', item_id-1, values=(item_id, rfid), tags='text_font')
         # self.animals.append((item_id, rfid))
         self.animals.insert(item_id-1, (item_id, rfid))
         self.change_entry_text()
-        self.db.add_animal(item_id, rfid)
+        db.add_animal(item_id, rfid)
         AudioManager.play("shared/sounds/rfid_success.wav")
 
 
@@ -293,6 +321,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             # Close the current database connection
             self.close_connection()
             
+            self.stop_listening()
+
             # Local import to avoid circular dependency
             from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
         
