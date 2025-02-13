@@ -52,10 +52,14 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                                       width=15, command=self.simulate_all_rfid)
         simulate_all_rfid_button.place(relx=0.80, rely=0.17, anchor=CENTER)
 
+        
+
         self.start_rfid = CTkButton(self, text="Start Scanning", compound=TOP,
                                          width=15, command=self.rfid_listen)
         self.start_rfid.place(relx=0.40, rely=0.17, anchor=CENTER)
-
+        if self.db.experiment_uses_rfid == 0:
+            self.start_rfid.configure(state="disabled")
+            
         self.table_frame = CTkFrame(self)
         self.table_frame.place(relx=0.15, rely=0.30, relheight=0.40, relwidth=0.80)
         self.table_frame.grid_columnconfigure(0, weight= 1)
