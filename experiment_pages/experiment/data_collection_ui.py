@@ -32,13 +32,11 @@ class DataCollectionUI(MouserPage):
                 i = i + 1
 
 
-
         self.measurement_strings = []
         self.measurement_ids = []
         for item in self.measurement_items:
             self.measurement_strings.append(item[1])
             self.measurement_ids.append(str(item[1]).lower().replace(" ", "_"))
-
 
         self.data_database = DataCollectionDatabase(database_name, self.measurement_strings)
 
