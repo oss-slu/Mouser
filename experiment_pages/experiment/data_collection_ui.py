@@ -20,6 +20,7 @@ class DataCollectionUI(MouserPage):
         super().__init__(parent, "Data Collection", prev_page)
 
         self.database = ExperimentDatabase(database_name)
+
         self.measurement_items = self.database.get_measurement_items()
         self.measurement_strings = []
         self.measurement_ids = []
@@ -192,22 +193,34 @@ class ChangeMeasurementsDialog():
             if i == 1:
                 entry.focus()
 
-                # Start data handling in a separate thread
-                data_handler = SerialDataHandler("device")
-                data_thread = threading.Thread(target=data_handler.start)
-                data_thread.start()
+                if self.data_collection.database.get_measurement_items()[0][2] == 1:
+                ## From get_measurement_items(), measurement items are tuples that return their automatic setting as a boolean at [2].
+                # [0] tracks the auto setting for the first measurement item, which should be weight.    
+                    # Start data handling in a separate thread
+                    data_handler = SerialDataHandler("device")
+                    data_thread = threading.Thread(target=data_handler.start)
+                    data_thread.start()
 
-                # Automated handling of data input
-                def check_for_data():
-                    while True:
-                        if len(data_handler.received_data) >= 2:  # Customize condition
-                            received_data = data_handler.get_stored_data()
-                            entry.insert(0, received_data)
-                            data_handler.stop()
-                            self.finish()  # Automatically call the finish method
-                            break
+                    # Automated handling of data input
+                    def check_for_data():
+                        while True:
+                            if len(data_handler.received_data) >= 2:  # Customize condition
+                                received_data = data_handler.get_stored_data()
+                                entry.insert(0, received_data)
+                                data_handler.stop()
+                                self.finish()  # Automatically call the finish method
+                                break
 
-                threading.Thread(target=check_for_data, daemon=True).start()
+                    threading.Thread(target=check_for_data, daemon=True).start()
+                else: # measurement_item[0] (Weight) is set to 'manual'
+                    submit_button = CTkButton(
+                        root,
+                        text="Submit",
+                        command=self.finish,
+                        width=100,
+                        height=40
+                    )
+                    submit_button.place(relx=0.5, rely=0.9, anchor=CENTER)
 
 
         self.error_text = CTkLabel(root, text="One or more values are not a number", fg_color="red")
