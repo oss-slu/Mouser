@@ -1,14 +1,18 @@
 # pylint: skip-file
 import time
+import threading
 from shared.serial_listener import SerialReader  # Adjust this to your actual import path
 
 class SerialDataHandler:
     '''Class to handle storing received data.'''
     def __init__(self, port=None):
         # Initialize SerialReader and an empty list to store the data
-        print(f"Initializing SerialDataHandler with port: {port}")
+        print(f"Initializing SerialDataHandler on port: {port}")
         self.reader = SerialReader(timeout=1, port=port)
         self.received_data = []
+        self._running = False
+        self.lock = threading.Lock()  # Ensure thread safety
+        self.listener_thread = None
 
     def poll_serial_data(self):
         '''Polls the serial reader and stores any received data.'''
@@ -16,28 +20,40 @@ class SerialDataHandler:
         if serial_data is not None:
             # Store the data in the list
             decoded_data = serial_data.decode('utf-8').strip()
-            self.received_data.append(decoded_data)
+            with self.lock:
+                self.received_data.append(decoded_data)
             print(decoded_data)
         else:
             print("No data available yet.")
 
     def start(self):
         '''Starts polling for serial data in a loop, typically on a separate thread.'''
+        if self._running:
+            print("⚠️ SerialDataHandler is already running!")
+            return
+        
         self._running = True
-        while self._running:
-            self.poll_serial_data()
-            # Pause briefly before polling again
-            time.sleep(0.5)
+        print("🔄 SerialDataHandler started listening...")
+
+        def listen_loop():
+            while self._running:
+                self.poll_serial_data()
+                # Pause briefly before polling again
+                time.sleep(0.5)
+        
+        self.listener_thread = threading.Thread(target=listen_loop, daemon=True)
+        self.listener_thread.start()
 
     def get_stored_data(self):
         '''Returns the most recent item in the list of stored data.'''
-        if self.received_data:
-            return self.received_data[-1]
-        return None
+        with self.lock:
+            return self.received_data.pop(0) if self.received_data else None
 
     def stop(self):
         '''Stops the serial reader and cleanup.'''
         self._running = False
+        if self.listener_thread:
+            self.listener_thread.join()
         self.reader.close()
 
 # Example of how to run SerialDataHandler in a separate thread

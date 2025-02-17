@@ -14,6 +14,7 @@ class SerialReader:
         self.running = True         # Flag to control the thread
         self.port_controller = SerialPortController(port)
         self.settings = self.port_controller.retrieve_setting(port)
+        self.thread = None
         print(f"Settings: {self.settings}")
         
         if self.settings:
@@ -108,8 +109,11 @@ class SerialReader:
     def close(self):
         '''Stops the serial reader and closes the connection.'''
         self.running = False
-        self.thread.join()  # Wait for the thread to finish
-        if self.ser.is_open:
+
+        if self.thread:  # 🔥 Check if thread exists before joining
+            self.thread.join()
+
+        if self.ser and self.ser.is_open:
             self.ser.close()
 
     def get_settings(self):

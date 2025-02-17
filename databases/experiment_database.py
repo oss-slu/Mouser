@@ -7,7 +7,7 @@ class ExperimentDatabase:
     '''SQLite Database Object for Experiments.'''
     def __init__(self, file=":memory:"):  #call with file name as argument or no args to use memory
         self.db_file = file
-        self._conn = sqlite3.connect(file)
+        self._conn = sqlite3.connect(file, check_same_thread=False)
         self._c = self._conn.cursor()
         try:
             self._c.execute('''CREATE TABLE experiment (
@@ -113,21 +113,29 @@ class ExperimentDatabase:
             self._c.execute(query)
             self._conn.commit()
 
-    def add_data_entry(self, date, animal_id, measurements):
-        '''Adds a data entry to the collected_data table with the given
-        date, animal_id and a list of measurments.'''
+    def add_data_entry(self, entry_date, animal_id, measurements):
+        '''Inserts a new data entry into the database.'''
+
         self._c.execute("SELECT item FROM measurement_items")
-        measurement_items = [item[0] for item in self._c.fetchall()]
+        measurement_columns = [item[0] for item in self._c.fetchall()]
+
+        if len(measurements) != len(measurement_columns):
+            print("❌ Error: Number of measurements does not match number of columns in collected_data table.")
+            return
+
+        columns = ", ".join(measurement_columns)  # Use correct measurement names
+        placeholders = ", ".join(["?"] * len(measurements))
+
+        query = f"INSERT INTO collected_data (date, animal_id, {columns}) VALUES (?, ?, {placeholders})"
+
+        try:
+            self._c.execute(query, (entry_date, animal_id) + tuple(measurements))
+            self._conn.commit()
+            print("✅ Data successfully inserted into database")
+        except sqlite3.Error as e:
+            print(f"❌ Database Insertion Error: {e}")
 
 
-        insert_param = "(date,animal_id," + ",".join(measurement_items) + ")"
-
-        values_param = f"({str(date)}, {str(animal_id)}, {','.join(map(str, measurements))})"
-
-        query = f"INSERT INTO collected_data {insert_param} VALUES {values_param}" % (insert_param, values_param)
-
-        self._c.execute(query)
-        self._conn.commit()
 
     def change_data_entry(self, date, animal_id, measurements):
         '''Overwrites the data entry of a particular date and animal id
@@ -181,6 +189,8 @@ class ExperimentDatabase:
     def add_animal(self, animal_id, rfid, remarks=''):
         '''Adds animal to experiment.'''
 
+        print(f"📡 DEBUG: Adding animal {animal_id} with RFID {rfid}")  # ✅ ADD THIS
+
         self.add_animal_rfid(animal_id, rfid)
 
         animal_id = self.get_animal_id(rfid)
@@ -191,7 +201,12 @@ class ExperimentDatabase:
                         VALUES (?, ?, ?, ?, True)''',
                         (animal_id, group_id, cage_id, remarks))
         self._conn.commit()
-        return self.get_animal_id(rfid)
+
+        inserted_id = self.get_animal_id(rfid)
+        print(f"📡 DEBUG: Inserted Animal ID: {inserted_id}")  # ✅ ADD THIS
+
+        return inserted_id
+
 
     def remove_animal(self, animal_id):
         '''Removes an animal from the experiment.'''
@@ -421,7 +436,12 @@ class ExperimentDatabase:
     def get_animal_id(self, rfid):
         '''Returns the id of the animal with the passed RFID.'''
         self._c.execute("SELECT animal_id FROM animal_rfid WHERE rfid=?", (rfid,))
-        return self._c.fetchone()[0]
+        result = self._c.fetchone()
+
+        if result is None:
+            print(f"❌ Error: No animal found with RFID {rfid}.")
+            return None
+        return result[0]
 
     def get_animal_rfid(self, animal_id):
         '''Returns the rfid number of the passed animal'''
