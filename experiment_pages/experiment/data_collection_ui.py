@@ -22,11 +22,22 @@ class DataCollectionUI(MouserPage):
         self.database = ExperimentDatabase(database_name)
 
         self.measurement_items = self.database.get_measurement_items()
+        
+        ## ENSURE ANIMALS ARE IN DATABASE BEFORE EXPERIMENT FOR EXPERIMENTS W/O RFID ##
+        if self.database.experiment_uses_rfid() != 1:
+            i = 1
+            max_num_animals = self.database.get_number_animals()
+            while i <= max_num_animals:
+                self.database.add_animal(i, i)
+                i = i + 1
+
+
         self.measurement_strings = []
         self.measurement_ids = []
         for item in self.measurement_items:
             self.measurement_strings.append(item[1])
             self.measurement_ids.append(str(item[1]).lower().replace(" ", "_"))
+
 
         self.data_database = DataCollectionDatabase(database_name, self.measurement_strings)
 
