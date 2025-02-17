@@ -25,13 +25,11 @@ class DataCollectionUI(MouserPage):
         
         ## ENSURE ANIMALS ARE IN DATABASE BEFORE EXPERIMENT FOR EXPERIMENTS W/O RFID ##
         if self.database.experiment_uses_rfid() != 1 and self.database.get_animals() == []:
-            print(self.database.get_animals())
             i = 1
             max_num_animals = self.database.get_number_animals()
             while i <= max_num_animals:
                 self.database.add_animal(i, i)
                 i = i + 1
-        print(self.database.get_animals())
 
 
 
