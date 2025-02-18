@@ -89,7 +89,7 @@ class ExperimentDatabase:
             # Update group animal count
             self._c.execute('''UPDATE groups 
                             SET num_animals = num_animals + 1 
-                            WHERE group_id = ?''', (group_id,))
+                            WHERE group_id = ?''', (group_id))
             
             self._conn.commit()
             return animal_id
@@ -108,7 +108,7 @@ class ExperimentDatabase:
             # Update group count
             self._c.execute('''UPDATE groups 
                             SET num_animals = num_animals - 1 
-                            WHERE group_id = ?''', (group_id,))
+                            WHERE group_id = ?''', (group_id))
             
             # Deactivate animal instead of deleting
             self._c.execute("UPDATE animals SET active = 0 WHERE animal_id = ?", (animal_id,))
@@ -195,7 +195,7 @@ class ExperimentDatabase:
 
     def get_animal_id(self, rfid):
         '''Returns the animal ID for a given RFID.'''
-        self._c.execute('SELECT animal_id FROM animals WHERE rfid = ?', (rfid,))
+        self._c.execute('SELECT animal_id FROM animals WHERE rfid = ?', (rfid))
         result = self._c.fetchone()
         return result[0] if result else None
 
@@ -206,7 +206,7 @@ class ExperimentDatabase:
                 SELECT animal_id, value 
                 FROM animal_measurements 
                 WHERE timestamp = ?
-            ''', (date,))
+            ''', (date))
             return self._c.fetchall()
         except Exception as e:
             print(f"Error getting data for date: {e}")
@@ -370,6 +370,16 @@ class ExperimentDatabase:
             df.to_csv(csv_file_path, index=False)
         
         print(f"All tables exported successfully to {experiment_folder}.")
+
+    def set_animal_active_status(self, animal_id, status):
+        '''Sets the active status of an animal.'''
+        self._c.execute("UPDATE animals SET active = ? WHERE animal_id = ?", (status, animal_id))
+        self._conn.commit()
+
+    def set_number_animals(self, number):
+        '''Sets the number of animals in the experiment.'''
+        self._c.execute("UPDATE experiment SET num_animals = ?", (number,))
+        self._conn.commit()
 
 
 

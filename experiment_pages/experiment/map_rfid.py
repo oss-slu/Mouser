@@ -109,7 +109,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         self.item_selected(None)
 
-        animals_setup = self.db.get_all_animals_rfid()
+        animals_setup = self.db.get_all_animal_ids()
         for animal in animals_setup:
             rfid = self.db.get_animal_rfid(animal)
             value = (int(animal), rfid)
@@ -270,10 +270,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         for item in selected_items:
             item_id = int(self.table.item(item, 'values')[0])
             self.table.delete(item)
-            self.db.remove_animal(item_id)
-
-            # Update animal list
-            self.animals = [(index, rfid) for (index, rfid) in self.animals if index != item_id]
+            self.db.set_animal_active_status(item_id, 0)
 
         self.change_entry_text()
 
@@ -290,7 +287,6 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
     def get_next_animal(self):
         '''returns the next animal in our experiment.'''
-
         min_unused = 1
 
         for animal in sorted(self.animals):
@@ -350,7 +346,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
     def press_back_to_menu_button(self):
         '''Handles back to menu button press.'''
-        if len(self.animals) != self.db.get_total_number_animals():
+        if len(self.db.get_all_animals_rfid()) != len(self.db.get_animals()):
             self.raise_warning('Not all animals have been mapped to RFIDs')
         else:
             current_file = self.db.db_file
@@ -379,13 +375,14 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             self.raise_warning("No items selected. Please select animals to sacrifice.")
             return
 
-        # First remove the selected animals like the remove button
+        # First mark the selected animals as inactive
         for item in selected_items:
             animal_id = int(self.table.item(item, 'values')[0])
             self.table.delete(item)
-            self.db.remove_animal(animal_id)
+            self.db.set_animal_active_status(animal_id, 0)  # Mark as inactive
             self.animals = [(index, rfid) for (index, rfid) in self.animals if index != animal_id]
-
+        
+        # Then update the UI table
         self.change_entry_text()
 
         # Then decrease the maximum number of animals
@@ -395,7 +392,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             return
             
         # Decrease the maximum number of animals by 1
-        self.db.set_number_animals(current_max - 1)
+        self.db.set_number_animals(current_max)
 
 class ChangeRFIDDialog():
     '''Change RFID user interface.'''
