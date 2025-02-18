@@ -199,38 +199,54 @@ class ExperimentDatabase:
 
     def get_data_for_date(self, date):
         '''Gets all measurements for a specific date.'''
-        self._c.execute('''
-            SELECT 
-                a.animal_id,
-                m.value,
-                m.timestamp
-            FROM animals a
-            LEFT JOIN animal_measurements m ON a.animal_id = m.animal_id
-            WHERE DATE(m.timestamp) = ? AND a.active = 1
-            ORDER BY a.animal_id
-        ''', (date,))
-        return self._c.fetchall()
+        try:
+            self._c.execute('''
+                SELECT animal_id, value 
+                FROM animal_measurements 
+                WHERE timestamp = ?
+            ''', (date,))
+            return self._c.fetchall()
+        except Exception as e:
+            print(f"Error getting data for date: {e}")
+            return []
 
-    def add_data_entry(self, entry_date, animal_id, measurements):
-        '''Adds new measurement entries for an animal.'''
-        for value in measurements:
-            if value is not None:
-                self._c.execute('''
-                    INSERT INTO animal_measurements (animal_id, timestamp, value)
-                    VALUES (?, ?, ?)
-                ''', (animal_id, entry_date, value))
-        self._conn.commit()
+    def add_data_entry(self, date, animal_id, values):
+        '''Adds a measurement entry for an animal on a specific date.'''
+        try:
+            # Convert values to list if it's not already
+            values = list(values) if isinstance(values, tuple) else values
+            
+            # Insert new measurement
+            self._c.execute('''
+                INSERT INTO animal_measurements (animal_id, timestamp, value)
+                VALUES (?, ?, ?)
+            ''', (animal_id, date, values[0]))  # Assuming single measurement for now
+            
+            self._conn.commit()
+        except Exception as e:
+            print(f"Error adding data entry: {e}")
+            self._conn.rollback()
 
-    def change_data_entry(self, entry_date, animal_id, measurements):
-        '''Updates measurement entries for an animal.'''
-        # First remove existing measurements for this date/animal
-        self._c.execute('''
-            DELETE FROM animal_measurements 
-            WHERE animal_id = ? AND DATE(timestamp) = ?
-        ''', (animal_id, entry_date))
-        
-        # Then add new measurements
-        self.add_data_entry(entry_date, animal_id, measurements)
+    def change_data_entry(self, date, animal_id, values):
+        '''Updates a measurement entry for an animal on a specific date.'''
+        try:
+            # Convert values to list if it's not already
+            values = list(values) if isinstance(values, tuple) else values
+            
+            # Update existing measurement
+            self._c.execute('''
+                UPDATE animal_measurements 
+                SET value = ?
+                WHERE animal_id = ? AND timestamp = ?
+            ''', (values[0], animal_id, date))
+            
+            if self._c.rowcount == 0:  # No existing record found
+                self.add_data_entry(date, animal_id, values)
+            
+            self._conn.commit()
+        except Exception as e:
+            print(f"Error changing data entry: {e}")
+            self._conn.rollback()
 
     def get_cages_by_group(self):
         '''Returns a dictionary of group IDs mapped to their cage information.'''
