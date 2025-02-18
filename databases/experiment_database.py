@@ -18,7 +18,8 @@ class ExperimentDatabase:
                                 num_groups INTEGER,
                                 cage_max INTEGER,
                                 measurement_type INTEGER,
-                                id TEXT);''')
+                                id TEXT,
+                                investigators TEXT);''')
             
             self._c.execute('''CREATE TABLE animals (
                                 animal_id INTEGER PRIMARY KEY,
@@ -44,13 +45,14 @@ class ExperimentDatabase:
         except sqlite3.OperationalError:
             pass
 
-    def setup_experiment(self, name, species, uses_rfid, num_animals, num_groups, cage_max, measurement_type, experiment_id):
-        '''Initializes Experiment.'''
+    def setup_experiment(self, name, species, uses_rfid, num_animals, num_groups, cage_max, measurement_type, experiment_id, investigators):
+        '''Initializes Experiment'''
+        investigators_str = ', '.join(investigators)  # Convert list to comma-separated string
         self._c.execute('''INSERT INTO experiment (name, species, uses_rfid, num_animals,
-                        num_groups, cage_max, measurement_type, id)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+                        num_groups, cage_max, measurement_type, id, investigators)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
                         (name, species, uses_rfid, num_animals, num_groups, 
-                         cage_max, measurement_type, experiment_id))
+                         cage_max, measurement_type, experiment_id, investigators_str))
         self._conn.commit()
 
     def setup_groups(self, group_names, cage_capacity):
@@ -339,6 +341,35 @@ class ExperimentDatabase:
             AND active = 1
         ''')
         return [animal[0] for animal in self._c.fetchall()]
+
+    def export_to_csv(self, directory):
+        '''Exports all relevant tables in the database to a folder named after the experiment in the specified directory.'''
+        import pandas as pd
+        
+        # Get the experiment name
+        self._c.execute("SELECT name FROM experiment")
+        experiment_name = self._c.fetchone()
+        experiment_name = experiment_name[0] if experiment_name else "default_experiment"
+
+        # Create a folder for the experiment
+        experiment_folder = os.path.join(directory, experiment_name)
+        os.makedirs(experiment_folder, exist_ok=True)
+
+        # Define the tables to export
+        tables = {
+            'experiment': 'experiment.csv',
+            'animals': 'animals.csv',
+            'animal_measurements': 'animal_measurements.csv',
+            'groups': 'groups.csv'
+        }
+
+        for table, filename in tables.items():
+            query = f"SELECT * FROM {table}"
+            df = pd.read_sql_query(query, self._conn)
+            csv_file_path = os.path.join(experiment_folder, filename)
+            df.to_csv(csv_file_path, index=False)
+        
+        print(f"All tables exported successfully to {experiment_folder}.")
 
 
 

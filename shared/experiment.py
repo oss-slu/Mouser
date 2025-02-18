@@ -164,8 +164,9 @@ class Experiment():
             num_animals=self.num_animals,
             num_groups=self.num_groups,
             cage_max=self.max_per_cage,
-            measurement_type=self.measurement_type,  # Use the stored measurement type
-            experiment_id=self.id
+            measurement_type=self.measurement_type,
+            experiment_id=self.id,
+            investigators=self.investigators
         )
         
         # Setup groups with cage capacity
@@ -186,4 +187,8 @@ class Experiment():
     def set_measurement_type(self, is_automatic: int):
         '''Sets whether measurements are automatic (1) or manual (0).'''
         self.measurement_type = is_automatic
+
+    def add_investigator(self, investigator_name):
+        if investigator_name and investigator_name not in self.investigators:
+            self.investigators.append(investigator_name)
         

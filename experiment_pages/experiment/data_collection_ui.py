@@ -277,22 +277,24 @@ class DataCollectionUI(MouserPage):
         self.date_label = CTkLabel(self, text=date_text, font=("Arial", 18))
         self.date_label.place(relx=0.5, rely=0.25, anchor=CENTER)
 
+        # Get all measurements for current date
         values = self.database.get_data_for_date(self.current_date)
-
+        
+        # Update each row in the table
         for child in self.table.get_children():
             animal_id = self.table.item(child)["values"][0]
             rfid = self.database.get_animal_rfid(animal_id)  # Fetch RFID
             found_data = False
             for val in values:
-                if str(val[0]) == str(animal_id):  # val[0] is animal_id in new schema
-                    self.table.item(child, values=tuple([animal_id, rfid, val[1]]))  # val[1] is the measurement value
+                if str(val[0]) == str(animal_id):  # val[0] is animal_id
+                    # Update table with animal_id, rfid, and measurement value
+                    self.table.item(child, values=(animal_id, rfid, val[1]))  # val[1] is measurement_value
                     found_data = True
                     break
+                
             if not found_data:
-                new_values = [animal_id, rfid]
-                for _ in self.measurement_items:
-                    new_values.append(None)
-                self.table.item(child, values=tuple(new_values))
+                # If no measurement found, show animal_id and rfid with None for measurement
+                self.table.item(child, values=(animal_id, rfid, None))
 
     def close_connection(self):
         '''Closes database file.'''
