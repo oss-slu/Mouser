@@ -188,6 +188,20 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         if db is None:
             db = self.db
         
+        # Clean up RFID value if it's coming from a reader
+        if isinstance(rfid, str):
+            # Remove any non-numeric characters
+            rfid = ''.join(filter(str.isdigit, rfid))
+            if not rfid:  # If no digits were found
+                print(f"Invalid RFID format received: {rfid}")
+                return
+        
+        try:
+            rfid = int(rfid)  # Convert to integer
+        except (ValueError, TypeError) as e:
+            print(f"Error converting RFID to integer: {e}")
+            return
+        
         item_id = self.animal_id
         
         # Find appropriate group with available space
