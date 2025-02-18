@@ -23,6 +23,9 @@ class CreateExperimentButton(CTkButton):
         '''Saves an experiment as a new .mouser file.'''
         directory = askdirectory()
         if directory:
+            # Get measurement type from experiment object
+            measurement_type = 1 if self.experiment.get_measurement_type() else 0
+            self.experiment.set_measurement_type(measurement_type)  # Set it before saving
             self.experiment.save_to_database(directory)
             if self.experiment.get_password():
                 password = self.experiment.get_password()

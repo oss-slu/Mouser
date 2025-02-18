@@ -5,7 +5,6 @@ import time
 from customtkinter import *
 from shared.tk_models import *
 from databases.experiment_database import ExperimentDatabase
-from databases.data_collection_database import DataCollectionDatabase
 from shared.audio import AudioManager
 from shared.scrollable_frame import ScrolledFrame
 from shared.serial_handler import SerialDataHandler
@@ -25,23 +24,57 @@ class DataCollectionUI(MouserPage):
 
         self.database = ExperimentDatabase(database_name)
         self.measurement_items = self.database.get_measurement_items()
+
+        ## ENSURE ANIMALS ARE IN DATABASE BEFORE EXPERIMENT FOR EXPERIMENTS W/O RFID ##
+        if self.database.experiment_uses_rfid() != 1 and self.database.get_animals() == []:
+            print("No RFIDs Detected. Filling out Database\n")
+            
+            i = 1
+            current_group = 1
+            max_num_animals = self.database.get_total_number_animals()
+            print(f"Total animals to add: {max_num_animals}")
+            
+            while i <= max_num_animals:
+                # Get cage capacity for current group
+                cage_capacity = self.database.get_cage_capacity(current_group)
+                print(f"Group {current_group} capacity: {cage_capacity}")
+                
+                # Get current number of animals in group
+                group_count = self.database.get_group_animal_count(current_group)
+                print(f"Current animals in group {current_group}: {group_count}")
+                
+                # If current group is full, move to next group
+                if group_count >= cage_capacity:
+                    print(f"Group {current_group} is full, moving to next group")
+                    current_group += 1
+                    continue
+                
+                # Add animal to current group
+                print(f"Adding animal {i} to group {current_group}")
+                self.database.add_animal(
+                    animal_id=i,
+                    rfid=i,     # Keep as integer for RFID
+                    group_id=current_group,
+                )
+                i = i + 1
+
         self.measurement_strings = []
         self.measurement_ids = []
+        print(self.measurement_items)
         for item in self.measurement_items:
             self.measurement_strings.append(item[1])
             self.measurement_ids.append(str(item[1]).lower().replace(" ", "_"))
 
-        self.data_database = DataCollectionDatabase(database_name, self.measurement_strings)
-
-        if self.database.experiment_uses_rfid() == 0:
+        if self.database.get_measurement_type() == 0:
             start_function = self.auto_increment
         else:
             start_function = self.rfid_listen
+
         self.auto_increment_button = CTkButton(self,
                                                text="Start",
                                                compound=TOP,
                                                width=15,
-                                               command= start_function)
+                                               command=start_function)
         self.auto_increment_button.place(relx=0.45, rely=0.4, anchor=CENTER)
         self.auto_inc_id = -1
 
@@ -91,8 +124,10 @@ class DataCollectionUI(MouserPage):
         self.animals = self.database.get_animals()  # Fetches Animal ID and RFID
         for animal in self.animals:
             animal_id = animal[0]
-            rfid = self.database.get_animal_rfid(animal_id)  # Fetch RFID from database
-            value = (animal_id, rfid, 0, 0)  # Include RFID in each row
+            rfid = animal[1]  # RFID is already included in get_animals() result
+            value = (animal_id, rfid)  # Initial values with just ID and RFID
+            for _ in self.measurement_items:
+                value += (None,)  # Add None for each measurement type
             self.table.insert('', END, values=value)
 
 
@@ -249,8 +284,8 @@ class DataCollectionUI(MouserPage):
             rfid = self.database.get_animal_rfid(animal_id)  # Fetch RFID
             found_data = False
             for val in values:
-                if str(val[1]) == str(animal_id):
-                    self.table.item(child, values=tuple([animal_id, rfid] + list(val[2:])))
+                if str(val[0]) == str(animal_id):  # val[0] is animal_id in new schema
+                    self.table.item(child, values=tuple([animal_id, rfid, val[1]]))  # val[1] is the measurement value
                     found_data = True
                     break
             if not found_data:

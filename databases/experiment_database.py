@@ -17,13 +17,13 @@ class ExperimentDatabase:
                                 num_animals INTEGER,
                                 num_groups INTEGER,
                                 cage_max INTEGER,
-                                measurement_type TEXT,
+                                measurement_type INTEGER,
                                 id TEXT);''')
             
             self._c.execute('''CREATE TABLE animals (
                                 animal_id INTEGER PRIMARY KEY,
                                 group_id INTEGER,
-                                rfid TEXT UNIQUE,
+                                rfid INTEGER UNIQUE,
                                 remarks TEXT,
                                 active INTEGER);''')
                                 
@@ -171,6 +171,19 @@ class ExperimentDatabase:
                         WHERE active = 1 
                         ORDER BY animal_id''')
         return self._c.fetchall()
+    
+    def get_total_number_animals(self):
+        '''Returns the total number of animals from the experiment table.'''
+        self._c.execute("SELECT num_animals FROM experiment")
+        result = self._c.fetchone()
+        print(result[0])
+        return result[0] if result else 0
+
+    def get_number_animals(self):
+        '''Returns the number of active animals in the database.'''
+        self._c.execute("SELECT COUNT(*) FROM animals WHERE active = 1")
+        result = self._c.fetchone()
+        return result[0] if result else 0
 
     def get_animal_rfid(self, animal_id):
         '''Returns the RFID for a given animal ID.'''
@@ -294,6 +307,22 @@ class ExperimentDatabase:
                         WHERE active = 1 AND rfid IS NOT NULL 
                         ORDER BY animal_id''')
         return [rfid[0] for rfid in self._c.fetchall()]
+
+    def get_measurement_type(self):
+        '''Returns whether the measurement is automatic (1) or manual (0).'''
+        self._c.execute("SELECT measurement_type FROM experiment")
+        result = self._c.fetchone()
+        return result[0] if result else 0  # Default to manual (0)
+
+    def get_all_animal_ids(self):
+        '''Returns a list of all animal IDs that have RFIDs mapped to them.'''
+        self._c.execute('''
+            SELECT animal_id 
+            FROM animals 
+            WHERE rfid IS NOT NULL 
+            AND active = 1
+        ''')
+        return [animal[0] for animal in self._c.fetchall()]
 
 
 

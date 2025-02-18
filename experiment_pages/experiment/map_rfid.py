@@ -57,7 +57,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.start_rfid = CTkButton(self, text="Start Scanning", compound=TOP,
                                          width=15, command=self.rfid_listen)
         self.start_rfid.place(relx=0.40, rely=0.17, anchor=CENTER)
-        if self.db.experiment_uses_rfid == 0:
+        if not self.db.experiment_uses_rfid():
             self.start_rfid.configure(state="disabled")
             
         self.table_frame = CTkFrame(self)
@@ -152,7 +152,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         return self.on_page
 
     def simulate_all_rfid(self):
-        while len(self.animals) != self.db.get_number_animals():
+        '''Simulates RFID for all remaining unmapped animals.'''
+        while len(self.animals) < self.db.get_total_number_animals():  # Changed from get_number_animals
             self.add_random_rfid()
 
 
@@ -170,7 +171,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
     def add_random_rfid(self):
         '''Adds a random rfid value to the next animal.'''
-        if len(self.animals) == self.db.get_number_animals():
+        if len(self.animals) >= self.db.get_total_number_animals():  # Changed from get_number_animals
             self.raise_warning()
         # KEEPING JUST IN CASE
         # elif self.serial_port_controller.get_writer_port() is not None:
@@ -182,18 +183,36 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             rfid = get_random_rfid()
             self.add_value(rfid)
 
-    def add_value(self, rfid, db= None):
-        '''Adds rfid number and animal to the table and to the database.'''
-
+    def add_value(self, rfid, db=None):
+        '''Adds rfid number and animal to the table and database.'''
         if db is None:
             db = self.db
         
         item_id = self.animal_id
+        
+        # Find appropriate group with available space
+        current_group = 1
+        while True:
+            # Get cage capacity for current group
+            cage_capacity = self.db.get_cage_capacity(current_group)
+            
+            # Get current number of animals in group
+            group_count = self.db.get_group_animal_count(current_group)
+            
+            # If current group has space, use it
+            if group_count < cage_capacity:
+                break
+            
+            # Otherwise, try next group
+            current_group += 1
+        
+        # Add to table
         self.table.insert('', item_id-1, values=(item_id, rfid), tags='text_font')
-        # self.animals.append((item_id, rfid))
         self.animals.insert(item_id-1, (item_id, rfid))
         self.change_entry_text()
-        db.add_animal(item_id, rfid)
+        
+        # Add to database with determined group
+        db.add_animal(animal_id=item_id, rfid=rfid, group_id=current_group)
         AudioManager.play("shared/sounds/rfid_success.wav")
 
 
@@ -316,14 +335,12 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         message.mainloop()
 
     def press_back_to_menu_button(self):
-        '''On pressing of back to menu button.'''
-        if len(self.animals) != self.db.get_number_animals():
-            self.raise_warning(warning_message= 'Not all animals have been mapped to RFIDs')
+        '''Handles back to menu button press.'''
+        if len(self.animals) != self.db.get_total_number_animals():
+            self.raise_warning('Not all animals have been mapped to RFIDs')
         else:
-            # Get the current file path before closing
-            current_file = self.db.db_file  # Changed from file_path to db_file
-            # Close the current database connection
-            self.close_connection()
+            current_file = self.db.db_file
+            self.db.close()
             
             self.stop_listening()
 

@@ -164,7 +164,7 @@ class Experiment():
             num_animals=self.num_animals,
             num_groups=self.num_groups,
             cage_max=self.max_per_cage,
-            measurement_type=','.join(measurement_types),
+            measurement_type=self.measurement_type,  # Use the stored measurement type
             experiment_id=self.id
         )
         
@@ -178,4 +178,12 @@ class Experiment():
             manager = PasswordManager(self.password)
             manager.encrypt_file(file)
         # TO:DO save date created to db
+        
+    def get_measurement_type(self):
+        '''Returns whether measurements are automatic.'''
+        return hasattr(self, 'measurement_type') and self.measurement_type == 1
+
+    def set_measurement_type(self, is_automatic: int):
+        '''Sets whether measurements are automatic (1) or manual (0).'''
+        self.measurement_type = is_automatic
         
