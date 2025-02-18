@@ -149,13 +149,31 @@ class Experiment():
             file = directory + '/' + self.name + '.pmouser'
         else:
             file = directory + '/' + self.name + '.mouser'
+        
         db = ExperimentDatabase(file)
-        db.setup_experiment(self.name, self.species, self.rfid, self.num_animals,
-                            self.num_groups, self.max_per_cage, self.id)
-        db.setup_groups(self.group_names)
-        db.setup_cages(self.num_animals, self.num_groups, self.max_per_cage)
-        db.setup_measurement_items(self.data_collect_type)
-        db.setup_collected_data(self.items)
+        
+        # Convert measurement types to strings if they're tuples
+        measurement_types = [item[0] if isinstance(item, tuple) else item 
+                            for item in self.data_collect_type]
+        
+        # Setup experiment with measurement_type from data_collect_type
+        db.setup_experiment(
+            name=self.name,
+            species=self.species,
+            uses_rfid=self.rfid,
+            num_animals=self.num_animals,
+            num_groups=self.num_groups,
+            cage_max=self.max_per_cage,
+            measurement_type=','.join(measurement_types),
+            experiment_id=self.id
+        )
+        
+        # Setup groups with cage capacity
+        db.setup_groups(
+            group_names=self.group_names,
+            cage_capacity=self.max_per_cage
+        )
+        
         if self.password:
             manager = PasswordManager(self.password)
             manager.encrypt_file(file)

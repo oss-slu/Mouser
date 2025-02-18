@@ -44,6 +44,8 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
 
         button_size = 40
 
+        print(self.experiment.get_experiment_id())
+
 
         self.collection_button = CTkButton(main_frame, text='Data Collection', width=button_size,
                                 command= self.data_page.raise_frame)

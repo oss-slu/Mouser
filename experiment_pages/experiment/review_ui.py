@@ -16,7 +16,7 @@ class ReviewUI(MouserPage):
         # Example usage with getter
         name_label = CTkLabel(
             self.main_frame,
-            text=f"Experiment name: {self.database.get_name()}",
+            text=f"Experiment name: " + database_name,
         )
         name_label.place(relx=0.5, rely=0.1, anchor=CENTER) #pylint: disable = undefined-variable
 

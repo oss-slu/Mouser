@@ -109,7 +109,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         self.item_selected(None)
 
-        animals_setup = self.db.get_all_animal_ids()
+        animals_setup = self.db.get_all_animals_rfid()
         for animal in animals_setup:
             rfid = self.db.get_animal_rfid(animal)
             value = (int(animal), rfid)
