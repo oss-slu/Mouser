@@ -19,7 +19,8 @@ class ExperimentDatabase:
                                 cage_max INTEGER,
                                 measurement_type INTEGER,
                                 id TEXT,
-                                investigators TEXT);''')
+                                investigators TEXT,
+                                measurement TEXT);''')
             
             self._c.execute('''CREATE TABLE animals (
                                 animal_id INTEGER PRIMARY KEY,
@@ -31,7 +32,7 @@ class ExperimentDatabase:
             self._c.execute('''CREATE TABLE animal_measurements (
                                 measurement_id INTEGER PRIMARY KEY,
                                 animal_id INTEGER,
-                                timestamp DATETIME,
+                                timestamp TEXT,
                                 value REAL,
                                 FOREIGN KEY(animal_id) REFERENCES animals(animal_id));''')
                                 
@@ -45,14 +46,14 @@ class ExperimentDatabase:
         except sqlite3.OperationalError:
             pass
 
-    def setup_experiment(self, name, species, uses_rfid, num_animals, num_groups, cage_max, measurement_type, experiment_id, investigators):
+    def setup_experiment(self, name, species, uses_rfid, num_animals, num_groups, cage_max, measurement_type, experiment_id, investigators, measurement):
         '''Initializes Experiment'''
         investigators_str = ', '.join(investigators)  # Convert list to comma-separated string
         self._c.execute('''INSERT INTO experiment (name, species, uses_rfid, num_animals,
-                        num_groups, cage_max, measurement_type, id, investigators)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                        num_groups, cage_max, measurement_type, id, investigators, measurement)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
                         (name, species, uses_rfid, num_animals, num_groups, 
-                         cage_max, measurement_type, experiment_id, investigators_str))
+                         cage_max, measurement_type, experiment_id, investigators_str, measurement))
         self._conn.commit()
 
     def setup_groups(self, group_names, cage_capacity):
@@ -206,7 +207,7 @@ class ExperimentDatabase:
                 SELECT animal_id, value 
                 FROM animal_measurements 
                 WHERE timestamp = ?
-            ''', (date))
+            ''', (date,))
             return self._c.fetchall()
         except Exception as e:
             print(f"Error getting data for date: {e}")
@@ -380,6 +381,28 @@ class ExperimentDatabase:
         '''Sets the number of animals in the experiment.'''
         self._c.execute("UPDATE experiment SET num_animals = ?", (number,))
         self._conn.commit()
+
+    def insert_blank_data_for_day(self, animal_ids, date):
+        '''Inserts blank measurements for a list of animal IDs for a specific date.'''
+        try:
+            for animal_id in animal_ids:
+                self._c.execute('''INSERT INTO animal_measurements (animal_id, timestamp, value)
+                                VALUES (?, ?, ?)''',
+                                (animal_id, date, None))  # Insert None for blank value
+            self._conn.commit()
+        except Exception as e:
+            print(f"Error inserting blank data: {e}")
+            self._conn.rollback()
+
+    def get_measurement_name(self):
+        '''Returns the measurement name from the experiment table.'''
+        try:
+            self._c.execute("SELECT measurement FROM experiment")
+            result = self._c.fetchone()
+            return result[0] if result else None  # Return the measurement type or None if not found
+        except Exception as e:
+            print(f"Error retrieving measurement value: {e}")
+            return None
 
 
 

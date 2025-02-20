@@ -102,14 +102,14 @@ class SummaryUI(MouserPage):# pylint: disable=undefined-variable
         labels.append(species_label)
         inputs.append(species_input)
 
-        items = ''
-        for item in self.input.get_measurement_items():
-            items += item + ',\n'
+        items = self.input.get_measurement_items()  # Directly get the string
+
         items_label = CTkLabel(self.main_frame, text='Measurement Items:', font=label_style)
-        if len(items) >= 2:
-            items_input = CTkLabel(self.main_frame, text=items[:-2])
-        else:
+        if items:  # Check if items is not empty
             items_input = CTkLabel(self.main_frame, text=items)
+        else:
+            items_input = CTkLabel(self.main_frame, text="No measurement items available.")  # Fallback message
+
         labels.append(items_label)
         inputs.append(items_input)
 

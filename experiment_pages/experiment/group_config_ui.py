@@ -56,8 +56,8 @@ class GroupConfigUI(MouserPage): # pylint: disable= undefined-variable
             name.grid(row=i+1, column=0, padx=10, pady=10)
             self.group_input.append(name)
 
-    def create_item_frame(self, items):
-        '''Creates a grid of all each item in items.'''
+    def create_item_frame(self, item):
+        '''Creates a grid for the item.'''
         self.button_vars = []
         self.item_auto_buttons = []
         self.item_man_buttons = []
@@ -65,19 +65,19 @@ class GroupConfigUI(MouserPage): # pylint: disable= undefined-variable
         type_label = CTkLabel(self.item_frame, text="Input Method")
         type_label.grid(row=0, column=0, columnspan=3, pady=8)
 
-        for i in range(0, len(items)): # pylint: disable= consider-using-enumerate
-            self.type = BooleanVar()
-            self.button_vars.append(self.type)
+        # Since item is now a string, we directly use it
+        self.type = BooleanVar()  # Variable to hold the input method
+        self.button_vars.append(self.type)
 
-            CTkLabel(self.item_frame, text=items[i]).grid(row=i+1, column=0, padx=10, pady=10, sticky=W)
-            auto = CTkRadioButton(self.item_frame, text='Automatic', variable=self.type, value=1)
-            man = CTkRadioButton(self.item_frame, text='Manual', variable=self.type, value=0)
+        CTkLabel(self.item_frame, text=item).grid(row=1, column=0, padx=10, pady=10, sticky=W)
+        auto = CTkRadioButton(self.item_frame, text='Automatic', variable=self.type, value=1)
+        man = CTkRadioButton(self.item_frame, text='Manual', variable=self.type, value=0)
 
-            auto.grid(row=i+1, column=1, padx=10, pady=10)
-            man.grid(row=i+1, column=2, padx=10, pady=10)
+        auto.grid(row=1, column=1, padx=10, pady=10)
+        man.grid(row=1, column=2, padx=10, pady=10)
 
-            self.item_auto_buttons.append(auto)
-            self.item_man_buttons.append(man)
+        self.item_auto_buttons.append(auto)
+        self.item_man_buttons.append(man)
 
     def update_page(self):
         '''Updates page to reflect current state of the experiment.'''
@@ -102,8 +102,6 @@ class GroupConfigUI(MouserPage): # pylint: disable= undefined-variable
         # pylint: disable= consider-using-enumerate
         items = self.experiment.get_measurement_items()
         measurement_collect_type = []
-        for i in range(0, len(items)):
-            measurement_collect_type.append((items[i], self.button_vars[i].get()))
-        # pylint: enable= consider-using-enumerate
+        measurement_collect_type.append((items, self.button_vars[0].get()))  # Use index 0 since there's only one item
         self.experiment.data_collect_type = measurement_collect_type
         self.next_page.update_page()

@@ -44,8 +44,6 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
 
         button_size = 40
 
-        print(self.experiment.get_experiment_id())
-
 
         self.collection_button = CTkButton(main_frame, text='Data Collection', width=button_size,
                                 command= self.data_page.raise_frame)
@@ -65,6 +63,8 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         self.group_button.grid(row=2, column=0, ipady=15, ipadx=15, pady=10, padx=10)
         self.rfid_button.grid(row=3, column=0, ipady=15, ipadx=15, pady=10, padx=10)
         self.summary_button.grid(row=4, column=0, ipady=15, ipadx=15, pady=10, padx=10)
+
+        print(self.experiment.get_measurement_items())
 
         if self.menu_button:
             self.menu_button.destroy()

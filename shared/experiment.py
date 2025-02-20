@@ -11,7 +11,7 @@ class Experiment():
         self.name = ''
         self.investigators = []
         self.species = ''
-        self.items = []
+        self.item = ''
         self.id = ''
         self.rfid = False
         self.num_animals = ''
@@ -38,11 +38,9 @@ class Experiment():
         '''Sets species.'''
         self.species = species
 
-    def set_measurement_items(self, items):
+    def set_measurement_item(self, items):
         '''Sets measurement items.'''
-        if self.items != items:
-            self.measurement_items_changed = True
-            self.items = items.copy()
+        self.item = items
 
     def set_uses_rfid(self, rfid):
         '''Sets if experiment uses rfid.'''
@@ -105,7 +103,7 @@ class Experiment():
 
     def get_measurement_items(self):
         '''Returns the list of measurement items of the experiment.'''
-        return self.items
+        return self.item
 
     def uses_rfid(self):
         '''Returns if experiment uses RFID.'''
@@ -166,7 +164,8 @@ class Experiment():
             cage_max=self.max_per_cage,
             measurement_type=self.measurement_type,
             experiment_id=self.id,
-            investigators=self.investigators
+            investigators=self.investigators,
+            measurement=self.item
         )
         
         # Setup groups with cage capacity

@@ -35,7 +35,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         pad_x = 10
         pad_y = 10
 
-        self.items = ['Weight']
+        self.items = ''
         self.added_invest = []
 
         CTkLabel(self.main_frame, text='Experiment Name').grid(
@@ -63,8 +63,6 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.species = CTkEntry(self.main_frame, width=140)
 
         self.measure_items = CTkEntry(self.main_frame, width=140)
-        self.measure_items.insert(0, 'Weight')
-        self.measure_items.configure(state='disabled')
 
         self.animal_num = CTkEntry(self.main_frame, width=110)
         self.group_num = CTkEntry(self.main_frame, width=110)
@@ -279,7 +277,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.input.set_unique_id()
         self.input.set_investigators(self.added_invest)
         self.input.set_species(self.species.get())
-        self.input.set_measurement_items(self.items)
+        self.input.set_measurement_item(self.measure_items.get())
         self.input.set_uses_rfid(self.rfid.get())
         self.input.set_num_animals(self.animal_num.get())
         self.input.set_num_groups(self.group_num.get())

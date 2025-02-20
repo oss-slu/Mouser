@@ -23,6 +23,12 @@ class DataCollectionUI(MouserPage):
         self.rfid_thread = None # Store running thread
 
         self.database = ExperimentDatabase(database_name)
+        
+        # Call the new method to insert blank data for today
+        today_date = str(date.today())
+        animal_ids = [animal[0] for animal in self.database.get_animals()]  # Get all animal IDs
+        self.database.insert_blank_data_for_day(animal_ids, today_date)  # Insert blank data
+
         self.measurement_items = self.database.get_measurement_items()
 
         ## ENSURE ANIMALS ARE IN DATABASE BEFORE EXPERIMENT FOR EXPERIMENTS W/O RFID ##
@@ -59,7 +65,7 @@ class DataCollectionUI(MouserPage):
                 i = i + 1
 
         self.measurement_strings = []
-        self.measurement_ids = []
+        self.measurement_ids = self.database.get_measurement_name()
         print(self.measurement_items)
         for item in self.measurement_items:
             self.measurement_strings.append(item[1])
@@ -92,13 +98,16 @@ class DataCollectionUI(MouserPage):
 
 
         columns = ['animal_id', 'rfid']
-        for measurement_id in self.measurement_ids:
-            columns.append(measurement_id)
+        print(self.database.get_measurement_name())
+        columns.append(str(self.database.get_measurement_name())) # Add measurement name as column
 
+        # Initialize the Treeview with the defined columns
         self.table = Treeview(self.table_frame,
                               columns=columns, show='headings',
                               selectmode="browse",
                               height=len(self.animals))
+
+        # Set up the column headings
         style = Style()
         style.configure("Treeview", font=("Arial", 18), rowheight=40)
         style.configure("Treeview.Heading", font=("Arial", 18))
@@ -112,11 +121,13 @@ class DataCollectionUI(MouserPage):
                 if i-2 < len(self.measurement_strings):  # Ensure index is in range
                     text = self.measurement_strings[i-2]
                 else:
-                    text = f"Measurement {i-1}"  # Default placeholder for missing items
+                    text = column  # Default placeholder for missing items
             
-            self.table.heading(column, text=text)
+            print(f"Setting heading for column: {column} with text: {text}")  # Debugging line
+            if text:  # Only set heading if text is not empty
+                self.table.heading(column, text=text)
 
-
+        # Add the table to the grid
         self.table.grid(row=0, column=0, sticky='nsew')
 
         self.date_label = CTkLabel(self)
@@ -131,7 +142,7 @@ class DataCollectionUI(MouserPage):
             self.table.insert('', END, values=value)
 
 
-        self.get_values_for_date(None)
+        self.get_values_for_date()
 
         self.table.bind('<<TreeviewSelect>>', self.item_selected)
 
@@ -269,7 +280,7 @@ class DataCollectionUI(MouserPage):
 
 
 
-    def get_values_for_date(self, _):
+    def get_values_for_date(self):
         '''Gets the data for the current date.'''
         self.current_date = str(date.today())
         self.date_label.destroy()
