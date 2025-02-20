@@ -15,15 +15,15 @@ class Experiment():
         self.id = ''
         self.rfid = False
         self.num_animals = ''
-        self.num_groups = '0'
+        self.num_cages = '0'
         self.max_per_cage = ''
-        self.animals_per_group = ''
-        self.group_names = []
+        self.animals_per_cage = ''
+        self.cage_names = []
         self.data_collect_type = []
         self.date_created = str(date.today())
         self.password = None
 
-        self.group_num_changed = False
+        self.cage_num_changed = False
         self.measurement_items_changed = False
 
     def set_name(self, name):
@@ -50,11 +50,11 @@ class Experiment():
         '''Set number of animals.'''
         self.num_animals = num
 
-    def set_num_groups(self, num):
-        '''Set number of groups.'''
-        if self.num_groups != num:
-            self.num_groups = num
-            self.group_num_changed = True
+    def set_num_cages(self, num):
+        '''Set number of cages.'''
+        if self.num_cages != num:
+            self.num_cages = num
+            self.cage_num_changed = True
 
     def set_max_animals(self, num):
         '''Set max animals per cage.'''
@@ -65,32 +65,32 @@ class Experiment():
         unique_id = uuid.uuid1()
         self.id = str(unique_id)
 
-    def set_group_names(self, names):
-        '''Sets group names.'''
-        self.group_names = names
+    def set_cage_names(self, names):
+        '''Sets cage names.'''
+        self.cage_names = names
 
     def set_collection_types(self, data_type):
         '''Sets collection types.'''
         self.data_collect_type = data_type
 
-    def set_animals_per_group(self, num):
-        '''Sets animals per group.'''
-        self.animals_per_group = num
+    def set_animals_per_cage(self, num):
+        '''Sets animals per cage.'''
+        self.animals_per_cage = num
 
     def set_password(self, password):
         '''Sets password.'''
         self.password = password
 
-    def set_group_num_changed_false(self):
-        '''Sets group number changed to false.'''
-        self.group_num_changed = False
+    def set_cage_num_changed_false(self):
+        '''Sets cage number changed to false.'''
+        self.cage_num_changed = False
 
     def set_measurement_items_changed_false(self):
         '''Sets measurement items changed to false.'''
         self.measurement_items_changed = False
 
     def get_name(self):
-        '''Returns the name of exeriment.'''
+        '''Returns the name of experiment.'''
         return self.name
 
     def get_investigators(self):
@@ -113,17 +113,17 @@ class Experiment():
         '''Returns number of animals of experiment.'''
         return self.num_animals
 
-    def get_num_groups(self):
-        '''Returns the number of groups in experiment.'''
-        return self.num_groups
+    def get_num_cages(self):
+        '''Returns the number of cages in experiment.'''
+        return self.num_cages
 
     def get_max_animals(self):
         '''Returns the maximum number of animals per cage in experiment.'''
         return self.max_per_cage
 
-    def get_group_names(self):
-        '''Returns the list of group names in experiment.'''
-        return self.group_names
+    def get_cage_names(self):
+        '''Returns the list of cage names in experiment.'''
+        return self.cage_names
 
     def get_collection_types(self):
         '''Return list of collection types in experiment.'''
@@ -133,9 +133,9 @@ class Experiment():
         '''Returns password.'''
         return self.password
 
-    def check_num_groups_change(self):
-        '''Returns if group number has changed.'''
-        return self.group_num_changed
+    def check_cage_num_changed(self):
+        '''Returns if cage number has changed.'''
+        return self.cage_num_changed
 
     def check_measurement_items_changed(self):
         '''Returns if measurement items have changed.'''
@@ -160,7 +160,7 @@ class Experiment():
             species=self.species,
             uses_rfid=self.rfid,
             num_animals=self.num_animals,
-            num_groups=self.num_groups,
+            num_groups=self.num_cages,
             cage_max=self.max_per_cage,
             measurement_type=self.measurement_type,
             experiment_id=self.id,
@@ -168,9 +168,9 @@ class Experiment():
             measurement=self.item
         )
         
-        # Setup groups with cage capacity
-        db.setup_groups(
-            group_names=self.group_names,
+        # Setup cages with cage capacity
+        db.setup_cages(
+            cage_names=self.cage_names,
             cage_capacity=self.max_per_cage
         )
         

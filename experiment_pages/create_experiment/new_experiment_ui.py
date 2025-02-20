@@ -52,7 +52,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
                       row=6, column=0, sticky=W, padx=pad_x, pady=pad_y)
         CTkLabel(self.main_frame, text="Number of Animals").grid(
                        row=7, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text="Number of Groups").grid(
+        CTkLabel(self.main_frame, text="Number of Cages").grid(
                        row=8, column=0, sticky=W, padx=pad_x, pady=pad_y)
         CTkLabel(self.main_frame,text="Max Animals per Cage").grid(
                       row=9, column=0, sticky=W, padx=pad_x, pady=pad_y)
@@ -65,7 +65,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.measure_items = CTkEntry(self.main_frame, width=140)
 
         self.animal_num = CTkEntry(self.main_frame, width=110)
-        self.group_num = CTkEntry(self.main_frame, width=110)
+        self.cage_num = CTkEntry(self.main_frame, width=110)
         self.num_per_cage = CTkEntry(self.main_frame, width=110)
 
         self.exper_name.grid(row=0, column=1, sticky=W, padx=pad_x, pady=pad_y)
@@ -74,7 +74,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.species.grid(row=3, column=1, sticky=W, padx=pad_x, pady=pad_y)
         self.measure_items.grid(row=4, column=1, sticky=W, padx=pad_x, pady=pad_y)
         self.animal_num.grid(row=7, column=1, sticky=W, padx=pad_x, pady=pad_y)
-        self.group_num.grid(row=8, column=1, sticky=W, padx=pad_x, pady=pad_y)
+        self.cage_num.grid(row=8, column=1, sticky=W, padx=pad_x, pady=pad_y)
         self.num_per_cage.grid(row=9, column=1, sticky=W, padx=pad_x, pady=pad_y)
 
         self.rfid = BooleanVar()
@@ -105,12 +105,12 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.species.bind("<KeyRelease>", lambda event: self.enable_next_button())
         self.measure_items.bind("<KeyRelease>", lambda event: self.enable_next_button())
         self.animal_num.bind("<KeyRelease>", lambda event: self.enable_next_button())
-        self.group_num.bind("<KeyRelease>", lambda event: self.enable_next_button())
+        self.cage_num.bind("<KeyRelease>", lambda event: self.enable_next_button())
         self.num_per_cage.bind("<KeyRelease>", lambda event: self.enable_next_button())
 
     def enable_next_button(self):
         if self.exper_name.get() and self.species.get() \
-                and self.animal_num.get() and self.group_num.get() and self.num_per_cage.get() \
+                and self.animal_num.get() and self.cage_num.get() and self.num_per_cage.get() \
                 and ((self.added_invest or self.investigators.get()) and (self.items or self.measure_items.get())):
             self.next_button.configure(state="normal")
             print("Button enabled")
@@ -218,10 +218,10 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
 
         # Add the appropriate warning message based on the option
         if option == 1:
-            label = CTkLabel(message, text='Number of animals must be divisible by number groups.')
+            label = CTkLabel(message, text='Number of animals must be divisible by number cages.')
             label.grid(row=0, column=0, padx=10, pady=10)
         elif option == 2:
-            label1 = CTkLabel(message, text='Number of animals, groups, or maximum')
+            label1 = CTkLabel(message, text='Number of animals, cages, or maximum')
             label2 = CTkLabel(message, text='animals per cage must be greater than 0.')
             label1.grid(row=0, column=0, padx=10)
             label2.grid(row=1, column=0, padx=10)
@@ -256,17 +256,17 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         '''If the total number of animals is greater than the total number
         of animals allowed in all combined cages, raise warning.'''
 
-        if int(self.animal_num.get()) > (int(self.group_num.get()) * int(self.num_per_cage.get())):
+        if int(self.animal_num.get()) > (int(self.cage_num.get()) * int(self.num_per_cage.get())):
             self.raise_warning(4)
-        elif self.animal_num.get() == '' or self.group_num.get() == '' or self.animal_num.get() == '':
+        elif self.animal_num.get() == '' or self.cage_num.get() == '' or self.animal_num.get() == '':
             self.raise_warning(2)
-        elif int(self.animal_num.get()) % int(self.group_num.get()) != 0:
+        elif int(self.animal_num.get()) % int(self.cage_num.get()) != 0:
             self.raise_warning(1)
-        elif int(self.animal_num.get()) == 0 or int(self.group_num.get()) == 0 or int(self.animal_num.get()) == 0:
+        elif int(self.animal_num.get()) == 0 or int(self.cage_num.get()) == 0 or int(self.animal_num.get()) == 0:
             self.raise_warning(2)
-        elif int(self.group_num.get()) * int(self.num_per_cage.get()) > int(self.animal_num.get()):
+        elif int(self.cage_num.get()) * int(self.num_per_cage.get()) > int(self.animal_num.get()):
             self.raise_warning(1)
-        elif int(self.animal_num.get()) % int(self.group_num.get()) == 0 and int(self.animal_num.get()) != 0:
+        elif int(self.animal_num.get()) % int(self.cage_num.get()) == 0 and int(self.animal_num.get()) != 0:
             self.save_input()
 
     def save_input(self):
@@ -280,8 +280,8 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.input.set_measurement_item(self.measure_items.get())
         self.input.set_uses_rfid(self.rfid.get())
         self.input.set_num_animals(self.animal_num.get())
-        self.input.set_num_groups(self.group_num.get())
+        self.input.set_num_cages(self.cage_num.get())
         self.input.set_max_animals(self.num_per_cage.get())
-        self.input.set_animals_per_group(int(self.animal_num.get()) / int(self.group_num.get()))
+        self.input.set_animals_per_cage(int(self.animal_num.get()) / int(self.cage_num.get()))
 
         self.next_page.update_page()

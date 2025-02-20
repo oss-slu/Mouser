@@ -204,29 +204,29 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         
         item_id = self.animal_id
         
-        # Find appropriate group with available space
-        current_group = 1
+        # Find appropriate cage with available space
+        current_cage = 1
         while True:
-            # Get cage capacity for current group
-            cage_capacity = self.db.get_cage_capacity(current_group)
+            # Get cage capacity for current cage
+            cage_capacity = self.db.get_cage_capacity(current_cage)
             
-            # Get current number of animals in group
-            group_count = self.db.get_group_animal_count(current_group)
+            # Get current number of animals in cage
+            cage_count = self.db.get_group_animal_count(current_cage)
             
-            # If current group has space, use it
-            if group_count < cage_capacity:
+            # If current cage has space, use it
+            if cage_count < cage_capacity:
                 break
             
-            # Otherwise, try next group
-            current_group += 1
+            # Otherwise, try next cage
+            current_cage += 1
         
         # Add to table
         self.table.insert('', item_id-1, values=(item_id, rfid), tags='text_font')
         self.animals.insert(item_id-1, (item_id, rfid))
         self.change_entry_text()
         
-        # Add to database with determined group
-        db.add_animal(animal_id=item_id, rfid=rfid, group_id=current_group)
+        # Add to database with determined cage
+        db.add_animal(animal_id=item_id, rfid=rfid, cage_id=current_cage)
         db._conn.commit()
 
         AudioManager.play("shared/sounds/rfid_success.wav")

@@ -36,31 +36,31 @@ class DataCollectionUI(MouserPage):
             print("No RFIDs Detected. Filling out Database\n")
             
             i = 1
-            current_group = 1
+            current_cage = 1
             max_num_animals = self.database.get_total_number_animals()
             print(f"Total animals to add: {max_num_animals}")
             
             while i <= max_num_animals:
-                # Get cage capacity for current group
-                cage_capacity = self.database.get_cage_capacity(current_group)
-                print(f"Group {current_group} capacity: {cage_capacity}")
+                # Get cage capacity for current cage
+                cage_capacity = self.database.get_cage_capacity(current_cage)
+                print(f"Cage {current_cage} capacity: {cage_capacity}")
                 
-                # Get current number of animals in group
-                group_count = self.database.get_group_animal_count(current_group)
-                print(f"Current animals in group {current_group}: {group_count}")
+                # Get current number of animals in cage
+                cage_count = self.database.get_group_animal_count(current_cage)
+                print(f"Current animals in cage {current_cage}: {cage_count}")
                 
-                # If current group is full, move to next group
-                if group_count >= cage_capacity:
-                    print(f"Group {current_group} is full, moving to next group")
-                    current_group += 1
+                # If current cage is full, move to next cage
+                if cage_count >= cage_capacity:
+                    print(f"Cage {current_cage} is full, moving to next cage")
+                    current_cage += 1
                     continue
                 
-                # Add animal to current group
-                print(f"Adding animal {i} to group {current_group}")
+                # Add animal to current cage
+                print(f"Adding animal {i} to cage {current_cage}")
                 self.database.add_animal(
                     animal_id=i,
                     rfid=i,     # Keep as integer for RFID
-                    group_id=current_group,
+                    cage_id=current_cage,
                 )
                 i = i + 1
 

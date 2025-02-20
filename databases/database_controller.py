@@ -49,7 +49,7 @@ class DatabaseController():
 
     def get_groups(self):
         '''Returns a list of all group names in the database.'''
-        return self.db.get_groups()
+        return self.db.get_cages()
 
     def get_num_cages(self):
         '''Returns the number of cages across all groups.'''
@@ -117,25 +117,25 @@ class DatabaseController():
         '''Returns a list of tuples for updating the database.'''
         updated_animals = []
         new_id = 1
-        group = 1
+        cage = 1
         for cages in self.cages_in_group.values():
             for cage in cages:
                 animals = self.animals_in_cage[str(cage)]
                 for animal in animals:
-                    updated_animals.append((int(animal), new_id, group, int(cage)))
+                    updated_animals.append((int(animal), new_id, cage, int(cage)))
                     new_id += 1
-            group += 1
+            cage += 1
         return updated_animals
 
     def update_experiment(self):
         '''Updates the database to reflect current animal states.'''
         updated_animals = self.get_updated_animals()
-        for old_id, new_id, group_id, cage in updated_animals:
+        for old_id, new_id, cage_id, cage in updated_animals:
             self.db._c.execute('''
                 UPDATE animals 
-                SET animal_id = ?, group_id = ? 
+                SET animal_id = ?, cage_id = ? 
                 WHERE animal_id = ?
-            ''', (new_id, group_id, old_id))
+            ''', (new_id, cage_id, old_id))
         self.db._conn.commit()
         self.reset_attributes()
 
