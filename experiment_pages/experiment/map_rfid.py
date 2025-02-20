@@ -181,7 +181,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         #     self.add_value(int(rand_rfid))
         else:
             rfid = get_random_rfid()
-            self.add_value(rfid)
+            self.add_value(rfid, self.db)
 
     def add_value(self, rfid, db=None):
         '''Adds rfid number and animal to the table and database.'''
@@ -227,6 +227,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         
         # Add to database with determined group
         db.add_animal(animal_id=item_id, rfid=rfid, group_id=current_group)
+        db._conn.commit()
+
         AudioManager.play("shared/sounds/rfid_success.wav")
 
 
@@ -349,6 +351,9 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         if len(self.db.get_all_animals_rfid()) != len(self.db.get_animals()):
             self.raise_warning('Not all animals have been mapped to RFIDs')
         else:
+            # Save the current state before closing the database
+            
+
             current_file = self.db.db_file
             self.db.close()
             
