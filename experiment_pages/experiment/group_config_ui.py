@@ -32,6 +32,8 @@ class GroupConfigUI(MouserPage): # pylint: disable= undefined-variable
         self.create_group_entries(int(self.experiment.get_num_groups()))
         self.create_item_frame(self.experiment.get_measurement_items())
 
+        self.experiment = experiment
+
         for i in range(0,2):
             self.grid_columnconfigure(i, weight=1)
             self.grid_rowconfigure(i, weight=1)
@@ -45,6 +47,7 @@ class GroupConfigUI(MouserPage): # pylint: disable= undefined-variable
         self.next_button = ChangePageButton(self, next_page, False)# pylint: disable= undefined-variable
         self.next_button.configure(command= lambda: [self.save_experiment(), self.next_button.navigate()])
         self.next_button.place(relx=0.85, rely=0.15)
+
 
 
     def create_group_entries(self, num):
