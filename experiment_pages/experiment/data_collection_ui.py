@@ -313,12 +313,11 @@ class DataCollectionUI(MouserPage):
 
 class ChangeMeasurementsDialog():
     '''Change Measurement Dialog window.'''
-    def __init__(self, parent: CTk, data_collection: DataCollectionUI, measurement_items: list):
-
+    def __init__(self, parent: CTk, data_collection: DataCollectionUI, measurement_items: str):
         self.parent = parent
         self.data_collection = data_collection
-        self.measurement_items = measurement_items
-        self.database = data_collection.database
+        self.measurement_items = str(measurement_items)  # Ensure measurement_items is a single string
+        self.database = data_collection.database  # Reference to the updated database
 
     def open(self, animal_id):
         '''Opens the change measurement dialog window and handles automated submission.'''
@@ -336,7 +335,7 @@ class ChangeMeasurementsDialog():
         id_label.place(relx=0.5, rely=0.1, anchor=CENTER)
 
         self.textboxes = []
-        count = len(self.measurement_items) + 1
+        count = 2  # Assuming one measurement item, adjust if needed
 
         for i in range(1, count):
             pos_y = i / count
@@ -344,7 +343,7 @@ class ChangeMeasurementsDialog():
             entry.place(relx=0.60, rely=pos_y, anchor=CENTER)
             self.textboxes.append(entry)
 
-            header = CTkLabel(root, text=self.measurement_items[i - 1] + ": ", font=("Arial", 18))
+            header = CTkLabel(root, text=self.measurement_items + ": ", font=("Arial", 18))
             header.place(relx=0.28, rely=pos_y, anchor=E)
 
             if i == 1:
@@ -362,56 +361,33 @@ class ChangeMeasurementsDialog():
                             received_data = data_handler.get_stored_data()
                             entry.insert(1, received_data)
                             data_handler.stop()
-                            self.finish()  # Automatically call the finish method
+                            self.finish(animal_id)  # Pass animal_id to finish method
                             break
 
                 threading.Thread(target=check_for_data, daemon=True).start()
-            
-        self.error_text = CTkLabel(root, text="One or more values are not a number", fg_color="red")
 
+        self.error_text = CTkLabel(root, text="One or more values are not a number", fg_color="red")
         self.root.mainloop()
 
-    def check_if_num(self, _):
-        '''Checks if the values are numbers.'''
-        errors = 0
-        values = self.get_all_values()
-        for value in values:
-            try:
-                float(value)
-            except ValueError:
-                self.show_error()
-                errors += 1
-        if errors == 0:
-            self.error_text.place_forget()
-            # self.submit_button["state"] = "normal"
-
-    def show_error(self):
-        '''Displays an error window if input is invalid.'''
-        if self.root.winfo_exists():
-            self.error_text.place(relx=0.5, rely=0.85, anchor=CENTER)
-            AudioManager.play(filepath="shared/sounds/error.wav")
-
-
-    def get_all_values(self):
-        '''Returns the values of all entries in self.textboxes as an array.'''
-        values = []
-        for entry in self.textboxes:
-            value = str(entry.get())
-            value = value.strip()
-            if value == "":
-                value = "0"
-            values.append(value)
-        return tuple(values)
-
-    def finish(self):
+    def finish(self, animal_id):
         '''Cleanup when done with change value dialog.'''
         if self.root.winfo_exists():
             values = self.get_all_values()
             self.close()
 
             if self.data_collection.winfo_exists():
-                self.data_collection.change_selected_value(values)
+                # Update the database with the new values
+                self.data_collection.database.change_data_entry(datetime.now(), animal_id, values)
 
+    def get_all_values(self):
+        '''Returns the values of all entries in self.textboxes as an array.'''
+        values = []
+        for entry in self.textboxes:
+            value = str(entry.get()).strip()
+            if value == "":
+                value = "0"
+            values.append(value)
+        return tuple(values)
 
     def close(self):
         '''Closes change value dialog window.'''
