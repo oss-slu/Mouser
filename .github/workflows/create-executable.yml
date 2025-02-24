@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - 224followupcomments #to test workflow, can be removed after merge
+      - SerialSettingPath
 
 jobs:
   build:
