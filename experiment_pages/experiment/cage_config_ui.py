@@ -26,8 +26,8 @@ class CageConfigurationUI(MouserPage):
                             command= self.randomize)
         save_button = CTkButton(input_frame, text='Save', width=15,
                             command= self.save_to_database)
-        move_button = CTkButton(input_frame, text='Move', width=15,
-                            command= self.check_move_input)
+        swap_button = CTkButton(input_frame, text='Swap', width=15,
+                            command= self.perform_swap)
 
         self.id_input = CTkEntry(input_frame, width=110)
         self.cage_input = CTkEntry(input_frame, width=110)
@@ -45,7 +45,7 @@ class CageConfigurationUI(MouserPage):
         auto_button.grid(row=0, column=0, padx=self.pad_x, pady=self.pad_y)
         self.id_input.grid(row=0, column=1, padx=self.pad_x, pady=self.pad_y)
         self.cage_input.grid(row=0, column=2, padx=self.pad_x, pady=self.pad_y)
-        move_button.grid(row=0, column=3, padx=self.pad_x, pady=self.pad_y)
+        swap_button.grid(row=0, column=3, padx=self.pad_x, pady=self.pad_y)
         save_button.grid(row=0, column=4, padx=self.pad_x, pady=self.pad_y)
 
         for i in range(0, 5):
@@ -54,7 +54,8 @@ class CageConfigurationUI(MouserPage):
 
         input_frame.pack(side=TOP, fill=X, anchor='center')
         self.config_frame.pack(side=TOP, fill=BOTH, anchor ='center')
-
+        self.animal_buttons = {}
+        self.selected_animals = set() 
 
         self.update_config_frame()
 
@@ -107,31 +108,34 @@ class CageConfigurationUI(MouserPage):
             cage_frame.pack(side=LEFT, expand=TRUE, fill=BOTH, anchor='center')
 
     def create_animal_frames(self, cage, cage_frame):
-        '''Creates frames for animals from information in database.'''
         animals = self.db.get_animals_in_cage(cage)
-
         for animal in animals:
+            animal_id = str(animal)  # Convert to string to avoid type inconsistency
+            animal_button = CTkButton(cage_frame, text=animal_id,
+                                    command=lambda a=animal_id: self.toggle_animal_selection(a))
+            animal_button.pack(pady=2)
+            self.animal_buttons[animal_id] = animal_button
+            print(f"Button created for Animal ID: {animal_id}")  # Debugging output
 
-            animal_frame = CTkFrame(cage_frame, border_width=3, border_color="#00e7ff")
+    def toggle_animal_selection(self, animal_id):
+        print(f"Toggling selection for Animal ID: {animal_id}")  # Debug output
+        button = self.animal_buttons.get(animal_id)
+        if button:
+            if animal_id in self.selected_animals:
+                self.selected_animals.remove(animal_id)
+                button.configure(bg_color="SystemButtonFace")  # Deselected state
+            else:
+                if len(self.selected_animals) < 2:  # Limit to two selections
+                    self.selected_animals.add(animal_id)
+                    button.configure(bg_color="#D5E8D4")  # Selected state
+        else:
+            print(f"Error: No button found for Animal ID: {animal_id}")  # Error message if no button found
 
-            id_measurement_frame = CTkFrame(animal_frame)
+    def update_ui_after_selection(self):
+        # Enable or disable the swap button based on selection count
+        self.swap_button['state'] = 'normal' if len(self.selected_animals) == 2 else 'disabled'
+        # Update input fields or other UI elements as necessary
 
-            CTkLabel(id_measurement_frame, text=animal, anchor='center').pack(
-                        side=LEFT, expand=TRUE, fill=BOTH, anchor='e')
-
-            CTkLabel(id_measurement_frame, text=self.db.get_animal_measurements(animal), anchor='center').pack(
-                        side=LEFT, expand=TRUE, fill=BOTH, anchor='center')
-
-            id_measurement_frame.pack(side=TOP, expand=TRUE, fill=BOTH, anchor='center')
-
-            animal_frame.pack(side=TOP,
-                       expand=TRUE,
-                       fill=BOTH,
-                       anchor='center',
-                       padx= 5,
-                       pady= 5,
-                       ipadx= 5,
-                       ipady= 5)
 
     def clear_entry(self, input_type):
         '''Clears entry from input frames.'''
@@ -144,18 +148,42 @@ class CageConfigurationUI(MouserPage):
         '''Autosorts the animals into cages in group.'''
         self.db.autosort()
         self.update_config_frame()
+        
+    def perform_swap(self):
+        '''Attempts to swap two selected animals.'''
+        if len(self.selected_animals) != 2:
+            self.raise_warning("Please select exactly two animals to swap.")
+            return
 
-    def move_animal(self, animal_id, new_cage):
-        '''Moves animal id to new cage.'''
-        old_cage = self.db.get_animal_current_cage(animal_id)
-        self.db.update_animal_cage(animal_id, old_cage, new_cage)
+        animal_id1, animal_id2 = self.selected_animals
 
-        self.clear_entry('cage')
-        self.clear_entry('id')
-        self.id_input.insert(END, 'animal id')
-        self.cage_input.insert(END, 'cage id')
+        # Check if the animals are in different cages before swapping
+        old_cage1 = self.db.get_animal_current_cage(animal_id1)
+        old_cage2 = self.db.get_animal_current_cage(animal_id2)
+
+        if old_cage1 == old_cage2:
+            self.raise_warning("Both animals are in the same cage.")
+            return
+
+        # Perform the swap
+        self.db.update_animal_cage(animal_id1, old_cage1, old_cage2)
+        self.db.update_animal_cage(animal_id2, old_cage2, old_cage1)
 
         self.update_config_frame()
+        print(f"Swapped animals {animal_id1} and {animal_id2} between cages {old_cage2} and {old_cage1}.")
+
+        # Clear selections after swap
+        self.clear_selections()
+
+        # Update the UI to reflect the swap
+        self.update_config_frame()
+
+    def clear_selections(self):
+        for animal_id in self.selected_animals:
+            if animal_id in self.animal_buttons:
+                self.animal_buttons[animal_id].set_color('default_color')  # Replace 'default_color' with the actual color code or variable
+        self.selected_animals.clear()
+        print("All selections have been cleared.")
 
     def raise_warning(self, option: int):
         '''Raises a warning page.'''
@@ -164,31 +192,32 @@ class CageConfigurationUI(MouserPage):
         message.geometry('320x100')
         message.resizable(False, False)
 
+        # Default label text in case the option does not match any condition
+        default_text = 'An unknown error has occurred.'
         if option == 1:
-            label = CTkLabel(message, text='Animal ID and Cage ID must be integers.')
-
+            text = 'Animal ID and Cage ID must be integers.'
         elif option == 2:
-            label = CTkLabel(message, text='Not a valid Animal ID.')
-
+            text = 'Not a valid Animal ID.'
         elif option == 3:
-            label = CTkLabel(message, text='Not a valid Cage ID.')
-
+            text = 'Not a valid Cage ID.'
         elif option == 4:
+            text = 'Number of animals in a cage must not exceed ' + str(self.db.get_cage_max())
+        else:
+            text = default_text
 
-            label = CTkLabel(message, text='Number of animals in a cage must not exceed '
-                             + str(self.db.get_cage_max()))
-
+        label = CTkLabel(message, text=text)
         label.grid(row=0, column=0, padx=10, pady=10)
 
         ok_button = CTkButton(message, text="OK", width=10,
-                        command= lambda: [message.destroy()])
+                        command=lambda: [message.destroy()])
         ok_button.grid(row=2, column=0, padx=10, pady=10)
 
         AudioManager.play(filepath='sounds/error.wav')
 
         message.mainloop()
 
-    def check_move_input(self):
+
+    def check_swap_input(self):
         '''Checks to see if the animal and cage inputs are valid
         and raises a warning if any issues occur.'''
         animal = self.id_input.get()
@@ -210,7 +239,7 @@ class CageConfigurationUI(MouserPage):
             self.raise_warning(3)
 
         elif isinstance(int(animal), int) and isinstance(int(cage), int) and valid_animal and valid_cage:
-            self.move_animal(animal, cage)
+            self.perform_swap(animal, cage)
 
     def check_num_in_cage_allowed(self):
         '''Checks if the number of animals in a cage is allowed.'''

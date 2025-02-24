@@ -33,9 +33,6 @@ class GroupConfigUI(MouserPage): # pylint: disable= undefined-variable
         self.create_item_frame(self.experiment.get_measurement_items())
 
         self.experiment = experiment
-        self.selected_animals = []
-        self.swap_button = CTkButton(self.main_frame, text="Swap", state="disabled", command=self.perform_swap)
-        self.swap_button.pack(side=BOTTOM, pady=10)
 
         for i in range(0,2):
             self.grid_columnconfigure(i, weight=1)
@@ -98,27 +95,6 @@ class GroupConfigUI(MouserPage): # pylint: disable= undefined-variable
                 widget.destroy()
             self.create_item_frame(self.experiment.get_measurement_items())
             self.experiment.set_measurement_items_changed_false()
-
-    def select_for_swap(self, animal_id):
-        if animal_id in self.selected_animals:
-            self.selected_animals.remove(animal_id)
-        else:
-            self.selected_animals.append(animal_id)
-            if len(self.selected_animals) == 2:
-                self.swap_button['state'] = 'normal'
-            elif len(self.selected_animals) < 2:
-                self.swap_button['state'] = 'disabled'
-
-    def perform_swap(self):
-        if len(self.selected_animals) == 2:
-            self.selected_animals.swap_animals(self.selected_animals[0], self.selected_animals[1]) 
-            self.update_ui_after_swap()
-            self.selected_animals = []  # Reset selection
-            self.swap_button['state'] = 'disabled'
-
-    def update_ui_after_swap(self):
-        # Code to refresh the UI elements showing animal group/cage assignments
-        pass
 
     def save_experiment(self):
         '''Saves the experiment file to a the database file.'''
