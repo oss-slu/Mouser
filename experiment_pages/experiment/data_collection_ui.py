@@ -273,15 +273,16 @@ class DataCollectionUI(MouserPage):
 
         AudioManager.play(filepath="shared/sounds/rfid_success.wav")  # Play success sound
 
-        # Immediately resume RFID listening unless manually stopped
-        if not self.rfid_stop_event.is_set():
-            print("🔄 Resuming RFID listener...")
-            threading.Thread(target=self.rfid_listen, daemon=True).start()
+        # Immediately resume RFID listening unless manually stopped and experiment uses RFID
+        if self.database.experiment_uses_rfid() == 1:
+            if not self.rfid_stop_event.is_set():
+                print("🔄 Resuming RFID listener...")
+                threading.Thread(target=self.rfid_listen, daemon=True).start()
 
 
 
     def get_values_for_date(self):
-        '''Gets the data for the current date.'''
+        '''Gets the data for the current date as a string in YYYY-MM-DD.'''
         self.current_date = str(date.today())
         self.date_label.destroy()
         date_text = "Current Date: " + self.current_date
@@ -380,6 +381,7 @@ class ChangeMeasurementsDialog():
                                     if current_index < len(self.animal_ids) - 1:
                                         next_animal_id = self.animal_ids[current_index + 1]
                                         self.data_collection.select_animal_by_id(next_animal_id)
+                                        break
                                 except ValueError:
                                     print(f"Warning: Animal ID {animal_id} not found in table")
                             else:
