@@ -179,11 +179,9 @@ class CageConfigurationUI(MouserPage):
         self.update_config_frame()
 
     def clear_selections(self):
-        for animal_id in self.selected_animals:
-            if animal_id in self.animal_buttons:
-                self.animal_buttons[animal_id].set_color('default_color')  # Replace 'default_color' with the actual color code or variable
+        ## Emptys the set of selected animals
+
         self.selected_animals.clear()
-        print("All selections have been cleared.")
 
     def raise_warning(self, option: int):
         '''Raises a warning page.'''
