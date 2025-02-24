@@ -63,8 +63,6 @@ class DataCollectionUI(MouserPage):
                     group_id=current_group,
                 )
                 i = i + 1
-            self.database._conn.commit()
-
 
         self.measurement_strings = []
         self.measurement_ids = self.database.get_measurement_name()
@@ -171,7 +169,7 @@ class DataCollectionUI(MouserPage):
     
     def rfid_listen(self):
         '''Continuously listens for RFID scans until manually stopped.'''
-    
+        
         if self.rfid_thread and self.rfid_thread.is_alive():
             print("⚠️ RFID listener is already running!")
             return  # Prevent multiple listeners
@@ -181,20 +179,17 @@ class DataCollectionUI(MouserPage):
 
         def listen():
             rfid_reader = SerialDataHandler("reader")
-            print("🔄 Initializing RFID reader...")
             rfid_reader.start()
-            print("✅ RFID Reader Started!")
+            print("🔄 RFID Reader Started!")
 
             while not self.rfid_stop_event.is_set():
                 received_rfid = rfid_reader.get_stored_data()
-                print(f"🔍 Checking for RFID data: {received_rfid}")  # Debug print
 
                 if received_rfid:
                     print(f"📡 RFID Scanned: {received_rfid}")
-                
+                    
                     animal_id = self.database.get_animal_id(received_rfid)
-                    print(f"🔍 Looking up animal ID for RFID {received_rfid}")
-                
+                    
                     if animal_id is None:
                         print(f"⚠️ No matching animal found for RFID: {received_rfid}")
                         continue  # Prevent NoneType errors
@@ -204,8 +199,12 @@ class DataCollectionUI(MouserPage):
 
                 time.sleep(1)  # Prevent duplicate scans
 
-        print("🛑 RFID listener has stopped.")
-        rfid_reader.stop()
+            print("🛑 RFID listener has stopped.")
+            rfid_reader.stop()
+
+
+        self.rfid_thread = threading.Thread(target=listen, daemon=True)
+        self.rfid_thread.start()
 
     def stop_listening(self):
         '''Stops the RFID listener and ensures the serial port is released.'''
