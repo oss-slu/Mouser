@@ -68,7 +68,7 @@ class DataCollectionUI(MouserPage):
         
 
 
-        columns = ['animal_id', 'rfid']
+        columns = ['animal_id']
         for measurement_id in self.measurement_ids:
             columns.append(measurement_id)
 
@@ -81,15 +81,11 @@ class DataCollectionUI(MouserPage):
         style.configure("Treeview.Heading", font=("Arial", 18))
 
         for i, column in enumerate(columns):
-            if i == 0:
+            
+            if i != 0: # i!= 0 means the column will hold measurement data
+                text = self.measurement_strings[i-1]
+            else: # i == 0, column is for animal id
                 text = "Animal ID"
-            elif i == 1:
-                text = "RFID"
-            else:
-                if i-2 < len(self.measurement_strings):  # Ensure index is in range
-                    text = self.measurement_strings[i-2]
-                else:
-                    text = f"Measurement {i-1}"  # Default placeholder for missing items
             
             self.table.heading(column, text=text)
 
