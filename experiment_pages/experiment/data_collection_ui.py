@@ -318,6 +318,15 @@ class ChangeMeasurementsDialog():
         self.data_collection = data_collection
         self.measurement_items = str(measurement_items)  # Ensure measurement_items is a single string
         self.database = data_collection.database  # Reference to the updated database
+        self.uses_rfid = self.database.experiment_uses_rfid() == 1
+        
+        if not self.uses_rfid:
+            # Get list of all animal IDs from the table
+            self.animal_ids = []
+            for child in self.data_collection.table.get_children():
+                values = self.data_collection.table.item(child)["values"]
+                self.animal_ids.append(values[0])  # First column contains animal IDs
+            self.current_index = 0  # Track position in animal_ids list
 
     def open(self, animal_id):
         '''Opens the change measurement dialog window and handles automated submission.'''
@@ -362,12 +371,28 @@ class ChangeMeasurementsDialog():
                             entry.insert(1, received_data)
                             data_handler.stop()
                             self.finish(animal_id)  # Pass animal_id to finish method
+                            
+                            if not self.uses_rfid:
+                                # Find current index in animal_ids list
+                                try:
+                                    current_index = self.animal_ids.index(animal_id)
+                                    # If not at the end of the list, move to next animal
+                                    if current_index < len(self.animal_ids) - 1:
+                                        next_animal_id = self.animal_ids[current_index + 1]
+                                        self.data_collection.select_animal_by_id(next_animal_id)
+                                except ValueError:
+                                    print(f"Warning: Animal ID {animal_id} not found in table")
+                            else:
+                                # Resume RFID listening if in RFID mode
+                                if not self.data_collection.rfid_stop_event.is_set():
+                                    self.data_collection.rfid_listen()
                             break
 
                 threading.Thread(target=check_for_data, daemon=True).start()
 
         self.error_text = CTkLabel(root, text="One or more values are not a number", fg_color="red")
         self.root.mainloop()
+
 
     def finish(self, animal_id):
         '''Cleanup when done with change value dialog.'''
@@ -392,4 +417,3 @@ class ChangeMeasurementsDialog():
     def close(self):
         '''Closes change value dialog window.'''
         self.root.destroy()
-
