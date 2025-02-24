@@ -377,7 +377,7 @@ class ChangeMeasurementsDialog():
 
             if self.data_collection.winfo_exists():
                 # Update the database with the new values
-                self.data_collection.database.change_data_entry(datetime.now(), animal_id, values)
+                self.data_collection.database.change_data_entry(date.today(), animal_id, values)
 
     def get_all_values(self):
         '''Returns the values of all entries in self.textboxes as an array.'''
