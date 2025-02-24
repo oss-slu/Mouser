@@ -124,17 +124,17 @@ class SummaryUI(MouserPage):# pylint: disable=undefined-variable
         labels.append(cage_label)
         inputs.append(cage_input)
 
-        groups = self.input.get_cage_names()
-        cage_names = ''
-        for cage in groups:
-            cage_names += cage + ',\n'
+        groups = self.input.get_group_names()
+        group_names = ''
+        for group in groups:
+            group_names += group + ',\n'
 
-        group_label = CTkLabel(self.main_frame, text='Cage Names:', font=label_style)
+        group_label = CTkLabel(self.main_frame, text='Group Names:', font=label_style)
 
-        if len(cage_names) >= 2:
-            group_input = CTkLabel(self.main_frame, text=cage_names[:-2])
+        if len(group_names) >= 2:
+            group_input = CTkLabel(self.main_frame, text=group_names[:-2])
         else:
-            group_input = CTkLabel(self.main_frame, text=cage_names)
+            group_input = CTkLabel(self.main_frame, text=group_names)
         labels.append(group_label)
         inputs.append(group_input)
 

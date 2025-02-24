@@ -23,13 +23,13 @@ class GroupConfigUI(MouserPage): # pylint: disable= undefined-variable
         self.main_frame = CTkFrame(scroll_canvas)
         self.main_frame.grid(row=0, column=0, sticky='NESW')
 
-        self.cage_frame = CTkFrame(self.main_frame)
+        self.group_frame = CTkFrame(self.main_frame)
         self.item_frame = CTkFrame(self.main_frame)
 
-        self.cage_frame.pack(side=TOP)
+        self.group_frame.pack(side=TOP)
         self.item_frame.pack(side=TOP)
 
-        self.create_cage_entries(int(self.experiment.get_num_cages()))
+        self.create_group_entries(int(self.experiment.get_num_groups()))
         self.create_item_frame(self.experiment.get_measurement_items())
 
         for i in range(0,2):
@@ -38,7 +38,7 @@ class GroupConfigUI(MouserPage): # pylint: disable= undefined-variable
 
 
     def set_next_button(self, next_page):
-        '''Sets the page that the next button navigates to.'''
+        '''Sets the page that the next button navigaties too.'''
         if self.next_button: #pylint: disable= access-member-before-definition
             self.next_button.destroy() #pylint: disable= access-member-before-definition
 
@@ -47,14 +47,14 @@ class GroupConfigUI(MouserPage): # pylint: disable= undefined-variable
         self.next_button.place(relx=0.85, rely=0.15)
 
 
-    def create_cage_entries(self, num):
-        '''Creates the widget for cage entries.'''
-        CTkLabel(self.cage_frame, text="Cage Name").grid(row=0, column=0, padx=10, pady=10)
-        self.cage_input = []
+    def create_group_entries(self, num):
+        '''Creates the widgit for group entries.'''
+        CTkLabel(self.group_frame, text="Group Name").grid(row=0, column=0, padx=10, pady=10)
+        self.group_input = []
         for i in range(0, num):
-            name = CTkEntry(self.cage_frame, width = 160)
+            name = CTkEntry(self.group_frame, width = 160)
             name.grid(row=i+1, column=0, padx=10, pady=10)
-            self.cage_input.append(name)
+            self.group_input.append(name)
 
     def create_item_frame(self, item):
         '''Creates a grid for the item.'''
@@ -81,11 +81,11 @@ class GroupConfigUI(MouserPage): # pylint: disable= undefined-variable
 
     def update_page(self):
         '''Updates page to reflect current state of the experiment.'''
-        if self.experiment.check_cage_num_changed():
-            for widget in self.cage_frame.winfo_children():
+        if self.experiment.check_num_groups_change():
+            for widget in self.group_frame.winfo_children():
                 widget.destroy()
-            self.create_cage_entries(int(self.experiment.get_num_cages()))
-            self.experiment.set_cage_num_changed_false()
+            self.create_group_entries(int(self.experiment.get_num_groups()))
+            self.experiment.set_group_num_changed_false()
 
         if self.experiment.check_measurement_items_changed():
             for widget in self.item_frame.winfo_children():
@@ -94,11 +94,11 @@ class GroupConfigUI(MouserPage): # pylint: disable= undefined-variable
             self.experiment.set_measurement_items_changed_false()
 
     def save_experiment(self):
-        '''Saves the experiment file to the database file.'''
-        cage_names = []
-        for entry in self.cage_input:
-            cage_names.append(entry.get())
-            self.experiment.cage_names = cage_names
+        '''Saves the experiment file to a the database file.'''
+        group_names = []
+        for entry in self.group_input:
+            group_names.append(entry.get())
+            self.experiment.group_names = group_names
         # pylint: disable= consider-using-enumerate
         items = self.experiment.get_measurement_items()
         measurement_collect_type = []

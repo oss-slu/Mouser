@@ -24,7 +24,7 @@ class ExperimentDatabase:
             
             self._c.execute('''CREATE TABLE animals (
                                 animal_id INTEGER PRIMARY KEY,
-                                cage_id INTEGER,
+                                group_id INTEGER,
                                 rfid INTEGER UNIQUE,
                                 remarks TEXT,
                                 active INTEGER);''')
@@ -36,8 +36,8 @@ class ExperimentDatabase:
                                 value REAL,
                                 FOREIGN KEY(animal_id) REFERENCES animals(animal_id));''')
                                 
-            self._c.execute('''CREATE TABLE cages (
-                                cage_id INTEGER PRIMARY KEY,
+            self._c.execute('''CREATE TABLE groups (
+                                group_id INTEGER PRIMARY KEY,
                                 name TEXT,
                                 num_animals INTEGER,
                                 cage_capacity INTEGER);''')
@@ -56,13 +56,13 @@ class ExperimentDatabase:
                          cage_max, measurement_type, experiment_id, investigators_str, measurement))
         self._conn.commit()
 
-    def setup_cages(self, cage_names, cage_capacity):
-        '''Adds the cages to the database.'''
-        for cage in cage_names:
-            self._c.execute('''INSERT INTO cages (name, num_animals, cage_capacity)
+    def setup_groups(self, group_names, cage_capacity):
+        '''Adds the groups to the database.'''
+        for group in group_names:
+            self._c.execute('''INSERT INTO groups (name, num_animals, cage_capacity)
                             VALUES (?, ?, ?)''',
-                            (cage, 0, cage_capacity))
-        self._conn.commit()
+                            (group, 0, cage_capacity))
+            self._conn.commit()
 
     def add_measurement(self, animal_id, value):
         '''Adds a new measurement for an animal.'''
@@ -80,22 +80,17 @@ class ExperimentDatabase:
                         WHERE DATE(m.timestamp) = ?''', (date,))
         return self._c.fetchall()
 
-    def add_animal(self, animal_id, rfid, cage_id, remarks=''):
+    def add_animal(self, animal_id, rfid, group_id, remarks=''):
         '''Adds animal to experiment.'''
         try:
-            self._c.execute('''INSERT INTO animals (animal_id, cage_id, rfid, remarks, active)
+            self._c.execute('''INSERT INTO animals (animal_id, group_id, rfid, remarks, active)
                             VALUES (?, ?, ?, ?, 1)''',
-                            (animal_id, cage_id, rfid, remarks))
+                            (animal_id, group_id, rfid, remarks))
             
-            # Update cage animal count
-            self._c.execute('''UPDATE cages 
+            # Update group animal count
+            self._c.execute('''UPDATE groups 
                             SET num_animals = num_animals + 1 
-                            WHERE cage_id = ?''', (cage_id,))
-            
-            # Ensure the cages table is updated correctly
-            self._c.execute('''UPDATE cages 
-                            SET num_animals = (SELECT COUNT(*) FROM animals WHERE cage_id = ? AND active = 1) 
-                            WHERE cage_id = ?''', (cage_id, cage_id))
+                            WHERE group_id = ?''', (group_id))
             
             self._conn.commit()
             return animal_id
@@ -105,16 +100,16 @@ class ExperimentDatabase:
 
     def remove_animal(self, animal_id):
         '''Removes an animal from the experiment.'''
-        self._c.execute("SELECT cage_id FROM animals WHERE animal_id = ?", (animal_id,))
-        cage_info = self._c.fetchone()
+        self._c.execute("SELECT group_id FROM animals WHERE animal_id = ?", (animal_id,))
+        group_info = self._c.fetchone()
         
-        if cage_info:
-            cage_id = cage_info[0]
+        if group_info:
+            group_id = group_info[0]
             
-            # Update cage count
-            self._c.execute('''UPDATE cages 
+            # Update group count
+            self._c.execute('''UPDATE groups 
                             SET num_animals = num_animals - 1 
-                            WHERE cage_id = ?''', (cage_id,))
+                            WHERE group_id = ?''', (group_id))
             
             # Deactivate animal instead of deleting
             self._c.execute("UPDATE animals SET active = 0 WHERE animal_id = ?", (animal_id,))
@@ -135,11 +130,11 @@ class ExperimentDatabase:
                 m.timestamp,
                 a.animal_id,
                 a.rfid,
-                c.name as cage_name,
+                g.name as group_name,
                 m.value
             FROM animal_measurements m
             JOIN animals a ON m.animal_id = a.animal_id
-            JOIN cages c ON a.cage_id = c.cage_id
+            JOIN groups g ON a.group_id = g.group_id
         '''
         df = pd.read_sql_query(measurements_query, self._conn)
         df.to_csv(output_file, index=False)
@@ -201,7 +196,7 @@ class ExperimentDatabase:
 
     def get_animal_id(self, rfid):
         '''Returns the animal ID for a given RFID.'''
-        self._c.execute('SELECT animal_id FROM animals WHERE rfid = ?', (rfid,))
+        self._c.execute('SELECT animal_id FROM animals WHERE rfid = ?', (rfid))
         result = self._c.fetchone()
         return result[0] if result else None
 
@@ -257,72 +252,72 @@ class ExperimentDatabase:
             self._conn.rollback()
 
     def get_cages_by_group(self):
-        '''Returns a dictionary of cage IDs mapped to their cage information.'''
+        '''Returns a dictionary of group IDs mapped to their cage information.'''
         self._c.execute('''
-            SELECT cage_id, name, cage_capacity 
-            FROM cages
+            SELECT group_id, name, cage_capacity 
+            FROM groups
         ''')
-        cages = self._c.fetchall()
+        groups = self._c.fetchall()
         
-        # Create a simulated cage structure based on cage capacity
+        # Create a simulated cage structure based on group capacity
         cages_by_group = {}
-        for cage in cages:
-            cage_id, _, capacity = cage
-            # Create virtual cage IDs for the cage based on capacity
-            num_cages = (self.get_group_animal_count(cage_id) + capacity - 1) // capacity
-            cages_by_group[cage_id] = list(range(1, num_cages + 1))
+        for group in groups:
+            group_id, _, capacity = group
+            # Create virtual cage IDs for the group based on capacity
+            num_cages = (self.get_group_animal_count(group_id) + capacity - 1) // capacity
+            cages_by_group[group_id] = list(range(1, num_cages + 1))
         
         return cages_by_group
 
-    def get_group_animal_count(self, cage_id):
-        '''Returns the number of active animals in a cage.'''
+    def get_group_animal_count(self, group_id):
+        '''Returns the number of active animals in a group.'''
         self._c.execute('''
             SELECT COUNT(*) 
             FROM animals 
-            WHERE cage_id = ? AND active = 1
-        ''', (cage_id,))
+            WHERE group_id = ? AND active = 1
+        ''', (group_id,))
         return self._c.fetchone()[0]
 
-    def get_cage_capacity(self, cage_id):
-        '''Returns the cage capacity for a cage.'''
-        self._c.execute('SELECT cage_capacity FROM cages WHERE cage_id = ?', (cage_id,))
+    def get_cage_capacity(self, group_id):
+        '''Returns the cage capacity for a group.'''
+        self._c.execute('SELECT cage_capacity FROM groups WHERE group_id = ?', (group_id,))
         result = self._c.fetchone()
         return result[0] if result else None
 
-    def get_animals_in_cage(self, cage_id, cage_number, cage_capacity):
-        '''Returns animals in a virtual cage based on cage and cage number.'''
+    def get_animals_in_cage(self, group_id, cage_number, cage_capacity):
+        '''Returns animals in a virtual cage based on group and cage number.'''
         self._c.execute('''
             SELECT animal_id, rfid, remarks 
             FROM animals 
-            WHERE cage_id = ? AND active = 1 
+            WHERE group_id = ? AND active = 1 
             ORDER BY animal_id
             LIMIT ? OFFSET ?
-        ''', (cage_id, cage_capacity, (cage_number - 1) * cage_capacity))
+        ''', (group_id, cage_capacity, (cage_number - 1) * cage_capacity))
         return self._c.fetchall()
 
     def get_cage_assignments(self):
         '''Returns a dictionary of animal IDs mapped to their cage assignments.'''
         cage_assignments = {}
-        cages = self._c.execute('SELECT cage_id, cage_capacity FROM cages').fetchall()
+        groups = self._c.execute('SELECT group_id, cage_capacity FROM groups').fetchall()
         
-        for cage_id, capacity in cages:
+        for group_id, capacity in groups:
             animals = self._c.execute('''
                 SELECT animal_id 
                 FROM animals 
-                WHERE cage_id = ? AND active = 1 
+                WHERE group_id = ? AND active = 1 
                 ORDER BY animal_id
-            ''', (cage_id,)).fetchall()
+            ''', (group_id,)).fetchall()
             
             for i, animal in enumerate(animals):
                 cage_number = (i // capacity) + 1
-                cage_assignments[animal[0]] = (cage_id, cage_number)
+                cage_assignments[animal[0]] = (group_id, cage_number)
         
         return cage_assignments
 
-    def get_cages(self):
-        '''Returns a list of all cage names in the database.'''
-        self._c.execute("SELECT name FROM cages")
-        return [cage[0] for cage in self._c.fetchall()]
+    def get_groups(self):
+        '''Returns a list of all group names in the database.'''
+        self._c.execute("SELECT name FROM groups")
+        return [group[0] for group in self._c.fetchall()]
 
     def get_all_animals_rfid(self):
         '''Returns a list of all RFIDs for active animals in the experiment.'''
@@ -366,7 +361,7 @@ class ExperimentDatabase:
             'experiment': 'experiment.csv',
             'animals': 'animals.csv',
             'animal_measurements': 'animal_measurements.csv',
-            'cages': 'cages.csv'
+            'groups': 'groups.csv'
         }
 
         for table, filename in tables.items():
