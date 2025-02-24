@@ -134,15 +134,13 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         # Automated handling of data input
         def check_for_data():
-            local_db = ExperimentDatabase(self.db.db_file)
             while True:
                 if len(rfid_reader.received_data) > 0:  # Customize condition
                     received_data = rfid_reader.get_stored_data()
                     print("DB RFID:", received_data)
-                    self.add_value(received_data, local_db)
+                    self.add_value(received_data, self.db)  # Use existing database connection
                     rfid_reader.stop()
                     self.stop_listening()
-                    local_db.close()
                     return
              
         threading.Thread(target=check_for_data, daemon=True).start()
