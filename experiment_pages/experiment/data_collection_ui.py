@@ -97,7 +97,7 @@ class DataCollectionUI(MouserPage):
         
 
 
-        columns = ['animal_id', 'rfid']
+        columns = ['animal_id']
         print(self.database.get_measurement_name())
         columns.append(str(self.database.get_measurement_name())) # Add measurement name as column
 
@@ -115,13 +115,8 @@ class DataCollectionUI(MouserPage):
         for i, column in enumerate(columns):
             if i == 0:
                 text = "Animal ID"
-            elif i == 1:
-                text = "RFID"
             else:
-                if i-2 < len(self.measurement_strings):  # Ensure index is in range
-                    text = self.measurement_strings[i-2]
-                else:
-                    text = column  # Default placeholder for missing items
+                text = column
             
             print(f"Setting heading for column: {column} with text: {text}")  # Debugging line
             if text:  # Only set heading if text is not empty
@@ -135,10 +130,7 @@ class DataCollectionUI(MouserPage):
         self.animals = self.database.get_animals()  # Fetches Animal ID and RFID
         for animal in self.animals:
             animal_id = animal[0]
-            rfid = animal[1]  # RFID is already included in get_animals() result
-            value = (animal_id, rfid)  # Initial values with just ID and RFID
-            for _ in self.measurement_items:
-                value += (None,)  # Add None for each measurement type
+            value = (animal_id, None)  # Initial values with just ID 
             self.table.insert('', END, values=value)
 
 
@@ -312,13 +304,13 @@ class DataCollectionUI(MouserPage):
             for val in values:
                 if str(val[0]) == str(animal_id):  # val[0] is animal_id
                     # Update table with animal_id, rfid, and measurement value
-                    self.table.item(child, values=(animal_id, rfid, val[1]))  # val[1] is measurement_value
+                    self.table.item(child, values=(animal_id, val[1]))  # val[1] is measurement_value
                     found_data = True
                     break
                 
             if not found_data:
                 # If no measurement found, show animal_id and rfid with None for measurement
-                self.table.item(child, values=(animal_id, rfid, None))
+                self.table.item(child, values=(animal_id, None))
 
     def close_connection(self):
         '''Closes database file.'''

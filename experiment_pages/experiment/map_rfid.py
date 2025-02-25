@@ -355,6 +355,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             
 
             current_file = self.db.db_file
+
+            self.db._conn.commit()
             self.db.close()
             
             self.stop_listening()
