@@ -61,6 +61,7 @@ class DataCollectionUI(MouserPage):
                     animal_id=i,
                     rfid=i,     # Keep as integer for RFID
                     group_id=current_group,
+                    remarks='',
                 )
                 i = i + 1
 
@@ -68,10 +69,13 @@ class DataCollectionUI(MouserPage):
         self.measurement_ids = self.database.get_measurement_name()
         print(self.measurement_items)
 
-        if self.database.get_measurement_type() == 0:
+        if self.database.get_measurement_type() == 0 and self.database.experiment_uses_rfid() == 0:
             start_function = self.auto_increment
         else:
             start_function = self.rfid_listen
+            
+
+        
 
         self.auto_increment_button = CTkButton(self,
                                                text="Start",
@@ -251,11 +255,12 @@ class DataCollectionUI(MouserPage):
             print("No animals in databse!")
         
 
-    def change_selected_value(self, animal_id_to_change, values):
+    def change_selected_value(self, animal_id_to_change, list_of_values):
         '''Updates the table and database with the new value.'''
-        new_value = values[-1]
+        new_value = list_of_values[-1]
+        print(animal_id_to_change)
         print(new_value)
-        self.database.change_data_entry(date.today(), animal_id_to_change, new_value)
+        self.database.change_data_entry(str(date.today()), animal_id_to_change, new_value)
 
         for child in self.table.get_children():
             if animal_id_to_change == self.table.item(child)["values"][0]:

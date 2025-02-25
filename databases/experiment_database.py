@@ -237,7 +237,7 @@ class ExperimentDatabase:
             ''', (value, animal_id, date))
             
             if self._c.rowcount == 0:  # No existing record found
-                self.add_data_entry(date, animal_id, values)
+                self.add_data_entry(date, animal_id, value)
             
             self._conn.commit()
         except Exception as e:
