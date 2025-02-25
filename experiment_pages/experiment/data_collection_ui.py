@@ -169,7 +169,7 @@ class DataCollectionUI(MouserPage):
     
     def rfid_listen(self):
         '''Continuously listens for RFID scans until manually stopped.'''
-        
+    
         if self.rfid_thread and self.rfid_thread.is_alive():
             print("⚠️ RFID listener is already running!")
             return  # Prevent multiple listeners
@@ -178,30 +178,32 @@ class DataCollectionUI(MouserPage):
         self.rfid_stop_event.clear()  # Reset stop flag
 
         def listen():
-            rfid_reader = SerialDataHandler("reader")
-            rfid_reader.start()
-            print("🔄 RFID Reader Started!")
+            try:
+                self.rfid_reader = SerialDataHandler("reader")
+                self.rfid_reader.start()
+                print("🔄 RFID Reader Started!")
 
-            while not self.rfid_stop_event.is_set():
-                received_rfid = rfid_reader.get_stored_data()
+                while not self.rfid_stop_event.is_set():
+                    if self.rfid_reader:  # Check if reader still exists
+                        received_rfid = self.rfid_reader.get_stored_data()
 
-                if received_rfid:
-                    print(f"📡 RFID Scanned: {received_rfid}")
-                    
-                    animal_id = self.database.get_animal_id(received_rfid)
-                    
-                    if animal_id is None:
-                        print(f"⚠️ No matching animal found for RFID: {received_rfid}")
-                        continue  # Prevent NoneType errors
+                        if received_rfid:
+                            print(f"📡 RFID Scanned: {received_rfid}")
+                            animal_id = self.database.get_animal_id(received_rfid)
+                            
+                            if animal_id is not None:
+                                print(f"✅ Found Animal ID: {animal_id}")
+                                self.after(0, lambda: self.select_animal_by_id(animal_id))
 
-                    print(f"✅ Found Animal ID: {animal_id}")
-                    self.after(0, lambda: self.select_animal_by_id(animal_id))
-
-                time.sleep(1)  # Prevent duplicate scans
-
-            print("🛑 RFID listener has stopped.")
-            rfid_reader.stop()
-
+                    time.sleep(0.1)  # Shorter sleep time for more responsive stopping
+            except Exception as e:
+                print(f"Error in RFID listener: {e}")
+            finally:
+                if hasattr(self, 'rfid_reader') and self.rfid_reader:
+                    self.rfid_reader.stop()
+                    self.rfid_reader.close()
+                    self.rfid_reader = None
+                print("🛑 RFID listener thread ended.")
 
         self.rfid_thread = threading.Thread(target=listen, daemon=True)
         self.rfid_thread.start()
@@ -209,21 +211,31 @@ class DataCollectionUI(MouserPage):
     def stop_listening(self):
         '''Stops the RFID listener and ensures the serial port is released.'''
         print("🛑 Stopping RFID listener...")
-        self.rfid_stop_event.set()  # Signal thread to stop
+        
+        # Set the stop event first
+        self.rfid_stop_event.set()
+        
+        # Stop and close the RFID reader
+        if hasattr(self, 'rfid_reader') and self.rfid_reader:
+            try:
+                self.rfid_reader.stop()
+                self.rfid_reader.close()
+            except Exception as e:
+                print(f"Error closing RFID reader: {e}")
+            finally:
+                self.rfid_reader = None
 
-        if hasattr(self, "rfid_reader") and self.rfid_reader:  # Check if the reader exists
-            self.rfid_reader.stop()  # Properly close the serial connection
-            self.rfid_reader.close()  # Close the serial port
-            self.rfid_reader = None  # Remove reference to force reinitialization
-
-        if self.rfid_thread:
-            self.rfid_thread.join()  # Wait for thread to exit
-            self.rfid_thread = None  # Reset thread reference
-
-        print("✅ RFID listener has been stopped.")
-
-
-        print("✅ RFID listener has been stopped.")
+        # Wait for thread to finish with timeout
+        if self.rfid_thread and self.rfid_thread.is_alive():
+            try:
+                self.rfid_thread.join(timeout=2)  # Wait up to 2 seconds
+                if self.rfid_thread.is_alive():
+                    print("⚠️ Warning: RFID thread did not stop cleanly")
+            except Exception as e:
+                print(f"Error joining RFID thread: {e}")
+        
+        self.rfid_thread = None
+        print("✅ RFID listener cleanup completed.")
 
     def select_animal_by_id(self, animal_id):
         '''Finds and selects the animal with the given ID in the table, then opens the entry box.'''
