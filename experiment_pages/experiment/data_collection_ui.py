@@ -67,9 +67,6 @@ class DataCollectionUI(MouserPage):
         self.measurement_strings = []
         self.measurement_ids = self.database.get_measurement_name()
         print(self.measurement_items)
-        for item in self.measurement_items:
-            self.measurement_strings.append(item[1])
-            self.measurement_ids.append(str(item[1]).lower().replace(" ", "_"))
 
         if self.database.get_measurement_type() == 0:
             start_function = self.auto_increment
@@ -357,7 +354,7 @@ class ChangeMeasurementsDialog():
             entry.place(relx=0.60, rely=pos_y, anchor=CENTER)
             self.textboxes.append(entry)
 
-            header = CTkLabel(root, text=self.measurement_items + ": ", font=("Arial", 18))
+            header = CTkLabel(root, text=self.data_collection.measurement_items[0] + ": ", font=("Arial", 18))
             header.place(relx=0.28, rely=pos_y, anchor=E)
 
             if i == 1:
@@ -371,28 +368,33 @@ class ChangeMeasurementsDialog():
                 # Automated handling of data input
                 def check_for_data():
                     while True:
-                        if len(data_handler.received_data) >= 2:  # Customize condition
-                            received_data = data_handler.get_stored_data()
-                            entry.insert(1, received_data)
-                            data_handler.stop()
-                            self.finish(animal_id)  # Pass animal_id to finish method
+                        if self.data_collection.database.get_measurement_type() == 1:
+                            if len(data_handler.received_data) >= 2:  # Customize condition
+                                received_data = data_handler.get_stored_data()
+                                entry.insert(1, received_data)
+                                data_handler.stop()
+                                self.finish(animal_id)  # Pass animal_id to finish method
+                                
+                                if not self.uses_rfid:
+                                    # Find current index in animal_ids list
+                                    try:
+                                        current_index = self.animal_ids.index(animal_id)
+                                        # If not at the end of the list, move to next animal
+                                        if current_index < len(self.animal_ids) - 1:
+                                            next_animal_id = self.animal_ids[current_index + 1]
+                                            self.data_collection.select_animal_by_id(next_animal_id)
+                                            break
+                                    except ValueError:
+                                        print(f"Warning: Animal ID {animal_id} not found in table")
+                                else:
+                                    # Resume RFID listening if in RFID mode
+                                    if not self.data_collection.rfid_stop_event.is_set():
+                                        self.data_collection.rfid_listen()
+                                break
+                                time.sleep(1)
+                        
+                                
                             
-                            if not self.uses_rfid:
-                                # Find current index in animal_ids list
-                                try:
-                                    current_index = self.animal_ids.index(animal_id)
-                                    # If not at the end of the list, move to next animal
-                                    if current_index < len(self.animal_ids) - 1:
-                                        next_animal_id = self.animal_ids[current_index + 1]
-                                        self.data_collection.select_animal_by_id(next_animal_id)
-                                        break
-                                except ValueError:
-                                    print(f"Warning: Animal ID {animal_id} not found in table")
-                            else:
-                                # Resume RFID listening if in RFID mode
-                                if not self.data_collection.rfid_stop_event.is_set():
-                                    self.data_collection.rfid_listen()
-                            break
 
                 threading.Thread(target=check_for_data, daemon=True).start()
 

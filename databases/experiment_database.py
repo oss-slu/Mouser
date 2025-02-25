@@ -147,15 +147,10 @@ class ExperimentDatabase:
 
     def get_measurement_items(self):
         '''Returns the list of measurement items for the experiment.'''
-        self._c.execute("SELECT measurement_type FROM experiment")
+        self._c.execute("SELECT measurement FROM experiment")
         result = self._c.fetchone()
         
-        if result and result[0]:
-            # Convert comma-separated string back to list of tuples
-            measurement_types = result[0].split(',')
-            # Return as list of tuples to maintain compatibility with existing code
-            return [(item.strip(), item.strip()) for item in measurement_types]
-        return []
+        return result
 
     def close(self):
         '''Closes database connection.'''
