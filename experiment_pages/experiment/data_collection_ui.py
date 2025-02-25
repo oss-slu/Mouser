@@ -251,34 +251,16 @@ class DataCollectionUI(MouserPage):
             print("No animals in databse!")
         
 
-    def change_selected_value(self, values):
-        '''Updates the table and database, then immediately resumes RFID listening.'''
+    def change_selected_value(self, animal_id_to_change, values):
+        '''Updates the table and database with the new value.'''
+        new_value = values[-1]
+        print(new_value)
+        self.database.change_data_entry(date.today(), animal_id_to_change, new_value)
 
-        item = self.table.item(self.changing_value)
-        animal_id = item["values"][0]
+        for child in self.table.get_children():
+            if animal_id_to_change == self.table.item(child)["values"][0]:
+                self.table.item(child, values=(animal_id_to_change, new_value))
 
-        new_values = []
-        for val in values:
-            new_values.append(val)
-
-        self.table.item(self.changing_value, values=tuple([animal_id] + new_values))
-
-        if "None" in item["values"][1:]:
-            self.database.add_data_entry(date.today(), animal_id, new_values)
-        else:
-            self.database.change_data_entry(date.today(), animal_id, new_values)
-
-        if self.auto_inc_id >= 0 and self.auto_inc_id < len(self.table.get_children()) - 1:
-            self.auto_inc_id += 1
-            self.open_auto_increment_changer()
-
-        AudioManager.play(filepath="shared/sounds/rfid_success.wav")  # Play success sound
-
-        # Immediately resume RFID listening unless manually stopped and experiment uses RFID
-        if self.database.experiment_uses_rfid() == 1:
-            if not self.rfid_stop_event.is_set():
-                print("🔄 Resuming RFID listener...")
-                threading.Thread(target=self.rfid_listen, daemon=True).start()
 
 
 
@@ -337,7 +319,7 @@ class ChangeMeasurementsDialog():
         title_text = "Modify Measurements for: " + str(animal_id)
         root.title(title_text)
 
-        root.geometry('700x700')
+        root.geometry('450x450')
         root.resizable(False, False)
         root.grid_rowconfigure(0, weight=1)
         root.grid_columnconfigure(0, weight=1)
@@ -367,8 +349,8 @@ class ChangeMeasurementsDialog():
 
                 # Automated handling of data input
                 def check_for_data():
-                    while True:
-                        if self.data_collection.database.get_measurement_type() == 1:
+                    if self.data_collection.database.get_measurement_type() == 1:
+                        while True:
                             if len(data_handler.received_data) >= 2:  # Customize condition
                                 received_data = data_handler.get_stored_data()
                                 entry.insert(1, received_data)
@@ -392,6 +374,9 @@ class ChangeMeasurementsDialog():
                                         self.data_collection.rfid_listen()
                                 break
                                 time.sleep(1)
+                    else:
+                        submit_button = CTkButton(root, text="Submit", command=lambda: self.finish(animal_id))
+                        submit_button.place(relx=0.5, rely=0.9, anchor=CENTER)
                         
                                 
                             
@@ -408,9 +393,12 @@ class ChangeMeasurementsDialog():
             values = self.get_all_values()
             self.close()
 
+            current_animal_id = animal_id
+
             if self.data_collection.winfo_exists():
                 # Update the database with the new values
-                self.data_collection.database.change_data_entry(date.today(), animal_id, values)
+                self.data_collection.change_selected_value(current_animal_id, values)
+        
 
     def get_all_values(self):
         '''Returns the values of all entries in self.textboxes as an array.'''

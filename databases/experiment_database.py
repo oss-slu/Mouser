@@ -225,18 +225,16 @@ class ExperimentDatabase:
             print(f"Error adding data entry: {e}")
             self._conn.rollback()
 
-    def change_data_entry(self, date, animal_id, values):
+    def change_data_entry(self, date, animal_id, value):
         '''Updates a measurement entry for an animal on a specific date.'''
         try:
-            # Convert values to list if it's not already
-            values = list(values) if isinstance(values, tuple) else values
             
             # Update existing measurement
             self._c.execute('''
                 UPDATE animal_measurements 
                 SET value = ?
                 WHERE animal_id = ? AND timestamp = ?
-            ''', (values[0], animal_id, date))
+            ''', (value, animal_id, date))
             
             if self._c.rowcount == 0:  # No existing record found
                 self.add_data_entry(date, animal_id, values)
