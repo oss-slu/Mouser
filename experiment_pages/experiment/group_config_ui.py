@@ -100,8 +100,9 @@ class GroupConfigUI(MouserPage): # pylint: disable= undefined-variable
             group_names.append(entry.get())
             self.experiment.group_names = group_names
         # pylint: disable= consider-using-enumerate
-        items = self.experiment.get_measurement_items()
-        measurement_collect_type = []
-        measurement_collect_type.append((items, self.button_vars[0].get()))  # Use index 0 since there's only one item
-        self.experiment.data_collect_type = measurement_collect_type
+        if self.button_vars[0].get() == True:
+            automatic_or_manual = 1
+        else:
+            automatic_or_manual = 0
+        self.experiment.data_collect_type = automatic_or_manual
         self.next_page.update_page()

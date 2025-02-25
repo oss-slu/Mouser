@@ -316,6 +316,7 @@ class ChangeMeasurementsDialog():
                 values = self.data_collection.table.item(child)["values"]
                 self.animal_ids.append(values[0])  # First column contains animal IDs
             self.current_index = 0  # Track position in animal_ids list
+            self.thread_running = False  # Add a flag to control the thread's life cycle
 
     def open(self, animal_id):
         '''Opens the change measurement dialog window and handles automated submission.'''
@@ -354,43 +355,53 @@ class ChangeMeasurementsDialog():
 
                 # Automated handling of data input
                 def check_for_data():
+                    print("Beginning check for data")
                     if self.data_collection.database.get_measurement_type() == 1:
-                        while True:
+                        print("Inside the if statement")
+
+                        current_index = self.animal_ids.index(animal_id)
+
+                        while current_index < len(self.animal_ids) and self.thread_running:
                             if len(data_handler.received_data) >= 2:  # Customize condition
                                 received_data = data_handler.get_stored_data()
                                 entry.insert(1, received_data)
                                 data_handler.stop()
-                                self.finish(animal_id)  # Pass animal_id to finish method
-                                
+
                                 if not self.uses_rfid:
                                     # Find current index in animal_ids list
-                                    try:
-                                        current_index = self.animal_ids.index(animal_id)
-                                        # If not at the end of the list, move to next animal
-                                        if current_index < len(self.animal_ids) - 1:
-                                            next_animal_id = self.animal_ids[current_index + 1]
-                                            self.data_collection.select_animal_by_id(next_animal_id)
-                                            break
-                                    except ValueError:
-                                        print(f"Warning: Animal ID {animal_id} not found in table")
+                                    print("Current table index:", current_index)
+                                    # If not at the end of the list, move to next animal
+                                    self.finish(animal_id)  # Pass animal_id to finish method
+                                    if current_index >= len(self.animal_ids):
+                                        print("closing!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                                        data_thread.join()
+                                        break
+                                    else:
+                                        next_animal_id = self.animal_ids[current_index + 1]
+                                        self.data_collection.select_animal_by_id(next_animal_id)
+                                        break
                                 else:
                                     # Resume RFID listening if in RFID mode
                                     if not self.data_collection.rfid_stop_event.is_set():
                                         self.data_collection.rfid_listen()
-                                break
-                                time.sleep(1)
+                                        self.finish(animal_id)  # Pass animal_id to finish method
+                                        break
+
+                                time.sleep(.25)
+
+                        # Stop the thread once max measurements are reached
+                        self.thread_running = False
+                        print("Thread finished")
+
                     else:
                         submit_button = CTkButton(root, text="Submit", command=lambda: self.finish(animal_id))
                         submit_button.place(relx=0.5, rely=0.9, anchor=CENTER)
-                        
-                                
-                            
 
+                self.thread_running = True  # Set flag to True when the thread starts
                 threading.Thread(target=check_for_data, daemon=True).start()
 
         self.error_text = CTkLabel(root, text="One or more values are not a number", fg_color="red")
         self.root.mainloop()
-
 
     def finish(self, animal_id):
         '''Cleanup when done with change value dialog.'''
@@ -403,7 +414,6 @@ class ChangeMeasurementsDialog():
             if self.data_collection.winfo_exists():
                 # Update the database with the new values
                 self.data_collection.change_selected_value(current_animal_id, values)
-        
 
     def get_all_values(self):
         '''Returns the values of all entries in self.textboxes as an array.'''

@@ -19,7 +19,7 @@ class Experiment():
         self.max_per_cage = ''
         self.animals_per_group = ''
         self.group_names = []
-        self.data_collect_type = []
+        self.data_collect_type = int
         self.date_created = str(date.today())
         self.password = None
 
@@ -151,8 +151,7 @@ class Experiment():
         db = ExperimentDatabase(file)
         
         # Convert measurement types to strings if they're tuples
-        measurement_types = [item[0] if isinstance(item, tuple) else item 
-                            for item in self.data_collect_type]
+        measurement_types = self.data_collect_type
         
         # Setup experiment with measurement_type from data_collect_type
         db.setup_experiment(
@@ -181,7 +180,7 @@ class Experiment():
         
     def get_measurement_type(self):
         '''Returns whether measurements are automatic.'''
-        return hasattr(self, 'measurement_type') and self.measurement_type == 1
+        return self.data_collect_type
 
     def set_measurement_type(self, is_automatic: int):
         '''Sets whether measurements are automatic (1) or manual (0).'''

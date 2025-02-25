@@ -79,7 +79,7 @@ class SerialDataHandler:
     def get_stored_data(self):
         '''Returns the most recent item in the list of stored data.'''
         with self.lock:
-            return self.received_data.pop(0) if self.received_data else None
+            return self.received_data.pop(-1) if self.received_data else None
 
 # Example of how to run SerialDataHandler in a separate thread
 def main():
