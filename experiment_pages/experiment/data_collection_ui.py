@@ -69,7 +69,7 @@ class DataCollectionUI(MouserPage):
         self.measurement_ids = self.database.get_measurement_name()
         print(self.measurement_items)
 
-        if self.database.get_measurement_type() == 0 and self.database.experiment_uses_rfid() == 0:
+        if self.database.experiment_uses_rfid() == 0:
             start_function = self.auto_increment
         else:
             start_function = self.rfid_listen

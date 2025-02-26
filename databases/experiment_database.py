@@ -30,7 +30,7 @@ class ExperimentDatabase:
                                 active INTEGER);''')
                                 
             self._c.execute('''CREATE TABLE animal_measurements (
-                                measurement_id INTEGER PRIMARY KEY,
+                                measurement_id INTEGER,
                                 animal_id INTEGER,
                                 timestamp TEXT,
                                 value REAL,

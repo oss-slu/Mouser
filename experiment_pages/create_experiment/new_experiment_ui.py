@@ -148,25 +148,6 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
             buttons[index].configure(command=f)
             index += 1
 
-    def update_items_frame(self):
-        '''Updates item frame.'''
-        for widget in self.item_frame.winfo_children():
-            widget.destroy()
-
-        funcs = []
-        buttons = []
-        for meas_item in self.items:
-            CTkLabel(self.item_frame, text=meas_item).grid(
-                            row=self.items.index(meas_item), column=0, sticky=W, padx=10)
-            rem_button = CTkButton(self.item_frame, text='-', width=3)
-            rem_button.grid(row=self.items.index(meas_item), column=2, sticky=W, padx=10)
-            buttons.append(rem_button)
-            funcs.append(lambda meas_item=meas_item: self.remove_measurment_item(meas_item))
-
-        index = 0
-        for f in funcs:
-            buttons[index].configure(command=f)
-            index += 1
 
     def get_user_list(self):
         '''Gets list of users in user database.'''
@@ -195,11 +176,11 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
     #         self.items.append(self.measure_items.get())
     #         self.update_items_frame()
 
-    def remove_measurment_item(self, item):
-        '''Removes passed item from the item frame.'''
-        if item in self.items:
-            self.items.remove(item)
-            self.update_items_frame()
+    # def remove_measurment_item(self, item):
+    #     '''Removes passed item from the item frame.'''
+    #     if item in self.items:
+    #         self.items.remove(item)
+    #         self.update_items_frame()
 
 
     def raise_warning(self, option: int):
