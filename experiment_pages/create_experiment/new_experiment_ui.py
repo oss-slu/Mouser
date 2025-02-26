@@ -170,19 +170,6 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
             self.update_invest_frame()
 
 
-    # def add_measurement_item(self):
-    #     '''Adds measurement item to the item frame.'''
-    #     if self.measure_items.get() and self.measure_items.get() not in self.items:
-    #         self.items.append(self.measure_items.get())
-    #         self.update_items_frame()
-
-    # def remove_measurment_item(self, item):
-    #     '''Removes passed item from the item frame.'''
-    #     if item in self.items:
-    #         self.items.remove(item)
-    #         self.update_items_frame()
-
-
     def raise_warning(self, option: int):
         '''Raises an error window that can be dismissed with any key or mouse press.'''
 
