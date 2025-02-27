@@ -23,11 +23,6 @@ class DataCollectionUI(MouserPage):
         self.rfid_thread = None # Store running thread
 
         self.database = ExperimentDatabase(database_name)
-        
-        # Call the new method to insert blank data for today
-        today_date = str(date.today())
-        animal_ids = [animal[0] for animal in self.database.get_animals()]  # Get all animal IDs
-        self.database.insert_blank_data_for_day(animal_ids, today_date)  # Insert blank data
 
         self.measurement_items = self.database.get_measurement_items()
 
@@ -64,6 +59,13 @@ class DataCollectionUI(MouserPage):
                     remarks='',
                 )
                 i = i + 1
+
+
+        # Call the new method to insert blank data for today
+        if len(self.database.get_measurements_by_date(date.today())) == 0:
+            today_date = str(date.today())
+            animal_ids = [animal[0] for animal in self.database.get_animals()]  # Get all animal IDs
+            self.database.insert_blank_data_for_day(animal_ids, today_date)  # Insert blank dataS
 
         self.measurement_strings = []
         self.measurement_ids = self.database.get_measurement_name()
@@ -257,7 +259,7 @@ class DataCollectionUI(MouserPage):
 
     def change_selected_value(self, animal_id_to_change, list_of_values):
         '''Updates the table and database with the new value.'''
-        new_value = list_of_values[-1]
+        new_value = float(list_of_values[0])
         print(animal_id_to_change)
         print(new_value)
         self.database.change_data_entry(str(date.today()), animal_id_to_change, new_value)

@@ -21,27 +21,28 @@ class ExperimentDatabase:
                                 id TEXT,
                                 investigators TEXT,
                                 measurement TEXT);''')
-            
+
             self._c.execute('''CREATE TABLE animals (
                                 animal_id INTEGER PRIMARY KEY,
                                 group_id INTEGER,
                                 rfid INTEGER UNIQUE,
                                 remarks TEXT,
                                 active INTEGER);''')
-                                
+
             self._c.execute('''CREATE TABLE animal_measurements (
                                 measurement_id INTEGER,
                                 animal_id INTEGER,
                                 timestamp TEXT,
                                 value REAL,
-                                FOREIGN KEY(animal_id) REFERENCES animals(animal_id));''')
-                                
+                                FOREIGN KEY(animal_id) REFERENCES animals(animal_id),
+                                PRIMARY KEY (animal_id, timestamp));''')
+
             self._c.execute('''CREATE TABLE groups (
                                 group_id INTEGER PRIMARY KEY,
                                 name TEXT,
                                 num_animals INTEGER,
                                 cage_capacity INTEGER);''')
-            
+
             self._conn.commit()
         except sqlite3.OperationalError:
             pass
@@ -396,6 +397,3 @@ class ExperimentDatabase:
         except Exception as e:
             print(f"Error retrieving measurement value: {e}")
             return None
-
-
-
