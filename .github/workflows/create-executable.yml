@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - 224followupcomments #to test workflow, can be removed after merge
+      - DatabaseRework
 
 jobs:
   build:
