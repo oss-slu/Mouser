@@ -68,6 +68,7 @@ class DataCollectionUI(MouserPage):
             self.database.insert_blank_data_for_day(animal_ids, today_date)  # Insert blank dataS
 
         self.measurement_strings = []
+        self.measurement_strings.append(self.measurement_items)
         self.measurement_ids = self.database.get_measurement_name()
         print(self.measurement_items)
 

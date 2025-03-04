@@ -91,7 +91,7 @@ class ExperimentDatabase:
             # Update group animal count
             self._c.execute('''UPDATE groups 
                             SET num_animals = num_animals + 1 
-                            WHERE group_id = ?''', (group_id))
+                            WHERE group_id = ?''', (group_id,))
             
             self._conn.commit()
             return animal_id
