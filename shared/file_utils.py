@@ -60,9 +60,8 @@ def save_temp_to_file(temp_file_path: str, permanent_file_path: str):
     base, ext = os.path.splitext(permanent_file_path)
     # Take only the part before the first underscore if it exists
     base = base.split('_')[0]
-    # Add timestamp before the extension
-    timestamp_str = datetime.now().strftime("_%Y%m%d_%H%M%S")
-    permanent_file_path = f"{base}{timestamp_str}{ext}"
+
+    permanent_file_path = f"{base}{ext}"  # Updated line
 
     with open(temp_file_path, 'rb') as temp_file:
         data = temp_file.read()
@@ -80,9 +79,7 @@ def save_temp_to_encrypted(temp_file_path: str, permanent_file_path: str, passwo
     base, ext = os.path.splitext(permanent_file_path)
     # Take only the part before the first underscore if it exists
     base = base.split('_')[0]
-    # Add timestamp before the extension
-    timestamp_str = datetime.now().strftime("_%Y%m%d_%H%M%S")
-    permanent_file_path = f"{base}{timestamp_str}{ext}"
+    permanent_file_path = f"{base}{ext}"  # Updated line
     
     manager = PasswordManager(password)
 

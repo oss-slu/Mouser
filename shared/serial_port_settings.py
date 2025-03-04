@@ -33,6 +33,7 @@ class SerialPortSetting(SettingPage):
         else:
             self.serial_port_controller = SerialPortController(self.preference)
 
+
         if hasattr(sys, '_MEIPASS'):
             # Running as a bundled executable
             base_path = sys._MEIPASS

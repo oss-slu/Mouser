@@ -53,7 +53,7 @@ class DataAnalysisUI(MouserPage):
 
         try:
             db = ExperimentDatabase(self.db_file)
-            db.export_all_tables_to_single_csv(save_dir)
+            db.export_to_csv(save_dir)
             print("Data exported successfully to CSV files.")
             # Once export is done, show the success notification
             self.show_notification("Success", "Export to CSV successful!")

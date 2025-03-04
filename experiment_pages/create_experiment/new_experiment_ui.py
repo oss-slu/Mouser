@@ -35,7 +35,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         pad_x = 10
         pad_y = 10
 
-        self.items = ['Weight']
+        self.items = ''
         self.added_invest = []
 
         CTkLabel(self.main_frame, text='Experiment Name').grid(
@@ -63,8 +63,6 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.species = CTkEntry(self.main_frame, width=140)
 
         self.measure_items = CTkEntry(self.main_frame, width=140)
-        self.measure_items.insert(0, 'Weight')
-        self.measure_items.configure(state='disabled')
 
         self.animal_num = CTkEntry(self.main_frame, width=110)
         self.group_num = CTkEntry(self.main_frame, width=110)
@@ -150,25 +148,6 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
             buttons[index].configure(command=f)
             index += 1
 
-    def update_items_frame(self):
-        '''Updates item frame.'''
-        for widget in self.item_frame.winfo_children():
-            widget.destroy()
-
-        funcs = []
-        buttons = []
-        for meas_item in self.items:
-            CTkLabel(self.item_frame, text=meas_item).grid(
-                            row=self.items.index(meas_item), column=0, sticky=W, padx=10)
-            rem_button = CTkButton(self.item_frame, text='-', width=3)
-            rem_button.grid(row=self.items.index(meas_item), column=2, sticky=W, padx=10)
-            buttons.append(rem_button)
-            funcs.append(lambda meas_item=meas_item: self.remove_measurment_item(meas_item))
-
-        index = 0
-        for f in funcs:
-            buttons[index].configure(command=f)
-            index += 1
 
     def get_user_list(self):
         '''Gets list of users in user database.'''
@@ -189,19 +168,6 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         if person in self.added_invest:
             self.added_invest.remove(person)
             self.update_invest_frame()
-
-
-    # def add_measurement_item(self):
-    #     '''Adds measurement item to the item frame.'''
-    #     if self.measure_items.get() and self.measure_items.get() not in self.items:
-    #         self.items.append(self.measure_items.get())
-    #         self.update_items_frame()
-
-    def remove_measurment_item(self, item):
-        '''Removes passed item from the item frame.'''
-        if item in self.items:
-            self.items.remove(item)
-            self.update_items_frame()
 
 
     def raise_warning(self, option: int):
@@ -279,7 +245,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.input.set_unique_id()
         self.input.set_investigators(self.added_invest)
         self.input.set_species(self.species.get())
-        self.input.set_measurement_items(self.items)
+        self.input.set_measurement_item(self.measure_items.get())
         self.input.set_uses_rfid(self.rfid.get())
         self.input.set_num_animals(self.animal_num.get())
         self.input.set_num_groups(self.group_num.get())

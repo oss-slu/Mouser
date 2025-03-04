@@ -11,7 +11,7 @@ class Experiment():
         self.name = ''
         self.investigators = []
         self.species = ''
-        self.items = []
+        self.item = ''
         self.id = ''
         self.rfid = False
         self.num_animals = ''
@@ -19,7 +19,7 @@ class Experiment():
         self.max_per_cage = ''
         self.animals_per_group = ''
         self.group_names = []
-        self.data_collect_type = []
+        self.data_collect_type = int
         self.date_created = str(date.today())
         self.password = None
 
@@ -38,11 +38,9 @@ class Experiment():
         '''Sets species.'''
         self.species = species
 
-    def set_measurement_items(self, items):
+    def set_measurement_item(self, items):
         '''Sets measurement items.'''
-        if self.items != items:
-            self.measurement_items_changed = True
-            self.items = items.copy()
+        self.item = items
 
     def set_uses_rfid(self, rfid):
         '''Sets if experiment uses rfid.'''
@@ -105,7 +103,7 @@ class Experiment():
 
     def get_measurement_items(self):
         '''Returns the list of measurement items of the experiment.'''
-        return self.items
+        return self.item
 
     def uses_rfid(self):
         '''Returns if experiment uses RFID.'''
@@ -149,15 +147,46 @@ class Experiment():
             file = directory + '/' + self.name + '.pmouser'
         else:
             file = directory + '/' + self.name + '.mouser'
+        
         db = ExperimentDatabase(file)
-        db.setup_experiment(self.name, self.species, self.rfid, self.num_animals,
-                            self.num_groups, self.max_per_cage, self.id)
-        db.setup_groups(self.group_names)
-        db.setup_cages(self.num_animals, self.num_groups, self.max_per_cage)
-        db.setup_measurement_items(self.data_collect_type)
-        db.setup_collected_data(self.items)
+        
+        # Convert measurement types to strings if they're tuples
+        measurement_types = self.data_collect_type
+        
+        # Setup experiment with measurement_type from data_collect_type
+        db.setup_experiment(
+            name=self.name,
+            species=self.species,
+            uses_rfid=self.rfid,
+            num_animals=self.num_animals,
+            num_groups=self.num_groups,
+            cage_max=self.max_per_cage,
+            measurement_type=self.measurement_type,
+            experiment_id=self.id,
+            investigators=self.investigators,
+            measurement=self.item
+        )
+        
+        # Setup groups with cage capacity
+        db.setup_groups(
+            group_names=self.group_names,
+            cage_capacity=self.max_per_cage
+        )
+        
         if self.password:
             manager = PasswordManager(self.password)
             manager.encrypt_file(file)
         # TO:DO save date created to db
+        
+    def get_measurement_type(self):
+        '''Returns whether measurements are automatic.'''
+        return self.data_collect_type
+
+    def set_measurement_type(self, is_automatic: int):
+        '''Sets whether measurements are automatic (1) or manual (0).'''
+        self.measurement_type = is_automatic
+
+    def add_investigator(self, investigator_name):
+        if investigator_name and investigator_name not in self.investigators:
+            self.investigators.append(investigator_name)
         
