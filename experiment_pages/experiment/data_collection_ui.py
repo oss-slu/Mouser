@@ -419,6 +419,8 @@ class ChangeMeasurementsDialog():
             if self.data_collection.winfo_exists():
                 # Update the database with the new values
                 self.data_collection.change_selected_value(current_animal_id, values)
+                from main import save_file
+                save_file()
 
     def get_all_values(self):
         '''Returns the values of all entries in self.textboxes as an array.'''
