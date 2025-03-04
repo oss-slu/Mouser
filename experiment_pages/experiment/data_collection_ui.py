@@ -116,10 +116,11 @@ class DataCollectionUI(MouserPage):
         style.configure("Treeview.Heading", font=("Arial", 18))
 
         for i, column in enumerate(columns):
-            if i == 0:
+            
+            if i != 0: # i!= 0 means the column will hold measurement data
+                text = self.measurement_strings[i-1]
+            else: # i == 0, column is for animal id
                 text = "Animal ID"
-            else:
-                text = column
             
             print(f"Setting heading for column: {column} with text: {text}")  # Debugging line
             if text:  # Only set heading if text is not empty
@@ -401,6 +402,7 @@ class ChangeMeasurementsDialog():
 
                 self.thread_running = True  # Set flag to True when the thread starts
                 threading.Thread(target=check_for_data, daemon=True).start()
+
 
         self.error_text = CTkLabel(root, text="One or more values are not a number", fg_color="red")
         self.root.mainloop()
