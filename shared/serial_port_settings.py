@@ -33,7 +33,8 @@ class SerialPortSetting(SettingPage):
         else:
             self.serial_port_controller = SerialPortController(self.preference)
 
-                if hasattr(sys, '_MEIPASS'):
+        
+        if hasattr(sys, '_MEIPASS'):
             # Running as a bundled executable
             base_path = sys._MEIPASS
         else:
@@ -42,7 +43,7 @@ class SerialPortSetting(SettingPage):
 
         self.port_setting_configuration_path = os.path.join(base_path, "settings", "serial ports")
 
-        
+
         # setting value element
         self.serial_port = StringVar(value = "")
         self.baud_rate_var = StringVar(value="")
