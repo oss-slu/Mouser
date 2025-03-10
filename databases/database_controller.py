@@ -20,7 +20,7 @@ class DatabaseController():
         animals_in_cage = {}
 
         # Group animals by their assigned cage
-        for animal_id, (group_id, cage_number) in cage_assignments.items():
+        for animal_id, (cage_number) in cage_assignments.items():
             cage_key = str(cage_number)
             if cage_key not in animals_in_cage:
                 animals_in_cage[cage_key] = []
@@ -129,7 +129,7 @@ class DatabaseController():
     def update_experiment(self):
         '''Updates the database to reflect current animal states.'''
         updated_animals = self.get_updated_animals()
-        for old_id, new_id, group_id, cage in updated_animals:
+        for old_id, new_id, group_id in updated_animals:
             self.db._c.execute('''
                 UPDATE animals
                 SET animal_id = ?, group_id = ?
