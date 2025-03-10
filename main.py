@@ -98,14 +98,14 @@ def open_file():
 # Command for 'New' option in menu bar
 def create_file():
     '''Command for the 'New' option in the menue bar.
-    
+
     Navigates to the NewExperimentUI page.'''
     page = NewExperimentUI(root, experiments_frame)
     page.raise_frame()
 
 def open_test():
     '''Command for 'Test Serials' button in the welcome screen.'''
-    
+
     test_screen_instance = TestScreen(root)
     test_screen_instance.grab_set()
 
@@ -164,7 +164,7 @@ mouse_label = CTkLabel(experiments_frame, image=mouse_image)
 mouse_label.grid(row=1, column=0, pady=(20, 10))
 
 welcome_frame = CTkFrame(experiments_frame)
-welcome_frame.place(relx=0.5, rely=0.33, anchor="center")
+welcome_frame.place(relx=0.5, rely=0.50, anchor="center")
 
 # Create and place the image
 image_label = CTkLabel(welcome_frame, image=mouse_image, text="")
@@ -174,9 +174,11 @@ image_label.pack(pady=(20, 10))
 text_label = CTkLabel(welcome_frame, text="Welcome to Mouser!", wraplength=400, font=("Georgia", 32))
 text_label.pack(padx=20, pady=10)
 
-new_file_button = CTkButton(welcome_frame, text="New Experiment", command=create_file, width=200, height=50)
-open_file_button = CTkButton(welcome_frame, text="Open Experiment", command=open_file, width=200, height=50)
-test_screen_button = CTkButton(welcome_frame, text="Test Serials", command= open_test, width=200, height=50)
+main_menu_button_height = main_frame.winfo_screenheight()/6
+main_menu_button_width = main_frame.winfo_screenwidth()*0.9
+new_file_button = CTkButton(welcome_frame, text="New Experiment", font=("Georgia", 80), command=create_file, width=main_menu_button_width, height=main_menu_button_height)
+open_file_button = CTkButton(welcome_frame, text="Open Experiment", font=("Georgia", 80), command=open_file, width=main_menu_button_width, height=main_menu_button_height)
+test_screen_button = CTkButton(welcome_frame, text="Test Serials", font=("Georgia", 80), command= open_test, width=main_menu_button_width, height=main_menu_button_height)
 
 new_file_button.pack(pady=(10, 5), padx=20, fill='x', expand=True)
 open_file_button.pack(pady=(5, 10), padx=20, fill='x', expand=True)
