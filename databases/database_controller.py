@@ -1,5 +1,4 @@
 '''Contains DatabaseController Class'''
-import copy
 from databases.experiment_database import ExperimentDatabase
 
 class DatabaseController():
@@ -10,23 +9,23 @@ class DatabaseController():
         self.reset_attributes()
 
     def set_cages_in_group(self):
-        '''Returns a dictionary with the keys as the group ids and 
+        '''Returns a dictionary with the keys as the group ids and
         the values are the cage ids in each group in the database.'''
         return self.db.get_cages_by_group()
 
     def set_animals_in_cage(self):
-        '''Returns a dictionary with the keys as the cage ids and 
+        '''Returns a dictionary with the keys as the cage ids and
         the values are the animal ids in each cage in the database.'''
         cage_assignments = self.db.get_cage_assignments()
         animals_in_cage = {}
-        
+
         # Group animals by their assigned cage
         for animal_id, (group_id, cage_number) in cage_assignments.items():
             cage_key = str(cage_number)
             if cage_key not in animals_in_cage:
                 animals_in_cage[cage_key] = []
             animals_in_cage[cage_key].append(str(animal_id))
-            
+
         return animals_in_cage
 
     def reset_attributes(self):
@@ -132,8 +131,8 @@ class DatabaseController():
         updated_animals = self.get_updated_animals()
         for old_id, new_id, group_id, cage in updated_animals:
             self.db._c.execute('''
-                UPDATE animals 
-                SET animal_id = ?, group_id = ? 
+                UPDATE animals
+                SET animal_id = ?, group_id = ?
                 WHERE animal_id = ?
             ''', (new_id, group_id, old_id))
         self.db._conn.commit()
