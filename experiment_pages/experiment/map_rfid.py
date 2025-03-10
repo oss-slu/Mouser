@@ -1,4 +1,5 @@
 '''Map RFID module.'''
+import time
 from tkinter import Menu
 from tkinter.ttk import Style, Treeview
 import tkinter.font as tkfont
@@ -32,12 +33,17 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         super().__init__(parent, "Map RFID", previous_page)
 
+        self.rfid_reader = None 
+        self.rfid_stop_event = threading.Event()  # Event to stop RFID listener
+        self.rfid_thread = None # Store running thread
+
         # Store the parent reference
         self.parent = parent
 
         file = database
         self.db = ExperimentDatabase(file)
 
+        self.animal_rfid_list = []
         self.animals = []
         self.animal_id = 1
 
@@ -56,7 +62,11 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         self.start_rfid = CTkButton(self, text="Start Scanning", compound=TOP,
                                          width=15, command=self.rfid_listen)
-        self.start_rfid.place(relx=0.40, rely=0.17, anchor=CENTER)
+        self.start_rfid.place(relx=0.45, rely=0.17, anchor=CENTER)
+
+        self.start_rfid = CTkButton(self, text="Stop Scanning", compound=TOP,
+                                         width=15, command=self.stop_listening)
+
         if not self.db.experiment_uses_rfid():
             self.start_rfid.configure(state="disabled")
 
@@ -127,29 +137,85 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.scroll_to_latest_entry()
 
     def rfid_listen(self):
-        rfid_reader = SerialDataHandler("reader")
+        """Starts RFID listener, ensuring the previous session is fully closed before restarting."""
+        
+        # Ensure old listener is properly stopped before starting a new one
+        if self.rfid_thread and self.rfid_thread.is_alive():
+            print("⚠️ Stopping stale RFID listener before restarting...")
+            self.stop_listening()
+            time.sleep(0.5)  # Allow OS to release the port
 
-        data_thread = threading.Thread(target=rfid_reader.start)
-        data_thread.start()
+        print("📡 Starting a fresh RFID listener...")
+        print("RFIDs already scanned: ", self.animal_rfid_list)
+        self.rfid_stop_event.clear()  # Reset the stop flag
 
-        # Automated handling of data input
-        def check_for_data():
-            local_db = ExperimentDatabase(self.db.db_file)
-            while True:
-                if len(rfid_reader.received_data) > 0:  # Customize condition
-                    received_data = rfid_reader.get_stored_data()
-                    print("DB RFID:", received_data)
-                    self.add_value(received_data, local_db)
-                    rfid_reader.stop()
-                    self.stop_listening()
-                    local_db.close()
-                    return
+        def listen():
+            try:
+                local_db = ExperimentDatabase(self.db.db_file)
+                self.rfid_reader = SerialDataHandler("reader")  # Store reference to close later
+                self.rfid_reader.start()
+                print("🔄 RFID Reader Started!")
 
-        threading.Thread(target=check_for_data, daemon=True).start()
+                last_rfid = None  # Track last scanned RFID to avoid duplicate reads
+
+                while not self.rfid_stop_event.is_set():
+                    received_rfid = self.rfid_reader.get_stored_data()
+
+                    if not received_rfid or received_rfid == last_rfid:
+                        time.sleep(0.5)
+                        continue
+
+                    last_rfid = received_rfid
+                    print(f"📡 RFID Scanned: {received_rfid}")
+
+                    clean_rfid = received_rfid.strip().replace("\x02", "").replace("\x03", "")
+
+                    if not clean_rfid:
+                        print("⚠️ Empty or invalid RFID detected, skipping...")
+                        continue  # 🚫 Avoid calling add_value()
+
+                    if clean_rfid in self.animal_rfid_list:
+                        print(f"⚠️ RFID {clean_rfid} is already in use! Skipping...")
+                        play_sound_async("shared/sounds/error.wav")
+                        continue  # 🚫 Avoid calling add_value()
+
+                    # If it's a new RFID, process it
+                    self.after(0, lambda: self.add_value(clean_rfid, local_db))
+                    self.animal_rfid_list.append(clean_rfid)
+                    play_sound_async("shared/sounds/rfid_success.wav")
+
+            except Exception as e:
+                print(f"❌ Error in RFID listener: {e}")
+
+            finally:
+                print("🛑 RFID listener has stopped.")
+                if self.rfid_reader:
+                    self.rfid_reader.stop()
+                    self.rfid_reader = None  # Ensure cleanup
+
+        self.rfid_thread = threading.Thread(target=listen, daemon=True)
+        self.rfid_thread.start()
 
     def stop_listening(self):
-        self.on_page = False
-        return self.on_page
+        """Stops the RFID listener thread and ensures the serial port is released."""
+        if self.rfid_stop_event.is_set():
+            return  # If already stopped, do nothing
+
+        print("⛔ Stopping RFID scanning...")
+        self.rfid_stop_event.set()  # Stop the listener loop
+
+        if self.rfid_thread and self.rfid_thread.is_alive():
+            self.rfid_thread.join(timeout=1)  # Ensure the thread fully stops
+
+        if self.rfid_reader:  # Make sure the serial reader is released
+            try:
+                print("🔌 Closing serial connection...")
+                self.rfid_reader.stop()
+                self.rfid_reader = None  # Reset the reader instance
+            except Exception as e:
+                print(f"⚠️ Error closing serial port: {e}")
+
+        time.sleep(0.5)  # Allow OS to release the port
 
     def simulate_all_rfid(self):
         '''Simulates RFID for all remaining unmapped animals.'''
@@ -181,10 +247,14 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         #     self.add_value(int(rand_rfid))
         else:
             rfid = get_random_rfid()
-            self.add_value(rfid, self.db)
 
     def add_value(self, rfid, db=None):
-        '''Adds rfid number and animal to the table and database.'''
+        """Adds RFID to the table, stops listening, checks the count, then restarts or stops."""
+
+        if rfid is None or rfid == "":
+            print("🚫 Skipping None/Empty RFID value... No entry will be added.")
+            return  # ✅ Prevents adding a blank entry
+
         if db is None:
             db = self.db
 
@@ -230,6 +300,24 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         db._conn.commit()
 
         AudioManager.play("shared/sounds/rfid_success.wav")
+
+        # Stop listening before checking conditions
+        self.stop_listening()
+
+        total_scanned = len(self.db.get_animals_rfid())  # Get count of scanned RFIDs
+        total_expected = db.get_number_animals()  # Expected count from DB
+
+        print(f"✅ Scanned: {total_scanned} / Expected: {total_expected}")
+
+        # Restart scanning if more animals need to be scanned
+        if total_scanned < total_expected:
+            print("🔄 Restarting RFID listening...")
+            self.rfid_listen()
+        else:
+            print("🎉 All animals have been mapped to RFIDs! RFID scanning completed.")
+            print("RFIDs scanned: ", self.db.get_animals_rfid())
+            self.stop_listening()
+
 
 
     def change_selected_value(self, rfid):
