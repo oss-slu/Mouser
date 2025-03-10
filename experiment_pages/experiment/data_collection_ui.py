@@ -18,7 +18,7 @@ class DataCollectionUI(MouserPage):
 
         super().__init__(parent, "Data Collection", prev_page)
 
-        self.rfid_reader = None 
+        self.rfid_reader = None
         self.rfid_stop_event = threading.Event()  # Event to stop RFID listener
         self.rfid_thread = None # Store running thread
 
@@ -29,27 +29,27 @@ class DataCollectionUI(MouserPage):
         ## ENSURE ANIMALS ARE IN DATABASE BEFORE EXPERIMENT FOR EXPERIMENTS W/O RFID ##
         if self.database.experiment_uses_rfid() != 1 and self.database.get_animals() == []:
             print("No RFIDs Detected. Filling out Database\n")
-            
+
             i = 1
             current_group = 1
             max_num_animals = self.database.get_total_number_animals()
             print(f"Total animals to add: {max_num_animals}")
-            
+
             while i <= max_num_animals:
                 # Get cage capacity for current group
                 cage_capacity = self.database.get_cage_capacity(current_group)
                 print(f"Group {current_group} capacity: {cage_capacity}")
-                
+
                 # Get current number of animals in group
                 group_count = self.database.get_group_animal_count(current_group)
                 print(f"Current animals in group {current_group}: {group_count}")
-                
+
                 # If current group is full, move to next group
                 if group_count >= cage_capacity:
                     print(f"Group {current_group} is full, moving to next group")
                     current_group += 1
                     continue
-                
+
                 # Add animal to current group
                 print(f"Adding animal {i} to group {current_group}")
                 self.database.add_animal(
@@ -76,9 +76,9 @@ class DataCollectionUI(MouserPage):
             start_function = self.auto_increment
         else:
             start_function = self.rfid_listen
-            
 
-        
+
+
 
         self.auto_increment_button = CTkButton(self,
                                                text="Start",
@@ -98,7 +98,7 @@ class DataCollectionUI(MouserPage):
         self.animals = self.database.get_animals()
         self.table_frame = CTkFrame(self)
         self.table_frame.place(relx=0.50, rely=0.65, anchor=CENTER)
-        
+
 
 
         columns = ['animal_id']
@@ -117,12 +117,12 @@ class DataCollectionUI(MouserPage):
         style.configure("Treeview.Heading", font=("Arial", 18))
 
         for i, column in enumerate(columns):
-            
+
             if i != 0: # i!= 0 means the column will hold measurement data
                 text = self.measurement_strings[i-1]
             else: # i == 0, column is for animal id
                 text = "Animal ID"
-            
+
             print(f"Setting heading for column: {column} with text: {text}")  # Debugging line
             if text:  # Only set heading if text is not empty
                 self.table.heading(column, text=text)
@@ -135,7 +135,7 @@ class DataCollectionUI(MouserPage):
         self.animals = self.database.get_animals()  # Fetches Animal ID and RFID
         for animal in self.animals:
             animal_id = animal[0]
-            value = (animal_id, None)  # Initial values with just ID 
+            value = (animal_id, None)  # Initial values with just ID
             self.table.insert('', END, values=value)
 
 
@@ -163,10 +163,10 @@ class DataCollectionUI(MouserPage):
         '''Automatically increments changer to hit each animal.'''
         self.auto_inc_id = 0
         self.open_auto_increment_changer()
-    
+
     def rfid_listen(self):
         '''Continuously listens for RFID scans until manually stopped.'''
-    
+
         if self.rfid_thread and self.rfid_thread.is_alive():
             print("⚠️ RFID listener is already running!")
             return  # Prevent multiple listeners
@@ -187,7 +187,7 @@ class DataCollectionUI(MouserPage):
                         if received_rfid:
                             print(f"📡 RFID Scanned: {received_rfid}")
                             animal_id = self.database.get_animal_id(received_rfid)
-                            
+
                             if animal_id is not None:
                                 print(f"✅ Found Animal ID: {animal_id}")
                                 self.after(0, lambda: self.select_animal_by_id(animal_id))
@@ -208,10 +208,10 @@ class DataCollectionUI(MouserPage):
     def stop_listening(self):
         '''Stops the RFID listener and ensures the serial port is released.'''
         print("🛑 Stopping RFID listener...")
-        
+
         # Set the stop event first
         self.rfid_stop_event.set()
-        
+
         # Stop and close the RFID reader
         if hasattr(self, 'rfid_reader') and self.rfid_reader:
             try:
@@ -230,7 +230,7 @@ class DataCollectionUI(MouserPage):
                     print("⚠️ Warning: RFID thread did not stop cleanly")
             except Exception as e:
                 print(f"Error joining RFID thread: {e}")
-        
+
         self.rfid_thread = None
         print("✅ RFID listener cleanup completed.")
 
@@ -241,7 +241,7 @@ class DataCollectionUI(MouserPage):
             if str(item_values[0]) == str(animal_id):  # Ensure IDs match as strings
                 self.after(0, lambda: self._open_changer_on_main_thread(child))
                 return
-        
+
         print(f"⚠️ Animal ID {animal_id} not found in table.")
 
     def _open_changer_on_main_thread(self, child):
@@ -257,7 +257,7 @@ class DataCollectionUI(MouserPage):
             self.open_changer()
         else:
             print("No animals in databse!")
-        
+
 
     def change_selected_value(self, animal_id_to_change, list_of_values):
         '''Updates the table and database with the new value.'''
@@ -283,7 +283,7 @@ class DataCollectionUI(MouserPage):
 
         # Get all measurements for current date
         values = self.database.get_data_for_date(self.current_date)
-        
+
         # Update each row in the table
         for child in self.table.get_children():
             animal_id = self.table.item(child)["values"][0]
@@ -295,7 +295,7 @@ class DataCollectionUI(MouserPage):
                     self.table.item(child, values=(animal_id, val[1]))  # val[1] is measurement_value
                     found_data = True
                     break
-                
+
             if not found_data:
                 # If no measurement found, show animal_id and rfid with None for measurement
                 self.table.item(child, values=(animal_id, None))
@@ -312,7 +312,7 @@ class ChangeMeasurementsDialog():
         self.measurement_items = str(measurement_items)  # Ensure measurement_items is a single string
         self.database = data_collection.database  # Reference to the updated database
         self.uses_rfid = self.database.experiment_uses_rfid() == 1
-        
+
         if not self.uses_rfid:
             # Get list of all animal IDs from the table
             self.animal_ids = []

@@ -53,7 +53,7 @@ class ExperimentDatabase:
         self._c.execute('''INSERT INTO experiment (name, species, uses_rfid, num_animals,
                         num_groups, cage_max, measurement_type, id, investigators, measurement)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                        (name, species, uses_rfid, num_animals, num_groups, 
+                        (name, species, uses_rfid, num_animals, num_groups,
                          cage_max, measurement_type, experiment_id, investigators_str, measurement))
         self._conn.commit()
 
@@ -75,7 +75,7 @@ class ExperimentDatabase:
 
     def get_measurements_by_date(self, date):
         '''Gets all measurements for a specific date.'''
-        self._c.execute('''SELECT a.animal_id, a.rfid, m.timestamp, m.value 
+        self._c.execute('''SELECT a.animal_id, a.rfid, m.timestamp, m.value
                         FROM animal_measurements m
                         JOIN animals a ON m.animal_id = a.animal_id
                         WHERE DATE(m.timestamp) = ?''', (date,))
@@ -87,12 +87,12 @@ class ExperimentDatabase:
             self._c.execute('''INSERT INTO animals (animal_id, group_id, rfid, remarks, active)
                             VALUES (?, ?, ?, ?, 1)''',
                             (animal_id, group_id, rfid, remarks))
-            
+
             # Update group animal count
-            self._c.execute('''UPDATE groups 
-                            SET num_animals = num_animals + 1 
+            self._c.execute('''UPDATE groups
+                            SET num_animals = num_animals + 1
                             WHERE group_id = ?''', (group_id,))
-            
+
             self._conn.commit()
             return animal_id
         except sqlite3.Error as e:
@@ -103,15 +103,15 @@ class ExperimentDatabase:
         '''Removes an animal from the experiment.'''
         self._c.execute("SELECT group_id FROM animals WHERE animal_id = ?", (animal_id,))
         group_info = self._c.fetchone()
-        
+
         if group_info:
             group_id = group_info[0]
-            
+
             # Update group count
-            self._c.execute('''UPDATE groups 
-                            SET num_animals = num_animals - 1 
+            self._c.execute('''UPDATE groups
+                            SET num_animals = num_animals - 1
                             WHERE group_id = ?''', (group_id))
-            
+
             # Deactivate animal instead of deleting
             self._c.execute("UPDATE animals SET active = 0 WHERE animal_id = ?", (animal_id,))
             self._conn.commit()
@@ -121,13 +121,13 @@ class ExperimentDatabase:
     def export_data(self, output_file):
         '''Exports experiment data to CSV files.'''
         import pandas as pd
-        
+
         # Create base directory
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
-        
+
         # Export measurements with animal info
         measurements_query = '''
-            SELECT 
+            SELECT
                 m.timestamp,
                 a.animal_id,
                 a.rfid,
@@ -150,7 +150,7 @@ class ExperimentDatabase:
         '''Returns the list of measurement items for the experiment.'''
         self._c.execute("SELECT measurement FROM experiment")
         result = self._c.fetchone()
-        
+
         return result
 
     def close(self):
@@ -165,12 +165,12 @@ class ExperimentDatabase:
 
     def get_animals(self):
         '''Returns a list of all active animals in the experiment.'''
-        self._c.execute('''SELECT animal_id, rfid 
-                        FROM animals 
-                        WHERE active = 1 
+        self._c.execute('''SELECT animal_id, rfid
+                        FROM animals
+                        WHERE active = 1
                         ORDER BY animal_id''')
         return self._c.fetchall()
-    
+
     def get_total_number_animals(self):
         '''Returns the total number of animals from the experiment table.'''
         self._c.execute("SELECT num_animals FROM experiment")
@@ -200,8 +200,8 @@ class ExperimentDatabase:
         '''Gets all measurements for a specific date.'''
         try:
             self._c.execute('''
-                SELECT animal_id, value 
-                FROM animal_measurements 
+                SELECT animal_id, value
+                FROM animal_measurements
                 WHERE timestamp = ?
             ''', (date,))
             return self._c.fetchall()
@@ -214,13 +214,13 @@ class ExperimentDatabase:
         try:
             # Convert values to list if it's not already
             values = list(values) if isinstance(values, tuple) else values
-            
+
             # Insert new measurement
             self._c.execute('''
                 INSERT INTO animal_measurements (animal_id, timestamp, value)
                 VALUES (?, ?, ?)
             ''', (animal_id, date, values[0]))  # Assuming single measurement for now
-            
+
             self._conn.commit()
         except Exception as e:
             print(f"Error adding data entry: {e}")
@@ -229,17 +229,17 @@ class ExperimentDatabase:
     def change_data_entry(self, date, animal_id, value):
         '''Updates a measurement entry for an animal on a specific date.'''
         try:
-            
+
             # Update existing measurement
             self._c.execute('''
-                UPDATE animal_measurements 
+                UPDATE animal_measurements
                 SET value = ?
                 WHERE animal_id = ? AND timestamp = ?
             ''', (value, animal_id, date))
-            
+
             if self._c.rowcount == 0:  # No existing record found
                 self.add_data_entry(date, animal_id, value)
-            
+
             self._conn.commit()
         except Exception as e:
             print(f"Error changing data entry: {e}")
@@ -248,11 +248,11 @@ class ExperimentDatabase:
     def get_cages_by_group(self):
         '''Returns a dictionary of group IDs mapped to their cage information.'''
         self._c.execute('''
-            SELECT group_id, name, cage_capacity 
+            SELECT group_id, name, cage_capacity
             FROM groups
         ''')
         groups = self._c.fetchall()
-        
+
         # Create a simulated cage structure based on group capacity
         cages_by_group = {}
         for group in groups:
@@ -260,14 +260,14 @@ class ExperimentDatabase:
             # Create virtual cage IDs for the group based on capacity
             num_cages = (self.get_group_animal_count(group_id) + capacity - 1) // capacity
             cages_by_group[group_id] = list(range(1, num_cages + 1))
-        
+
         return cages_by_group
 
     def get_group_animal_count(self, group_id):
         '''Returns the number of active animals in a group.'''
         self._c.execute('''
-            SELECT COUNT(*) 
-            FROM animals 
+            SELECT COUNT(*)
+            FROM animals
             WHERE group_id = ? AND active = 1
         ''', (group_id,))
         return self._c.fetchone()[0]
@@ -281,9 +281,9 @@ class ExperimentDatabase:
     def get_animals_in_cage(self, group_id, cage_number, cage_capacity):
         '''Returns animals in a virtual cage based on group and cage number.'''
         self._c.execute('''
-            SELECT animal_id, rfid, remarks 
-            FROM animals 
-            WHERE group_id = ? AND active = 1 
+            SELECT animal_id, rfid, remarks
+            FROM animals
+            WHERE group_id = ? AND active = 1
             ORDER BY animal_id
             LIMIT ? OFFSET ?
         ''', (group_id, cage_capacity, (cage_number - 1) * cage_capacity))
@@ -293,19 +293,19 @@ class ExperimentDatabase:
         '''Returns a dictionary of animal IDs mapped to their cage assignments.'''
         cage_assignments = {}
         groups = self._c.execute('SELECT group_id, cage_capacity FROM groups').fetchall()
-        
+
         for group_id, capacity in groups:
             animals = self._c.execute('''
-                SELECT animal_id 
-                FROM animals 
-                WHERE group_id = ? AND active = 1 
+                SELECT animal_id
+                FROM animals
+                WHERE group_id = ? AND active = 1
                 ORDER BY animal_id
             ''', (group_id,)).fetchall()
-            
+
             for i, animal in enumerate(animals):
                 cage_number = (i // capacity) + 1
                 cage_assignments[animal[0]] = (group_id, cage_number)
-        
+
         return cage_assignments
 
     def get_groups(self):
@@ -315,9 +315,9 @@ class ExperimentDatabase:
 
     def get_all_animals_rfid(self):
         '''Returns a list of all RFIDs for active animals in the experiment.'''
-        self._c.execute('''SELECT rfid 
-                        FROM animals 
-                        WHERE active = 1 AND rfid IS NOT NULL 
+        self._c.execute('''SELECT rfid
+                        FROM animals
+                        WHERE active = 1 AND rfid IS NOT NULL
                         ORDER BY animal_id''')
         return [rfid[0] for rfid in self._c.fetchall()]
 
@@ -330,9 +330,9 @@ class ExperimentDatabase:
     def get_all_animal_ids(self):
         '''Returns a list of all animal IDs that have RFIDs mapped to them.'''
         self._c.execute('''
-            SELECT animal_id 
-            FROM animals 
-            WHERE rfid IS NOT NULL 
+            SELECT animal_id
+            FROM animals
+            WHERE rfid IS NOT NULL
             AND active = 1
         ''')
         return [animal[0] for animal in self._c.fetchall()]
@@ -340,7 +340,7 @@ class ExperimentDatabase:
     def export_to_csv(self, directory):
         '''Exports all relevant tables in the database to a folder named after the experiment in the specified directory.'''
         import pandas as pd
-        
+
         # Get the experiment name
         self._c.execute("SELECT name FROM experiment")
         experiment_name = self._c.fetchone()
@@ -363,7 +363,7 @@ class ExperimentDatabase:
             df = pd.read_sql_query(query, self._conn)
             csv_file_path = os.path.join(experiment_folder, filename)
             df.to_csv(csv_file_path, index=False)
-        
+
         print(f"All tables exported successfully to {experiment_folder}.")
 
     def set_animal_active_status(self, animal_id, status):

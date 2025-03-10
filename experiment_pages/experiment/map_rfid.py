@@ -52,14 +52,14 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                                       width=15, command=self.simulate_all_rfid)
         simulate_all_rfid_button.place(relx=0.80, rely=0.17, anchor=CENTER)
 
-        
+
 
         self.start_rfid = CTkButton(self, text="Start Scanning", compound=TOP,
                                          width=15, command=self.rfid_listen)
         self.start_rfid.place(relx=0.40, rely=0.17, anchor=CENTER)
         if not self.db.experiment_uses_rfid():
             self.start_rfid.configure(state="disabled")
-            
+
         self.table_frame = CTkFrame(self)
         self.table_frame.place(relx=0.15, rely=0.30, relheight=0.40, relwidth=0.80)
         self.table_frame.grid_columnconfigure(0, weight= 1)
@@ -144,7 +144,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                     self.stop_listening()
                     local_db.close()
                     return
-             
+
         threading.Thread(target=check_for_data, daemon=True).start()
 
     def stop_listening(self):
@@ -187,7 +187,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         '''Adds rfid number and animal to the table and database.'''
         if db is None:
             db = self.db
-        
+
         # Clean up RFID value if it's coming from a reader
         if isinstance(rfid, str):
             # Remove any non-numeric characters
@@ -195,36 +195,36 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             if not rfid:  # If no digits were found
                 print(f"Invalid RFID format received: {rfid}")
                 return
-        
+
         try:
             rfid = int(rfid)  # Convert to integer
         except (ValueError, TypeError) as e:
             print(f"Error converting RFID to integer: {e}")
             return
-        
+
         item_id = self.animal_id
-        
+
         # Find appropriate group with available space
         current_group = 1
         while True:
             # Get cage capacity for current group
             cage_capacity = self.db.get_cage_capacity(current_group)
-            
+
             # Get current number of animals in group
             group_count = self.db.get_group_animal_count(current_group)
-            
+
             # If current group has space, use it
             if group_count < cage_capacity:
                 break
-            
+
             # Otherwise, try next group
             current_group += 1
-        
+
         # Add to table
         self.table.insert('', item_id-1, values=(item_id, rfid), tags='text_font')
         self.animals.insert(item_id-1, (item_id, rfid))
         self.change_entry_text()
-        
+
         # Add to database with determined group
         db.add_animal(animal_id=item_id, rfid=rfid, group_id=current_group)
         db._conn.commit()
@@ -238,13 +238,13 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.table.item(self.changing_value, values=(
             item['values'][0], rfid))
         self.change_rfid_button["state"] = "normal"
-        
+
 
         AudioManager.play("shared/sounds/rfid_success.wav")
 
     def item_selected(self, _):
         selected = self.table.selection()
-        print("Selection ", selected, " changed.") 
+        print("Selection ", selected, " changed.")
 
         # Check if any selected item starts with 'I00'
         enable_button = any(self.table.item(item_id, 'values')[0].startswith('I00') for item_id in selected)
@@ -292,7 +292,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         min_unused = 1
 
         for animal in sorted(self.animals):
-            if animal[0] > min_unused: 
+            if animal[0] > min_unused:
                 break
             min_unused += 1
 
@@ -310,7 +310,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
     def open_change_rfid(self):
         '''Opens change RFID window if an item is selected, otherwise shows a warning.'''
         selected_items = self.table.selection()
-    
+
         # Check if there is exactly one item selected (assuming RFID change is intended for single selections)
         if len(selected_items) != 1:
             self.raise_warning("No item selected. Please select a single item to change its RFID.")
@@ -352,18 +352,18 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             self.raise_warning('Not all animals have been mapped to RFIDs')
         else:
             # Save the current state before closing the database
-            
+
 
             current_file = self.db.db_file
 
             self.db._conn.commit()
             self.db.close()
-            
+
             self.stop_listening()
 
             # Local import to avoid circular dependency
             from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
-        
+
             # Create new ExperimentMenuUI instance with the same file
             temp_file = file_utils.create_temp_copy(current_file)
             new_page = ExperimentMenuUI(self.parent, temp_file, self.menu_page)
@@ -388,7 +388,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             self.table.delete(item)
             self.db.set_animal_active_status(animal_id, 0)  # Mark as inactive
             self.animals = [(index, rfid) for (index, rfid) in self.animals if index != animal_id]
-        
+
         # Then update the UI table
         self.change_entry_text()
 
@@ -397,7 +397,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         if current_max <= 0:
             self.raise_warning("Cannot reduce animal count below 0")
             return
-            
+
         # Decrease the maximum number of animals by 1
         self.db.set_number_animals(current_max)
 
@@ -422,7 +422,7 @@ class ChangeRFIDDialog():
 
         # Simulate All RFID Button
         simulate_all_rfid_button = CTkButton(
-            self, text="Simulate All RFID", compound=TOP, width=15, 
+            self, text="Simulate All RFID", compound=TOP, width=15,
             command=self.simulate_all_rfid)
         simulate_all_rfid_button.place(relx=0.80, rely=0.27, anchor=CENTER)
 
