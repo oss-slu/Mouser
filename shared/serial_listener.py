@@ -10,11 +10,12 @@ class SerialReader:
         '''Initializes the serial reader, opens the connection, and starts the listening thread.'''
         print(f"Initializing SerialReader with port: {port}")
         self.timeout = timeout
-        self.data_queue = Queue()   # A queue to hold the incoming data from the serial port
-        self.running = True         # Flag to control the thread
+        self.data_queue = Queue()
+        self.running = False  # Start as False until explicitly started
         self.port_controller = SerialPortController(port)
         self.settings = self.port_controller.retrieve_setting(port)
         self.thread = None
+        self.ser = None
         print(f"Settings: {self.settings}")
         
         if self.settings:
@@ -30,8 +31,9 @@ class SerialReader:
                 )
                 
                 # Start the listener thread
+                self.running = True  # Set to True before starting thread
                 self.thread = threading.Thread(target=self.read_from_serial)
-                self.thread.daemon = True  # Daemonize thread to close with the main program
+                self.thread.daemon = True
                 self.thread.start()
 
             except serial.SerialException as e:
@@ -40,81 +42,68 @@ class SerialReader:
         else:
             print("Error: Serial settings could not be loaded.")
             self.ser = None
-        
-    def find_device_config(self, port):
-        '''Find the corresponding .csv file for the given port.'''
-        preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference", port)
-        
-        if not os.path.exists(preference_dir):
-            print(f"ERROR: Preference folder for {port} not found.")
-            return None
-
-        try:
-            # Read the preferred configuration file
-            config_path = os.path.join(preference_dir, "preferred_config.txt")
-            rfid_path = os.path.join(preference_dir, "rfid_config.txt")
-            if os.path.exists(config_path):
-                with open(config_path, "r") as file:
-                    device_file_name = file.readline().strip()
-                    print(f"Meaurement Device config file found: {device_file_name}")
-
-                    csv_path = os.path.join(os.getcwd(), "settings", "serial ports", device_file_name)
-                    if os.path.exists(csv_path):
-                        print(f"Device config file found: {device_file_name}")
-                        return csv_path
-                    else:
-                        print(f"ERROR: Device config file {device_file_name} not found.")
-                        return None
-                    
-            elif os.path.exists(rfid_path):
-                with open(rfid_path, "r") as file:
-                    device_file_name = file.readline().strip()
-                    print(f"RFID Device config file found: {device_file_name}")
-                    
-                    csv_path = os.path.join(os.getcwd(), "settings", "serial ports", device_file_name)
-                    if os.path.exists(csv_path):
-                        print(f"Device config file found: {device_file_name}")
-                        return csv_path
-                    else:
-                        print(f"ERROR: Device config file {device_file_name} not found.")
-
-            else:
-                print(f"ERROR: preferred_config.txt missing for {port}.")
-                return None
-        except Exception as e:
-            print(f"Error reading device config: {e}")
-            return None
-
 
     def read_from_serial(self):
         '''Runs in a background thread to read from the serial port.'''
         while self.running:
             try:
-                # Read a line from the serial device
-                if self.ser.is_open:
+                if self.ser and self.ser.is_open:
                     line = self.ser.readline()
                     if line:
-                        # Put the read line in the queue
                         self.data_queue.put(line)
+                else:
+                    print("Serial port is not open, stopping reader thread")
+                    break
             except serial.SerialException as e:
                 print(f"Error reading from serial port: {e}")
-                self.running = False  # Stop running if there's a serial error
+                break  # Exit the thread on serial error
+            except Exception as e:
+                print(f"Unexpected error in read_from_serial: {e}")
+                break
+        print("Serial reader thread stopped")
 
     def get_data(self):
         '''Checks if there's data in the queue and returns it.'''
-        if not self.data_queue.empty():
-            return self.data_queue.get()
+        try:
+            if not self.data_queue.empty():
+                return self.data_queue.get_nowait()
+        except Exception as e:
+            print(f"Error getting data from queue: {e}")
         return None
 
     def close(self):
         '''Stops the serial reader and closes the connection.'''
-        self.running = False
+        print("Closing serial reader...")
+        self.running = False  # Signal thread to stop
 
-        if self.thread:  # 🔥 Check if thread exists before joining
-            self.thread.join()
+        # Close serial port
+        if self.ser:
+            try:
+                if self.ser.is_open:
+                    self.ser.close()
+            except Exception as e:
+                print(f"Error closing serial port: {e}")
+            finally:
+                self.ser = None
 
-        if self.ser and self.ser.is_open:
-            self.ser.close()
+        # Wait for thread to finish
+        if self.thread and self.thread.is_alive():
+            try:
+                self.thread.join(timeout=2)  # Wait up to 2 seconds
+                if self.thread.is_alive():
+                    print("Warning: Serial reader thread did not stop cleanly")
+            except Exception as e:
+                print(f"Error joining thread: {e}")
+        
+        # Clear any remaining data
+        while not self.data_queue.empty():
+            try:
+                self.data_queue.get_nowait()
+            except:
+                pass
+
+        self.thread = None
+        print("Serial reader closed")
 
     def get_settings(self):
         return self.settings
