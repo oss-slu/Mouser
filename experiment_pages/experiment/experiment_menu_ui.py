@@ -9,7 +9,7 @@ from experiment_pages.experiment.map_rfid import MapRFIDPage
 from experiment_pages.experiment.cage_config_ui import CageConfigurationUI
 from experiment_pages.experiment.experiment_invest_ui import InvestigatorsUI
 from databases.experiment_database import ExperimentDatabase
-from experiment_pages.experiment.review_ui import ReviewUI
+# from experiment_pages.experiment.review_ui import ReviewUI
 
 class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
     '''Experiment Menu Page Frame'''
@@ -36,21 +36,21 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         main_frame.grid_rowconfigure(0, weight = 1, minsize= 50)
         main_frame.grid_rowconfigure(1, weight = 1, minsize= 50)
         main_frame.grid_rowconfigure(2, weight = 1, minsize= 50)
-        
+
         main_frame.grid_columnconfigure(0, weight = 1)
         main_frame.grid_columnconfigure(1, weight = 1)
 
         self.data_page = DataCollectionUI(parent, self, name)
         self.analysis_page = DataAnalysisUI(parent, self, os.path.abspath(name))
         self.cage_page = CageConfigurationUI(name, parent, self)
-        self.summary_page = ReviewUI(parent, self, name)
+        # self.summary_page = ReviewUI(parent, self, name)
         if controller is None:
             self.rfid_page = MapRFIDPage(name, parent, self)
         else:
             self.rfid_page = MapRFIDPage(name, parent, self, controller)
         self.invest_page = InvestigatorsUI(parent, self)
 
-        button_height = main_frame.winfo_screenheight()/3
+        button_height = main_frame.winfo_screenheight()/2
         button_width = main_frame.winfo_screenwidth()/2
         button_font = ("Arial Black", 35)
 
@@ -65,14 +65,14 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
                                                   self.cage_page.update_config_frame()], font=button_font)
         self.rfid_button = CTkButton(main_frame, text='Map RFID', width=button_width, height= button_height,
                                 command=  self.rfid_page.raise_frame, font=button_font)
-        self.summary_button = CTkButton(main_frame, text='Summary View', width=button_width, height= button_height,
-                                command= self.summary_page.raise_frame, font=button_font)
+        # self.summary_button = CTkButton(main_frame, text='Summary View', width=button_width, height= button_height,
+        #                         command= self.summary_page.raise_frame, font=button_font)
 
         self.collection_button.grid(row=0, column=0, ipady=0, ipadx=0, pady=0, padx=0)
         self.analysis_button.grid(row=0, column=1, ipady=0, ipadx=0, pady=0, padx=0)
         self.group_button.grid(row=1, column=0, ipady=0, ipadx=0, pady=0, padx=0)
         self.rfid_button.grid(row=1, column=1, ipady=0, ipadx=0, pady=0, padx=0)
-        self.summary_button.grid(row=2, column=0, ipady=0, ipadx=0, pady=0, padx=0)
+        # self.summary_button.grid(row=2, column=0, ipady=0, ipadx=0, pady=0, padx=0)
 
         if self.menu_button:
             self.menu_button.destroy()
@@ -130,7 +130,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
                 name = path + "/databases/experiments/" + splitted[-1]
             else:
                 name = path + "\\databases\\experiments\\" + splitted[-1]
-            
+
 
         try:
             os.remove(name)
@@ -148,7 +148,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         print(f"Number of animals mapped = {num_mapped}\n Number of total animals = {num_animals}")
 
         return (num_animals == num_mapped)
-    
+
     def disable_buttons_if_needed(self):
     # This method disables all buttons except for the Map RFID button until all specimens have an associated RFID
         self.group_button.configure(state="normal")
@@ -162,7 +162,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
                 self.analysis_button.configure(state="normal")
                 self.group_button.configure(state="normal")
         else:
-            self.rfid_button.configure(state="disabled")        
+            self.rfid_button.configure(state="disabled")
 
 
     def on_show_frame(self):
