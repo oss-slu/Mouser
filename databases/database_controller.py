@@ -85,7 +85,7 @@ class DatabaseController():
         return []
     
     def autosort(self):
-        self.autosort()
+        self.db.autosort()
 
     def get_animals_in_cage(self, cage):
         '''Returns a list of animal ids in the specified cage.'''
