@@ -25,7 +25,7 @@ class ExperimentDatabase:
             self._c.execute('''CREATE TABLE animals (
                                 animal_id INTEGER PRIMARY KEY,
                                 group_id INTEGER,
-                                rfid INTEGER UNIQUE,
+                                rfid TEXT UNIQUE,
                                 remarks TEXT,
                                 active INTEGER);''')
 
