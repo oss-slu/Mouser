@@ -28,9 +28,17 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         main_frame = CTkFrame(self) # pylint: disable=redefined-outer-name
 
         main_frame.grid(row=6, column=1, sticky='NESW')
-        main_frame.place(relx=0.3, rely=0.20, relwidth= 0.40, relheight = 0.75)
+        main_frame.place(relx=0, rely=0, relwidth= 1, relheight = 0.9)
+
+
+
+    # setting row and column standards, if needed more add here
+        main_frame.grid_rowconfigure(0, weight = 1, minsize= 50)
+        main_frame.grid_rowconfigure(1, weight = 1, minsize= 50)
+        main_frame.grid_rowconfigure(2, weight = 1, minsize= 50)
 
         main_frame.grid_columnconfigure(0, weight = 1)
+        main_frame.grid_columnconfigure(1, weight = 1)
 
         self.data_page = DataCollectionUI(parent, self, name)
         self.analysis_page = DataAnalysisUI(parent, self, os.path.abspath(name))
@@ -42,27 +50,29 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
             self.rfid_page = MapRFIDPage(name, parent, self, controller)
         self.invest_page = InvestigatorsUI(parent, self)
 
-        button_size = 40
+        button_height = main_frame.winfo_screenheight()*0.3
+        button_width = main_frame.winfo_screenwidth()*0.48
+        button_font = ("Arial Black", 35)
 
 
-        self.collection_button = CTkButton(main_frame, text='Data Collection', width=button_size,
-                                command= self.data_page.raise_frame)
-        self.analysis_button = CTkButton(main_frame, text='Data Exporting', width=button_size,
-                                command= self.analysis_page.raise_frame)
-        self.group_button = CTkButton(main_frame, text='Group Configuration', width=button_size,
+        self.collection_button = CTkButton(main_frame, text='Data Collection', width=button_width, height= button_height, border_width=2.5,
+                                command= self.data_page.raise_frame, font=button_font)
+        self.analysis_button = CTkButton(main_frame, text='Data Exporting', width=button_width, height= button_height, border_width=2.5,
+                                command= self.analysis_page.raise_frame, font=button_font)
+        self.group_button = CTkButton(main_frame, text='Group Configuration', width=button_width, height= button_height, border_width=2.5,
                                 command= lambda: [self.cage_page.raise_frame(),
                                                   self.cage_page.update_controller_attributes(),
-                                                  self.cage_page.update_config_frame()])
-        self.rfid_button = CTkButton(main_frame, text='Map RFID', width=button_size,
-                                command=  self.rfid_page.raise_frame)
-        self.summary_button = CTkButton(main_frame, text='Summary View', width=button_size,
-                                command= self.summary_page.raise_frame)
+                                                  self.cage_page.update_config_frame()], font=button_font)
+        self.rfid_button = CTkButton(main_frame, text='Map RFID', width=button_width, height= button_height, border_width=2.5,
+                                command=  self.rfid_page.raise_frame, font=button_font)
+        self.summary_button = CTkButton(main_frame, text='Summary View', width=button_width, height= button_height, border_width=2.5,
+                                command= self.summary_page.raise_frame, font=button_font)
 
-        self.collection_button.grid(row=0, column=0, ipady=15, ipadx=15, pady=10, padx=10)
-        self.analysis_button.grid(row=1, column=0, ipady=15, ipadx=15, pady=10, padx=10)
-        self.group_button.grid(row=2, column=0, ipady=15, ipadx=15, pady=10, padx=10)
-        self.rfid_button.grid(row=3, column=0, ipady=15, ipadx=15, pady=10, padx=10)
-        self.summary_button.grid(row=4, column=0, ipady=15, ipadx=15, pady=10, padx=10)
+        self.collection_button.grid(row=0, column=0, ipady=0, ipadx=0, pady=0, padx=0)
+        self.analysis_button.grid(row=0, column=1, ipady=0, ipadx=0, pady=0, padx=0)
+        self.group_button.grid(row=1, column=0, ipady=0, ipadx=0, pady=0, padx=0)
+        self.rfid_button.grid(row=1, column=1, ipady=0, ipadx=0, pady=0, padx=0)
+        self.summary_button.grid(row=2, column=0, ipady=0, ipadx=0, pady=0, padx=0)
 
         print(self.experiment.get_measurement_items())
 
@@ -122,7 +132,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
                 name = path + "/databases/experiments/" + splitted[-1]
             else:
                 name = path + "\\databases\\experiments\\" + splitted[-1]
-            
+
 
         try:
             os.remove(name)
@@ -140,7 +150,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         print(f"Number of animals mapped = {num_mapped}\nNumber of total animals = {num_animals}")
 
         return (num_animals == num_mapped)
-    
+
     def disable_buttons_if_needed(self):
     # This method disables all buttons except for the Map RFID button until all specimens have an associated RFID
         self.group_button.configure(state="normal")
@@ -154,7 +164,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
                 self.analysis_button.configure(state="normal")
                 self.group_button.configure(state="normal")
         else:
-            self.rfid_button.configure(state="disabled")        
+            self.rfid_button.configure(state="disabled")
 
 
     def on_show_frame(self):
