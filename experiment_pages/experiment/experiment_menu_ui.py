@@ -74,6 +74,8 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         self.rfid_button.grid(row=1, column=1, ipady=0, ipadx=0, pady=0, padx=0)
         self.summary_button.grid(row=2, column=0, ipady=0, ipadx=0, pady=0, padx=0)
 
+        print(self.experiment.get_measurement_items())
+
         if self.menu_button:
             self.menu_button.destroy()
 
@@ -142,10 +144,10 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
 
     def all_rfid_mapped(self):
         '''Returns true if there is a mapped rfid for each animal in the experiment.'''
-        num_animals = self.experiment.get_number_animals()
-        num_mapped = len(self.experiment.get_all_animal_ids())
+        num_animals = self.experiment.get_total_number_animals()  # Total active animals from experiment setup
+        num_mapped = len(self.experiment.get_all_animal_ids())   # Active animals with RFIDs
 
-        print(f"Number of animals mapped = {num_mapped}\n Number of total animals = {num_animals}")
+        print(f"Number of animals mapped = {num_mapped}\nNumber of total animals = {num_animals}")
 
         return (num_animals == num_mapped)
 
