@@ -327,6 +327,58 @@ class ExperimentDatabase:
         '''Returns a list of all group names in the database.'''
         self._c.execute("SELECT name FROM groups")
         return [group[0] for group in self._c.fetchall()]
+    
+    def get_animal_current_cage(self, animal_id):
+        '''Returns the current cage (group_id) for an animal'''
+        self._c.execute('''
+            SELECT group_id 
+            FROM animals 
+            WHERE animal_id = ? AND active = 1
+        ''', (animal_id,))
+        result = self._c.fetchone()
+        return result[0] if result else None
+
+    def update_animal_cage(self, animal_id, new_group_id):
+        '''Updates an animal's cage assignment by updating its group_id'''
+        try:
+            # Get current group_id
+            self._c.execute('''
+                SELECT group_id 
+                FROM animals 
+                WHERE animal_id = ? AND active = 1
+            ''', (animal_id,))
+            old_group = self._c.fetchone()
+            
+            if old_group:
+                old_group_id = old_group[0]
+                
+                # Update animal's group
+                self._c.execute('''
+                    UPDATE animals 
+                    SET group_id = ? 
+                    WHERE animal_id = ? AND active = 1
+                ''', (new_group_id, animal_id))
+                
+                # Update old group's count
+                self._c.execute('''
+                    UPDATE groups 
+                    SET num_animals = num_animals - 1 
+                    WHERE group_id = ?
+                ''', (old_group_id,))
+                
+                # Update new group's count
+                self._c.execute('''
+                    UPDATE groups 
+                    SET num_animals = num_animals + 1 
+                    WHERE group_id = ?
+                ''', (new_group_id,))
+                
+                self._conn.commit()
+                return True
+        except Exception as e:
+            print(f"Error updating animal cage: {e}")
+            self._conn.rollback()
+            return False
 
     def get_all_animals_rfid(self):
         '''Returns a list of all RFIDs for active animals in the experiment.'''
@@ -412,3 +464,41 @@ class ExperimentDatabase:
         except Exception as e:
             print(f"Error retrieving measurement value: {e}")
             return None
+        
+    def autosort(self):
+        '''Automatically sorts animals into cages within their groups, respecting cage capacity limits.'''
+        try:
+            # Get all groups and their cage capacities
+            self._c.execute('SELECT group_id, cage_capacity FROM groups')
+            groups = self._c.fetchall()
+            
+            for group_id, cage_capacity in groups:
+                # Get all active animals in the current group
+                self._c.execute('''
+                    SELECT animal_id
+                    FROM animals
+                    WHERE group_id = ? AND active = 1
+                    ORDER BY animal_id
+                ''', (group_id,))
+                animals = self._c.fetchall()
+                
+                # Assign animals to virtual cages based on capacity
+                for i, animal in enumerate(animals):
+                    cage_number = (i // cage_capacity) + 1
+                    animal_id = animal[0]
+                    
+                    # Update the animal's cage assignment in the database
+                    # This is handled through the cage_assignments dictionary
+                    self._c.execute('''
+                        UPDATE animals
+                        SET remarks = ?
+                        WHERE animal_id = ?
+                    ''', (f"Cage {cage_number}", animal_id))
+            
+            self._conn.commit()
+            return True
+            
+        except Exception as e:
+            print(f"Error during autosort: {e}")
+            self._conn.rollback()
+            return False

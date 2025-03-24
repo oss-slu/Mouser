@@ -62,6 +62,17 @@ class DatabaseController():
         self._c.execute("SELECT cage_max FROM experiment")
         result = self._c.fetchone()
         return int(result[0]) if result else 0
+    
+    def get_animals_in_group(self, group_name):
+        '''Returns list of animals in a given group/cage'''
+        self.db._c.execute('''
+            SELECT animal_id
+            FROM animals
+            WHERE group_id = (SELECT group_id FROM groups WHERE name = ?)
+            AND active = 1
+            ORDER BY animal_id
+        ''', (group_name,))
+        return self.db._c.fetchall()
 
     def get_measurement_items(self):
         '''Returns a list of all measurement items in the database.'''
@@ -72,6 +83,9 @@ class DatabaseController():
         if group in self.cages_in_group:
             return self.cages_in_group[group]
         return []
+    
+    def autosort(self):
+        self.autosort()
 
     def get_animals_in_cage(self, cage):
         '''Returns a list of animal ids in the specified cage.'''
@@ -84,11 +98,8 @@ class DatabaseController():
         return self.animal_weights[int(animal_id)]
 
     def get_animal_current_cage(self, animal_id):
-        '''Returns the cage id of the specified animal id.'''
-        cage_assignments = self.db.get_cage_assignments()
-        if int(animal_id) in cage_assignments:
-            return str(cage_assignments[int(animal_id)][1])
-        return None
+        '''Gets the current cage (group_id) for an animal'''
+        return self.db.get_animal_current_cage(animal_id)
 
     def check_valid_animal(self, animal_id):
         '''Returns true if the specified animal id is valid and false otherwise.'''
@@ -106,11 +117,9 @@ class DatabaseController():
                 return False
         return True
 
-    def update_animal_cage(self, animal, old_cage, new_cage):
-        '''Removes specified animal from the first cage to the second cage.'''
-        if animal in self.animals_in_cage[old_cage]:
-            self.animals_in_cage[old_cage].remove(animal)
-            self.animals_in_cage[new_cage].append(animal)
+    def update_animal_cage(self, animal_id, new_cage):
+        '''Updates an animal's cage assignment'''
+        return self.db.update_animal_cage(animal_id, new_cage)
 
     def get_updated_animals(self):
         '''Returns a list of tuples for updating the database.'''

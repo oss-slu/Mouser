@@ -158,11 +158,9 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
             if not self.all_rfid_mapped():
                 self.collection_button.configure(state="disabled")
                 self.analysis_button.configure(state="disabled")
-                self.group_button.configure(state="disabled")
             else:
                 self.collection_button.configure(state="normal")
                 self.analysis_button.configure(state="normal")
-                self.group_button.configure(state="normal")
         else:
             self.rfid_button.configure(state="disabled")
 

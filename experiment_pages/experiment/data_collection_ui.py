@@ -26,7 +26,7 @@ class DataCollectionUI(MouserPage):
 
         self.measurement_items = self.database.get_measurement_items()
 
-        ## ENSURE ANIMALS ARE IN DATABASE BEFORE EXPERIMENT FOR EXPERIMENTS W/O RFID ##
+        ## ENSURE ANIMALS ARE IN DATABASE BEFORE EXPERIMENT FOR ALL EXPERIMENTS ##
         if self.database.experiment_uses_rfid() != 1 and self.database.get_animals() == []:
             print("No RFIDs Detected. Filling out Database\n")
 
