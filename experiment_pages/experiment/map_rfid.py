@@ -219,8 +219,17 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
     def simulate_all_rfid(self):
         '''Simulates RFID for all remaining unmapped animals.'''
-        while len(self.animals) < self.db.get_total_number_animals():  # Changed from get_number_animals
+        total_needed = self.db.get_total_number_animals()
+        current_count = len(self.animals)
+        
+        print(f"Simulating RFIDs: {current_count} mapped, {total_needed} total needed")
+        
+        while current_count < total_needed:
             self.add_random_rfid()
+            current_count = len(self.animals)
+            # Force UI update
+            self.update()
+            self.scroll_to_latest_entry()
 
 
     def scroll_to_latest_entry(self):
@@ -237,16 +246,32 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
     def add_random_rfid(self):
         '''Adds a random rfid value to the next animal.'''
-        if len(self.animals) >= self.db.get_total_number_animals():  # Changed from get_number_animals
+        if len(self.animals) >= self.db.get_total_number_animals():
             self.raise_warning()
-        # KEEPING JUST IN CASE
-        # elif self.serial_port_controller.get_writer_port() is not None:
-        #     self.serial_port_controller.write_to("123")
-        #     constant_rfid = self.serial_port_controller.read_info()
-        #     rand_rfid = constant_rfid+str(random.randint(10000, 99999))
-        #     self.add_value(int(rand_rfid))
-        else:
+            return
+
+        # Generate a unique RFID
+        rfid = get_random_rfid()
+        while str(rfid) in [str(animal[1]) for animal in self.animals]:  # Ensure unique RFID
             rfid = get_random_rfid()
+
+        # Get the next animal ID
+        animal_id = self.get_next_animal()
+        
+        # Find next available group
+        group_id = self.db.find_next_available_group()
+        
+        # Add to database
+        self.db.add_animal(animal_id, rfid, group_id, '')
+        self.db._conn.commit()
+        
+        # Add to UI table
+        self.table.insert('', END, values=(animal_id, rfid), tags='text_font')
+        self.animals.append((animal_id, rfid))
+        
+        # Update entry text
+        self.change_entry_text()
+        
 
     def add_value(self, rfid, db=None):
         """Adds RFID to the table, stops listening, checks the count, then restarts or stops."""
