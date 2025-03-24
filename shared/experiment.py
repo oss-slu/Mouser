@@ -22,6 +22,7 @@ class Experiment():
         self.data_collect_type = int
         self.date_created = str(date.today())
         self.password = None
+        self.daily_frequency = 1 # Default to 1 measurement per day
 
         self.group_num_changed = False
         self.measurement_items_changed = False
@@ -164,7 +165,8 @@ class Experiment():
             measurement_type=self.measurement_type,
             experiment_id=self.id,
             investigators=self.investigators,
-            measurement=self.item
+            measurement=self.item,
+            num_runs=self.daily_frequency
         )
         
         # Setup groups with cage capacity
@@ -190,3 +192,10 @@ class Experiment():
         if investigator_name and investigator_name not in self.investigators:
             self.investigators.append(investigator_name)
         
+    def set_daily_frequency(self, frequency: int):
+        """Sets how many times per day measurements will be taken"""
+        self.daily_frequency = frequency
+
+    def get_daily_frequency(self):
+        """Returns how many times per day measurements will be taken"""
+        return self.daily_frequency

@@ -20,7 +20,8 @@ class ExperimentDatabase:
                                 measurement_type INTEGER,
                                 id TEXT,
                                 investigators TEXT,
-                                measurement TEXT);''')
+                                measurement TEXT,
+                                num_measurements INTEGER);''')
 
             self._c.execute('''CREATE TABLE animals (
                                 animal_id INTEGER PRIMARY KEY,
@@ -47,14 +48,14 @@ class ExperimentDatabase:
         except sqlite3.OperationalError:
             pass
 
-    def setup_experiment(self, name, species, uses_rfid, num_animals, num_groups, cage_max, measurement_type, experiment_id, investigators, measurement):
+    def setup_experiment(self, name, species, uses_rfid, num_animals, num_groups, cage_max, measurement_type, experiment_id, investigators, measurement, num_runs):
         '''Initializes Experiment'''
         investigators_str = ', '.join(investigators)  # Convert list to comma-separated string
         self._c.execute('''INSERT INTO experiment (name, species, uses_rfid, num_animals,
-                        num_groups, cage_max, measurement_type, id, investigators, measurement)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                        num_groups, cage_max, measurement_type, id, investigators, measurement, num_measurements)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
                         (name, species, uses_rfid, num_animals, num_groups,
-                         cage_max, measurement_type, experiment_id, investigators_str, measurement))
+                         cage_max, measurement_type, experiment_id, investigators_str, measurement, num_runs))
         self._conn.commit()
 
     def setup_groups(self, group_names, cage_capacity):

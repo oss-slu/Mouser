@@ -56,6 +56,8 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
                        row=8, column=0, sticky=W, padx=pad_x, pady=pad_y)
         CTkLabel(self.main_frame,text="Max Animals per Cage").grid(
                       row=9, column=0, sticky=W, padx=pad_x, pady=pad_y)
+        CTkLabel(self.main_frame, text="Measurements per Day").grid(
+                      row=10, column=0, sticky=W, padx=pad_x, pady=pad_y)
 
         self.exper_name = CTkEntry(self.main_frame, width=140)
         self.password = CTkEntry(self.main_frame,width=120,show="*")
@@ -67,6 +69,9 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.animal_num = CTkEntry(self.main_frame, width=110)
         self.group_num = CTkEntry(self.main_frame, width=110)
         self.num_per_cage = CTkEntry(self.main_frame, width=110)
+        
+        self.daily_freq = CTkEntry(self.main_frame, width=110)
+        self.daily_freq.insert(0, "1")  # Default value
 
         self.exper_name.grid(row=0, column=1, sticky=W, padx=pad_x, pady=pad_y)
         self.password.grid(row=0,column=3, sticky=W, padx=pad_x,pady=pad_y)
@@ -76,6 +81,9 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.animal_num.grid(row=7, column=1, sticky=W, padx=pad_x, pady=pad_y)
         self.group_num.grid(row=8, column=1, sticky=W, padx=pad_x, pady=pad_y)
         self.num_per_cage.grid(row=9, column=1, sticky=W, padx=pad_x, pady=pad_y)
+
+        self.daily_freq.grid(row=10, column=1, sticky=W, padx=pad_x, pady=pad_y)
+
 
         self.rfid = BooleanVar()
 
@@ -251,5 +259,6 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.input.set_num_groups(self.group_num.get())
         self.input.set_max_animals(self.num_per_cage.get())
         self.input.set_animals_per_group(int(self.animal_num.get()) / int(self.group_num.get()))
+        self.input.set_daily_frequency(self.daily_freq.get())
 
         self.next_page.update_page()

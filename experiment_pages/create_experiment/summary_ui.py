@@ -143,6 +143,12 @@ class SummaryUI(MouserPage):# pylint: disable=undefined-variable
         rfid_input = CTkLabel(self.main_frame, text=rfid)
         labels.append(rfid_label)
         inputs.append(rfid_input)
+
+        freq_label = CTkLabel(self.main_frame, text='Measurements per Day:', font=label_style)
+        freq_input = CTkLabel(self.main_frame, text=str(self.input.get_daily_frequency()))  # Assuming this method exists
+        labels.append(freq_label)
+        inputs.append(freq_input)
+        
         # pylint: disable= consider-using-enumerate
         for index in range(0, len(labels)):
             labels[index].grid(row=index, column=0, padx= pad_x, pady= pad_y, sticky=NW)
