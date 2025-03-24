@@ -51,7 +51,6 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
                                 command= self.analysis_page.raise_frame)
         self.group_button = CTkButton(main_frame, text='Group Configuration', width=button_size,
                                 command= lambda: [self.cage_page.raise_frame(),
-                                                  self.cage_page.update_controller_attributes(),
                                                   self.cage_page.update_config_frame()])
         self.rfid_button = CTkButton(main_frame, text='Map RFID', width=button_size,
                                 command=  self.rfid_page.raise_frame)
@@ -148,11 +147,9 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
             if not self.all_rfid_mapped():
                 self.collection_button.configure(state="disabled")
                 self.analysis_button.configure(state="disabled")
-                self.group_button.configure(state="disabled")
             else:
                 self.collection_button.configure(state="normal")
                 self.analysis_button.configure(state="normal")
-                self.group_button.configure(state="normal")
         else:
             self.rfid_button.configure(state="disabled")        
 
