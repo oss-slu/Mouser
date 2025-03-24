@@ -117,6 +117,15 @@ class ExperimentDatabase:
             self._conn.commit()
         else:
             raise LookupError(f"No animal found with ID {animal_id}")
+        
+    def find_next_available_group(self):
+        '''Finds the next available group with space in its cage.'''
+        self._c.execute('''SELECT group_id, num_animals, cage_capacity
+                        FROM groups
+                        WHERE num_animals < cage_capacity
+                        ORDER BY group_id''')
+        result = self._c.fetchone()
+        return result[0] if result else None
 
     def export_data(self, output_file):
         '''Exports experiment data to CSV files.'''
