@@ -1,4 +1,4 @@
-import customtkinter as ctk
+from customtkinter import *
 
 # Function to gradually change border thickness for the fading effect (with red color)
 # this is currently not utilised anywhere

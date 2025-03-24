@@ -17,6 +17,8 @@ from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment.select_experiment_ui import ExperimentsUI
 from experiment_pages.experiment.test_screen import TestScreen
 
+from shared.error_overlay import *
+
 # Function to resolve resource paths (must be defined before usage)
 def get_resource_path(relative_path):
     ''' Get the absolute path to a resource. Works for development and PyInstaller executables. '''
@@ -181,6 +183,10 @@ test_screen_button = CTkButton(welcome_frame, text="Test Serials", command= open
 new_file_button.pack(pady=(10, 5), padx=20, fill='x', expand=True)
 open_file_button.pack(pady=(5, 10), padx=20, fill='x', expand=True)
 test_screen_button.pack(pady=(5, 10), padx=20, fill='x', expand=True)
+
+border_button = CTkButton(root, text="Activate Border Fade", command=fading_border_effect(main_frame), width=200, height=50, corner_radius=10)
+border_button.pack(pady=(10, 10), padx=20, fill='x', expand=True)
+
 
 raise_frame(experiments_frame)
 root.grid_rowconfigure(0, weight=1)
