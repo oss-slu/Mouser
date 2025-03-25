@@ -43,10 +43,6 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         self.animal_id_entry_text = StringVar(value="1")
 
-        simulate_rfid_button = CTkButton(self, text="Simulate RFID", compound=TOP,
-                                      width=15, command=self.add_random_rfid)
-        simulate_rfid_button.place(relx=0.60, rely=0.17, anchor=CENTER)
-
         # Simulate All RFID Button
         simulate_all_rfid_button = CTkButton(self, text="Simulate ALL RFID", compound=TOP,
                                       width=15, command=self.simulate_all_rfid)
