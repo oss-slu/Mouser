@@ -178,6 +178,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
             except Exception as e:
                 print(f"❌ Error in RFID listener: {e}")
+                play_sound_async("shared/sounds/error.wav")
 
             finally:
                 print("🛑 RFID listener has stopped.")
@@ -287,6 +288,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             rfid = int(rfid)  # Convert to integer
         except (ValueError, TypeError) as e:
             print(f"Error converting RFID to integer: {e}")
+            play_sound_async("shared/sounds/error.wav")
             return
 
         item_id = self.animal_id

@@ -6,7 +6,13 @@ from customtkinter import *
 from tkinter import filedialog
 from shared.tk_models import *
 from databases.experiment_database import ExperimentDatabase
+from playsound import playsound
+import threading
 
+
+def play_sound_async(filename):
+    '''Plays the given filename.'''
+    threading.Thread(target=playsound, args=(filename,), daemon=True).start()
 
 class DataAnalysisUI(MouserPage):
     '''Data Exporting UI.'''
@@ -60,6 +66,7 @@ class DataAnalysisUI(MouserPage):
         except Exception as e:
             print(f"An error occurred while exporting data: {e}")
             self.show_notification("Error", "Export to CSV failed")
+            play_sound_async("shared/sounds/error.wav")
 
     def raise_frame(self):
         '''Raise the frame for this UI'''
