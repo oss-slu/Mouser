@@ -51,17 +51,19 @@ class DataCollectionUI(MouserPage):
         self.auto_increment_button = CTkButton(self,
                                                text="Start",
                                                compound=TOP,
-                                               width=15,
+                                               width=250, height=75,
+                                               font=("Georgia", 65),
                                                command= start_function)
-        self.auto_increment_button.place(relx=0.45, rely=0.4, anchor=CENTER)
+        self.auto_increment_button.place(relx=0.35, rely=0.30, anchor=CENTER)
         self.auto_inc_id = -1
 
         self.stop_button = CTkButton(self,
                                      text="Stop Listening",
                                      compound=TOP,
-                                     width=15,
+                                     width=250, height=75,
+                                     font=("Georgia", 65),
                                      command= self.stop_listening)
-        self.stop_button.place(relx=0.55, rely=0.4, anchor=CENTER)
+        self.stop_button.place(relx=0.55, rely=0.30, anchor=CENTER)
 
         self.animals = self.database.get_animals()
         self.table_frame = CTkFrame(self)
@@ -78,8 +80,8 @@ class DataCollectionUI(MouserPage):
                               selectmode="browse",
                               height=len(self.animals))
         style = Style()
-        style.configure("Treeview", font=("Arial", 18), rowheight=40)
-        style.configure("Treeview.Heading", font=("Arial", 18))
+        style.configure("Treeview", font=("Arial", 25), rowheight=40)
+        style.configure("Treeview.Heading", font=("Arial", 25))
 
         for i, column in enumerate(columns):
             
@@ -246,8 +248,8 @@ class DataCollectionUI(MouserPage):
         self.current_date = str(date.today())
         self.date_label.destroy()
         date_text = "Current Date: " + self.current_date
-        self.date_label = CTkLabel(self, text=date_text, font=("Arial", 18))
-        self.date_label.place(relx=0.5, rely=0.25, anchor=CENTER)
+        self.date_label = CTkLabel(self, text=date_text, font=("Arial", 25))
+        self.date_label.place(relx=0.5, rely=0.20, anchor=CENTER)
 
         values = self.database.get_data_for_date(self.current_date)
 
@@ -291,7 +293,7 @@ class ChangeMeasurementsDialog():
         root.grid_rowconfigure(0, weight=1)
         root.grid_columnconfigure(0, weight=1)
 
-        id_label = CTkLabel(root, text="Animal ID: " + str(animal_id), font=("Arial", 18))
+        id_label = CTkLabel(root, text="Animal ID: " + str(animal_id), font=("Arial", 25))
         id_label.place(relx=0.5, rely=0.1, anchor=CENTER)
 
         self.textboxes = []
@@ -303,7 +305,7 @@ class ChangeMeasurementsDialog():
             entry.place(relx=0.60, rely=pos_y, anchor=CENTER)
             self.textboxes.append(entry)
 
-            header = CTkLabel(root, text=self.measurement_items[i - 1] + ": ", font=("Arial", 18))
+            header = CTkLabel(root, text=self.measurement_items[i - 1] + ": ", font=("Arial", 25))
             header.place(relx=0.28, rely=pos_y, anchor=E)
 
             if i == 1:

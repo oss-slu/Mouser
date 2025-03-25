@@ -158,7 +158,7 @@ main_frame = MouserPage(root, "Mouser")
 
 experiments_frame = ExperimentsUI(root, main_frame)
 
-mouse_image = CTkImage(light_image=Image.open(get_resource_path("shared/images/MouseLogo.png")), size=(550, 200))
+mouse_image = CTkImage(light_image=Image.open(get_resource_path("shared/images/MouseLogo.png")), size=(850, 275))
 
 mouse_label = CTkLabel(experiments_frame, image=mouse_image)
 mouse_label.grid(row=1, column=0, pady=(20, 10))
@@ -171,8 +171,8 @@ image_label = CTkLabel(welcome_frame, image=mouse_image, text="")
 image_label.pack(pady=(20, 10))
 
 # Create and place the welcome text
-text_label = CTkLabel(welcome_frame, text="Welcome to Mouser!", wraplength=400, font=("Georgia", 32))
-text_label.pack(padx=20, pady=10)
+# text_label = CTkLabel(welcome_frame, text="Welcome to Mouser!", wraplength=400, font=("Georgia", 32))
+# text_label.pack(padx=20, pady=10)
 
 main_menu_button_height = main_frame.winfo_screenheight()/6
 main_menu_button_width = main_frame.winfo_screenwidth()*0.9

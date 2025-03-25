@@ -45,14 +45,14 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         # Simulate All RFID Button
         simulate_all_rfid_button = CTkButton(self, text="Simulate ALL RFID", compound=TOP,
-                                      width=15, command=self.simulate_all_rfid)
-        simulate_all_rfid_button.place(relx=0.80, rely=0.17, anchor=CENTER)
+                                      width=250, height=75, font=("Georgia", 65), command=self.simulate_all_rfid)
+        simulate_all_rfid_button.place(relx=0.80, rely=0.15, anchor=CENTER)
 
         
 
         self.start_rfid = CTkButton(self, text="Start Scanning", compound=TOP,
-                                         width=15, command=self.rfid_listen)
-        self.start_rfid.place(relx=0.40, rely=0.17, anchor=CENTER)
+                                         width=250, height=75, font=("Georgia", 65), command=self.rfid_listen)
+        self.start_rfid.place(relx=0.45, rely=0.15, anchor=CENTER)
         if self.db.experiment_uses_rfid == 0:
             self.start_rfid.configure(state="disabled")
             
@@ -89,19 +89,19 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         self.changer = ChangeRFIDDialog(parent, self)
         self.change_rfid_button = CTkButton(self, text="Change RFID", compound=TOP,
-                                         width=15, command=self.open_change_rfid)
-        self.change_rfid_button.place(relx=0.40, rely=0.75, anchor=CENTER)
+                                         width=250, height=75, font=("Georgia", 65), command=self.open_change_rfid)
+        self.change_rfid_button.place(relx=0.15, rely=0.80, anchor=CENTER)
 
         self.delete_button = CTkButton(self, text="Remove Selection(s)", compound=TOP,
-                                       width=20, command=self.remove_selected_items,
+                                       width=250, height=75, font=("Georgia", 65), command=self.remove_selected_items,
                                        state="normal")  # Initialize button as disabled
-        self.delete_button.place(relx=0.70, rely=0.75, anchor=CENTER)
+        self.delete_button.place(relx=0.45, rely=0.80, anchor=CENTER)
 
         # Add Sacrifice button with normal state
         self.sacrifice_button = CTkButton(self, text="Sacrifice Selected", compound=TOP,
-                                      width=20, command=self.sacrifice_selected_items,
+                                      width=250, height=75, font=("Georgia", 65), command=self.sacrifice_selected_items,
                                       state="normal")  # Initialize as enabled
-        self.sacrifice_button.place(relx=0.90, rely=0.75, anchor=CENTER)
+        self.sacrifice_button.place(relx=0.80, rely=0.80, anchor=CENTER)
 
         self.item_selected(None)
 
@@ -109,7 +109,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         for animal in animals_setup:
             rfid = self.db.get_animal_rfid(animal)
             value = (int(animal), rfid)
-            self.table.tag_configure('text_font', font=('Arial', 10))
+            self.table.tag_configure('text_font', font=('Arial', 25))
             self.table.insert('', END, values=value, tags='text_font')
             self.animals.append(value)
             self.animal_id_entry_text.set(animal)
@@ -383,7 +383,7 @@ class ChangeRFIDDialog():
 
         # Simulate All RFID Button
         simulate_all_rfid_button = CTkButton(
-            self, text="Simulate All RFID", compound=TOP, width=15, 
+            self, text="Simulate All RFID", compound=TOP, width=250, height=75,
             command=self.simulate_all_rfid)
         simulate_all_rfid_button.place(relx=0.80, rely=0.27, anchor=CENTER)
 

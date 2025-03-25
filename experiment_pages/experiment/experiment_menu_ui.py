@@ -9,7 +9,7 @@ from experiment_pages.experiment.map_rfid import MapRFIDPage
 from experiment_pages.experiment.cage_config_ui import CageConfigurationUI
 from experiment_pages.experiment.experiment_invest_ui import InvestigatorsUI
 from databases.experiment_database import ExperimentDatabase
-# from experiment_pages.experiment.review_ui import ReviewUI
+from experiment_pages.experiment.review_ui import ReviewUI
 
 class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
     '''Experiment Menu Page Frame'''
@@ -43,36 +43,36 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         self.data_page = DataCollectionUI(parent, self, name)
         self.analysis_page = DataAnalysisUI(parent, self, os.path.abspath(name))
         self.cage_page = CageConfigurationUI(name, parent, self)
-        # self.summary_page = ReviewUI(parent, self, name)
+        self.summary_page = ReviewUI(parent, self, name)
         if controller is None:
             self.rfid_page = MapRFIDPage(name, parent, self)
         else:
             self.rfid_page = MapRFIDPage(name, parent, self, controller)
         self.invest_page = InvestigatorsUI(parent, self)
 
-        button_height = main_frame.winfo_screenheight()/2
-        button_width = main_frame.winfo_screenwidth()/2
+        button_height = main_frame.winfo_screenheight()*0.3
+        button_width = main_frame.winfo_screenwidth()*0.48
         button_font = ("Arial Black", 35)
 
 
-        self.collection_button = CTkButton(main_frame, text='Data Collection', width=button_width, height= button_height,
+        self.collection_button = CTkButton(main_frame, text='Data Collection', width=button_width, height= button_height, border_width=2.5,
                                 command= self.data_page.raise_frame, font=button_font)
-        self.analysis_button = CTkButton(main_frame, text='Data Exporting', width=button_width, height= button_height,
+        self.analysis_button = CTkButton(main_frame, text='Data Exporting', width=button_width, height= button_height, border_width=2.5,
                                 command= self.analysis_page.raise_frame, font=button_font)
-        self.group_button = CTkButton(main_frame, text='Group Configuration', width=button_width, height= button_height,
+        self.group_button = CTkButton(main_frame, text='Group Configuration', width=button_width, height= button_height, border_width=2.5,
                                 command= lambda: [self.cage_page.raise_frame(),
                                                   self.cage_page.update_controller_attributes(),
                                                   self.cage_page.update_config_frame()], font=button_font)
-        self.rfid_button = CTkButton(main_frame, text='Map RFID', width=button_width, height= button_height,
+        self.rfid_button = CTkButton(main_frame, text='Map RFID', width=button_width, height= button_height, border_width=2.5,
                                 command=  self.rfid_page.raise_frame, font=button_font)
-        # self.summary_button = CTkButton(main_frame, text='Summary View', width=button_width, height= button_height,
-        #                         command= self.summary_page.raise_frame, font=button_font)
+        self.summary_button = CTkButton(main_frame, text='Summary View', width=button_width, height= button_height, border_width=2.5,
+                                command= self.summary_page.raise_frame, font=button_font)
 
         self.collection_button.grid(row=0, column=0, ipady=0, ipadx=0, pady=0, padx=0)
         self.analysis_button.grid(row=0, column=1, ipady=0, ipadx=0, pady=0, padx=0)
         self.group_button.grid(row=1, column=0, ipady=0, ipadx=0, pady=0, padx=0)
         self.rfid_button.grid(row=1, column=1, ipady=0, ipadx=0, pady=0, padx=0)
-        # self.summary_button.grid(row=2, column=0, ipady=0, ipadx=0, pady=0, padx=0)
+        self.summary_button.grid(row=2, column=0, ipady=0, ipadx=0, pady=0, padx=0)
 
         if self.menu_button:
             self.menu_button.destroy()
