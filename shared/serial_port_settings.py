@@ -274,7 +274,15 @@ class SerialPortSetting(SettingPage):
             self.serial_port.get()
         ]
 
-        settings_path = os.path.join(os.getcwd(), "settings", "serial ports", f"{configuration_name}.csv")
+        if hasattr(sys, '_MEIPASS'):
+            base_path = os.path.dirname(sys.executable)  # Path where the .exe resides
+        else:
+            base_path = os.getcwd()
+
+        settings_dir = os.path.join(base_path, "settings", "serial ports")
+        os.makedirs(settings_dir, exist_ok=True)
+
+        settings_path = os.path.join(settings_dir, f"{configuration_name}.csv")
 
         try:
             with open(settings_path, "w", newline="", encoding="utf-8") as file:
@@ -308,7 +316,12 @@ class SerialPortSetting(SettingPage):
 
     def set_preference(self, port, file_name):
         '''Save a specific configuration for a given port in its own preference folder.'''
-        preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference", "device")
+        if hasattr(sys, '_MEIPASS'):
+            base_path = os.path.dirname(sys.executable)
+        else:
+            base_path = os.getcwd()
+
+        preference_dir = os.path.join(base_path, "settings", "serial ports", "preference", "device")
         os.makedirs(preference_dir, exist_ok=True)
         preference_path = os.path.join(preference_dir, "preferred_config.txt")
         
@@ -321,7 +334,12 @@ class SerialPortSetting(SettingPage):
 
     def set_rfid(self, port, file_name):
         '''Save a specific configuration for a given port in its own preference folder.'''
-        preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference", "reader")
+        if hasattr(sys, '_MEIPASS'):
+            base_path = os.path.dirname(sys.executable)
+        else:
+            base_path = os.getcwd()
+
+        preference_dir = os.path.join(base_path, "settings", "serial ports", "preference", "reader")
         os.makedirs(preference_dir, exist_ok=True)
         preference_path = os.path.join(preference_dir, "rfid_config.txt")
         
@@ -332,24 +350,33 @@ class SerialPortSetting(SettingPage):
         except Exception as e:
             print(f"Error saving RFID Reader for {port}: {e}")
 
-    def confirm_setting(self, f = None):
-        '''select a configuration and use it as current serial
-        port setting'''
-        if f:
-            file_name = os.path.join(self.port_setting_configuration_path, f)
+    def confirm_setting(self, f=None):
+        '''select a configuration and use it as current serial port setting'''
+        if hasattr(sys, '_MEIPASS'):
+            base_path = os.path.dirname(sys.executable)
         else:
-            file_name = os.path.join(self.port_setting_configuration_path, self.current_configuration_name.get())
-        file = open(file_name)
-        csv_reader = reader(file)
-        for line in csv_reader:
-            self.baud_rate_var.set(line[0])
-            self.parity_var.set(line[1])
-            self.flow_control_var.set(line[2])
-            self.data_bits_var.set(line[3])
-            self.stop_bits_var.set(line[4])
-            self.input_bype_var.set(line[5])
-            self.serial_port.set(line[6])
-        file.close()
+            base_path = os.getcwd()
+
+        config_dir = os.path.join(base_path, "settings", "serial ports")
+        
+        if f:
+            file_name = os.path.join(config_dir, f)
+        else:
+            file_name = os.path.join(config_dir, self.current_configuration_name.get())
+
+        try:
+            with open(file_name) as file:
+                csv_reader = reader(file)
+                for line in csv_reader:
+                    self.baud_rate_var.set(line[0])
+                    self.parity_var.set(line[1])
+                    self.flow_control_var.set(line[2])
+                    self.data_bits_var.set(line[3])
+                    self.stop_bits_var.set(line[4])
+                    self.input_bype_var.set(line[5])
+                    self.serial_port.set(line[6])
+        except Exception as e:
+            print(f"Error loading configuration: {e}")
 
 
     def edit_configuration(self):
