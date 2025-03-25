@@ -185,10 +185,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         message.resizable(True, True)
 
         # Add the appropriate warning message based on the option
-        if option == 1:
-            label = CTkLabel(message, text='Number of animals must be divisible by number groups.')
-            label.grid(row=0, column=0, padx=10, pady=10)
-        elif option == 2:
+        if option == 2:
             label1 = CTkLabel(message, text='Number of animals, groups, or maximum')
             label2 = CTkLabel(message, text='animals per cage must be greater than 0.')
             label1.grid(row=0, column=0, padx=10)
@@ -228,13 +225,9 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
             self.raise_warning(4)
         elif self.animal_num.get() == '' or self.group_num.get() == '' or self.animal_num.get() == '':
             self.raise_warning(2)
-        elif int(self.animal_num.get()) % int(self.group_num.get()) != 0:
-            self.raise_warning(1)
         elif int(self.animal_num.get()) == 0 or int(self.group_num.get()) == 0 or int(self.animal_num.get()) == 0:
             self.raise_warning(2)
-        elif int(self.group_num.get()) * int(self.num_per_cage.get()) > int(self.animal_num.get()):
-            self.raise_warning(1)
-        elif int(self.animal_num.get()) % int(self.group_num.get()) == 0 and int(self.animal_num.get()) != 0:
+        else:
             self.save_input()
 
     def save_input(self):
@@ -250,6 +243,5 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.input.set_num_animals(self.animal_num.get())
         self.input.set_num_groups(self.group_num.get())
         self.input.set_max_animals(self.num_per_cage.get())
-        self.input.set_animals_per_group(int(self.animal_num.get()) / int(self.group_num.get()))
 
         self.next_page.update_page()
