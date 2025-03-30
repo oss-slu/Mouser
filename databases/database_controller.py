@@ -87,6 +87,9 @@ class DatabaseController():
     def autosort(self):
         self.db.autosort()
 
+    def randomize_cages(self):
+        self.db.randomize_cages()
+
     def get_animals_in_cage(self, cage):
         '''Returns a list of animal ids in the specified cage.'''
         if cage in self.animals_in_cage:

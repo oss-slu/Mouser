@@ -185,8 +185,10 @@ class ExperimentDatabase:
         '''Returns the total number of animals from the experiment table.'''
         self._c.execute("SELECT num_animals FROM experiment")
         result = self._c.fetchone()
-        print(result[0])
-        return result[0] if result else 0
+        if result:
+            print(result[0])
+            return result[0]
+        return 0
 
     def get_number_animals(self):
         '''Returns the number of active animals in the database.'''
@@ -202,7 +204,7 @@ class ExperimentDatabase:
 
     def get_animal_id(self, rfid):
         '''Returns the animal ID for a given RFID.'''
-        self._c.execute('SELECT animal_id FROM animals WHERE rfid = ?', (rfid))
+        self._c.execute('SELECT animal_id FROM animals WHERE rfid = ?', (rfid,))
         result = self._c.fetchone()
         return result[0] if result else None
 
@@ -222,20 +224,20 @@ class ExperimentDatabase:
     def add_data_entry(self, date, animal_id, values):
         '''Adds a measurement entry for an animal on a specific date.'''
         try:
-            # Convert values to list if it's not already
-            values = list(values) if isinstance(values, tuple) else values
+            # Handle both single values and lists/tuples
+            value = values[0] if isinstance(values, (list, tuple)) else values
 
             # Insert new measurement
             self._c.execute('''
                 INSERT INTO animal_measurements (animal_id, timestamp, value)
                 VALUES (?, ?, ?)
-            ''', (animal_id, date, values[0]))  # Assuming single measurement for now
+            ''', (animal_id, date, value))
 
             self._conn.commit()
         except Exception as e:
             print(f"Error adding data entry: {e}")
             self._conn.rollback()
-
+            
     def change_data_entry(self, date, animal_id, value):
         '''Updates a measurement entry for an animal on a specific date.'''
         try:
@@ -460,7 +462,7 @@ class ExperimentDatabase:
             print(f"Error retrieving measurement value: {e}")
             return None
         
-    def autosort(self):
+    def randomize_cages(self):
         '''Automatically sorts animals into cages within their groups, respecting cage capacity limits.'''
         try:
             # Get all groups and their cage capacities
@@ -489,6 +491,86 @@ class ExperimentDatabase:
                         SET remarks = ?
                         WHERE animal_id = ?
                     ''', (f"Cage {cage_number}", animal_id))
+            
+            self._conn.commit()
+            return True
+            
+        except Exception as e:
+            print(f"Error during autosort: {e}")
+            self._conn.rollback()
+            return False
+        
+    def autosort(self):
+        '''Automatically sorts animals, putting largest into groups, then smallest, until all are sorted'''
+        try:
+            # Get latest measurement for each active animal
+            self._c.execute('''
+                SELECT a.animal_id, m.value 
+                FROM animals a
+                JOIN animal_measurements m ON a.animal_id = m.animal_id
+                WHERE a.active = 1
+                GROUP BY a.animal_id
+                HAVING m.timestamp = MAX(m.timestamp)
+            ''')
+            measurements = self._c.fetchall()
+            
+            # Sort measurements by value in descending order
+            measurements.sort(key=lambda x: x[1], reverse=True)
+            
+            # Get all groups and their capacities
+            self._c.execute('SELECT group_id, cage_capacity FROM groups')
+            groups = self._c.fetchall()
+            
+            # First, reset all group counts to 0
+            for group_id, _ in groups:
+                self._c.execute('''
+                    UPDATE groups
+                    SET num_animals = 0
+                    WHERE group_id = ?
+                ''', (group_id,))
+            
+            # Initialize pointers for largest and smallest animals
+            large_ptr = 0
+            small_ptr = len(measurements) - 1
+            use_largest = True  # Flag to alternate between largest and smallest
+            
+            while large_ptr <= small_ptr:
+                for group_id, capacity in groups:
+                    # Check if we've distributed all animals
+                    if large_ptr > small_ptr:
+                        break
+                        
+                    # Check if this group has space
+                    self._c.execute('SELECT num_animals FROM groups WHERE group_id = ?', (group_id,))
+                    current_count = self._c.fetchone()[0]
+                    
+                    if current_count >= capacity:
+                        continue
+                    
+                    # Get the next animal to assign (either largest or smallest)
+                    if use_largest:
+                        animal_id = measurements[large_ptr][0]
+                        large_ptr += 1
+                    else:
+                        animal_id = measurements[small_ptr][0]
+                        small_ptr -= 1
+                    
+                    # Update the animal's group assignment
+                    self._c.execute('''
+                        UPDATE animals 
+                        SET group_id = ? 
+                        WHERE animal_id = ?
+                    ''', (group_id, animal_id))
+                    
+                    # Update group animal count
+                    self._c.execute('''
+                        UPDATE groups
+                        SET num_animals = num_animals + 1
+                        WHERE group_id = ?
+                    ''', (group_id,))
+                
+                # Switch between distributing largest and smallest
+                use_largest = not use_largest
             
             self._conn.commit()
             return True
