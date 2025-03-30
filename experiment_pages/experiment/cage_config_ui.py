@@ -39,17 +39,13 @@ class CageConfigurationUI(MouserPage):
         self.cage_input.bind("<Button-1>", lambda arg='cage': self.clear_entry(arg))
 
         self.pad_x, self.pad_y = 10, 10
-        self.calendar = DateEntry(input_frame, date_pattern='yyyy-mm-dd')
-        self.calendar.grid(row=0, column=5, padx=self.pad_x, pady=self.pad_y)
 
         auto_button.grid(row=0, column=0, padx=self.pad_x, pady=self.pad_y)
         random_button.grid(row=0, column=1, padx=self.pad_x, pady=self.pad_y)
-        self.id_input.grid(row=0, column=2, padx=self.pad_x, pady=self.pad_y)
-        self.cage_input.grid(row=0, column=3, padx=self.pad_x, pady=self.pad_y)
-        swap_button.grid(row=0, column=4, padx=self.pad_x, pady=self.pad_y)
-        save_button.grid(row=0, column=5, padx=self.pad_x, pady=self.pad_y)
+        swap_button.grid(row=0, column=2, padx=self.pad_x, pady=self.pad_y)
+        save_button.grid(row=0, column=3, padx=self.pad_x, pady=self.pad_y)
 
-        for i in range(0, 5):
+        for i in range(0, 4):
             input_frame.grid_columnconfigure(i, weight=1)
         input_frame.grid_rowconfigure(0, weight=1)
 
