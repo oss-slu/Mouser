@@ -20,12 +20,14 @@ class CageConfigurationUI(MouserPage):
         input_frame = CTkFrame(scroll_canvas)
         self.config_frame = CTkFrame(scroll_canvas)
 
-        auto_button = CTkButton(input_frame, text='Randomize', width=15,
+        random_button = CTkButton(input_frame, text='Randomize', width=15,
                             command=self.randomize)
         save_button = CTkButton(input_frame, text='Save', width=15,
                             command=self.save_to_database)
         swap_button = CTkButton(input_frame, text='Swap', width=15,
                             command=self.perform_swap)
+        auto_button = CTkButton(input_frame, text='AutoSort', width=15,
+                                command=self.autosort)
 
         self.id_input = CTkEntry(input_frame, width=110)
         self.cage_input = CTkEntry(input_frame, width=110)
@@ -41,10 +43,11 @@ class CageConfigurationUI(MouserPage):
         self.calendar.grid(row=0, column=5, padx=self.pad_x, pady=self.pad_y)
 
         auto_button.grid(row=0, column=0, padx=self.pad_x, pady=self.pad_y)
-        self.id_input.grid(row=0, column=1, padx=self.pad_x, pady=self.pad_y)
-        self.cage_input.grid(row=0, column=2, padx=self.pad_x, pady=self.pad_y)
-        swap_button.grid(row=0, column=3, padx=self.pad_x, pady=self.pad_y)
-        save_button.grid(row=0, column=4, padx=self.pad_x, pady=self.pad_y)
+        random_button.grid(row=0, column=1, padx=self.pad_x, pady=self.pad_y)
+        self.id_input.grid(row=0, column=2, padx=self.pad_x, pady=self.pad_y)
+        self.cage_input.grid(row=0, column=3, padx=self.pad_x, pady=self.pad_y)
+        swap_button.grid(row=0, column=4, padx=self.pad_x, pady=self.pad_y)
+        save_button.grid(row=0, column=5, padx=self.pad_x, pady=self.pad_y)
 
         for i in range(0, 5):
             input_frame.grid_columnconfigure(i, weight=1)
@@ -133,6 +136,10 @@ class CageConfigurationUI(MouserPage):
 
     def randomize(self):
         '''Autosorts the animals into cages.'''
+        self.db.randomize_cages()
+        self.update_config_frame()
+
+    def autosort(self):
         self.db.autosort()
         self.update_config_frame()
 
