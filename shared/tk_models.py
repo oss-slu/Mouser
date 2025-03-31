@@ -3,6 +3,8 @@ from tkinter import PhotoImage
 from abc import ABC, abstractmethod
 from customtkinter import *
 
+from shared.error_overlay import fading_border_effect
+
 current_frame: CTkFrame = None
 
 def raise_frame(frame: CTkFrame): #pylint: disable= redefined-outer-name
@@ -12,7 +14,7 @@ def raise_frame(frame: CTkFrame): #pylint: disable= redefined-outer-name
         current_frame.pack_forget()
     current_frame = frame
     current_frame.pack()
-   
+
 def create_nav_button(parent: CTkFrame, name: str, button_image: PhotoImage, frame: CTkFrame, relx: float, rely: float): #pylint: disable= line-too-long,redefined-outer-name
     '''Makes a navigation button to the various sub-menus of the program.'''
 
@@ -46,6 +48,9 @@ class MouserPage(CTkFrame):
             self.menu_button = MenuButton(self, menu_page)
 
         self.check_window_size()
+
+    def colored_border(self, color: str):
+        fading_border_effect(self, color)
 
     def raise_frame(self):
         '''Raises the page frame in the stacking order.'''

@@ -33,7 +33,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         super().__init__(parent, "Map RFID", previous_page)
 
-        self.rfid_reader = None 
+        self.rfid_reader = None
         self.rfid_stop_event = threading.Event()  # Event to stop RFID listener
         self.rfid_thread = None # Store running thread
 
@@ -130,7 +130,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
     def rfid_listen(self):
         """Starts RFID listener, ensuring the previous session is fully closed before restarting."""
-        
+
         # Ensure old listener is properly stopped before starting a new one
         if self.rfid_thread and self.rfid_thread.is_alive():
             print("⚠️ Stopping stale RFID listener before restarting...")
@@ -178,6 +178,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
             except Exception as e:
                 print(f"❌ Error in RFID listener: {e}")
+                play_sound_async("shared/sounds/error.wav")
 
             finally:
                 print("🛑 RFID listener has stopped.")
@@ -287,6 +288,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             rfid = int(rfid)  # Convert to integer
         except (ValueError, TypeError) as e:
             print(f"Error converting RFID to integer: {e}")
+            play_sound_async("shared/sounds/error.wav")
             return
 
         item_id = self.animal_id
@@ -449,11 +451,13 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         AudioManager.play("shared/sounds/error.wav")
 
+        MouserPage.colored_border(self.root, 'yellow')
+
         message.mainloop()
 
     def press_back_to_menu_button(self):
         '''Handles back to menu button press.'''
-        if len(self.db.get_all_animals_rfid()) != len(self.db.get_animals()):
+        if len(self.db.get_all_animals_rfid()) != self.db.get_total_number_animals():
             self.raise_warning('Not all animals have been mapped to RFIDs')
         else:
             # Save the current state before closing the database
