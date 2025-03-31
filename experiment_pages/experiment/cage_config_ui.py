@@ -1,6 +1,5 @@
 '''Contains cage configuration page and behaviour.'''
 from customtkinter import *
-from tkcalendar import DateEntry
 from shared.tk_models import *
 from shared.scrollable_frame import ScrolledFrame
 from databases.database_controller import DatabaseController
@@ -22,8 +21,6 @@ class CageConfigurationUI(MouserPage):
 
         random_button = CTkButton(input_frame, text='Randomize', width=15,
                             command=self.randomize)
-        save_button = CTkButton(input_frame, text='Save', width=15,
-                            command=self.save_to_database)
         swap_button = CTkButton(input_frame, text='Swap', width=15,
                             command=self.perform_swap)
         auto_button = CTkButton(input_frame, text='AutoSort', width=15,
@@ -43,9 +40,8 @@ class CageConfigurationUI(MouserPage):
         auto_button.grid(row=0, column=0, padx=self.pad_x, pady=self.pad_y)
         random_button.grid(row=0, column=1, padx=self.pad_x, pady=self.pad_y)
         swap_button.grid(row=0, column=2, padx=self.pad_x, pady=self.pad_y)
-        save_button.grid(row=0, column=3, padx=self.pad_x, pady=self.pad_y)
 
-        for i in range(0, 4):
+        for i in range(0, 3):
             input_frame.grid_columnconfigure(i, weight=1)
         input_frame.grid_rowconfigure(0, weight=1)
 
