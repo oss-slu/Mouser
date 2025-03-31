@@ -236,7 +236,13 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         if self.password.get():
             self.input.set_password(self.password.get())
         self.input.set_unique_id()
-        self.input.set_investigators(self.added_invest)
+        
+        # Combine added investigators with any remaining text in the text box
+        all_investigators = self.added_invest.copy()
+        if self.investigators.get().strip():
+            all_investigators.append(self.investigators.get().strip())
+        self.input.set_investigators(all_investigators)
+        
         self.input.set_species(self.species.get())
         self.input.set_measurement_item(self.measure_items.get())
         self.input.set_uses_rfid(self.rfid.get())
