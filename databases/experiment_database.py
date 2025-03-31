@@ -295,16 +295,20 @@ class ExperimentDatabase:
         result = self._c.fetchone()
         return result[0] if result else None
 
-    def get_animals_in_cage(self, group_id, cage_number, cage_capacity):
+    def get_animals_in_cage(self, group_name):
         '''Returns animals in a virtual cage based on group and cage number.'''
-        self._c.execute('''
-            SELECT animal_id, rfid, remarks
-            FROM animals
-            WHERE group_id = ? AND active = 1
-            ORDER BY animal_id
-            LIMIT ? OFFSET ?
-        ''', (group_id, cage_capacity, (cage_number - 1) * cage_capacity))
-        return self._c.fetchall()
+        try:
+            self._c.execute('''
+                SELECT animal_id
+                FROM animals
+                WHERE group_id = (SELECT group_id FROM groups WHERE name = ?)
+                AND active = 1
+                ORDER BY animal_id
+            ''', (group_name,))
+            return self._c.fetchall() or [] #Empty list if nothing
+        except sqlite3.Error as e:
+            print(f"Database error: {e}")
+            return []
 
     def get_cage_assignments(self):
         '''Returns a dictionary of animal IDs mapped to their cage assignments.'''
@@ -381,6 +385,19 @@ class ExperimentDatabase:
             print(f"Error updating animal cage: {e}")
             self._conn.rollback()
             return False
+
+    def update_experiment(self, animals_to_update):
+        '''Updates the database to reflect current animal states.'''
+        updated_animals = animals_to_update
+        for old_id, new_id, group_id in updated_animals:
+            self._c.execute('''
+                UPDATE animals
+                SET animal_id = ?, group_id = ?
+                WHERE animal_id = ?
+            ''', (new_id, group_id, old_id))
+        self._conn.commit()
+
+        
 
     def get_all_animals_rfid(self):
         '''Returns a list of all RFIDs for active animals in the experiment.'''
@@ -468,40 +485,59 @@ class ExperimentDatabase:
             return None
         
     def randomize_cages(self):
-        '''Automatically sorts animals into cages within their groups, respecting cage capacity limits.'''
+        '''Automatically and randomly sorts animals into cages within their groups, respecting cage capacity limits.'''
+        import random
+        
         try:
             # Get all groups and their cage capacities
-            self._c.execute('SELECT group_id, cage_capacity FROM groups')
+            self._c.execute('SELECT group_id, cage_capacity FROM groups ORDER BY group_id')
             groups = self._c.fetchall()
             
-            for group_id, cage_capacity in groups:
-                # Get all active animals in the current group
-                self._c.execute('''
-                    SELECT animal_id
-                    FROM animals
-                    WHERE group_id = ? AND active = 1
-                    ORDER BY animal_id
-                ''', (group_id,))
-                animals = self._c.fetchall()
-                
-                # Assign animals to virtual cages based on capacity
-                for i, animal in enumerate(animals):
-                    cage_number = (i // cage_capacity) + 1
-                    animal_id = animal[0]
+            # Get all active animals
+            self._c.execute('SELECT animal_id FROM animals WHERE active = 1')
+            animals = [animal[0] for animal in self._c.fetchall()]
+            random.shuffle(animals)
+            
+            # Reset all group counts
+            self._c.execute('UPDATE groups SET num_animals = 0')
+            
+            current_group_idx = 0
+            for animal_id in animals:
+                # Find next group with space
+                while True:
+                    if current_group_idx >= len(groups):
+                        current_group_idx = 0  # Start over from first group if needed
                     
-                    # Update the animal's cage assignment in the database
-                    # This is handled through the cage_assignments dictionary
-                    self._c.execute('''
-                        UPDATE animals
-                        SET remarks = ?
-                        WHERE animal_id = ?
-                    ''', (f"Cage {cage_number}", animal_id))
+                    group_id, capacity = groups[current_group_idx]
+                    
+                    # Check if group has space
+                    self._c.execute('SELECT num_animals FROM groups WHERE group_id = ?', (group_id,))
+                    current_count = self._c.fetchone()[0]
+                    
+                    if current_count < capacity:
+                        break
+                        
+                    current_group_idx += 1
+                
+                # Assign animal to group
+                self._c.execute('''
+                    UPDATE animals
+                    SET group_id = ?
+                    WHERE animal_id = ?
+                ''', (group_id, animal_id))
+                
+                # Update group count
+                self._c.execute('''
+                    UPDATE groups
+                    SET num_animals = num_animals + 1
+                    WHERE group_id = ?
+                ''', (group_id,))
             
             self._conn.commit()
             return True
             
         except Exception as e:
-            print(f"Error during autosort: {e}")
+            print(f"Error during randomization: {e}")
             self._conn.rollback()
             return False
         

@@ -59,20 +59,13 @@ class DatabaseController():
 
     def get_cage_max(self):
         '''Returns the maximum size of the cages in the database.'''
-        self._c.execute("SELECT cage_max FROM experiment")
-        result = self._c.fetchone()
+        self.db._c.execute("SELECT cage_max FROM experiment")
+        result = self.db._c.fetchone()
         return int(result[0]) if result else 0
     
     def get_animals_in_group(self, group_name):
         '''Returns list of animals in a given group/cage'''
-        self.db._c.execute('''
-            SELECT animal_id
-            FROM animals
-            WHERE group_id = (SELECT group_id FROM groups WHERE name = ?)
-            AND active = 1
-            ORDER BY animal_id
-        ''', (group_name,))
-        return self.db._c.fetchall()
+        return self.db.get_animals_in_cage(group_name)
 
     def get_measurement_items(self):
         '''Returns a list of all measurement items in the database.'''
@@ -85,9 +78,11 @@ class DatabaseController():
         return []
     
     def autosort(self):
+        '''Calls the Database Autosort Function'''
         self.db.autosort()
 
     def randomize_cages(self):
+        '''Calls the Database Randomize Function'''
         self.db.randomize_cages()
 
     def get_animals_in_cage(self, cage):
@@ -139,17 +134,13 @@ class DatabaseController():
         return updated_animals
 
     def update_experiment(self):
-        '''Updates the database to reflect current animal states.'''
+        '''Calls the Database update_experiment method'''
         updated_animals = self.get_updated_animals()
-        for old_id, new_id, group_id in updated_animals:
-            self.db._c.execute('''
-                UPDATE animals
-                SET animal_id = ?, group_id = ?
-                WHERE animal_id = ?
-            ''', (new_id, group_id, old_id))
-        self.db._conn.commit()
+        self.db.update_experiment(updated_animals)
         self.reset_attributes()
 
     def close(self):
         '''Closes the database file.'''
         self.db.close()
+    
+
