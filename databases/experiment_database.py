@@ -546,7 +546,7 @@ class ExperimentDatabase:
         try:
             # Get latest measurement for each active animal
             self._c.execute('''
-                SELECT a.animal_id, m.value 
+                SELECT a.animal_id, m.value, m.timestamp
                 FROM animals a
                 JOIN animal_measurements m ON a.animal_id = m.animal_id
                 WHERE a.active = 1
@@ -557,7 +557,16 @@ class ExperimentDatabase:
             
             # Sort measurements by value in descending order
             measurements.sort(key=lambda x: x[1], reverse=True)
-            
+
+            # Set measurement_id to 0 for all measurements used in sorting
+            for measurement in measurements:
+                animal_id, _, timestamp = measurement
+                self._c.execute('''
+                    UPDATE animal_measurements
+                    SET measurement_id = 0
+                    WHERE animal_id = ? AND timestamp = ?
+                ''', (animal_id, timestamp))
+                
             # Get all groups and their capacities
             self._c.execute('SELECT group_id, cage_capacity FROM groups')
             groups = self._c.fetchall()
