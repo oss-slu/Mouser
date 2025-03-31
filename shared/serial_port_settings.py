@@ -83,14 +83,21 @@ class SerialPortSetting(SettingPage):
         self.summary_page("Map RFID")
         self.summary_page("Data Collection")
 
-        self.available_configuration = [file for file in listdir(self.port_setting_configuration_path)
-                                        if isfile(join(self.port_setting_configuration_path, file))]
+        if os.path.exists(self.port_setting_configuration_path):
+            self.available_configuration = [
+                file for file in listdir(self.port_setting_configuration_path)
+                if isfile(join(self.port_setting_configuration_path, file))
+            ]
+        else:
+            print(f"⚠️ Warning: Config path not found: {self.port_setting_configuration_path}")
+            self.available_configuration = []
+
         
     def get_base_path(self):
-        """Returns the directory of the executable or script."""
-        if getattr(sys, 'frozen', False):  # This is True for PyInstaller .exe
+        """Return the root path where the .exe or main.py is located."""
+        if getattr(sys, 'frozen', False):
             return os.path.dirname(sys.executable)
-        return os.path.dirname(os.path.abspath(__file__))
+        return os.path.dirname(os.path.abspath(sys.argv[0]))
 
     def edit_page(self, tab: str):
         ''' page that allow user to edit/update serial port settings'''
