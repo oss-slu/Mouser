@@ -33,15 +33,9 @@ class SerialPortSetting(SettingPage):
         else:
             self.serial_port_controller = SerialPortController(self.preference)
 
-
-        if hasattr(sys, '_MEIPASS'):
-            # Running as a bundled executable
-            base_path = sys._MEIPASS
-        else:
-            # Running from source
-            base_path = os.getcwd()
-
-        self.port_setting_configuration_path = os.path.join(base_path, "settings", "serial ports")
+        read_path = self.get_read_path()
+        write_path = self.get_write_path()
+        self.port_setting_configuration_path = os.path.join(write_path, "settings", "serial ports")
 
 
         # setting value element
@@ -55,12 +49,12 @@ class SerialPortSetting(SettingPage):
 
         if preference:
             if preference == "device":
-                self.preference_path = os.path.join(os.getcwd(), "settings", "serial ports", "preference", "device", "preferred_config.txt")
+                self.preference_path = os.path.join(read_path, "settings", "serial ports", "preference", "device", "preferred_config.txt")
             elif preference == "reader":
-                self.preference_path = os.path.join(os.getcwd(), "settings", "serial ports", "preference", "reader", "rfid_config.txt")
+                self.preference_path = os.path.join(read_path, "settings", "serial ports", "preference", "reader", "rfid_config.txt")
+
             else:
                 self.preference_path = None  # Fallback if no valid type
-
             
             if os.path.exists(self.preference_path):
                 try:
@@ -85,13 +79,43 @@ class SerialPortSetting(SettingPage):
         self.tab_view = CTkTabview(master=self)
         self.tab_view.grid(padx=20, pady=20, sticky = "ew")
 
-        self.tab_view.add("Map RFID")
-        self.tab_view.add("Data Collection")
-        self.summary_page("Map RFID")
-        self.summary_page("Data Collection")
+        self.tab_view.add("Serial Settings")
+        self.summary_page("Serial Settings")
 
-        self.available_configuration = [file for file in listdir(self.port_setting_configuration_path)
-                                        if isfile(join(self.port_setting_configuration_path, file))]
+        self.available_configuration = []
+        read_config_path = os.path.join(self.get_read_path(), "settings", "serial ports")
+        write_config_path = os.path.join(self.get_write_path(), "settings", "serial ports")
+
+        # Read from both
+        for path in [read_config_path, write_config_path]:
+            if os.path.exists(path):
+                for file in listdir(path):
+                    full_path = join(path, file)
+                    if isfile(full_path) and file not in self.available_configuration:
+                        self.available_configuration.append(file)
+            else:
+                print(f"⚠️ Warning: Config path not found: {path}")
+
+
+        
+    def get_base_path(self):
+        """Return the root path where the .exe or main.py is located."""
+        if getattr(sys, 'frozen', False):
+            return os.path.dirname(sys.executable)
+        return os.path.dirname(os.path.abspath(sys.argv[0]))
+    
+    def get_read_path(self):
+        """Return the path where the settings are read from."""
+        if getattr(sys, 'frozen', False):
+            return sys._MEIPASS  # temp unpacked dir
+        return os.path.dirname(os.path.abspath(sys.argv[0]))
+
+    def get_write_path(self):
+        """Return the path where the settings are written to."""
+        if getattr(sys, 'frozen', False):
+            return os.path.dirname(sys.executable)  # EXE location
+        return os.path.dirname(os.path.abspath(sys.argv[0]))
+
 
     def edit_page(self, tab: str):
         ''' page that allow user to edit/update serial port settings'''
@@ -274,7 +298,12 @@ class SerialPortSetting(SettingPage):
             self.serial_port.get()
         ]
 
-        settings_path = os.path.join(os.getcwd(), "settings", "serial ports", f"{configuration_name}.csv")
+        base_path = self.get_write_path()
+
+        settings_dir = os.path.join(base_path, "settings", "serial ports")
+        os.makedirs(settings_dir, exist_ok=True)
+
+        settings_path = os.path.join(settings_dir, f"{configuration_name}.csv")
 
         try:
             with open(settings_path, "w", newline="", encoding="utf-8") as file:
@@ -290,25 +319,23 @@ class SerialPortSetting(SettingPage):
         '''Function for the edit button on summary page, brings user
         to the edit page'''
         self.refresh_tabs()
-        self.edit_page("Map RFID")
-        self.edit_page("Data Collection")
+        self.edit_page("Serial Settings")
 
     def go_to_summary_page(self):
         '''Refresh tabs and display the summary page'''
         self.refresh_tabs()
-        self.summary_page("Map RFID")
-        self.summary_page("Data Collection")
+        self.summary_page("Serial Settings")
     
     def refresh_tabs(self):
         '''refreshes the page when updates are made'''
-        self.tab_view.delete("Map RFID")
-        self.tab_view.delete("Data Collection")
-        self.tab_view.add("Map RFID")
-        self.tab_view.add("Data Collection")
+        self.tab_view.delete("Serial Settings")
+        self.tab_view.add("Serial Settings")
 
     def set_preference(self, port, file_name):
         '''Save a specific configuration for a given port in its own preference folder.'''
-        preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference", "device")
+        base_path = self.get_write_path()
+
+        preference_dir = os.path.join(base_path, "settings", "serial ports", "preference", "device")
         os.makedirs(preference_dir, exist_ok=True)
         preference_path = os.path.join(preference_dir, "preferred_config.txt")
         
@@ -321,7 +348,9 @@ class SerialPortSetting(SettingPage):
 
     def set_rfid(self, port, file_name):
         '''Save a specific configuration for a given port in its own preference folder.'''
-        preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference", "reader")
+        base_path = self.get_write_path()
+
+        preference_dir = os.path.join(base_path, "settings", "serial ports", "preference", "reader")
         os.makedirs(preference_dir, exist_ok=True)
         preference_path = os.path.join(preference_dir, "rfid_config.txt")
         
@@ -332,25 +361,36 @@ class SerialPortSetting(SettingPage):
         except Exception as e:
             print(f"Error saving RFID Reader for {port}: {e}")
 
-    def confirm_setting(self, f = None):
-        '''select a configuration and use it as current serial
-        port setting'''
-        if f:
-            file_name = os.path.join(self.port_setting_configuration_path, f)
-        else:
-            file_name = os.path.join(self.port_setting_configuration_path, self.current_configuration_name.get())
-        file = open(file_name)
-        csv_reader = reader(file)
-        for line in csv_reader:
-            self.baud_rate_var.set(line[0])
-            self.parity_var.set(line[1])
-            self.flow_control_var.set(line[2])
-            self.data_bits_var.set(line[3])
-            self.stop_bits_var.set(line[4])
-            self.input_bype_var.set(line[5])
-            self.serial_port.set(line[6])
-        file.close()
+    def confirm_setting(self, f=None):
+        '''select a configuration and use it as current serial port setting'''
+        read_path = self.get_read_path()
+        write_path = self.get_write_path()
+        
+        read_config_dir = os.path.join(read_path, "settings", "serial ports")
+        write_config_dir = os.path.join(write_path, "settings", "serial ports")
 
+        if f:
+            file_name = f
+        else:
+            file_name = self.current_configuration_name.get()
+
+        full_path = os.path.join(write_config_dir, file_name)
+        if not os.path.exists(full_path):
+            full_path = os.path.join(read_config_dir, file_name)
+
+        try:
+            with open(full_path) as file:
+                csv_reader = reader(file)
+                for line in csv_reader:
+                    self.baud_rate_var.set(line[0])
+                    self.parity_var.set(line[1])
+                    self.flow_control_var.set(line[2])
+                    self.data_bits_var.set(line[3])
+                    self.stop_bits_var.set(line[4])
+                    self.input_bype_var.set(line[5])
+                    self.serial_port.set(line[6])
+        except Exception as e:
+            print(f"Error loading configuration: {e}")
 
     def edit_configuration(self):
         '''allow user to edit existing configuration by overwriting

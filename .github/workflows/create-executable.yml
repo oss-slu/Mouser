@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - DatabaseRework
+      - SaveSettings
 
 jobs:
   build:
@@ -48,7 +49,7 @@ jobs:
             --hidden-import "babel.numbers" \
             --add-data "shared/images/*:shared/images" \
             --add-data "shared/sounds/*:shared/sounds" \
-            --add-data "settings/serial ports/*:settings/serial ports" \
+            --add-data "settings:settings" \
             main.py
         shell: bash #run in bash to avoid syntax error
 
