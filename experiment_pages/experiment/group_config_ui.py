@@ -69,7 +69,7 @@ class GroupConfigUI(MouserPage): # pylint: disable= undefined-variable
         type_label.grid(row=0, column=0, columnspan=3, pady=8)
 
         # Since item is now a string, we directly use it
-        self.type = BooleanVar()  # Variable to hold the input method
+        self.type = BooleanVar(value=True)  # Variable to hold the input method
         self.button_vars.append(self.type)
 
         CTkLabel(self.item_frame, text=item).grid(row=1, column=0, padx=10, pady=10, sticky=W)

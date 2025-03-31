@@ -77,7 +77,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.group_num.grid(row=8, column=1, sticky=W, padx=pad_x, pady=pad_y)
         self.num_per_cage.grid(row=9, column=1, sticky=W, padx=pad_x, pady=pad_y)
 
-        self.rfid = BooleanVar()
+        self.rfid = BooleanVar(value=True)
 
         CTkRadioButton(self.rfid_frame, text='Yes', variable=self.rfid, value=1).grid(row=0, column=0,
                     padx=pad_x, pady=pad_y)
