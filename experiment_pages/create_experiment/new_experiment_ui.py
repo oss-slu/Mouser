@@ -107,6 +107,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.animal_num.bind("<KeyRelease>", lambda event: self.enable_next_button())
         self.group_num.bind("<KeyRelease>", lambda event: self.enable_next_button())
         self.num_per_cage.bind("<KeyRelease>", lambda event: self.enable_next_button())
+        self.investigators.bind("<Return>", lambda event: [self.add_investigator(), self.investigators.delete(0, END)])
 
     def enable_next_button(self):
         if self.exper_name.get() and self.species.get() \
