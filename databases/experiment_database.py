@@ -154,6 +154,12 @@ class ExperimentDatabase:
         self._c.execute("SELECT id FROM experiment")
         result = self._c.fetchone()
         return result[0] if result else None
+    
+    def get_experiment_name(self):
+        '''Returns the experiment name from the experiment table.'''
+        self._c.execute("SELECT name FROM experiment")
+        result = self._c.fetchone()
+        return result[0] if result else None
 
     def get_measurement_items(self):
         '''Returns the list of measurement items for the experiment.'''
