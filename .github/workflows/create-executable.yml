@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - DatabaseRework
+      - SaveSettings
 
 jobs:
   build:
