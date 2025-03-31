@@ -1,17 +1,14 @@
 '''Contains cage configuration page and behaviour.'''
 from customtkinter import *
-from tkcalendar import DateEntry
 from shared.tk_models import *
 from shared.scrollable_frame import ScrolledFrame
 from databases.database_controller import DatabaseController
 from shared.audio import AudioManager
 
-#pylint: disable= undefined-variable
 class CageConfigurationUI(MouserPage):
     '''The Frame that allows user to configure the cages.'''
     def __init__(self, database, parent: CTk, prev_page: CTkFrame = None):
-
-        super().__init__(parent, "Group Configuration", prev_page)
+        super().__init__(parent, "Cage Configuration", prev_page)
 
         self.prev_page = prev_page
         self.db = DatabaseController(database)
@@ -22,12 +19,12 @@ class CageConfigurationUI(MouserPage):
         input_frame = CTkFrame(scroll_canvas)
         self.config_frame = CTkFrame(scroll_canvas)
 
-        auto_button = CTkButton(input_frame, text='Randomize', width=15,
-                            command= self.randomize)
-        save_button = CTkButton(input_frame, text='Save', width=15,
-                            command= self.save_to_database)
+        random_button = CTkButton(input_frame, text='Randomize', width=15,
+                            command=self.randomize)
         swap_button = CTkButton(input_frame, text='Swap', width=15,
-                            command= self.perform_swap)
+                            command=self.perform_swap)
+        auto_button = CTkButton(input_frame, text='AutoSort', width=15,
+                                command=self.autosort)
 
         self.id_input = CTkEntry(input_frame, width=110)
         self.cage_input = CTkEntry(input_frame, width=110)
@@ -39,103 +36,81 @@ class CageConfigurationUI(MouserPage):
         self.cage_input.bind("<Button-1>", lambda arg='cage': self.clear_entry(arg))
 
         self.pad_x, self.pad_y = 10, 10
-        self.calendar = DateEntry(input_frame, date_pattern='yyyy-mm-dd')
-        self.calendar.grid(row=0, column=5, padx=self.pad_x, pady=self.pad_y)
 
         auto_button.grid(row=0, column=0, padx=self.pad_x, pady=self.pad_y)
-        self.id_input.grid(row=0, column=1, padx=self.pad_x, pady=self.pad_y)
-        self.cage_input.grid(row=0, column=2, padx=self.pad_x, pady=self.pad_y)
-        swap_button.grid(row=0, column=3, padx=self.pad_x, pady=self.pad_y)
-        save_button.grid(row=0, column=4, padx=self.pad_x, pady=self.pad_y)
+        random_button.grid(row=0, column=1, padx=self.pad_x, pady=self.pad_y)
+        swap_button.grid(row=0, column=2, padx=self.pad_x, pady=self.pad_y)
 
-        for i in range(0, 5):
+        for i in range(0, 3):
             input_frame.grid_columnconfigure(i, weight=1)
         input_frame.grid_rowconfigure(0, weight=1)
 
         input_frame.pack(side=TOP, fill=X, anchor='center')
-        self.config_frame.pack(side=TOP, fill=BOTH, anchor ='center')
+        self.config_frame.pack(side=TOP, fill=BOTH, anchor='center')
         self.animal_buttons = {}
-        self.selected_animals = set() 
+        self.selected_animals = set()
 
         self.update_config_frame()
 
-
     def update_config_frame(self):
-        '''updates the config frame to reflect new information.'''
+        '''Updates the config frame to reflect new information.'''
         for widget in self.config_frame.winfo_children():
             widget.destroy()
-        self.create_group_frames()
+        self.create_cage_layout()
 
-
-    def create_group_frames(self):
-        '''Initializes group frames from information in database.'''
-        groups = self.db.get_groups()
-
+    def create_cage_layout(self):
+        '''Creates the layout of all cages and their animals.'''
+        cages = self.db.get_groups()  # Each group represents a cage
         label_style = CTkFont("Arial", 12)
 
-        for group in groups:
-            group_frame = CTkFrame(self.config_frame, border_width=3, border_color="#00e7ff", bg_color='#0097A7')
-            label = CTkLabel(group_frame, text=group, bg_color='#0097A7', font=label_style)
+        for cage_name in cages:
+            cage_frame = CTkFrame(self.config_frame, border_width=3, border_color="#00e7ff", bg_color='#0097A7')
+
+            # Cage header
+            label = CTkLabel(cage_frame, text=f'Cage: {cage_name}', bg_color='#0097A7', font=label_style)
             label.pack(side=TOP, padx=self.pad_x, pady=self.pad_y, anchor='center')
 
-            self.create_cage_frames(group, group_frame)
-            #Only Necessary Change is the side of the frame.
-            #From TOP to LEFT gives us the cage groups horizontally.
-            group_frame.pack(side=LEFT, expand=TRUE, fill=BOTH, anchor='center')
+            # Create header frame for labels
+            header_frame = CTkFrame(cage_frame)
+            CTkLabel(header_frame, text='Animal ID').pack(side=LEFT, anchor='center')
 
-    def create_cage_frames(self, group, group_frame):
-        '''Initializes cage frames for given group and group frame
-        from information in database.'''
-        cages = self.db.get_cages_in_group(group)
-        meas_items = self.db.get_measurement_items()
+            # Get and display animals in this cage using the database controller
+            animals = self.db.get_animals_in_group(cage_name)
 
-
-        for cage in cages:
-            cage_frame = CTkFrame(group_frame, border_width=3, border_color="#00e7ff")
-            CTkLabel(cage_frame, text='Cage ' + cage).pack(side=TOP, anchor='center')
-
-            id_weight_label_frame = CTkFrame(cage_frame)
-
-            CTkLabel(id_weight_label_frame, text='Animal ID').pack(side=LEFT, anchor='center')
-            for item in meas_items:
-
-                CTkLabel(id_weight_label_frame, text=item).pack(side=LEFT, anchor='center')
-
-            id_weight_label_frame.pack(side=TOP, expand=TRUE, fill=BOTH, anchor='center')
-
-            self.create_animal_frames(cage, cage_frame)
+            for animal in animals:
+                animal_id = str(animal[0])
+                # Create a new frame for each animal to hold the button
+                animal_frame = CTkFrame(cage_frame)
+                animal_button = CTkButton(
+                    animal_frame,
+                    text=animal_id,
+                    command=lambda a=animal_id: self.toggle_animal_selection(a),
+                    fg_color="#0097A7",
+                    hover_color="#00b8d4",
+                    text_color="white"
+                )
+                animal_button.pack(fill=X, pady=2)
+                animal_frame.pack(fill=X, pady=1)
+                self.animal_buttons[animal_id] = animal_button
 
             cage_frame.pack(side=LEFT, expand=TRUE, fill=BOTH, anchor='center')
 
-    def create_animal_frames(self, cage, cage_frame):
-        animals = self.db.get_animals_in_cage(cage)
-        for animal in animals:
-            animal_id = str(animal)  # Convert to string to avoid type inconsistency
-            animal_button = CTkButton(cage_frame, text=animal_id,
-                                    command=lambda a=animal_id: self.toggle_animal_selection(a))
-            animal_button.pack(pady=2)
-            self.animal_buttons[animal_id] = animal_button
-            print(f"Button created for Animal ID: {animal_id}")  # Debugging output
-
     def toggle_animal_selection(self, animal_id):
-        print(f"Toggling selection for Animal ID: {animal_id}")  # Debug output
+        '''Toggles the selection state of an animal.'''
         button = self.animal_buttons.get(animal_id)
         if button:
             if animal_id in self.selected_animals:
                 self.selected_animals.remove(animal_id)
-                button.configure(bg_color="SystemButtonFace")  # Deselected state
+                button.configure(fg_color="#0097A7")  # Reset to default blue
+                print(f"Deselected animal: {animal_id}")
             else:
-                if len(self.selected_animals) < 2:  # Limit to two selections
+                if len(self.selected_animals) < 2:
                     self.selected_animals.add(animal_id)
-                    button.configure(bg_color="#D5E8D4")  # Selected state
+                    button.configure(fg_color="#D5E8D4")  # Selected state green
+                    print(f"Selected animal: {animal_id}")
+            print(f"Currently selected animals: {self.selected_animals}")
         else:
-            print(f"Error: No button found for Animal ID: {animal_id}")  # Error message if no button found
-
-    def update_ui_after_selection(self):
-        # Enable or disable the swap button based on selection count
-        self.swap_button['state'] = 'normal' if len(self.selected_animals) == 2 else 'disabled'
-        # Update input fields or other UI elements as necessary
-
+            print(f"Error: No button found for Animal ID: {animal_id}")
 
     def clear_entry(self, input_type):
         '''Clears entry from input frames.'''
@@ -145,107 +120,54 @@ class CageConfigurationUI(MouserPage):
             self.cage_input.delete(0, END)
 
     def randomize(self):
-        '''Autosorts the animals into cages in group.'''
+        '''Autosorts the animals into cages.'''
+        self.db.randomize_cages()
+        self.update_config_frame()
+
+    def autosort(self):
+        '''Calls database's autosort function.'''
         self.db.autosort()
         self.update_config_frame()
-        
+
     def perform_swap(self):
-        '''Attempts to swap two selected animals.'''
+        '''Swaps two selected animals between cages.'''
         if len(self.selected_animals) != 2:
             self.raise_warning("Please select exactly two animals to swap.")
             return
 
         animal_id1, animal_id2 = self.selected_animals
 
-        # Check if the animals are in different cages before swapping
-        old_cage1 = self.db.get_animal_current_cage(animal_id1)
-        old_cage2 = self.db.get_animal_current_cage(animal_id2)
+        # Get the current cages through the database controller
+        cage1 = self.db.get_animal_current_cage(animal_id1)
+        cage2 = self.db.get_animal_current_cage(animal_id2)
 
-        if old_cage1 == old_cage2:
+        if cage1 == cage2:
             self.raise_warning("Both animals are in the same cage.")
             return
 
-        # Perform the swap
-        self.db.update_animal_cage(animal_id1, old_cage1, old_cage2)
-        self.db.update_animal_cage(animal_id2, old_cage2, old_cage1)
-
-        self.update_config_frame()
-        print(f"Swapped animals {animal_id1} and {animal_id2} between cages {old_cage2} and {old_cage1}.")
-
-        # Clear selections after swap
-        self.clear_selections()
-
-        # Update the UI to reflect the swap
-        self.update_config_frame()
-
-    def clear_selections(self):
-        ## Emptys the set of selected animals
+        # Perform the swap using the database controller
+        self.db.update_animal_cage(animal_id1, cage2)  # Move animal 1 to cage 2
+        self.db.update_animal_cage(animal_id2, cage1)  # Move animal 2 to cage 1
 
         self.selected_animals.clear()
+        self.update_config_frame()
 
-    def raise_warning(self, option: int):
-        '''Raises a warning page.'''
-        message = CTk()
-        message.title("WARNING")
-        message.geometry('320x100')
-        message.resizable(False, False)
+    def raise_warning(self, message):
+        '''Raises a warning page with the given message.'''
+        message_window = CTk()
+        message_window.title("WARNING")
+        message_window.geometry('320x100')
+        message_window.resizable(False, False)
 
-        # Default label text in case the option does not match any condition
-        default_text = 'An unknown error has occurred.'
-        if option == 1:
-            text = 'Animal ID and Cage ID must be integers.'
-        elif option == 2:
-            text = 'Not a valid Animal ID.'
-        elif option == 3:
-            text = 'Not a valid Cage ID.'
-        elif option == 4:
-            text = 'Number of animals in a cage must not exceed ' + str(self.db.get_cage_max())
-        else:
-            text = default_text
-
-        label = CTkLabel(message, text=text)
+        label = CTkLabel(message_window, text=message)
         label.grid(row=0, column=0, padx=10, pady=10)
 
-        ok_button = CTkButton(message, text="OK", width=10,
-                        command=lambda: [message.destroy()])
+        ok_button = CTkButton(message_window, text="OK", width=10,
+                            command=lambda: message_window.destroy())
         ok_button.grid(row=2, column=0, padx=10, pady=10)
 
         AudioManager.play(filepath='sounds/error.wav')
-
-        message.mainloop()
-
-
-    def check_swap_input(self):
-        '''Checks to see if the animal and cage inputs are valid
-        and raises a warning if any issues occur.'''
-        animal = self.id_input.get()
-        cage = self.cage_input.get()
-
-        valid_animal = self.db.check_valid_animal(animal)
-        valid_cage = self.db.check_valid_cage(cage)
-
-        if animal == '' or cage == '':
-            self.raise_warning(1)
-
-        elif not isinstance(int(animal), int) or not isinstance(int(cage), int):
-            self.raise_warning(1)
-
-        elif not valid_animal:
-            self.raise_warning(2)
-
-        elif not valid_cage:
-            self.raise_warning(3)
-
-        elif isinstance(int(animal), int) and isinstance(int(cage), int) and valid_animal and valid_cage:
-            self.perform_swap(animal, cage)
-
-    def check_num_in_cage_allowed(self):
-        '''Checks if the number of animals in a cage is allowed.'''
-        return self.db.check_num_in_cage_allowed()
-
-    def update_controller_attributes(self):
-        '''Resets attributes in the database.'''
-        self.db.reset_attributes()
+        message_window.mainloop()
 
     def save_to_database(self):
         '''Saves updated values to database.'''
@@ -253,7 +175,11 @@ class CageConfigurationUI(MouserPage):
             self.db.update_experiment()
             raise_frame(self.prev_page)
         else:
-            self.raise_warning(4)
+            self.raise_warning(f'Number of animals in a cage must not exceed {self.db.get_cage_max()}')
+
+    def check_num_in_cage_allowed(self):
+        '''Checks if the number of animals in a cage is allowed.'''
+        return self.db.check_num_in_cage_allowed()
 
     def close_connection(self):
         '''Closes database file.'''

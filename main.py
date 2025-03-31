@@ -112,6 +112,7 @@ def open_test():
 def open_serial_port_setting():
     '''opens the serial port setting page'''
     SerialPortSetting("device", rfid_serial_port_controller) # pylint: disable=unused-variable
+
 def save_file():
     '''Command for the 'save file' option in menu bar.'''
     print("Current", CURRENT_FILE_PATH)
@@ -151,6 +152,7 @@ file_dropdown.add_option(option="Save File", command = save_file)
 
 settings_dropdown = CustomDropdownMenu(widget=settings_menu)
 settings_dropdown.add_option(option="Serial Port", command = open_serial_port_setting)
+settings_dropdown.add_option(option="Test Serials", command=open_test)
 
 root.config(menu=menu_bar)
 

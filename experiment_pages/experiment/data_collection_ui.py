@@ -26,7 +26,7 @@ class DataCollectionUI(MouserPage):
 
         self.measurement_items = self.database.get_measurement_items()
 
-        ## ENSURE ANIMALS ARE IN DATABASE BEFORE EXPERIMENT FOR EXPERIMENTS W/O RFID ##
+        ## ENSURE ANIMALS ARE IN DATABASE BEFORE EXPERIMENT FOR ALL EXPERIMENTS ##
         if self.database.experiment_uses_rfid() != 1 and self.database.get_animals() == []:
             print("No RFIDs Detected. Filling out Database\n")
 
@@ -61,11 +61,11 @@ class DataCollectionUI(MouserPage):
                 i = i + 1
 
 
-        # Call the new method to insert blank data for today
-        if len(self.database.get_measurements_by_date(date.today())) == 0:
-            today_date = str(date.today())
-            animal_ids = [animal[0] for animal in self.database.get_animals()]  # Get all animal IDs
-            self.database.insert_blank_data_for_day(animal_ids, today_date)  # Insert blank dataS
+        # # Call the new method to insert blank data for today
+        # if len(self.database.get_measurements_by_date(date.today())) == 0:
+        #     today_date = str(date.today())
+        #     animal_ids = [animal[0] for animal in self.database.get_animals()]  # Get all animal IDs
+        #     self.database.insert_blank_data_for_day(animal_ids, today_date)  # Insert blank dataS
 
         self.measurement_strings = []
         self.measurement_strings.append(self.measurement_items)
@@ -289,7 +289,6 @@ class DataCollectionUI(MouserPage):
         # Update each row in the table
         for child in self.table.get_children():
             animal_id = self.table.item(child)["values"][0]
-            rfid = self.database.get_animal_rfid(animal_id)  # Fetch RFID
             found_data = False
             for val in values:
                 if str(val[0]) == str(animal_id):  # val[0] is animal_id
