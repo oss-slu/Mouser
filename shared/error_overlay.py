@@ -1,5 +1,7 @@
 from customtkinter import *
 
+
+# command=lambda: fading_border_effect(welcome_frame)
 # Function to gradually change border thickness for the fading effect (with red color)
 # this is currently not utilised anywhere
 def fading_border_effect(frame):
@@ -13,7 +15,6 @@ def fading_border_effect(frame):
         elif step >= 13 and step < 26:  # Gradually decrease thickness
             new_thickness = current_thickness - 2
         else:
-            frame.lower()
             return  # Stop the effect after the transition is complete
 
         # Apply new border thickness and set color to red
@@ -24,4 +25,3 @@ def fading_border_effect(frame):
 
     # Start the effect with an initial step value of 0
     fade_in_out(0)
-    frame.lift()

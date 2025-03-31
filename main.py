@@ -16,7 +16,6 @@ from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment.select_experiment_ui import ExperimentsUI
 from experiment_pages.experiment.test_screen import TestScreen
-
 from shared.error_overlay import *
 
 # Function to resolve resource paths (must be defined before usage)
@@ -184,7 +183,7 @@ new_file_button.pack(pady=(10, 5), padx=20, fill='x', expand=True)
 open_file_button.pack(pady=(5, 10), padx=20, fill='x', expand=True)
 test_screen_button.pack(pady=(5, 10), padx=20, fill='x', expand=True)
 
-border_button = CTkButton(root, text="Activate Border Fade", command=fading_border_effect(main_frame), width=200, height=50, corner_radius=10)
+border_button = CTkButton(root, text="Activate Border Fade", command=lambda: fading_border_effect(welcome_frame), width=200, height=50, corner_radius=10)
 border_button.pack(pady=(10, 10), padx=20, fill='x', expand=True)
 
 
