@@ -62,7 +62,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.investigators = CTkEntry(self.main_frame, width=140)
         self.species = CTkEntry(self.main_frame, width=140)
 
-        self.measure_items = CTkEntry(self.main_frame, width=140)
+        self.measure_items = CTkEntry(self.main_frame, width=140, textvariable=StringVar(value="Weight"))
 
         self.animal_num = CTkEntry(self.main_frame, width=110)
         self.group_num = CTkEntry(self.main_frame, width=110)
@@ -77,7 +77,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.group_num.grid(row=8, column=1, sticky=W, padx=pad_x, pady=pad_y)
         self.num_per_cage.grid(row=9, column=1, sticky=W, padx=pad_x, pady=pad_y)
 
-        self.rfid = BooleanVar()
+        self.rfid = BooleanVar(value=True)
 
         CTkRadioButton(self.rfid_frame, text='Yes', variable=self.rfid, value=1).grid(row=0, column=0,
                     padx=pad_x, pady=pad_y)
@@ -107,6 +107,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.animal_num.bind("<KeyRelease>", lambda event: self.enable_next_button())
         self.group_num.bind("<KeyRelease>", lambda event: self.enable_next_button())
         self.num_per_cage.bind("<KeyRelease>", lambda event: self.enable_next_button())
+        self.investigators.bind("<Return>", lambda event: [self.add_investigator(), self.investigators.delete(0, END)])
 
     def enable_next_button(self):
         if self.exper_name.get() and self.species.get() \
