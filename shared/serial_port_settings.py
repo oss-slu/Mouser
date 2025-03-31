@@ -39,7 +39,7 @@ class SerialPortSetting(SettingPage):
             base_path = sys._MEIPASS
         else:
             # Running from source
-            base_path = os.getcwd()
+            base_path = os.path.dirname(sys.argv[0])
 
         self.port_setting_configuration_path = os.path.join(base_path, "settings", "serial ports")
 
@@ -55,9 +55,10 @@ class SerialPortSetting(SettingPage):
 
         if preference:
             if preference == "device":
-                self.preference_path = os.path.join(os.getcwd(), "settings", "serial ports", "preference", "device", "preferred_config.txt")
+                self.preference_path = os.path.join(os.path.dirname(sys.argv[0]), "settings", "serial ports", "preference", "device", "preferred_config.txt")
             elif preference == "reader":
-                self.preference_path = os.path.join(os.getcwd(), "settings", "serial ports", "preference", "reader", "rfid_config.txt")
+                self.preference_path = os.path.join(os.path.dirname(sys.argv[0]), "settings", "serial ports", "preference", "reader", "rfid_config.txt")
+
             else:
                 self.preference_path = None  # Fallback if no valid type
 
@@ -277,7 +278,7 @@ class SerialPortSetting(SettingPage):
         if hasattr(sys, '_MEIPASS'):
             base_path = os.path.dirname(sys.executable)  # Path where the .exe resides
         else:
-            base_path = os.getcwd()
+            base_path = os.path.dirname(sys.argv[0])
 
         settings_dir = os.path.join(base_path, "settings", "serial ports")
         os.makedirs(settings_dir, exist_ok=True)
@@ -319,7 +320,7 @@ class SerialPortSetting(SettingPage):
         if hasattr(sys, '_MEIPASS'):
             base_path = os.path.dirname(sys.executable)
         else:
-            base_path = os.getcwd()
+            base_path = os.path.dirname(sys.argv[0])
 
         preference_dir = os.path.join(base_path, "settings", "serial ports", "preference", "device")
         os.makedirs(preference_dir, exist_ok=True)
@@ -337,7 +338,7 @@ class SerialPortSetting(SettingPage):
         if hasattr(sys, '_MEIPASS'):
             base_path = os.path.dirname(sys.executable)
         else:
-            base_path = os.getcwd()
+            base_path = os.path.dirname(sys.argv[0])
 
         preference_dir = os.path.join(base_path, "settings", "serial ports", "preference", "reader")
         os.makedirs(preference_dir, exist_ok=True)
@@ -355,7 +356,7 @@ class SerialPortSetting(SettingPage):
         if hasattr(sys, '_MEIPASS'):
             base_path = os.path.dirname(sys.executable)
         else:
-            base_path = os.getcwd()
+            base_path = os.path.dirname(sys.argv[0])
 
         config_dir = os.path.join(base_path, "settings", "serial ports")
         
