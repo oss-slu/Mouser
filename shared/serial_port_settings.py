@@ -84,14 +84,20 @@ class SerialPortSetting(SettingPage):
         self.summary_page("Map RFID")
         self.summary_page("Data Collection")
 
-        if os.path.exists(self.port_setting_configuration_path):
-            self.available_configuration = [
-                file for file in listdir(self.port_setting_configuration_path)
-                if isfile(join(self.port_setting_configuration_path, file))
-            ]
-        else:
-            print(f"⚠️ Warning: Config path not found: {self.port_setting_configuration_path}")
-            self.available_configuration = []
+        self.available_configuration = []
+        read_config_path = os.path.join(self.get_read_path(), "settings", "serial ports")
+        write_config_path = os.path.join(self.get_write_path(), "settings", "serial ports")
+
+        # Read from both
+        for path in [read_config_path, write_config_path]:
+            if os.path.exists(path):
+                for file in listdir(path):
+                    full_path = join(path, file)
+                    if isfile(full_path) and file not in self.available_configuration:
+                        self.available_configuration.append(file)
+            else:
+                print(f"⚠️ Warning: Config path not found: {path}")
+
 
         
     def get_base_path(self):
