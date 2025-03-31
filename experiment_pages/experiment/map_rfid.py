@@ -212,13 +212,17 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
     def simulate_all_rfid(self):
         '''Simulates RFID for all remaining unmapped animals.'''
         total_needed = self.db.get_total_number_animals()
-        current_count = len(self.animals)
+        current_count = len(self.db.get_animals())
         
         print(f"Simulating RFIDs: {current_count} mapped, {total_needed} total needed")
+
+        if current_count >= total_needed:
+            self.raise_warning()
+            return
         
         while current_count < total_needed:
             self.add_random_rfid()
-            current_count = len(self.animals)
+            current_count = len(self.db.get_animals())
             # Force UI update
             self.update()
             self.scroll_to_latest_entry()
@@ -238,7 +242,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
     def add_random_rfid(self):
         '''Adds a random rfid value to the next animal.'''
-        if len(self.animals) >= self.db.get_total_number_animals():
+        active_animals = len(self.db.get_animals())
+        if active_animals >= self.db.get_total_number_animals():
             self.raise_warning()
             return
 
@@ -321,7 +326,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         # Stop listening before checking conditions
         self.stop_listening()
 
-        total_scanned = len(self.db.get_animals_rfid())  # Get count of scanned RFIDs
+        total_scanned = len(self.db.get_animals())  # Get count of scanned RFIDs
         total_expected = db.get_number_animals()  # Expected count from DB
 
         print(f"✅ Scanned: {total_scanned} / Expected: {total_expected}")
@@ -377,7 +382,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         for item in selected_items:
             item_id = int(self.table.item(item, 'values')[0])
             self.table.delete(item)
-            self.db.set_animal_active_status(item_id, 0)
+            self.db.remove_animal(item_id)
+            print("Total number of animal rows in the table:", len(self.table.get_children()))
 
         self.change_entry_text()
 
@@ -394,23 +400,17 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
     def get_next_animal(self):
         '''returns the next animal in our experiment.'''
-        min_unused = 1
+        total_animals = self.db.get_total_number_animals()
+        # Get list of existing ACTIVE animal IDs from the database
+        existing_animal_ids = set(self.db.get_all_animals())  # Changed from get_all_animal_ids()
+        
+        # Find the first gap in the sequence
+        for animal_id in range(1, total_animals + 1):
+            if animal_id not in existing_animal_ids:
+                return animal_id
+        
+        return total_animals + 1
 
-        for animal in sorted(self.animals):
-            if animal[0] > min_unused:
-                break
-            min_unused += 1
-
-        return min_unused
-
-        '''
-        next_animal = self.animals[-1][0] + 1
-        for i, animal in enumerate(self.animals):
-            if i < len(self.animals) - 1 and animal[0] + 1 != self.animals[i+1][0]:
-                next_animal = animal[0] + 1
-                break
-        return next_animal
-        '''
 
     def open_change_rfid(self):
         '''Opens change RFID window if an item is selected, otherwise shows a warning.'''
@@ -451,9 +451,40 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         message.mainloop()
 
+    def update(self):
+        """Updates the table view to match the database state."""
+        # Clear existing table entries
+        for item in self.table.get_children():
+            self.table.delete(item)
+        
+        # Clear existing animals list
+        self.animals.clear()
+        
+        # Fetch all active animals from database
+        animals_setup = self.db.get_all_animal_ids()
+        
+        # Rebuild table with fresh data
+        for animal in animals_setup:
+            rfid = self.db.get_animal_rfid(animal)
+            value = (int(animal), rfid)
+            self.table.tag_configure('text_font', font=('Arial', 25))
+            self.table.insert('', END, values=value, tags='text_font')
+            self.animals.append(value)
+        
+        # Update the animal ID entry text
+        if animals_setup:
+            self.animal_id_entry_text.set(str(self.get_next_animal()))
+        else:
+            self.animal_id_entry_text.set("1")
+        
+        # Scroll to show the latest entry
+        self.scroll_to_latest_entry()
+
     def press_back_to_menu_button(self):
         '''Handles back to menu button press.'''
-        if len(self.db.get_all_animals_rfid()) != len(self.db.get_animals()):
+        print("Animals mapped: ", len(self.db.get_all_animals_rfid()), "\n")
+        print("Animals needed: ", self.db.get_total_number_animals())
+        if len(self.db.get_all_animals_rfid()) != self.db.get_total_number_animals():
             self.raise_warning('Not all animals have been mapped to RFIDs')
         else:
             # Save the current state before closing the database
@@ -494,17 +525,17 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             self.db.set_animal_active_status(animal_id, 0)  # Mark as inactive
             self.animals = [(index, rfid) for (index, rfid) in self.animals if index != animal_id]
 
-        # Then update the UI table
-        self.change_entry_text()
+            # Then update the UI table
+            self.change_entry_text()
 
-        # Then decrease the maximum number of animals
-        current_max = self.db.get_number_animals()
-        if current_max <= 0:
-            self.raise_warning("Cannot reduce animal count below 0")
-            return
-
-        # Decrease the maximum number of animals by 1
-        self.db.set_number_animals(current_max)
+            # Then decrease the maximum number of animals
+            current_max = self.db.get_number_animals()
+            if current_max <= 0:
+                self.raise_warning("Cannot reduce animal count below 0")
+                return
+            else:
+                # Decrease the maximum number of animals by 1
+                self.db.set_number_animals(current_max)
 
 class ChangeRFIDDialog():
     '''Change RFID user interface.'''
@@ -534,11 +565,15 @@ class ChangeRFIDDialog():
         self.root.mainloop()
 
     def simulate_all_rfid(self):
-        while len(self.animals) != self.db.get_number_animals():
-            self.add_random_rfid()
+        self.map_rfid.simulate_all_rfid()
 
     def add_random_rfid(self):
         '''Adds a random frid number to selected value.'''
+        active_animals = len(self.map_rfid.db.get_all_animal_ids())
+        print("TotalNumber of active animals: ", active_animals)
+        if active_animals >= self.map_rfid.db.get_total_number_animals():
+            self.map_rfid.raise_warning()
+            return
         rfid = get_random_rfid()
         self.map_rfid.change_selected_value(rfid)
         self.close()

@@ -110,11 +110,9 @@ class ExperimentDatabase:
             # Update group count
             self._c.execute('''UPDATE groups
                             SET num_animals = num_animals - 1
-                            WHERE group_id = ?''', (group_id))
+                            WHERE group_id = ?''', (group_id,))
 
-            # Deactivate animal instead of deleting
-            self._c.execute("UPDATE animals SET active = 0 WHERE animal_id = ?", (animal_id,))
-            self._conn.commit()
+            self._c.execute("DELETE FROM animals WHERE animal_id = ?", (animal_id,))
         else:
             raise LookupError(f"No animal found with ID {animal_id}")
 
@@ -191,7 +189,7 @@ class ExperimentDatabase:
         self._c.execute("SELECT num_animals FROM experiment")
         result = self._c.fetchone()
         if result:
-            print(result[0])
+            print("Total number of animals in DB: ",result[0])
             return result[0]
         return 0
 
@@ -414,12 +412,21 @@ class ExperimentDatabase:
         return result[0] if result else 0  # Default to manual (0)
 
     def get_all_animal_ids(self):
-        '''Returns a list of all animal IDs that have RFIDs mapped to them.'''
+        '''Returns a list of all active animal IDs that have RFIDs mapped to them.'''
         self._c.execute('''
             SELECT animal_id
             FROM animals
             WHERE rfid IS NOT NULL
             AND active = 1
+        ''')
+        return [animal[0] for animal in self._c.fetchall()]
+    
+    def get_all_animals(self):
+        '''Returns a list of ALL animals ACTIVE OR NOT with RFIDs'''
+        self._c.execute('''
+            SELECT animal_id
+            FROM animals
+            WHERE rfid IS NOT NULL
         ''')
         return [animal[0] for animal in self._c.fetchall()]
 
