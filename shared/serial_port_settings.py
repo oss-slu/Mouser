@@ -33,9 +33,9 @@ class SerialPortSetting(SettingPage):
         else:
             self.serial_port_controller = SerialPortController(self.preference)
 
-        base_path = self.get_base_path()
-
-        self.port_setting_configuration_path = os.path.join(base_path, "settings", "serial ports")
+        read_path = self.get_read_path()
+        write_path = self.get_write_path()
+        self.port_setting_configuration_path = os.path.join(write_path, "settings", "serial ports")
 
 
         # setting value element
@@ -49,9 +49,10 @@ class SerialPortSetting(SettingPage):
 
         if preference:
             if preference == "device":
-                self.preference_path = os.path.join(base_path, "settings", "serial ports", "preference", "device", "preferred_config.txt")
+                self.preference_path = os.path.join(read_path, "settings", "serial ports", "preference", "device", "preferred_config.txt")
             elif preference == "reader":
-                self.preference_path = os.path.join(base_path, "settings", "serial ports", "preference", "reader", "rfid_config.txt")
+                self.preference_path = os.path.join(read_path, "settings", "serial ports", "preference", "reader", "rfid_config.txt")
+
             else:
                 self.preference_path = None  # Fallback if no valid type
             
@@ -98,6 +99,19 @@ class SerialPortSetting(SettingPage):
         if getattr(sys, 'frozen', False):
             return os.path.dirname(sys.executable)
         return os.path.dirname(os.path.abspath(sys.argv[0]))
+    
+    def get_read_path(self):
+        """Return the path where the settings are read from."""
+        if getattr(sys, 'frozen', False):
+            return sys._MEIPASS  # temp unpacked dir
+        return os.path.dirname(os.path.abspath(sys.argv[0]))
+
+    def get_write_path(self):
+        """Return the path where the settings are written to."""
+        if getattr(sys, 'frozen', False):
+            return os.path.dirname(sys.executable)  # EXE location
+        return os.path.dirname(os.path.abspath(sys.argv[0]))
+
 
     def edit_page(self, tab: str):
         ''' page that allow user to edit/update serial port settings'''
@@ -280,7 +294,7 @@ class SerialPortSetting(SettingPage):
             self.serial_port.get()
         ]
 
-        base_path = self.get_base_path()
+        base_path = self.get_write_path()
 
         settings_dir = os.path.join(base_path, "settings", "serial ports")
         os.makedirs(settings_dir, exist_ok=True)
@@ -319,7 +333,7 @@ class SerialPortSetting(SettingPage):
 
     def set_preference(self, port, file_name):
         '''Save a specific configuration for a given port in its own preference folder.'''
-        base_path = self.get_base_path()
+        base_path = self.get_write_path()
 
         preference_dir = os.path.join(base_path, "settings", "serial ports", "preference", "device")
         os.makedirs(preference_dir, exist_ok=True)
@@ -334,7 +348,7 @@ class SerialPortSetting(SettingPage):
 
     def set_rfid(self, port, file_name):
         '''Save a specific configuration for a given port in its own preference folder.'''
-        base_path = self.get_base_path()
+        base_path = self.get_write_path()
 
         preference_dir = os.path.join(base_path, "settings", "serial ports", "preference", "reader")
         os.makedirs(preference_dir, exist_ok=True)
@@ -349,17 +363,23 @@ class SerialPortSetting(SettingPage):
 
     def confirm_setting(self, f=None):
         '''select a configuration and use it as current serial port setting'''
-        base_path = self.get_base_path()
-
-        config_dir = os.path.join(base_path, "settings", "serial ports")
+        read_path = self.get_read_path()
+        write_path = self.get_write_path()
         
+        read_config_dir = os.path.join(read_path, "settings", "serial ports")
+        write_config_dir = os.path.join(write_path, "settings", "serial ports")
+
         if f:
-            file_name = os.path.join(config_dir, f)
+            file_name = f
         else:
-            file_name = os.path.join(config_dir, self.current_configuration_name.get())
+            file_name = self.current_configuration_name.get()
+
+        full_path = os.path.join(write_config_dir, file_name)
+        if not os.path.exists(full_path):
+            full_path = os.path.join(read_config_dir, file_name)
 
         try:
-            with open(file_name) as file:
+            with open(full_path) as file:
                 csv_reader = reader(file)
                 for line in csv_reader:
                     self.baud_rate_var.set(line[0])
