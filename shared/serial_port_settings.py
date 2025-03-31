@@ -33,13 +33,7 @@ class SerialPortSetting(SettingPage):
         else:
             self.serial_port_controller = SerialPortController(self.preference)
 
-
-        if hasattr(sys, '_MEIPASS'):
-            # Running as a bundled executable
-            base_path = sys._MEIPASS
-        else:
-            # Running from source
-            base_path = os.path.dirname(sys.argv[0])
+        base_path = self.get_base_path()
 
         self.port_setting_configuration_path = os.path.join(base_path, "settings", "serial ports")
 
@@ -55,13 +49,11 @@ class SerialPortSetting(SettingPage):
 
         if preference:
             if preference == "device":
-                self.preference_path = os.path.join(os.path.dirname(sys.argv[0]), "settings", "serial ports", "preference", "device", "preferred_config.txt")
+                self.preference_path = os.path.join(base_path, "settings", "serial ports", "preference", "device", "preferred_config.txt")
             elif preference == "reader":
-                self.preference_path = os.path.join(os.path.dirname(sys.argv[0]), "settings", "serial ports", "preference", "reader", "rfid_config.txt")
-
+                self.preference_path = os.path.join(base_path, "settings", "serial ports", "preference", "reader", "rfid_config.txt")
             else:
                 self.preference_path = None  # Fallback if no valid type
-
             
             if os.path.exists(self.preference_path):
                 try:
@@ -93,6 +85,12 @@ class SerialPortSetting(SettingPage):
 
         self.available_configuration = [file for file in listdir(self.port_setting_configuration_path)
                                         if isfile(join(self.port_setting_configuration_path, file))]
+        
+    def get_base_path(self):
+        """Returns the directory of the executable or script."""
+        if getattr(sys, 'frozen', False):  # This is True for PyInstaller .exe
+            return os.path.dirname(sys.executable)
+        return os.path.dirname(os.path.abspath(__file__))
 
     def edit_page(self, tab: str):
         ''' page that allow user to edit/update serial port settings'''
@@ -275,10 +273,7 @@ class SerialPortSetting(SettingPage):
             self.serial_port.get()
         ]
 
-        if hasattr(sys, '_MEIPASS'):
-            base_path = os.path.dirname(sys.executable)  # Path where the .exe resides
-        else:
-            base_path = os.path.dirname(sys.argv[0])
+        base_path = self.get_base_path()
 
         settings_dir = os.path.join(base_path, "settings", "serial ports")
         os.makedirs(settings_dir, exist_ok=True)
@@ -317,10 +312,7 @@ class SerialPortSetting(SettingPage):
 
     def set_preference(self, port, file_name):
         '''Save a specific configuration for a given port in its own preference folder.'''
-        if hasattr(sys, '_MEIPASS'):
-            base_path = os.path.dirname(sys.executable)
-        else:
-            base_path = os.path.dirname(sys.argv[0])
+        base_path = self.get_base_path()
 
         preference_dir = os.path.join(base_path, "settings", "serial ports", "preference", "device")
         os.makedirs(preference_dir, exist_ok=True)
@@ -335,10 +327,7 @@ class SerialPortSetting(SettingPage):
 
     def set_rfid(self, port, file_name):
         '''Save a specific configuration for a given port in its own preference folder.'''
-        if hasattr(sys, '_MEIPASS'):
-            base_path = os.path.dirname(sys.executable)
-        else:
-            base_path = os.path.dirname(sys.argv[0])
+        base_path = self.get_base_path()
 
         preference_dir = os.path.join(base_path, "settings", "serial ports", "preference", "reader")
         os.makedirs(preference_dir, exist_ok=True)
@@ -353,10 +342,7 @@ class SerialPortSetting(SettingPage):
 
     def confirm_setting(self, f=None):
         '''select a configuration and use it as current serial port setting'''
-        if hasattr(sys, '_MEIPASS'):
-            base_path = os.path.dirname(sys.executable)
-        else:
-            base_path = os.path.dirname(sys.argv[0])
+        base_path = self.get_base_path()
 
         config_dir = os.path.join(base_path, "settings", "serial ports")
         
@@ -378,7 +364,6 @@ class SerialPortSetting(SettingPage):
                     self.serial_port.set(line[6])
         except Exception as e:
             print(f"Error loading configuration: {e}")
-
 
     def edit_configuration(self):
         '''allow user to edit existing configuration by overwriting
