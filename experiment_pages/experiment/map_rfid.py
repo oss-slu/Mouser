@@ -488,14 +488,12 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         if len(self.db.get_all_animals_rfid()) != self.db.get_total_number_animals():
             self.raise_warning('Not all animals have been mapped to RFIDs')
         else:
-            # Save the current state before closing the database
-
-
+            # Save the current state before cleaning up
             current_file = self.db.db_file
-
-            self.db._conn.commit()
-            self.db.close()
-
+            
+            # Commit any pending changes and close the singleton instance
+            self.db.close()  # This will now handle the singleton cleanup
+            
             self.stop_listening()
 
             # Local import to avoid circular dependency

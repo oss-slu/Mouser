@@ -5,10 +5,21 @@ from datetime import datetime
 
 class ExperimentDatabase:
     '''SQLite Database Object for Experiments.'''
-    def __init__(self, file=":memory:"):  #call with file name as argument or no args to use memory
-        self.db_file = file
-        self._conn = sqlite3.connect(file, check_same_thread=False)
-        self._c = self._conn.cursor()
+    _instance  = None
+
+
+    def __new__(cls, file=":memory:"):
+        '''Builds Database connections if singleton does not exist'''
+        if cls._instance is None:
+            cls._instance = super(ExperimentDatabase, cls).__new__(cls)
+            cls._instance.db_file = file
+            cls._instance._conn = sqlite3.connect(file, check_same_thread=False)
+            cls._instance._c = cls._instance._conn.cursor()
+            cls._instance._initialize_tables()
+        return cls._instance
+
+
+    def _initialize_tables(self):  # Call to work with singleton changes
         try:
             self._c.execute('''CREATE TABLE experiment (
                                 name TEXT,
@@ -167,8 +178,28 @@ class ExperimentDatabase:
         return result
 
     def close(self):
-        '''Closes database connection.'''
-        self._conn.close()
+        '''Closes database connection and cleans up singleton instance.'''
+        try:
+            if self._conn is not None:
+                # Commit any pending transactions
+                self._conn.commit()
+                
+                # Close the cursor if it exists
+                if self._c is not None:
+                    self._c.close()
+                    self._c = None
+                
+                # Close the connection
+                self._conn.close()
+                self._conn = None
+                
+                # Clear the singleton instance
+                ExperimentDatabase._instance = None
+                
+                return True
+        except Exception as e:
+            print(f"Error during database cleanup: {e}")
+            return False
 
     def experiment_uses_rfid(self):
         '''Returns whether the experiment uses RFID (0 or 1).'''

@@ -91,7 +91,7 @@ def open_file():
             temp_file = file_utils.create_temp_copy(file_path)
             global TEMP_FILE_PATH
             TEMP_FILE_PATH = temp_file
-            page = ExperimentMenuUI(root, temp_file, experiments_frame)
+            page = ExperimentMenuUI(root, temp_file, experiments_frame, file_path)
             page.raise_frame()
 #pylint:enable = global-statement
 

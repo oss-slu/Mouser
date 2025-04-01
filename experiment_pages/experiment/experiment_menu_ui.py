@@ -13,7 +13,7 @@ from experiment_pages.experiment.review_ui import ReviewUI
 
 class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
     '''Experiment Menu Page Frame'''
-    def __init__(self, parent: CTk, name: str, prev_page: ChangeableFrame = None, controller: SerialPortController = None): #pylint: disable= undefined-variable
+    def __init__(self, parent: CTk, name: str, prev_page: ChangeableFrame = None, full_path: str = "", controller: SerialPortController = None): #pylint: disable= undefined-variable
 
         #review imported here to prevent a reference loop from occuring
 
@@ -22,6 +22,8 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         experiment_name = os.path.basename(name)
         experiment_name = os.path.splitext(experiment_name)[0]
         self.experiment = ExperimentDatabase(name)
+
+        self.file_path = full_path
 
         super().__init__(parent, experiment_name, prev_page)
 
@@ -40,7 +42,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         main_frame.grid_columnconfigure(0, weight = 1)
         main_frame.grid_columnconfigure(1, weight = 1)
 
-        self.data_page = DataCollectionUI(parent, self, name)
+        self.data_page = DataCollectionUI(parent, self, name, self.file_path)
         self.analysis_page = DataAnalysisUI(parent, self, os.path.abspath(name))
         self.cage_page = CageConfigurationUI(name, parent, self)
         self.summary_page = ReviewUI(parent, self, name)
