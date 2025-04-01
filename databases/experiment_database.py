@@ -117,7 +117,7 @@ class ExperimentDatabase:
             self._conn.commit()
         else:
             raise LookupError(f"No animal found with ID {animal_id}")
-        
+
     def find_next_available_group(self):
         '''Finds the next available group with space in its cage.'''
         self._c.execute('''SELECT group_id, num_animals, cage_capacity
@@ -154,7 +154,7 @@ class ExperimentDatabase:
         self._c.execute("SELECT id FROM experiment")
         result = self._c.fetchone()
         return result[0] if result else None
-    
+
     def get_experiment_name(self):
         '''Returns the experiment name from the experiment table.'''
         self._c.execute("SELECT name FROM experiment")
@@ -242,7 +242,7 @@ class ExperimentDatabase:
         except Exception as e:
             print(f"Error adding data entry: {e}")
             self._conn.rollback()
-            
+
     def change_data_entry(self, date, animal_id, value):
         '''Updates a measurement entry for an animal on a specific date.'''
         try:
@@ -333,12 +333,12 @@ class ExperimentDatabase:
         '''Returns a list of all group names in the database.'''
         self._c.execute("SELECT name FROM groups")
         return [group[0] for group in self._c.fetchall()]
-    
+
     def get_animal_current_cage(self, animal_id):
         '''Returns the current cage (group_id) for an animal'''
         self._c.execute('''
-            SELECT group_id 
-            FROM animals 
+            SELECT group_id
+            FROM animals
             WHERE animal_id = ? AND active = 1
         ''', (animal_id,))
         result = self._c.fetchone()
@@ -349,36 +349,36 @@ class ExperimentDatabase:
         try:
             # Get current group_id
             self._c.execute('''
-                SELECT group_id 
-                FROM animals 
+                SELECT group_id
+                FROM animals
                 WHERE animal_id = ? AND active = 1
             ''', (animal_id,))
             old_group = self._c.fetchone()
-            
+
             if old_group:
                 old_group_id = old_group[0]
-                
+
                 # Update animal's group
                 self._c.execute('''
-                    UPDATE animals 
-                    SET group_id = ? 
+                    UPDATE animals
+                    SET group_id = ?
                     WHERE animal_id = ? AND active = 1
                 ''', (new_group_id, animal_id))
-                
+
                 # Update old group's count
                 self._c.execute('''
-                    UPDATE groups 
-                    SET num_animals = num_animals - 1 
+                    UPDATE groups
+                    SET num_animals = num_animals - 1
                     WHERE group_id = ?
                 ''', (old_group_id,))
-                
+
                 # Update new group's count
                 self._c.execute('''
-                    UPDATE groups 
-                    SET num_animals = num_animals + 1 
+                    UPDATE groups
+                    SET num_animals = num_animals + 1
                     WHERE group_id = ?
                 ''', (new_group_id,))
-                
+
                 self._conn.commit()
                 return True
         except Exception as e:
@@ -397,7 +397,7 @@ class ExperimentDatabase:
             ''', (new_id, group_id, old_id))
         self._conn.commit()
 
-        
+
 
     def get_all_animals_rfid(self):
         '''Returns a list of all RFIDs for active animals in the experiment.'''
@@ -483,64 +483,64 @@ class ExperimentDatabase:
         except Exception as e:
             print(f"Error retrieving measurement value: {e}")
             return None
-        
+
     def randomize_cages(self):
         '''Automatically and randomly sorts animals into cages within their groups, respecting cage capacity limits.'''
         import random
-        
+
         try:
             # Get all groups and their cage capacities
             self._c.execute('SELECT group_id, cage_capacity FROM groups ORDER BY group_id')
             groups = self._c.fetchall()
-            
+
             # Get all active animals
             self._c.execute('SELECT animal_id FROM animals WHERE active = 1')
             animals = [animal[0] for animal in self._c.fetchall()]
             random.shuffle(animals)
-            
+
             # Reset all group counts
             self._c.execute('UPDATE groups SET num_animals = 0')
-            
+
             current_group_idx = 0
             for animal_id in animals:
                 # Find next group with space
                 while True:
                     if current_group_idx >= len(groups):
                         current_group_idx = 0  # Start over from first group if needed
-                    
+
                     group_id, capacity = groups[current_group_idx]
-                    
+
                     # Check if group has space
                     self._c.execute('SELECT num_animals FROM groups WHERE group_id = ?', (group_id,))
                     current_count = self._c.fetchone()[0]
-                    
+
                     if current_count < capacity:
                         break
-                        
+
                     current_group_idx += 1
-                
+
                 # Assign animal to group
                 self._c.execute('''
                     UPDATE animals
                     SET group_id = ?
                     WHERE animal_id = ?
                 ''', (group_id, animal_id))
-                
+
                 # Update group count
                 self._c.execute('''
                     UPDATE groups
                     SET num_animals = num_animals + 1
                     WHERE group_id = ?
                 ''', (group_id,))
-            
+
             self._conn.commit()
             return True
-            
+
         except Exception as e:
             print(f"Error during randomization: {e}")
             self._conn.rollback()
             return False
-        
+
     def autosort(self):
         '''Automatically sorts animals, putting largest into groups, then smallest, until all are sorted'''
         try:
@@ -554,7 +554,7 @@ class ExperimentDatabase:
                 HAVING m.timestamp = MAX(m.timestamp)
             ''')
             measurements = self._c.fetchall()
-            
+
             # Sort measurements by value in descending order
             measurements.sort(key=lambda x: x[1], reverse=True)
 
@@ -566,11 +566,11 @@ class ExperimentDatabase:
                     SET measurement_id = 0
                     WHERE animal_id = ? AND timestamp = ?
                 ''', (animal_id, timestamp))
-                
+
             # Get all groups and their capacities
             self._c.execute('SELECT group_id, cage_capacity FROM groups')
             groups = self._c.fetchall()
-            
+
             # First, reset all group counts to 0
             for group_id, _ in groups:
                 self._c.execute('''
@@ -578,25 +578,25 @@ class ExperimentDatabase:
                     SET num_animals = 0
                     WHERE group_id = ?
                 ''', (group_id,))
-            
+
             # Initialize pointers for largest and smallest animals
             large_ptr = 0
             small_ptr = len(measurements) - 1
             use_largest = True  # Flag to alternate between largest and smallest
-            
+
             while large_ptr <= small_ptr:
                 for group_id, capacity in groups:
                     # Check if we've distributed all animals
                     if large_ptr > small_ptr:
                         break
-                        
+
                     # Check if this group has space
                     self._c.execute('SELECT num_animals FROM groups WHERE group_id = ?', (group_id,))
                     current_count = self._c.fetchone()[0]
-                    
+
                     if current_count >= capacity:
                         continue
-                    
+
                     # Get the next animal to assign (either largest or smallest)
                     if use_largest:
                         animal_id = measurements[large_ptr][0]
@@ -604,27 +604,27 @@ class ExperimentDatabase:
                     else:
                         animal_id = measurements[small_ptr][0]
                         small_ptr -= 1
-                    
+
                     # Update the animal's group assignment
                     self._c.execute('''
-                        UPDATE animals 
-                        SET group_id = ? 
+                        UPDATE animals
+                        SET group_id = ?
                         WHERE animal_id = ?
                     ''', (group_id, animal_id))
-                    
+
                     # Update group animal count
                     self._c.execute('''
                         UPDATE groups
                         SET num_animals = num_animals + 1
                         WHERE group_id = ?
                     ''', (group_id,))
-                
+
                 # Switch between distributing largest and smallest
                 use_largest = not use_largest
-            
+
             self._conn.commit()
             return True
-            
+
         except Exception as e:
             print(f"Error during autosort: {e}")
             self._conn.rollback()

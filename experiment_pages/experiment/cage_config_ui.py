@@ -62,11 +62,10 @@ class CageConfigurationUI(MouserPage):
         '''Creates the layout of all cages and their animals.'''
         cages = self.db.get_groups()  # Each group represents a cage
         label_style = CTkFont("Arial", 12)
-        meas_items = self.db.get_measurement_items()
 
         for cage_name in cages:
             cage_frame = CTkFrame(self.config_frame, border_width=3, border_color="#00e7ff", bg_color='#0097A7')
-            
+
             # Cage header
             label = CTkLabel(cage_frame, text=f'Cage: {cage_name}', bg_color='#0097A7', font=label_style)
             label.pack(side=TOP, padx=self.pad_x, pady=self.pad_y, anchor='center')
@@ -83,7 +82,7 @@ class CageConfigurationUI(MouserPage):
                 # Create a new frame for each animal to hold the button
                 animal_frame = CTkFrame(cage_frame)
                 animal_button = CTkButton(
-                    animal_frame, 
+                    animal_frame,
                     text=animal_id,
                     command=lambda a=animal_id: self.toggle_animal_selection(a),
                     fg_color="#0097A7",
@@ -126,6 +125,7 @@ class CageConfigurationUI(MouserPage):
         self.update_config_frame()
 
     def autosort(self):
+        '''Calls database's autosort function.'''
         self.db.autosort()
         self.update_config_frame()
 
@@ -136,7 +136,7 @@ class CageConfigurationUI(MouserPage):
             return
 
         animal_id1, animal_id2 = self.selected_animals
-        
+
         # Get the current cages through the database controller
         cage1 = self.db.get_animal_current_cage(animal_id1)
         cage2 = self.db.get_animal_current_cage(animal_id2)

@@ -85,6 +85,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
 
 
     def raise_frame(self):
+        '''Raises the frame to the user interaction level.'''
         self.on_show_frame()
         super().raise_frame()
 
@@ -125,7 +126,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         # disconnect the file from the database
         self.disconnect_database()
         splitted = name.split("\\")
-        if ("Protected" in splitted[-1]):
+        if "Protected" in splitted[-1]:
             path = os.getcwd()
             if os.name == 'posix':
                 name = path + "/databases/experiments/" + splitted[-1]
@@ -148,9 +149,10 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
 
         print(f"Number of animals mapped = {num_mapped}\nNumber of total animals = {num_animals}")
 
-        return (num_animals == num_mapped)
+        return num_animals == num_mapped
 
     def disable_buttons_if_needed(self):
+        '''Disables Data Collection and Data Export buttons if RFIDs are not yet mapped.'''
     # This method disables all buttons except for the Map RFID button until all specimens have an associated RFID
         self.group_button.configure(state="normal")
         if self.experiment.experiment_uses_rfid() == 1:
@@ -165,4 +167,5 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
 
 
     def on_show_frame(self):
+        '''Calls disable buttons.'''
         self.disable_buttons_if_needed()
