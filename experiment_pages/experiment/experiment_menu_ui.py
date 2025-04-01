@@ -61,7 +61,6 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
                                 command= self.analysis_page.raise_frame, font=button_font)
         self.group_button = CTkButton(main_frame, text='Group Configuration', width=button_width, height= button_height, border_width=2.5,
                                 command= lambda: [self.cage_page.raise_frame(),
-                                                  self.cage_page.update_controller_attributes(),
                                                   self.cage_page.update_config_frame()], font=button_font)
         self.rfid_button = CTkButton(main_frame, text='Map RFID', width=button_width, height= button_height, border_width=2.5,
                                 command=  self.rfid_page.raise_frame, font=button_font)

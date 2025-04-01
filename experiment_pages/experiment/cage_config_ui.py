@@ -74,12 +74,6 @@ class CageConfigurationUI(MouserPage):
             # Create header frame for labels
             header_frame = CTkFrame(cage_frame)
             CTkLabel(header_frame, text='Animal ID').pack(side=LEFT, anchor='center')
-            
-            # Add measurement labels
-            if meas_items:
-                for item in meas_items:
-                    CTkLabel(header_frame, text=item).pack(side=LEFT, anchor='center')
-            header_frame.pack(side=TOP, expand=TRUE, fill=BOTH, anchor='center')
 
             # Get and display animals in this cage using the database controller
             animals = self.db.get_animals_in_group(cage_name)
