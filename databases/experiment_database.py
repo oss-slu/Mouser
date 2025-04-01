@@ -189,7 +189,7 @@ class ExperimentDatabase:
         self._c.execute("SELECT num_animals FROM experiment")
         result = self._c.fetchone()
         if result:
-            print("Total number of animals in DB: ",result[0])
+            print("Total number of animals in Experiment: ",result[0])
             return result[0]
         return 0
 

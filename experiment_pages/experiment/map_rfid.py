@@ -381,6 +381,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         for item in selected_items:
             item_id = int(self.table.item(item, 'values')[0])
+            self.table.selection_remove(item)
             self.table.delete(item)
             self.db.remove_animal(item_id)
             print("Total number of animal rows in the table:", len(self.table.get_children()))
@@ -402,8 +403,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         '''returns the next animal in our experiment.'''
         total_animals = self.db.get_total_number_animals()
         # Get list of existing ACTIVE animal IDs from the database
-        existing_animal_ids = set(self.db.get_all_animals())  # Changed from get_all_animal_ids()
-        
+        existing_animal_ids = set(self.db.get_all_animals())  
+
         # Find the first gap in the sequence
         for animal_id in range(1, total_animals + 1):
             if animal_id not in existing_animal_ids:
@@ -521,6 +522,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         # First mark the selected animals as inactive
         for item in selected_items:
             animal_id = int(self.table.item(item, 'values')[0])
+            self.table.selection_remove(item)
             self.table.delete(item)
             self.db.set_animal_active_status(animal_id, 0)  # Mark as inactive
             self.animals = [(index, rfid) for (index, rfid) in self.animals if index != animal_id]
@@ -529,13 +531,15 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             self.change_entry_text()
 
             # Then decrease the maximum number of animals
-            current_max = self.db.get_number_animals()
+            current_max = self.db.get_total_number_animals()
+            current_max = current_max - 1
             if current_max <= 0:
                 self.raise_warning("Cannot reduce animal count below 0")
                 return
             else:
                 # Decrease the maximum number of animals by 1
                 self.db.set_number_animals(current_max)
+
 
 class ChangeRFIDDialog():
     '''Change RFID user interface.'''
