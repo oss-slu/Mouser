@@ -99,14 +99,14 @@ def open_file():
 # Command for 'New' option in menu bar
 def create_file():
     '''Command for the 'New' option in the menue bar.
-    
+
     Navigates to the NewExperimentUI page.'''
     page = NewExperimentUI(root, experiments_frame)
     page.raise_frame()
 
 def open_test():
     '''Command for 'Test Serials' button in the welcome screen.'''
-    
+
     test_screen_instance = TestScreen(root)
     test_screen_instance.grab_set()
 
@@ -183,9 +183,8 @@ new_file_button.pack(pady=(10, 5), padx=20, fill='x', expand=True)
 open_file_button.pack(pady=(5, 10), padx=20, fill='x', expand=True)
 test_screen_button.pack(pady=(5, 10), padx=20, fill='x', expand=True)
 
-border_button = CTkButton(root, text="Activate Border Fade", command=lambda: fading_border_effect(welcome_frame), width=200, height=50, corner_radius=10)
+border_button = CTkButton(root, text="Activate Border Fade", command=lambda: fading_border_effect(root, 'red'), width=200, height=50, corner_radius=10)
 border_button.pack(pady=(10, 10), padx=20, fill='x', expand=True)
-
 
 raise_frame(experiments_frame)
 root.grid_rowconfigure(0, weight=1)
