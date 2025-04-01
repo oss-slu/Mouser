@@ -79,10 +79,8 @@ class SerialPortSetting(SettingPage):
         self.tab_view = CTkTabview(master=self)
         self.tab_view.grid(padx=20, pady=20, sticky = "ew")
 
-        self.tab_view.add("Map RFID")
-        self.tab_view.add("Data Collection")
-        self.summary_page("Map RFID")
-        self.summary_page("Data Collection")
+        self.tab_view.add("Serial Settings")
+        self.summary_page("Serial Settings")
 
         self.available_configuration = []
         read_config_path = os.path.join(self.get_read_path(), "settings", "serial ports")
@@ -321,21 +319,17 @@ class SerialPortSetting(SettingPage):
         '''Function for the edit button on summary page, brings user
         to the edit page'''
         self.refresh_tabs()
-        self.edit_page("Map RFID")
-        self.edit_page("Data Collection")
+        self.edit_page("Serial Settings")
 
     def go_to_summary_page(self):
         '''Refresh tabs and display the summary page'''
         self.refresh_tabs()
-        self.summary_page("Map RFID")
-        self.summary_page("Data Collection")
+        self.summary_page("Serial Settings")
     
     def refresh_tabs(self):
         '''refreshes the page when updates are made'''
-        self.tab_view.delete("Map RFID")
-        self.tab_view.delete("Data Collection")
-        self.tab_view.add("Map RFID")
-        self.tab_view.add("Data Collection")
+        self.tab_view.delete("Serial Settings")
+        self.tab_view.add("Serial Settings")
 
     def set_preference(self, port, file_name):
         '''Save a specific configuration for a given port in its own preference folder.'''
