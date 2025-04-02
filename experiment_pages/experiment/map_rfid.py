@@ -169,7 +169,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                         continue  # 🚫 Avoid calling add_value()
 
                     # If it's a new RFID, process it
-                    self.after(0, lambda: self.add_value(clean_rfid, self.db))
+                    self.after(0, lambda: self.add_value(clean_rfid))
                     self.animal_rfid_list.append(clean_rfid)
                     play_sound_async("shared/sounds/rfid_success.wav")
 
@@ -267,29 +267,12 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.change_entry_text()
 
 
-    def add_value(self, rfid, db=None):
+    def add_value(self, rfid):
         """Adds RFID to the table, stops listening, checks the count, then restarts or stops."""
 
         if rfid is None or rfid == "":
             print("🚫 Skipping None/Empty RFID value... No entry will be added.")
             return  # ✅ Prevents adding a blank entry
-
-        if db is None:
-            db = self.db
-
-        # Clean up RFID value if it's coming from a reader
-        if isinstance(rfid, str):
-            # Remove any non-numeric characters
-            rfid = ''.join(filter(str.isdigit, rfid))
-            if not rfid:  # If no digits were found
-                print(f"Invalid RFID format received: {rfid}")
-                return
-
-        try:
-            rfid = int(rfid)  # Convert to integer
-        except (ValueError, TypeError) as e:
-            print(f"Error converting RFID to integer: {e}")
-            return
 
         item_id = self.animal_id
 
@@ -315,8 +298,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.change_entry_text()
 
         # Add to database with determined group
-        db.add_animal(animal_id=item_id, rfid=rfid, group_id=current_group)
-        db._conn.commit()
+        self.db.add_animal(item_id, rfid, current_group, '')
+        self.db._conn.commit()
 
         AudioManager.play("shared/sounds/rfid_success.wav")
 
