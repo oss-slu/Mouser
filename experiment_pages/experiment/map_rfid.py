@@ -455,7 +455,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                 from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 
                 # Create new ExperimentMenuUI instance with the same file
-                new_page = ExperimentMenuUI(self.parent, self.file_path, self.menu_page)
+                new_page = ExperimentMenuUI(self.parent, self.file_path, self.menu_page, self.file_path)
                 new_page.raise_frame()
 
             except Exception as e:
