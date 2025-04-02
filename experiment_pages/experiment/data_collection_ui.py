@@ -410,9 +410,15 @@ class ChangeMeasurementsDialog():
                                         data_thread.join()
                                         break
                                     else:
-                                        next_animal_id = self.animal_ids[current_index + 1]
-                                        self.data_collection.select_animal_by_id(next_animal_id)
-                                        break
+                                        if current_index + 1 < len(self.animal_ids): # If there are more animals
+                                            next_animal_id = self.animal_ids[current_index + 1]
+                                            self.data_collection.select_animal_by_id(next_animal_id)
+                                            break
+                                        else: # End of animal list, pass value to exit while loop
+                                            next_animal_id = len(self.animal_ids) + 1
+                                            self.data_collection.select_animal_by_id(next_animal_id)
+                                            break
+
                                 else:
                                     # Resume RFID listening if in RFID mode
                                     if not self.data_collection.rfid_stop_event.is_set():
