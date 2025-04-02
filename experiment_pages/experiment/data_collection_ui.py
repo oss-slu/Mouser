@@ -274,7 +274,7 @@ class DataCollectionUI(MouserPage):
             self.database.change_data_entry(str(date.today()), animal_id_to_change, new_value)
             print("Database entry updated")
 
-            # Update display table 
+            # Update display table
             try:
                 for child in self.table.get_children():
                     if animal_id_to_change == self.table.item(child)["values"][0]:
@@ -289,11 +289,11 @@ class DataCollectionUI(MouserPage):
                     # Ensure all changes are committed
                     self.database._conn.commit()
                     print("Changes committed")
-                    
+
                     print(f"Attempting to save {self.database.db_file} to {self.current_file_path}")
                     save_temp_to_file(self.database.db_file, self.current_file_path)
                     print("Autosave Success!")
-                    
+
                 except Exception as save_error:
                     print(f"Autosave failed: {save_error}")
                     print(f"Error type: {type(save_error)}")
@@ -352,7 +352,7 @@ class ChangeMeasurementsDialog():
             values = self.data_collection.table.item(child)["values"]
             self.animal_ids.append(values[0])
         self.current_index = 0
-        
+
         self.root = root = CTkToplevel(self.parent)
 
         title_text = "Modify Measurements for: " + str(animal_id)

@@ -183,19 +183,19 @@ class ExperimentDatabase:
             if self._conn is not None:
                 # Commit any pending transactions
                 self._conn.commit()
-                
+
                 # Close the cursor if it exists
                 if self._c is not None:
                     self._c.close()
                     self._c = None
-                
+
                 # Close the connection
                 self._conn.close()
                 self._conn = None
-                
+
                 # Clear the singleton instance
                 ExperimentDatabase._instance = None
-                
+
                 return True
         except Exception as e:
             print(f"Error during database cleanup: {e}")
@@ -236,7 +236,7 @@ class ExperimentDatabase:
         result = self._c.fetchone()
         return result[0] if result else None
 
-    def get_animal_id(self, rfid):
+    def get_animal_id(self, rfid: str):
         '''Returns the animal ID for a given RFID.'''
         self._c.execute('SELECT animal_id FROM animals WHERE rfid = ?', (rfid,))
         result = self._c.fetchone()
@@ -451,7 +451,7 @@ class ExperimentDatabase:
             AND active = 1
         ''')
         return [animal[0] for animal in self._c.fetchall()]
-    
+
     def get_all_animals(self):
         '''Returns a list of ALL animals ACTIVE OR NOT with RFIDs'''
         self._c.execute('''
