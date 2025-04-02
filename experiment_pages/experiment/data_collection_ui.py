@@ -399,39 +399,46 @@ class ChangeMeasurementsDialog():
 
                         while current_index < len(self.animal_ids) and self.thread_running:
                             if len(data_handler.received_data) >= 2:  # Customize condition
-                                received_data = data_handler.get_stored_data()
-                                entry.insert(1, received_data)
-                                data_handler.stop()
+                                # Check if the widget still exists before trying to update it
+                                try:
+                                    if entry.winfo_exists():  # Check if entry widget still exists
+                                        received_data = data_handler.get_stored_data()
+                                        entry.insert(1, received_data)
+                                        data_handler.stop()
 
-                                if not self.uses_rfid:
-                                    # Find current index in animal_ids list
-                                    print("Current table index:", current_index)
-                                    # If not at the end of the list, move to next animal
-                                    self.finish(animal_id)  # Pass animal_id to finish method
-                                    if current_index >= len(self.animal_ids):
-                                        print("closing!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                                        data_thread.join()
-                                        break
+                                        if not self.uses_rfid:
+                                            print("Current table index:", current_index)
+                                            self.finish(animal_id)  # Pass animal_id to finish method
+                                            if current_index >= len(self.animal_ids):
+                                                print("closing!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                                                data_thread.join()
+                                                break
+                                            else:
+                                                # Check if we have more animals in the list
+                                                if current_index + 1 < len(self.animal_ids):
+                                                    next_animal_id = self.animal_ids[current_index + 1]
+                                                    self.data_collection.select_animal_by_id(next_animal_id)
+                                                else:
+                                                    # If we're at the end, use length + 1 as the next ID
+                                                    next_animal_id = len(self.animal_ids) + 1
+                                                    self.data_collection.select_animal_by_id(next_animal_id)
+                                                break
+                                        else:
+                                            if not self.data_collection.rfid_stop_event.is_set():
+                                                self.data_collection.rfid_listen()
+                                                self.finish(animal_id)
+                                                break
                                     else:
-                                        if current_index + 1 < len(self.animal_ids): # If there are more animals
-                                            next_animal_id = self.animal_ids[current_index + 1]
-                                            self.data_collection.select_animal_by_id(next_animal_id)
-                                            break
-                                        else: # End of animal list, pass value to exit while loop
-                                            next_animal_id = len(self.animal_ids) + 1
-                                            self.data_collection.select_animal_by_id(next_animal_id)
-                                            break
-
-                                else:
-                                    # Resume RFID listening if in RFID mode
-                                    if not self.data_collection.rfid_stop_event.is_set():
-                                        self.data_collection.rfid_listen()
-                                        self.finish(animal_id)  # Pass animal_id to finish method
+                                        # Widget no longer exists, stop the thread
+                                        self.thread_running = False
                                         break
+                                except Exception as e:
+                                    print(f"Widget error: {e}")
+                                    self.thread_running = False
+                                    break
 
                                 time.sleep(.25)
 
-                        # Stop the thread once max measurements are reached
                         self.thread_running = False
                         print("Thread finished")
 
