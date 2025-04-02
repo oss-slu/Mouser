@@ -29,7 +29,7 @@ def play_sound_async(filename):
 
 class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
     '''Map RFID user interface and window.'''
-    def __init__(self, database, parent: CTk, previous_page: CTkFrame = None):
+    def __init__(self, database, parent: CTk, previous_page: CTkFrame = None, file_path = ""):
 
         super().__init__(parent, "Map RFID", previous_page)
 
@@ -66,6 +66,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.table_frame.place(relx=0.15, rely=0.30, relheight=0.40, relwidth=0.80)
         self.table_frame.grid_columnconfigure(0, weight= 1)
         self.table_frame.grid_rowconfigure(0, weight= 1)
+
+        self.file_path = file_path
 
         heading_style = Style()
         heading_style.configure("Treeview.Heading", font=('Arial', 10))
@@ -462,21 +464,35 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         if len(self.db.get_all_animals_rfid()) != self.db.get_total_number_animals():
             self.raise_warning('Not all animals have been mapped to RFIDs')
         else:
-            # Save the current state before cleaning up
-            current_file = self.db.db_file
+            try:
+                # Save the current state before cleaning up
+                current_file = self.db.db_file
+                
+                # Ensure all changes are committed
+                self.db._conn.commit()
+                print("Changes committed")
+                
+                # Save back to original file location
+                print(f"Saving {current_file} to {self.file_path}")
+                file_utils.save_temp_to_file(current_file, self.file_path)
+                print("Save successful!")
 
-            # Commit any pending changes and close the singleton instance
-            self.db.close()  # This will now handle the singleton cleanup
+                # Close the database connection
+                self.db.close()  # This will now handle the singleton cleanup
 
-            self.stop_listening()
+                self.stop_listening()
 
-            # Local import to avoid circular dependency
-            from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+                # Local import to avoid circular dependency
+                from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 
-            # Create new ExperimentMenuUI instance with the same file
-            temp_file = file_utils.create_temp_copy(current_file)
-            new_page = ExperimentMenuUI(self.parent, temp_file, self.menu_page)
-            new_page.raise_frame()
+                # Create new ExperimentMenuUI instance with the same file
+                new_page = ExperimentMenuUI(self.parent, self.file_path, self.menu_page)
+                new_page.raise_frame()
+                
+            except Exception as e:
+                print(f"Error during save and cleanup: {e}")
+                import traceback
+                print(f"Full traceback: {traceback.format_exc()}")
 
 
     def close_connection(self):

@@ -47,9 +47,9 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         self.cage_page = CageConfigurationUI(name, parent, self)
         self.summary_page = ReviewUI(parent, self, name)
         if controller is None:
-            self.rfid_page = MapRFIDPage(name, parent, self)
+            self.rfid_page = MapRFIDPage(name, parent, self, self.file_path)
         else:
-            self.rfid_page = MapRFIDPage(name, parent, self, controller)
+            self.rfid_page = MapRFIDPage(name, parent, self, controller, self.file_path)
         self.invest_page = InvestigatorsUI(parent, self)
 
         button_height = main_frame.winfo_screenheight()*0.3
