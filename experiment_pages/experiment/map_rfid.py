@@ -158,20 +158,22 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                     print(f"📡 RFID Scanned: {received_rfid}")
 
                     clean_rfid = received_rfid.strip().replace("\x02", "").replace("\x03", "")
+                    clean_rfid = clean_rfid.strip()
 
                     if not clean_rfid:
                         print("⚠️ Empty or invalid RFID detected, skipping...")
                         continue  # 🚫 Avoid calling add_value()
 
-                    if clean_rfid in self.animal_rfid_list:
+                    elif clean_rfid in self.animal_rfid_list:
                         print(f"⚠️ RFID {clean_rfid} is already in use! Skipping...")
                         play_sound_async("shared/sounds/error.wav")
                         continue  # 🚫 Avoid calling add_value()
 
-                    # If it's a new RFID, process it
-                    self.after(0, lambda: self.add_value(clean_rfid))
-                    self.animal_rfid_list.append(clean_rfid)
-                    play_sound_async("shared/sounds/rfid_success.wav")
+                    else:
+                        # If it's a new RFID, process it
+                        self.after(0, lambda: self.add_value(clean_rfid))
+                        self.animal_rfid_list.append(clean_rfid)
+                        play_sound_async("shared/sounds/rfid_success.wav")
 
             except Exception as e:
                 print(f"❌ Error in RFID listener: {e}")
@@ -293,9 +295,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             current_group += 1
 
         # Add to table
-        self.table.insert('', item_id-1, values=(item_id, rfid), tags='text_font')
-        self.animals.insert(item_id-1, (item_id, rfid))
-        self.change_entry_text()
+        self.table.insert('', item_id, values=(item_id, rfid), tags='text_font')
+        self.animals.insert(item_id, (item_id, rfid))
 
         # Add to database with determined group
         self.db.add_animal(item_id, rfid, current_group, '')
@@ -307,16 +308,18 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.stop_listening()
 
         total_scanned = len(self.db.get_animals())  # Get count of scanned RFIDs
-        total_expected = db.get_number_animals()  # Expected count from DB
+        total_expected = self.db.get_total_number_animals()  # Expected count from DB
 
         print(f"✅ Scanned: {total_scanned} / Expected: {total_expected}")
 
         # Restart scanning if more animals need to be scanned
         if total_scanned < total_expected:
             print("🔄 Restarting RFID listening...")
+            self.change_entry_text()
             self.rfid_listen()
         else:
             print("🎉 All animals have been mapped to RFIDs! RFID scanning completed.")
+            self.change_entry_text()
             print("RFIDs scanned: ", self.db.get_all_animals_rfid())
             self.stop_listening()
 
@@ -450,11 +453,11 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             try:
                 # Save the current state before cleaning up
                 current_file = self.db.db_file
-                
+
                 # Ensure all changes are committed
                 self.db._conn.commit()
                 print("Changes committed")
-                
+
                 # Save back to original file location
                 print(f"Saving {current_file} to {self.file_path}")
                 file_utils.save_temp_to_file(current_file, self.file_path)
@@ -471,7 +474,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                 # Create new ExperimentMenuUI instance with the same file
                 new_page = ExperimentMenuUI(self.parent, self.file_path, self.menu_page)
                 new_page.raise_frame()
-                
+
             except Exception as e:
                 print(f"Error during save and cleanup: {e}")
                 import traceback
