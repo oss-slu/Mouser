@@ -140,7 +140,6 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         def listen():
             try:
-                local_db = ExperimentDatabase(self.db.db_file)
                 self.rfid_reader = SerialDataHandler("reader")  # Store reference to close later
                 self.rfid_reader.start()
                 print("🔄 RFID Reader Started!")
@@ -225,6 +224,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             # Force UI update
             self.update()
             self.scroll_to_latest_entry()
+
+        self.save()
 
 
     def scroll_to_latest_entry(self):
@@ -316,24 +317,14 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         if total_scanned < total_expected:
             print("🔄 Restarting RFID listening...")
             self.change_entry_text()
+            self.save()
             self.rfid_listen()
         else:
             print("🎉 All animals have been mapped to RFIDs! RFID scanning completed.")
             self.change_entry_text()
             print("RFIDs scanned: ", self.db.get_all_animals_rfid())
+            self.save()
             self.stop_listening()
-
-
-
-    def change_selected_value(self, rfid):
-        '''Changes the selected rfid value.'''
-        item = self.table.item(self.changing_value)
-        self.table.item(self.changing_value, values=(
-            item['values'][0], rfid))
-        self.change_rfid_button["state"] = "normal"
-
-
-        AudioManager.play("shared/sounds/rfid_success.wav")
 
     def item_selected(self, _):
         selected = self.table.selection()
@@ -363,6 +354,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             self.db.remove_animal(item_id)
             print("Total number of animal rows in the table:", len(self.table.get_children()))
 
+        self.save()
         self.change_entry_text()
 
     def change_entry_text(self):
@@ -451,17 +443,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             self.raise_warning('Not all animals have been mapped to RFIDs')
         else:
             try:
-                # Save the current state before cleaning up
-                current_file = self.db.db_file
-
-                # Ensure all changes are committed
-                self.db._conn.commit()
-                print("Changes committed")
-
-                # Save back to original file location
-                print(f"Saving {current_file} to {self.file_path}")
-                file_utils.save_temp_to_file(current_file, self.file_path)
-                print("Save successful!")
+                # Save database state to permanent file
+                self.save()
 
                 # Close the database connection
                 self.db.close()  # This will now handle the singleton cleanup
@@ -484,6 +467,26 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
     def close_connection(self):
         '''Closes database file.'''
         self.db.close()
+
+    def save(self):
+        '''Saves current database state to permanent file'''
+        try:
+            # Save the current state before cleaning up
+            current_file = self.db.db_file
+
+            # Ensure all changes are committed
+            self.db._conn.commit()
+            print("Changes committed")
+
+            # Save back to original file location
+            print(f"Saving {current_file} to {self.file_path}")
+            file_utils.save_temp_to_file(current_file, self.file_path)
+            print("Save successful!")
+
+        except Exception as e:
+            print(f"Error during save: {e}")
+            import traceback
+            print(f"Full traceback: {traceback.format_exc()}")
 
     def sacrifice_selected_items(self):
         '''Decreases the maximum number of animals in the experiment by 1'''
@@ -513,6 +516,9 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             else:
                 # Decrease the maximum number of animals by 1
                 self.db.set_number_animals(current_max)
+
+        # Lastly, commit and save changes (After all animals sacrificed)
+        self.save()
 
 class SerialPortSelection():
     '''Serial port selection user interface.'''
