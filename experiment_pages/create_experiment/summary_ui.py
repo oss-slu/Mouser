@@ -27,29 +27,36 @@ class CreateExperimentButton(CTkButton):
             measurement_type = 1 if self.experiment.get_measurement_type() else 0
             self.experiment.set_measurement_type(measurement_type)  # Set it before saving
             self.experiment.save_to_database(directory)
+            
             if self.experiment.get_password():
                 password = self.experiment.get_password()
-                file = directory + '/' + self.experiment.get_name() + '.pmouser'
+                # Use os.path.join for file path
+                file = os.path.join(directory, f"{self.experiment.get_name()}.pmouser")
+                
                 manager = PasswordManager(password)
                 decrypted_data = manager.decrypt_file(file)
+                
                 temp_folder_name = "Mouser"
                 temp_folder_path = os.path.join(tempfile.gettempdir(), temp_folder_name)
                 os.makedirs(temp_folder_path, exist_ok=True)
-                temp_file_name = self.experiment.get_name() + '.pmouser'
+                
+                temp_file_name = f"{self.experiment.get_name()}.pmouser"
                 temp_file_path = os.path.join(temp_folder_path, temp_file_name)
+                
                 if os.path.exists(temp_file_path):
                     os.remove(temp_file_path)
 
                 with open(temp_file_path, "wb") as temp_file:
                     temp_file.write(decrypted_data)
                     temp_file.seek(0)
-                    root= self.winfo_toplevel() #pylint: disable= redefined-outer-name
+                    root = self.winfo_toplevel() #pylint: disable= redefined-outer-name
                     page = ExperimentMenuUI(root, temp_file.name)
 
             else:
-                file = directory + '/' + self.experiment.get_name() + '.mouser'
-                root= self.winfo_toplevel()
-                page = ExperimentMenuUI(root, file)
+                # Use os.path.join for file path
+                file = os.path.join(directory, f"{self.experiment.get_name()}.mouser")
+                root = self.winfo_toplevel()
+                page = ExperimentMenuUI(root, file, None, file)
                 raise_frame(page) #pylint: disable=undefined-variable
 
 class SummaryUI(MouserPage):# pylint: disable=undefined-variable

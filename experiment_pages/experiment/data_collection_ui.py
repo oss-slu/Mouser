@@ -392,7 +392,7 @@ class ChangeMeasurementsDialog():
                     if self.data_collection.database.get_measurement_type() == 1:
                         print("Inside the if statement")
 
-                        if animal_id = len(self.animal_ids) + 1:
+                        if animal_id == len(self.animal_ids) + 1:
                             current_index = len(self.animal_ids) + 1
                         else:
                             current_index = self.animal_ids.index(animal_id)
