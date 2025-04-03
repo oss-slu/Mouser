@@ -174,6 +174,17 @@ class DataCollectionUI(MouserPage):
             return  # Prevent multiple listeners
 
         print("📡 Starting RFID listener...")
+        print("All RFIDs:", self.database.get_all_animals_rfid())
+        animals = self.database.get_animals()
+        print("Animals:", animals)
+
+        # Check RFIDs directly
+        print("RFIDs in database:", self.database.get_all_animals_rfid())
+
+        # Try fetching one by one
+        for rfid in self.database.get_all_animals_rfid():
+            print(f"RFID {rfid} -> ID:", self.database.get_animal_id(rfid))
+
         self.rfid_stop_event.clear()  # Reset stop flag
 
         def listen():
@@ -187,12 +198,22 @@ class DataCollectionUI(MouserPage):
                         received_rfid = self.rfid_reader.get_stored_data()
 
                         if received_rfid:
+                            import re
+                            received_rfid = re.sub(r"[^\d]", "", received_rfid)  # Keep only digits
+
+                            if not received_rfid:
+                                print("⚠️ Empty RFID scan detected, ignoring...")
+                                continue
+
                             print(f"📡 RFID Scanned: {received_rfid}")
                             animal_id = self.database.get_animal_id(received_rfid)
 
                             if animal_id is not None:
                                 print(f"✅ Found Animal ID: {animal_id}")
                                 self.after(0, lambda: self.select_animal_by_id(animal_id))
+                            else:
+                                print("❌ No animal found for scanned RFID.")
+
 
                     time.sleep(0.1)  # Shorter sleep time for more responsive stopping
             except Exception as e:
@@ -313,6 +334,7 @@ class ChangeMeasurementsDialog():
         self.measurement_items = str(measurement_items)  # Ensure measurement_items is a single string
         self.database = data_collection.database  # Reference to the updated database
         self.uses_rfid = self.database.experiment_uses_rfid() == 1
+        self.auto_animal_ids = data_collection.database.get_all_animals_rfid()  # Get all animal IDs from the database
 
         if not self.uses_rfid:
             # Get list of all animal IDs from the table
@@ -322,6 +344,9 @@ class ChangeMeasurementsDialog():
                 self.animal_ids.append(values[0])  # First column contains animal IDs
             self.current_index = 0  # Track position in animal_ids list
             self.thread_running = False  # Add a flag to control the thread's life cycle
+
+        else:
+            self.animal_ids = [str(aid) for aid in self.database.get_all_animal_ids()]
 
     def open(self, animal_id):
         '''Opens the change measurement dialog window and handles automated submission.'''
@@ -363,8 +388,7 @@ class ChangeMeasurementsDialog():
                     print("Beginning check for data")
                     if self.data_collection.database.get_measurement_type() == 1:
                         print("Inside the if statement")
-
-                        current_index = self.animal_ids.index(animal_id)
+                        current_index = self.animal_ids.index(str(animal_id))
 
                         while current_index < len(self.animal_ids) and self.thread_running:
                             if len(data_handler.received_data) >= 2:  # Customize condition

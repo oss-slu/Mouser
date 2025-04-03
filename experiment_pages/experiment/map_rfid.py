@@ -143,12 +143,12 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         def listen():
             try:
-                local_db = ExperimentDatabase(self.db.db_file)
-                self.rfid_reader = SerialDataHandler("reader")  # Store reference to close later
+                local_db = ExperimentDatabase(self.database.db_file)  # ✅ Safer to use local DB instance
+                self.rfid_reader = SerialDataHandler("reader")
                 self.rfid_reader.start()
                 print("🔄 RFID Reader Started!")
 
-                last_rfid = None  # Track last scanned RFID to avoid duplicate reads
+                last_rfid = None
 
                 while not self.rfid_stop_event.is_set():
                     received_rfid = self.rfid_reader.get_stored_data()
@@ -160,30 +160,31 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                     last_rfid = received_rfid
                     print(f"📡 RFID Scanned: {received_rfid}")
 
+                    # ✅ Clean up garbage chars and whitespace
                     clean_rfid = received_rfid.strip().replace("\x02", "").replace("\x03", "")
 
                     if not clean_rfid:
                         print("⚠️ Empty or invalid RFID detected, skipping...")
-                        continue  # 🚫 Avoid calling add_value()
+                        continue
 
-                    if clean_rfid in self.animal_rfid_list:
-                        print(f"⚠️ RFID {clean_rfid} is already in use! Skipping...")
-                        play_sound_async("shared/sounds/error.wav")
-                        continue  # 🚫 Avoid calling add_value()
+                    animal_id = local_db.get_animal_id(clean_rfid)
+                    if animal_id is not None:
+                        print(f"✅ Found Animal ID: {animal_id}")
+                        self.after(0, lambda: self.select_animal_by_id(animal_id))
+                    else:
+                        print("❌ No animal found for scanned RFID:", clean_rfid)
 
-                    # If it's a new RFID, process it
-                    self.after(0, lambda: self.add_value(clean_rfid, local_db))
-                    self.animal_rfid_list.append(clean_rfid)
-                    play_sound_async("shared/sounds/rfid_success.wav")
+                    time.sleep(0.1)
 
             except Exception as e:
-                print(f"❌ Error in RFID listener: {e}")
-
+                print(f"Error in RFID listener: {e}")
             finally:
-                print("🛑 RFID listener has stopped.")
-                if self.rfid_reader:
+                if hasattr(self, 'rfid_reader') and self.rfid_reader:
                     self.rfid_reader.stop()
-                    self.rfid_reader = None  # Ensure cleanup
+                    self.rfid_reader.close()
+                    self.rfid_reader = None
+                print("🛑 RFID listener thread ended.")
+
 
         self.rfid_thread = threading.Thread(target=listen, daemon=True)
         self.rfid_thread.start()
@@ -321,8 +322,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         # Stop listening before checking conditions
         self.stop_listening()
 
-        total_scanned = len(self.db.get_animals_rfid())  # Get count of scanned RFIDs
-        total_expected = db.get_number_animals()  # Expected count from DB
+        total_scanned = len(self.db.get_all_animals_rfid())  # Get count of scanned RFIDs
+        total_expected = db.get_total_number_animals()  # Expected count from DB
 
         print(f"✅ Scanned: {total_scanned} / Expected: {total_expected}")
 
@@ -332,7 +333,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             self.rfid_listen()
         else:
             print("🎉 All animals have been mapped to RFIDs! RFID scanning completed.")
-            print("RFIDs scanned: ", self.db.get_animals_rfid())
+            print("RFIDs scanned: ", self.db.get_all_animals_rfid())
             self.stop_listening()
 
 
@@ -453,7 +454,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
     def press_back_to_menu_button(self):
         '''Handles back to menu button press.'''
-        if len(self.db.get_all_animals_rfid()) != len(self.db.get_animals()):
+        if len(self.db.get_all_animals_rfid()) != self.db.get_total_number_animals():
             self.raise_warning('Not all animals have been mapped to RFIDs')
         else:
             # Save the current state before closing the database
