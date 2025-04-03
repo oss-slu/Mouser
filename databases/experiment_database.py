@@ -667,3 +667,10 @@ class ExperimentDatabase:
             print(f"Error during autosort: {e}")
             self._conn.rollback()
             return False
+
+    def get_cage_number(self, cage_name):
+        self._c.execute('''
+                        SELECT group_id FROM groups
+                        WHERE name = ?''', (cage_name,))
+        result = self._c.fetchone()
+        return result[0] if result else None
