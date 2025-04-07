@@ -57,16 +57,16 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         button_font = ("Arial Black", 35)
 
 
-        self.collection_button = CTkButton(main_frame, text='Data Collection', width=button_width, height= button_height, border_width=2.5,
+        self.collection_button = CTkButton(main_frame, text='Data Collection', hover_color='red', width=button_width, height= button_height, border_width=2.5,
                                 command= self.data_page.raise_frame, font=button_font)
-        self.analysis_button = CTkButton(main_frame, text='Data Exporting', width=button_width, height= button_height, border_width=2.5,
+        self.analysis_button = CTkButton(main_frame, text='Data Exporting', hover_color='red', width=button_width, height= button_height, border_width=2.5,
                                 command= self.analysis_page.raise_frame, font=button_font)
-        self.group_button = CTkButton(main_frame, text='Group Configuration', width=button_width, height= button_height, border_width=2.5,
+        self.group_button = CTkButton(main_frame, text='Group Configuration', hover_color='red', width=button_width, height= button_height, border_width=2.5,
                                 command= lambda: [self.cage_page.raise_frame(),
                                                   self.cage_page.update_config_frame()], font=button_font)
-        self.rfid_button = CTkButton(main_frame, text='Map RFID', width=button_width, height= button_height, border_width=2.5,
+        self.rfid_button = CTkButton(main_frame, text='Map RFID', hover_color='red', width=button_width, height= button_height, border_width=2.5,
                                 command=  self.rfid_page.raise_frame, font=button_font)
-        self.summary_button = CTkButton(main_frame, text='Summary View', width=button_width, height= button_height, border_width=2.5,
+        self.summary_button = CTkButton(main_frame, text='Summary View', hover_color='red', width=button_width, height= button_height, border_width=2.5,
                                 command= self.summary_page.raise_frame, font=button_font)
 
         self.collection_button.grid(row=0, column=0, ipady=0, ipadx=0, pady=0, padx=0)
