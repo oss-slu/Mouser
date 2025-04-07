@@ -140,7 +140,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         def listen():
             try:
-                local_db = ExperimentDatabase(self.database.db_file)  # ✅ Safer to use local DB instance
+                local_db = ExperimentDatabase(self.db.db_file)  # ✅ Safer to use local DB instance
                 self.rfid_reader = SerialDataHandler("reader")
                 self.rfid_reader.start()
                 print("🔄 RFID Reader Started!")
