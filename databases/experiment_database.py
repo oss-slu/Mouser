@@ -176,6 +176,7 @@ class ExperimentDatabase:
         '''Returns whether the experiment uses RFID (0 or 1).'''
         self._c.execute("SELECT uses_rfid FROM experiment")
         result = self._c.fetchone()
+        print("Experiment uses RFID:", result)
         return result[0] if result else 0
 
     def get_animals(self):
@@ -211,6 +212,8 @@ class ExperimentDatabase:
         '''Returns the animal ID for a given RFID.'''
         self._c.execute('SELECT animal_id FROM animals WHERE rfid = ?', (rfid,))
         result = self._c.fetchone()
+        print("Animal RFID:", rfid)
+        print("Animal ID:", result)
         return result[0] if result else None
 
     def get_data_for_date(self, date):
