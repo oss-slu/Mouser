@@ -7,6 +7,7 @@ from os import listdir, getcwd
 from os.path import isfile, join
 from csv import *
 from customtkinter import *
+from tkinter import simpledialog
 from tkinter import messagebox
 from shared.tk_models import SettingPage
 from shared.serial_port_controller import *
@@ -96,7 +97,89 @@ class SerialPortSetting(SettingPage):
             else:
                 print(f"⚠️ Warning: Config path not found: {path}")
 
+        self.preset_name_var = StringVar(value="")
+        self.setup_preset_ui()
 
+    def setup_preset_ui(self):
+        # Add buttons for preset management
+        self.save_preset_button = CTkButton(self.edit_region, text="Save Preset",
+                                            command=self.save_current_settings_as_preset)
+        self.save_preset_button.grid(row=12, column=1, padx=20, pady=5, sticky="ew")
+
+        self.load_preset_button = CTkButton(self.edit_region, text="Load Preset",
+                                            command=self.load_preset_ui)
+        self.load_preset_button.grid(row=12, column=2, padx=20, pady=5, sticky="ew")
+
+        self.delete_preset_button = CTkButton(self.edit_region, text="Delete Preset",
+                                              command=self.delete_preset_ui)
+        self.delete_preset_button.grid(row=12, column=3, padx=20, pady=5, sticky="ew")
+
+    def save_current_settings_as_preset(self):
+        """Save current settings as a new preset."""
+        configuration_name = simpledialog.askstring("Input", "Enter Preset Name", parent=self.master)
+        if configuration_name:
+            settings = [
+                self.baud_rate_var.get(),
+                self.parity_var.get(),
+                self.flow_control_var.get(),
+                self.data_bits_var.get(),
+                self.stop_bits_var.get(),
+                self.input_bype_var.get(),
+                self.serial_port.get()
+            ]
+            self.save_preset(configuration_name, settings)
+
+    def save_preset(self, preset_name, settings):
+        """Save a new or existing preset to a CSV file."""
+        preset_file = os.path.join(self.get_write_path(), 'settings', 'serial_ports', f"{preset_name}.csv")
+        with open(preset_file, 'w', newline="", encoding="utf-8") as file:
+            writer = csv.writer(file)
+            writer.writerow(settings)
+        messagebox.showinfo("Success", f"Preset '{preset_name}' saved successfully!")
+
+    def load_preset_ui(self):
+        """UI to select a preset to load."""
+        presets_dir = os.path.join(self.get_write_path(), 'settings', 'serial_ports')
+        presets = [f for f in os.listdir(presets_dir) if f.endswith('.csv')]
+        preset_name = simpledialog.askstring("Select Preset", "Enter Preset Name:", parent=self.master)
+        if preset_name:
+            self.load_preset(preset_name)
+
+    def load_preset(self, preset_name):
+        """Load settings from a preset CSV file."""
+        preset_file = os.path.join(self.get_write_path(), 'settings', 'serial_ports', f"{preset_name}.csv")
+        try:
+            with open(preset_file, newline="") as file:
+                reader = csv.reader(file)
+                settings = next(reader)
+                self.apply_settings(settings)
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to load preset: {e}")
+
+    def apply_settings(self, settings):
+        """Apply the loaded settings to the UI variables."""
+        self.baud_rate_var.set(settings[0])
+        self.parity_var.set(settings[1])
+        self.flow_control_var.set(settings[2])
+        self.data_bits_var.set(settings[3])
+        self.stop_bits_var.set(settings[4])
+        self.input_bype_var.set(settings[5])
+        self.serial_port.set(settings[6])
+
+    def delete_preset_ui(self):
+        """UI to select a preset to delete."""
+        preset_name = simpledialog.askstring("Delete Preset", "Enter Preset Name to Delete:", parent=self.master)
+        if preset_name:
+            self.delete_preset(preset_name)
+
+    def delete_preset(self, preset_name):
+        """Delete a preset CSV file."""
+        preset_file = os.path.join(self.get_write_path(), 'settings', 'serial_ports', f"{preset_name}.csv")
+        try:
+            os.remove(preset_file)
+            messagebox.showinfo("Success", f"Preset '{preset_name}' deleted successfully!")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to delete preset: {e}")
         
     def get_base_path(self):
         """Return the root path where the .exe or main.py is located."""
