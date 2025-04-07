@@ -48,7 +48,16 @@ def open_file():
     '''
     file_path = askopenfilename(filetypes=[("Database files",".mouser .pmouser")])
     print(file_path)
+    global TEMP_FILE_PATH
+
     if file_path:
+
+        # Close any existing db connections to respect singleton
+        if TEMP_FILE_PATH and os.path.exists(TEMP_FILE_PATH):
+            from databases.experiment_database import ExperimentDatabase
+            if ExperimentDatabase._instance is not None:
+                ExperimentDatabase._instance.close()
+
         global CURRENT_FILE_PATH
         CURRENT_FILE_PATH = file_path
 
@@ -89,7 +98,6 @@ def open_file():
             password_button.pack()
         else:
             temp_file = file_utils.create_temp_copy(file_path)
-            global TEMP_FILE_PATH
             TEMP_FILE_PATH = temp_file
             page = ExperimentMenuUI(root, temp_file, experiments_frame, file_path)
             page.raise_frame()
