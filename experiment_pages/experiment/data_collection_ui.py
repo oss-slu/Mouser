@@ -101,10 +101,8 @@ class DataCollectionUI(MouserPage):
         self.stop_button.place(relx=0.55, rely=0.30, anchor=CENTER)
 
         self.animals = self.database.get_animals()
-        self.table_frame = CTkFrame(self)
+        self.table_frame = ScrolledFrame(self)
         self.table_frame.place(relx=0.50, rely=0.65, anchor=CENTER)
-
-
 
         columns = ['animal_id']
         print(self.database.get_measurement_name())
@@ -313,6 +311,7 @@ class DataCollectionUI(MouserPage):
 
                     print(f"Attempting to save {self.database.db_file} to {self.current_file_path}")
                     save_temp_to_file(self.database.db_file, self.current_file_path)
+                    AudioManager.play("shared/sounds/rfid_success.wav")
                     print("Autosave Success!")
 
                 except Exception as save_error:
