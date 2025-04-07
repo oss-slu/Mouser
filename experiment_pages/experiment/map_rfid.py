@@ -349,9 +349,11 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         for item in selected_items:
             item_id = int(self.table.item(item, 'values')[0])
+            rfid_value = self.table.item(item, 'values')[1]
             self.table.selection_remove(item)
             self.table.delete(item)
             self.db.remove_animal(item_id)
+            self.animal_rfid_list.remove(rfid_value)
             print("Total number of animal rows in the table:", len(self.table.get_children()))
 
         self.save()
