@@ -388,7 +388,7 @@ class ChangeMeasurementsDialog():
                     print("Beginning check for data")
                     if self.data_collection.database.get_measurement_type() == 1:
                         print("Inside the if statement")
-                        current_index = self.animal_ids.index(str(animal_id))
+                        current_index = self.animal_ids.index(animal_id)
 
                         while current_index < len(self.animal_ids) and self.thread_running:
                             if len(data_handler.received_data) >= 2:  # Customize condition
