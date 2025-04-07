@@ -140,11 +140,12 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         def listen():
             try:
-                self.rfid_reader = SerialDataHandler("reader")  # Store reference to close later
+                local_db = ExperimentDatabase(self.database.db_file)  # ✅ Safer to use local DB instance
+                self.rfid_reader = SerialDataHandler("reader")
                 self.rfid_reader.start()
                 print("🔄 RFID Reader Started!")
 
-                last_rfid = None  # Track last scanned RFID to avoid duplicate reads
+                last_rfid = None
 
                 while not self.rfid_stop_event.is_set():
                     received_rfid = self.rfid_reader.get_stored_data()
@@ -156,6 +157,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                     last_rfid = received_rfid
                     print(f"📡 RFID Scanned: {received_rfid}")
 
+                    # ✅ Clean up garbage chars and whitespace
                     clean_rfid = received_rfid.strip().replace("\x02", "").replace("\x03", "")
                     clean_rfid = clean_rfid.strip()
 
@@ -175,13 +177,14 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                         play_sound_async("shared/sounds/rfid_success.wav")
 
             except Exception as e:
-                print(f"❌ Error in RFID listener: {e}")
-
+                print(f"Error in RFID listener: {e}")
             finally:
-                print("🛑 RFID listener has stopped.")
-                if self.rfid_reader:
+                if hasattr(self, 'rfid_reader') and self.rfid_reader:
                     self.rfid_reader.stop()
-                    self.rfid_reader = None  # Ensure cleanup
+                    self.rfid_reader.close()
+                    self.rfid_reader = None
+                print("🛑 RFID listener thread ended.")
+
 
         self.rfid_thread = threading.Thread(target=listen, daemon=True)
         self.rfid_thread.start()
