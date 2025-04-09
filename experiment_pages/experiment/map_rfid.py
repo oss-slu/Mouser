@@ -106,6 +106,10 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                                       state="normal")  # Initialize as enabled
         self.sacrifice_button.place(relx=0.80, rely=0.80, anchor=CENTER)
 
+        self.stop_scanning_button = CTkButton(self, text="Stop Listening", compound=TOP,
+                                  width=250, height=75, font=("Georgia", 65), command=self.stop_listening)
+        self.stop_scanning_button.place(relx=0.10, rely=0.80, anchor=CENTER)
+
         self.item_selected(None)
 
         animals_setup = self.db.get_all_animal_ids()
@@ -166,6 +170,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                     elif clean_rfid in self.animal_rfid_list:
                         print(f"⚠️ RFID {clean_rfid} is already in use! Skipping...")
                         play_sound_async("shared/sounds/error.wav")
+                        self.raise_warning("This RFID tag has already been mapped to an animal")
                         continue  # 🚫 Avoid calling add_value()
 
                     else:
