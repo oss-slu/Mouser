@@ -170,7 +170,6 @@ class CageConfigurationUI(MouserPage):
         confirm = CTkMessagebox(
             title= "Confirm AutoSort",
             message= "Are you sure you want to AutoSort? \nThis will remove measurements used to sort from the database.",
-            icon="question",
             option_1="No",
             option_2="Yes"
         )
