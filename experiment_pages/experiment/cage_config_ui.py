@@ -1,6 +1,7 @@
 '''Contains cage configuration page and behaviour.'''
 from customtkinter import *
 from shared.tk_models import *
+from CTkMessagebox import CTkMessagebox
 from shared.scrollable_frame import ScrolledFrame
 from databases.database_controller import DatabaseController
 from shared.audio import AudioManager
@@ -165,10 +166,18 @@ class CageConfigurationUI(MouserPage):
         self.save()
 
     def autosort(self):
-        '''Calls database's autosort function.'''
-        self.db.autosort()
-        self.update_config_frame()
-        self.save()
+        '''Calls database's autosort function after user confirmation.'''
+        confirm = CTkMessagebox(
+            title= "Confirm AutoSort",
+            message= "Are you sure you want to AutoSort? \nThis will remove measurements used to sort from the database.",
+            icon="question",
+            option_1="No",
+            option_2="Yes"
+        )
+        if confirm.get() == "Yes":
+            self.db.autosort()
+            self.update_config_frame()
+            self.save()
 
     def perform_swap(self):
         '''Swaps two selected animals between cages.'''
