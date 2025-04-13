@@ -199,7 +199,7 @@ class DataCollectionUI(MouserPage):
 
                         if received_rfid:
                             import re
-                            received_rfid = re.sub(r"[^\d]", "", received_rfid)  # Keep only digits
+                            received_rfid = re.sub(r"[^\w]", "", received_rfid)  # Keep only alphanumeric characters, gets rid of spaces and encrypted greeting messages
 
                             if not received_rfid:
                                 print("⚠️ Empty RFID scan detected, ignoring...")
@@ -256,6 +256,8 @@ class DataCollectionUI(MouserPage):
 
         self.rfid_thread = None
         print("✅ RFID listener cleanup completed.")
+        self.changer.stop_thread()  # Stop the changer thread if it's running
+        self.changer.close()  # Close the changer dialog if it's open
 
     def select_animal_by_id(self, animal_id):
         '''Finds and selects the animal with the given ID in the table, then opens the entry box.'''
@@ -458,3 +460,8 @@ class ChangeMeasurementsDialog():
     def close(self):
         '''Closes change value dialog window.'''
         self.root.destroy()
+
+    def stop_thread(self):
+        '''Stops the data input thread if running.'''
+        self.thread_running = False
+        print("❌Measurement thread stopped")
