@@ -5,10 +5,21 @@ from datetime import datetime
 
 class ExperimentDatabase:
     '''SQLite Database Object for Experiments.'''
-    def __init__(self, file=":memory:"):  #call with file name as argument or no args to use memory
-        self.db_file = file
-        self._conn = sqlite3.connect(file, check_same_thread=False)
-        self._c = self._conn.cursor()
+    _instance  = None
+
+
+    def __new__(cls, file=":memory:"):
+        '''Builds Database connections if singleton does not exist'''
+        if cls._instance is None:
+            cls._instance = super(ExperimentDatabase, cls).__new__(cls)
+            cls._instance.db_file = file
+            cls._instance._conn = sqlite3.connect(file, check_same_thread=False)
+            cls._instance._c = cls._instance._conn.cursor()
+            cls._instance._initialize_tables()
+        return cls._instance
+
+
+    def _initialize_tables(self):  # Call to work with singleton changes
         try:
             self._c.execute('''CREATE TABLE experiment (
                                 name TEXT,
@@ -110,11 +121,9 @@ class ExperimentDatabase:
             # Update group count
             self._c.execute('''UPDATE groups
                             SET num_animals = num_animals - 1
-                            WHERE group_id = ?''', (group_id))
+                            WHERE group_id = ?''', (group_id,))
 
-            # Deactivate animal instead of deleting
-            self._c.execute("UPDATE animals SET active = 0 WHERE animal_id = ?", (animal_id,))
-            self._conn.commit()
+            self._c.execute("DELETE FROM animals WHERE animal_id = ?", (animal_id,))
         else:
             raise LookupError(f"No animal found with ID {animal_id}")
 
@@ -169,8 +178,28 @@ class ExperimentDatabase:
         return result
 
     def close(self):
-        '''Closes database connection.'''
-        self._conn.close()
+        '''Closes database connection and cleans up singleton instance.'''
+        try:
+            if self._conn is not None:
+                # Commit any pending transactions
+                self._conn.commit()
+
+                # Close the cursor if it exists
+                if self._c is not None:
+                    self._c.close()
+                    self._c = None
+
+                # Close the connection
+                self._conn.close()
+                self._conn = None
+
+                # Clear the singleton instance
+                ExperimentDatabase._instance = None
+
+                return True
+        except Exception as e:
+            print(f"Error during database cleanup: {e}")
+            return False
 
     def experiment_uses_rfid(self):
         '''Returns whether the experiment uses RFID (0 or 1).'''
@@ -191,7 +220,7 @@ class ExperimentDatabase:
         self._c.execute("SELECT num_animals FROM experiment")
         result = self._c.fetchone()
         if result:
-            print(result[0])
+            print("Total number of animals in Experiment: ",result[0])
             return result[0]
         return 0
 
@@ -207,7 +236,7 @@ class ExperimentDatabase:
         result = self._c.fetchone()
         return result[0] if result else None
 
-    def get_animal_id(self, rfid):
+    def get_animal_id(self, rfid: str):
         '''Returns the animal ID for a given RFID.'''
         self._c.execute('SELECT animal_id FROM animals WHERE rfid = ?', (rfid,))
         result = self._c.fetchone()
@@ -414,12 +443,21 @@ class ExperimentDatabase:
         return result[0] if result else 0  # Default to manual (0)
 
     def get_all_animal_ids(self):
-        '''Returns a list of all animal IDs that have RFIDs mapped to them.'''
+        '''Returns a list of all active animal IDs that have RFIDs mapped to them.'''
         self._c.execute('''
             SELECT animal_id
             FROM animals
             WHERE rfid IS NOT NULL
             AND active = 1
+        ''')
+        return [animal[0] for animal in self._c.fetchall()]
+
+    def get_all_animals(self):
+        '''Returns a list of ALL animals ACTIVE OR NOT with RFIDs'''
+        self._c.execute('''
+            SELECT animal_id
+            FROM animals
+            WHERE rfid IS NOT NULL
         ''')
         return [animal[0] for animal in self._c.fetchall()]
 
@@ -629,3 +667,10 @@ class ExperimentDatabase:
             print(f"Error during autosort: {e}")
             self._conn.rollback()
             return False
+
+    def get_cage_number(self, cage_name):
+        self._c.execute('''
+                        SELECT group_id FROM groups
+                        WHERE name = ?''', (cage_name,))
+        result = self._c.fetchone()
+        return result[0] if result else None
