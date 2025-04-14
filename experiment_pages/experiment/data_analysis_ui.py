@@ -39,6 +39,20 @@ class DataAnalysisUI(MouserPage):
         )
         self.export_button.grid(row=1, column=0, padx=20, pady=30)  # Adjust padding for spacing
 
+    def show_success_message(self):
+        '''Shows a temporary success message on the screen'''
+        success_label = CTkLabel(
+            self.master,  # Use self.master to ensure it's on the main window
+            text="Export to CSV successful!",
+            text_color="green",
+            font=("Arial", 24, "bold")
+        )
+        # Position it above the export button
+        success_label.place(relx=0.5, rely=0.6, anchor=CENTER)
+
+        # Automatically remove the label after 2 seconds
+        self.after(2000, success_label.destroy)
+
     def export_to_csv(self):
         '''Handles exporting the database to CSV files.'''
         if not self.db_file or not os.path.exists(self.db_file):
@@ -54,9 +68,10 @@ class DataAnalysisUI(MouserPage):
         try:
             db = ExperimentDatabase(self.db_file)
             db.export_to_csv(save_dir)
-            AudioManager.play('shared/sounds/rfid_success.wav')
-            # Once export is done, show the success notification
-            self.show_notification("Success", "Export to CSV successful!")
+            print("Data exported successfully to CSV files.")
+            AudioManager.play("shared/sounds/rfid_success.wav")
+            # Replace the notification with our new success message
+            self.show_success_message()
         except Exception as e:
             print(f"An error occurred while exporting data: {e}")
             self.show_notification("Error", "Export to CSV failed")
