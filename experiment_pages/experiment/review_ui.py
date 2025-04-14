@@ -2,6 +2,7 @@
 #pylint: skip-file
 from databases.experiment_database import ExperimentDatabase
 from shared.tk_models import *
+from customtkinter import CTk, CTkLabel, CTkFont
 
 class ReviewUI(MouserPage):
     '''Review User Interface for experiment summary.'''
@@ -9,13 +10,12 @@ class ReviewUI(MouserPage):
         super().__init__(parent, "Review Experiment - Summary", prev_page)
         
         self.database = ExperimentDatabase(database_name)
-
-        self.main_frame = CTkFrame(self, corner_radius=15)
-        self.main_frame.grid(row=0, column=0, sticky='NESW')
-        self.main_frame.place(relx=0.5, rely=0.5, anchor=CENTER) #pylint: disable = undefined-variable
+    
+        # Using ScrollableFrame instead of CTkFrame
+        self.main_frame = CTkScrollableFrame(self)
+        self.main_frame.place(relx=0.5, rely=0.5, relwidth=0.8, relheight=0.8, anchor="center")
 
         self.create_summary_frame()
-
 
     def create_summary_frame(self):
         '''Creates and populates the summary frame with experiment data.'''
