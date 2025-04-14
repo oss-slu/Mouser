@@ -16,8 +16,6 @@ from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment.select_experiment_ui import ExperimentsUI
 from experiment_pages.experiment.test_screen import TestScreen
-import tkinter as tk
-
 
 # Function to resolve resource paths (must be defined before usage)
 def get_resource_path(relative_path):
