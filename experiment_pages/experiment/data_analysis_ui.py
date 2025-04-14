@@ -6,14 +6,14 @@ from customtkinter import *
 from tkinter import filedialog
 from shared.tk_models import *
 from databases.experiment_database import ExperimentDatabase
-
+from shared.audio import AudioManager
 
 class DataAnalysisUI(MouserPage):
     '''Data Exporting UI.'''
     def __init__(self, parent: CTk, prev_page: CTkFrame = None, db_file=None):
         super().__init__(parent, "Data Exporting", prev_page)
         self.db_file = db_file  # Accept the database file dynamically
-        
+
         # Create the main frame
         main_frame = CTkFrame(self, corner_radius=15)
         main_frame.grid(row=0, column=0, sticky="nsew")
@@ -21,8 +21,8 @@ class DataAnalysisUI(MouserPage):
 
         # Add a title label
         title_label = CTkLabel(
-            main_frame, 
-            text="Data Analysis & Export", 
+            main_frame,
+            text="Data Analysis & Export",
             font=("Arial", 22, "bold"),  # Larger font for clarity
             pady=20
         )
@@ -30,11 +30,11 @@ class DataAnalysisUI(MouserPage):
 
         # Add a button to export the database to CSV
         self.export_button = CTkButton(
-            main_frame, 
-            text="Export Data to CSV", 
-            command=self.export_to_csv, 
-            width=200, 
-            height=75, 
+            main_frame,
+            text="Export Data to CSV",
+            command=self.export_to_csv,
+            width=200,
+            height=75,
             font=("Arial", 20)
         )
         self.export_button.grid(row=1, column=0, padx=20, pady=30)  # Adjust padding for spacing
@@ -45,7 +45,7 @@ class DataAnalysisUI(MouserPage):
             print(f"Database file {self.db_file} not found.")
             self.show_notification("Error", "Database file not found.")
             return
-        
+
         # Ask user for the directory to save CSV files
         save_dir = filedialog.askdirectory(title="Select Directory to Save CSV Files")
         if not save_dir:  # User cancelled the dialog
@@ -54,7 +54,7 @@ class DataAnalysisUI(MouserPage):
         try:
             db = ExperimentDatabase(self.db_file)
             db.export_to_csv(save_dir)
-            print("Data exported successfully to CSV files.")
+            AudioManager.play('shared/sounds/rfid_success.wav')
             # Once export is done, show the success notification
             self.show_notification("Success", "Export to CSV successful!")
         except Exception as e:
@@ -74,20 +74,20 @@ class DataAnalysisUI(MouserPage):
 
         # Add a label for the message
         label = CTkLabel(
-            notification, 
-            text=message, 
-            font=("Arial", 20), 
+            notification,
+            text=message,
+            font=("Arial", 20),
             pady=20
         )
         label.pack(pady=10)
 
         # Add an OK button
         ok_button = CTkButton(
-            notification, 
-            text="OK", 
-            command=notification.destroy, 
-            width=100, 
-            height=100, 
+            notification,
+            text="OK",
+            command=notification.destroy,
+            width=100,
+            height=100,
             font=("Arial", 18)
         )
         ok_button.pack(pady=20)

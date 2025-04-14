@@ -439,7 +439,6 @@ class ChangeMeasurementsDialog():
                                     # If not at the end of the list, move to next animal
                                     self.finish(animal_id)  # Pass animal_id to finish method
                                     if current_index >= len(self.animal_ids):
-                                        print("closing!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                                         data_thread.join()
                                         break
                                     else:
@@ -487,6 +486,7 @@ class ChangeMeasurementsDialog():
             if self.data_collection.winfo_exists():
                 # Update the database with the new values
                 self.data_collection.change_selected_value(current_animal_id, values)
+                AudioManager.play("shared/sounds/rfid_success.wav")
 
     def get_all_values(self):
         '''Returns the values of all entries in self.textboxes as an array.'''
