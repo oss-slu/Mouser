@@ -80,6 +80,7 @@ class DataAnalysisUI(MouserPage):
         '''Raise the frame for this UI'''
         super().raise_frame()
 
+
     def show_notification(self, title, message):
         '''Displays a notification when export is complete.'''
         notification = CTkToplevel(self)  # Use Toplevel for a non-blocking modal
