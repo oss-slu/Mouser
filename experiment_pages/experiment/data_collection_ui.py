@@ -101,7 +101,7 @@ class DataCollectionUI(MouserPage):
         self.stop_button.place(relx=0.55, rely=0.30, anchor=CENTER)
 
         self.animals = self.database.get_animals()
-        self.table_frame = CTkFrame(self)
+        self.table_frame = ScrolledFrame(self)
         self.table_frame.place(relx=0.50, rely=0.65, anchor=CENTER)
 
 
