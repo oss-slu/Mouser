@@ -12,7 +12,7 @@ from shared.tk_models import SettingPage
 from shared.serial_port_controller import *
 
 class SerialPortSetting(SettingPage):
-    '''a class that implements methods and functions 
+    '''a class that implements methods and functions
     related to connecting serial port setting to the experiments '''
 
     def __init__(self, preference = NONE, controller: SerialPortController = NONE):
@@ -55,7 +55,7 @@ class SerialPortSetting(SettingPage):
 
             else:
                 self.preference_path = None  # Fallback if no valid type
-            
+
             if os.path.exists(self.preference_path):
                 try:
                     with open(self.preference_path, "r") as file:
@@ -97,13 +97,13 @@ class SerialPortSetting(SettingPage):
                 print(f"⚠️ Warning: Config path not found: {path}")
 
 
-        
+
     def get_base_path(self):
         """Return the root path where the .exe or main.py is located."""
         if getattr(sys, 'frozen', False):
             return os.path.dirname(sys.executable)
         return os.path.dirname(os.path.abspath(sys.argv[0]))
-    
+
     def get_read_path(self):
         """Return the path where the settings are read from."""
         if getattr(sys, 'frozen', False):
@@ -129,12 +129,12 @@ class SerialPortSetting(SettingPage):
         if self.preference:
             self.import_file.set(self.preference)
         self.edit_configuration_button = CTkButton(self.configuration_region, text="Edit", width=2, height=14, command=self.edit_configuration)
-        
+
         self.set_preference_button = CTkButton(
             self.configuration_region, text="Set as Meausurement Device", width=2, height=14,
             command=lambda: self.set_preference(self.serial_port.get(), self.current_configuration_name.get())
         )
-        
+
         self.set_rfid_button = CTkButton(
             self.configuration_region, text="Set as RFID Reader", width=2, height=14,
             command=lambda: self.set_rfid(self.serial_port.get(), self.current_configuration_name.get())
@@ -283,11 +283,11 @@ class SerialPortSetting(SettingPage):
     def save(self):
         '''Save the current settings as a new or existing configuration.'''
         configuration_name = self.configuration_name.get().strip()
-        
+
         if not configuration_name:
-            messagebox.showerror("Error", "Configuration name cannot be empty.")
+            messagebox.showerror("Error", "Configuration name cannot be empty.", parent=self)
             return
-        
+
         settings = [
             self.baud_rate_var.get(),
             self.parity_var.get(),
@@ -315,6 +315,8 @@ class SerialPortSetting(SettingPage):
             print(f"Error saving settings: {e}")
             messagebox.showerror("Error", f"Failed to save settings: {e}")
 
+        self.destroy()
+
     def edit(self):
         '''Function for the edit button on summary page, brings user
         to the edit page'''
@@ -325,7 +327,7 @@ class SerialPortSetting(SettingPage):
         '''Refresh tabs and display the summary page'''
         self.refresh_tabs()
         self.summary_page("Serial Settings")
-    
+
     def refresh_tabs(self):
         '''refreshes the page when updates are made'''
         self.tab_view.delete("Serial Settings")
@@ -338,7 +340,7 @@ class SerialPortSetting(SettingPage):
         preference_dir = os.path.join(base_path, "settings", "serial ports", "preference", "device")
         os.makedirs(preference_dir, exist_ok=True)
         preference_path = os.path.join(preference_dir, "preferred_config.txt")
-        
+
         try:
             with open(preference_path, "w") as file:
                 file.write(file_name + "\n")
@@ -353,7 +355,7 @@ class SerialPortSetting(SettingPage):
         preference_dir = os.path.join(base_path, "settings", "serial ports", "preference", "reader")
         os.makedirs(preference_dir, exist_ok=True)
         preference_path = os.path.join(preference_dir, "rfid_config.txt")
-        
+
         try:
             with open(preference_path, "w") as file:
                 file.write(file_name + "\n")
@@ -365,7 +367,7 @@ class SerialPortSetting(SettingPage):
         '''select a configuration and use it as current serial port setting'''
         read_path = self.get_read_path()
         write_path = self.get_write_path()
-        
+
         read_config_dir = os.path.join(read_path, "settings", "serial ports")
         write_config_dir = os.path.join(write_path, "settings", "serial ports")
 
