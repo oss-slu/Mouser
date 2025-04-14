@@ -43,7 +43,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         file = database
         self.db = ExperimentDatabase(file)
 
-        self.animal_rfid_list = []
+        self.animal_rfid_list = [str(rfid) for rfid in self.db.get_all_animals_rfid()]
         self.animals = []
         self.animal_id = 1
 
