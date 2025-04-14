@@ -23,10 +23,6 @@ def get_random_rfid():
     '''Returns a simulated rfid number'''
     return random.randint(1000000000, 9999999999)
 
-def play_sound_async(filename):
-    '''Plays the given filename.'''
-    threading.Thread(target=playsound, args=(filename,), daemon=True).start()
-
 class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
     '''Map RFID user interface and window.'''
     def __init__(self, database, parent: CTk, previous_page: CTkFrame = None, file_path = ""):
@@ -171,7 +167,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
                     elif clean_rfid in self.animal_rfid_list:
                         print(f"⚠️ RFID {clean_rfid} is already in use! Skipping...")
-                        play_sound_async("shared/sounds/error.wav")
+                        AudioManager.play("shared/sounds/error.wav")
                         self.raise_warning("This RFID tag has already been mapped to an animal")
                         continue  # 🚫 Avoid calling add_value()
 
@@ -179,8 +175,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                         # If it's a new RFID, process it
                         self.after(0, lambda: self.add_value(clean_rfid))
                         self.animal_rfid_list.append(clean_rfid)
-                        play_sound_async("shared/sounds/rfid_success.wav")
-
+                        AudioManager.play("shared/sounds/rfid_success.wav")
 
             except Exception as e:
                 print(f"Error in RFID listener: {e}")
