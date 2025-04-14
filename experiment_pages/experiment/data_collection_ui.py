@@ -8,19 +8,22 @@ from databases.experiment_database import ExperimentDatabase
 from shared.audio import AudioManager
 from shared.scrollable_frame import ScrolledFrame
 from shared.serial_handler import SerialDataHandler
+from shared.file_utils import save_temp_to_file
 import threading
 
 #pylint: disable= undefined-variable
 class DataCollectionUI(MouserPage):
     '''Page Frame for Data Collection.'''
 
-    def __init__(self, parent: CTk, prev_page: CTkFrame = None, database_name = ""):
+    def __init__(self, parent: CTk, prev_page: CTkFrame = None, database_name = "", file_path = ""):
 
         super().__init__(parent, "Data Collection", prev_page)
 
         self.rfid_reader = None
         self.rfid_stop_event = threading.Event()  # Event to stop RFID listener
         self.rfid_thread = None # Store running thread
+
+        self.current_file_path = file_path
 
         self.database = ExperimentDatabase(database_name)
 
@@ -286,17 +289,43 @@ class DataCollectionUI(MouserPage):
 
     def change_selected_value(self, animal_id_to_change, list_of_values):
         '''Updates the table and database with the new value.'''
-        new_value = float(list_of_values[0])
-        print(animal_id_to_change)
-        print(new_value)
-        self.database.change_data_entry(str(date.today()), animal_id_to_change, new_value)
+        try:
+            new_value = float(list_of_values[0])
+            print(f"Saving data point for animal {animal_id_to_change}: {new_value}")
 
-        for child in self.table.get_children():
-            if animal_id_to_change == self.table.item(child)["values"][0]:
-                self.table.item(child, values=(animal_id_to_change, new_value))
+            # Write change to database
+            self.database.change_data_entry(str(date.today()), animal_id_to_change, new_value)
+            print("Database entry updated")
 
+            # Update display table
+            try:
+                for child in self.table.get_children():
+                    if animal_id_to_change == self.table.item(child)["values"][0]:
+                        self.table.item(child, values=(animal_id_to_change, new_value))
+                print("Table display updated")
+            except Exception as table_error:
+                print(f"Error updating table display: {table_error}")
 
+            # Autosave: Commit and save the database file
+            if hasattr(self.database, 'db_file') and self.database.db_file != ":memory:":
+                try:
+                    # Ensure all changes are committed
+                    self.database._conn.commit()
+                    print("Changes committed")
 
+                    print(f"Attempting to save {self.database.db_file} to {self.current_file_path}")
+                    save_temp_to_file(self.database.db_file, self.current_file_path)
+                    print("Autosave Success!")
+
+                except Exception as save_error:
+                    print(f"Autosave failed: {save_error}")
+                    print(f"Error type: {type(save_error)}")
+                    import traceback
+                    print(f"Full traceback: {traceback.format_exc()}")
+        except Exception as e:
+            print(f"Top level error: {e}")
+            import traceback
+            print(f"Full traceback: {traceback.format_exc()}")
 
     def get_values_for_date(self):
         '''Gets the data for the current date as a string in YYYY-MM-DD.'''
@@ -352,6 +381,13 @@ class ChangeMeasurementsDialog():
 
     def open(self, animal_id):
         '''Opens the change measurement dialog window and handles automated submission.'''
+         # Initialize animal_ids unconditionally - we need this list for both RFID and non-RFID cases
+        self.animal_ids = []
+        for child in self.data_collection.table.get_children():
+            values = self.data_collection.table.item(child)["values"]
+            self.animal_ids.append(values[0])
+        self.current_index = 0
+
         self.root = root = CTkToplevel(self.parent)
 
         title_text = "Modify Measurements for: " + str(animal_id)
@@ -389,7 +425,6 @@ class ChangeMeasurementsDialog():
                 def check_for_data():
                     print("Beginning check for data")
                     if self.data_collection.database.get_measurement_type() == 1:
-                        print("Inside the if statement")
                         current_index = self.animal_ids.index(animal_id)
 
                         while current_index < len(self.animal_ids) and self.thread_running:
@@ -408,9 +443,15 @@ class ChangeMeasurementsDialog():
                                         data_thread.join()
                                         break
                                     else:
-                                        next_animal_id = self.animal_ids[current_index + 1]
-                                        self.data_collection.select_animal_by_id(next_animal_id)
-                                        break
+                                        if current_index + 1 < len(self.animal_ids): # If there are more animals
+                                            next_animal_id = self.animal_ids[current_index + 1]
+                                            self.data_collection.select_animal_by_id(next_animal_id)
+                                            break
+                                        else: # End of animal list, pass value to exit while loop
+                                            next_animal_id = len(self.animal_ids) + 1
+                                            self.data_collection.select_animal_by_id(next_animal_id)
+                                            break
+
                                 else:
                                     # Resume RFID listening if in RFID mode
                                     if not self.data_collection.rfid_stop_event.is_set():

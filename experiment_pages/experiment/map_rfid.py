@@ -29,11 +29,11 @@ def play_sound_async(filename):
 
 class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
     '''Map RFID user interface and window.'''
-    def __init__(self, database, parent: CTk, previous_page: CTkFrame = None):
+    def __init__(self, database, parent: CTk, previous_page: CTkFrame = None, file_path = ""):
 
         super().__init__(parent, "Map RFID", previous_page)
 
-        self.rfid_reader = None 
+        self.rfid_reader = None
         self.rfid_stop_event = threading.Event()  # Event to stop RFID listener
         self.rfid_thread = None # Store running thread
 
@@ -67,6 +67,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.table_frame.grid_columnconfigure(0, weight= 1)
         self.table_frame.grid_rowconfigure(0, weight= 1)
 
+        self.file_path = file_path
+
         heading_style = Style()
         heading_style.configure("Treeview.Heading", font=('Arial', 10))
 
@@ -93,11 +95,6 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             label="Remove Selection(s)", command=self.remove_selected_items)
         self.table.bind("<Button-3>", self.right_click_menu)
 
-        self.changer = ChangeRFIDDialog(parent, self)
-        self.change_rfid_button = CTkButton(self, text="Change RFID", compound=TOP,
-                                         width=250, height=75, font=("Georgia", 65), command=self.open_change_rfid)
-        self.change_rfid_button.place(relx=0.15, rely=0.80, anchor=CENTER)
-
         self.delete_button = CTkButton(self, text="Remove Selection(s)", compound=TOP,
                                        width=250, height=75, font=("Georgia", 65), command=self.remove_selected_items,
                                        state="normal")  # Initialize button as disabled
@@ -108,6 +105,10 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                                       width=250, height=75, font=("Georgia", 65), command=self.sacrifice_selected_items,
                                       state="normal")  # Initialize as enabled
         self.sacrifice_button.place(relx=0.80, rely=0.80, anchor=CENTER)
+
+        self.stop_scanning_button = CTkButton(self, text="Stop Listening", compound=TOP,
+                                  width=250, height=75, font=("Georgia", 65), command=self.stop_listening)
+        self.stop_scanning_button.place(relx=0.10, rely=0.80, anchor=CENTER)
 
         self.item_selected(None)
 
@@ -130,7 +131,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
     def rfid_listen(self):
         """Starts RFID listener, ensuring the previous session is fully closed before restarting."""
-        
+
         # Ensure old listener is properly stopped before starting a new one
         if self.rfid_thread and self.rfid_thread.is_alive():
             print("⚠️ Stopping stale RFID listener before restarting...")
@@ -143,8 +144,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         def listen():
             try:
-                local_db = ExperimentDatabase(self.database.db_file)  # ✅ Safer to use local DB instance
-                self.rfid_reader = SerialDataHandler("reader")
+
+                self.rfid_reader = SerialDataHandler("reader")  # Store reference to close later
                 self.rfid_reader.start()
                 print("🔄 RFID Reader Started!")
 
@@ -162,19 +163,24 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
                     # ✅ Clean up garbage chars and whitespace
                     clean_rfid = received_rfid.strip().replace("\x02", "").replace("\x03", "")
+                    clean_rfid = clean_rfid.strip()
 
                     if not clean_rfid:
                         print("⚠️ Empty or invalid RFID detected, skipping...")
                         continue
 
-                    animal_id = local_db.get_animal_id(clean_rfid)
-                    if animal_id is not None:
-                        print(f"✅ Found Animal ID: {animal_id}")
-                        self.after(0, lambda: self.select_animal_by_id(animal_id))
-                    else:
-                        print("❌ No animal found for scanned RFID:", clean_rfid)
+                    elif clean_rfid in self.animal_rfid_list:
+                        print(f"⚠️ RFID {clean_rfid} is already in use! Skipping...")
+                        play_sound_async("shared/sounds/error.wav")
+                        self.raise_warning("This RFID tag has already been mapped to an animal")
+                        continue  # 🚫 Avoid calling add_value()
 
-                    time.sleep(0.1)
+                    else:
+                        # If it's a new RFID, process it
+                        self.after(0, lambda: self.add_value(clean_rfid))
+                        self.animal_rfid_list.append(clean_rfid)
+                        play_sound_async("shared/sounds/rfid_success.wav")
+
 
             except Exception as e:
                 print(f"Error in RFID listener: {e}")
@@ -213,16 +219,22 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
     def simulate_all_rfid(self):
         '''Simulates RFID for all remaining unmapped animals.'''
         total_needed = self.db.get_total_number_animals()
-        current_count = len(self.animals)
-        
+        current_count = len(self.db.get_animals())
+
         print(f"Simulating RFIDs: {current_count} mapped, {total_needed} total needed")
-        
+
+        if current_count >= total_needed:
+            self.raise_warning()
+            return
+
         while current_count < total_needed:
             self.add_random_rfid()
-            current_count = len(self.animals)
+            current_count = len(self.db.get_animals())
             # Force UI update
             self.update()
             self.scroll_to_latest_entry()
+
+        self.save()
 
 
     def scroll_to_latest_entry(self):
@@ -239,7 +251,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
     def add_random_rfid(self):
         '''Adds a random rfid value to the next animal.'''
-        if len(self.animals) >= self.db.get_total_number_animals():
+        active_animals = len(self.db.get_animals())
+        if active_animals >= self.db.get_total_number_animals():
             self.raise_warning()
             return
 
@@ -250,45 +263,28 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         # Get the next animal ID
         animal_id = self.get_next_animal()
-        
+
         # Find next available group
         group_id = self.db.find_next_available_group()
-        
+
         # Add to database
         self.db.add_animal(animal_id, rfid, group_id, '')
         self.db._conn.commit()
-        
+
         # Add to UI table
         self.table.insert('', END, values=(animal_id, rfid), tags='text_font')
         self.animals.append((animal_id, rfid))
-        
+
         # Update entry text
         self.change_entry_text()
-        
 
-    def add_value(self, rfid, db=None):
+
+    def add_value(self, rfid):
         """Adds RFID to the table, stops listening, checks the count, then restarts or stops."""
 
         if rfid is None or rfid == "":
             print("🚫 Skipping None/Empty RFID value... No entry will be added.")
             return  # ✅ Prevents adding a blank entry
-
-        if db is None:
-            db = self.db
-
-        # Clean up RFID value if it's coming from a reader
-        if isinstance(rfid, str):
-            # Remove any non-numeric characters
-            rfid = ''.join(filter(str.isdigit, rfid))
-            if not rfid:  # If no digits were found
-                print(f"Invalid RFID format received: {rfid}")
-                return
-
-        try:
-            rfid = int(rfid)  # Convert to integer
-        except (ValueError, TypeError) as e:
-            print(f"Error converting RFID to integer: {e}")
-            return
 
         item_id = self.animal_id
 
@@ -309,44 +305,35 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             current_group += 1
 
         # Add to table
-        self.table.insert('', item_id-1, values=(item_id, rfid), tags='text_font')
-        self.animals.insert(item_id-1, (item_id, rfid))
-        self.change_entry_text()
+        self.table.insert('', item_id, values=(item_id, rfid), tags='text_font')
+        self.animals.insert(item_id, (item_id, rfid))
 
         # Add to database with determined group
-        db.add_animal(animal_id=item_id, rfid=rfid, group_id=current_group)
-        db._conn.commit()
+        self.db.add_animal(item_id, rfid, current_group, '')
+        self.db._conn.commit()
 
         AudioManager.play("shared/sounds/rfid_success.wav")
 
         # Stop listening before checking conditions
         self.stop_listening()
 
-        total_scanned = len(self.db.get_all_animals_rfid())  # Get count of scanned RFIDs
-        total_expected = db.get_total_number_animals()  # Expected count from DB
+        total_scanned = len(self.db.get_animals())  # Get count of scanned RFIDs
+        total_expected = self.db.get_total_number_animals()  # Expected count from DB
 
         print(f"✅ Scanned: {total_scanned} / Expected: {total_expected}")
 
         # Restart scanning if more animals need to be scanned
         if total_scanned < total_expected:
             print("🔄 Restarting RFID listening...")
+            self.change_entry_text()
+            self.save()
             self.rfid_listen()
         else:
             print("🎉 All animals have been mapped to RFIDs! RFID scanning completed.")
+            self.change_entry_text()
             print("RFIDs scanned: ", self.db.get_all_animals_rfid())
+            self.save()
             self.stop_listening()
-
-
-
-    def change_selected_value(self, rfid):
-        '''Changes the selected rfid value.'''
-        item = self.table.item(self.changing_value)
-        self.table.item(self.changing_value, values=(
-            item['values'][0], rfid))
-        self.change_rfid_button["state"] = "normal"
-
-
-        AudioManager.play("shared/sounds/rfid_success.wav")
 
     def item_selected(self, _):
         selected = self.table.selection()
@@ -360,12 +347,6 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         else:
             self.delete_button["state"] = "disabled"
 
-        # Handling for change RFID button
-        if len(selected) != 1:
-            self.change_rfid_button["state"] = "disabled"
-        else:
-            self.change_rfid_button["state"] = "normal"
-
     def remove_selected_items(self):
         '''Removes the selected item from a table, warning if none selected.'''
         selected_items = self.table.selection()
@@ -377,9 +358,14 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         for item in selected_items:
             item_id = int(self.table.item(item, 'values')[0])
+            rfid_value = self.table.item(item, 'values')[1]
+            self.table.selection_remove(item)
             self.table.delete(item)
-            self.db.set_animal_active_status(item_id, 0)
+            self.db.remove_animal(item_id)
+            self.animal_rfid_list.remove(rfid_value)
+            print("Total number of animal rows in the table:", len(self.table.get_children()))
 
+        self.save()
         self.change_entry_text()
 
     def change_entry_text(self):
@@ -395,37 +381,16 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
     def get_next_animal(self):
         '''returns the next animal in our experiment.'''
-        min_unused = 1
+        total_animals = self.db.get_total_number_animals()
+        # Get list of existing ACTIVE animal IDs from the database
+        existing_animal_ids = set(self.db.get_all_animals())
 
-        for animal in sorted(self.animals):
-            if animal[0] > min_unused:
-                break
-            min_unused += 1
+        # Find the first gap in the sequence
+        for animal_id in range(1, total_animals + 1):
+            if animal_id not in existing_animal_ids:
+                return animal_id
 
-        return min_unused
-
-        '''
-        next_animal = self.animals[-1][0] + 1
-        for i, animal in enumerate(self.animals):
-            if i < len(self.animals) - 1 and animal[0] + 1 != self.animals[i+1][0]:
-                next_animal = animal[0] + 1
-                break
-        return next_animal
-        '''
-
-    def open_change_rfid(self):
-        '''Opens change RFID window if an item is selected, otherwise shows a warning.'''
-        selected_items = self.table.selection()
-
-        # Check if there is exactly one item selected (assuming RFID change is intended for single selections)
-        if len(selected_items) != 1:
-            self.raise_warning("No item selected. Please select a single item to change its RFID.")
-            return
-
-        # If an item is selected, proceed to open the RFID change dialog
-        self.changing_value = selected_items[0]
-        self.change_rfid_button["state"] = "disabled"
-        self.changer.open()
+        return total_animals + 1
 
     def open_serial_port_selection(self):
         '''Opens serial port selection.'''
@@ -452,33 +417,85 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         message.mainloop()
 
+    def update(self):
+        """Updates the table view to match the database state."""
+        # Clear existing table entries
+        for item in self.table.get_children():
+            self.table.delete(item)
+
+        # Clear existing animals list
+        self.animals.clear()
+
+        # Fetch all active animals from database
+        animals_setup = self.db.get_all_animal_ids()
+
+        # Rebuild table with fresh data
+        for animal in animals_setup:
+            rfid = self.db.get_animal_rfid(animal)
+            value = (int(animal), rfid)
+            self.table.tag_configure('text_font', font=('Arial', 25))
+            self.table.insert('', END, values=value, tags='text_font')
+            self.animals.append(value)
+
+        # Update the animal ID entry text
+        if animals_setup:
+            self.animal_id_entry_text.set(str(self.get_next_animal()))
+        else:
+            self.animal_id_entry_text.set("1")
+
+        # Scroll to show the latest entry
+        self.scroll_to_latest_entry()
+
     def press_back_to_menu_button(self):
         '''Handles back to menu button press.'''
         if len(self.db.get_all_animals_rfid()) != self.db.get_total_number_animals():
             self.raise_warning('Not all animals have been mapped to RFIDs')
         else:
-            # Save the current state before closing the database
+            try:
+                # Save database state to permanent file
+                self.save()
 
+                # Close the database connection
+                self.db.close()  # This will now handle the singleton cleanup
 
-            current_file = self.db.db_file
+                self.stop_listening()
 
-            self.db._conn.commit()
-            self.db.close()
+                # Local import to avoid circular dependency
+                from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 
-            self.stop_listening()
+                # Create new ExperimentMenuUI instance with the same file
+                new_page = ExperimentMenuUI(self.parent, self.file_path, self.menu_page, self.file_path)
+                new_page.raise_frame()
 
-            # Local import to avoid circular dependency
-            from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
-
-            # Create new ExperimentMenuUI instance with the same file
-            temp_file = file_utils.create_temp_copy(current_file)
-            new_page = ExperimentMenuUI(self.parent, temp_file, self.menu_page)
-            new_page.raise_frame()
+            except Exception as e:
+                print(f"Error during save and cleanup: {e}")
+                import traceback
+                print(f"Full traceback: {traceback.format_exc()}")
 
 
     def close_connection(self):
         '''Closes database file.'''
         self.db.close()
+
+    def save(self):
+        '''Saves current database state to permanent file'''
+        try:
+            # Save the current state before cleaning up
+            current_file = self.db.db_file
+
+            # Ensure all changes are committed
+            self.db._conn.commit()
+            print("Changes committed")
+
+            # Save back to original file location
+            print(f"Saving {current_file} to {self.file_path}")
+            file_utils.save_temp_to_file(current_file, self.file_path)
+            print("Save successful!")
+
+        except Exception as e:
+            print(f"Error during save: {e}")
+            import traceback
+            print(f"Full traceback: {traceback.format_exc()}")
 
     def sacrifice_selected_items(self):
         '''Decreases the maximum number of animals in the experiment by 1'''
@@ -491,62 +508,26 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         # First mark the selected animals as inactive
         for item in selected_items:
             animal_id = int(self.table.item(item, 'values')[0])
+            self.table.selection_remove(item)
             self.table.delete(item)
             self.db.set_animal_active_status(animal_id, 0)  # Mark as inactive
             self.animals = [(index, rfid) for (index, rfid) in self.animals if index != animal_id]
 
-        # Then update the UI table
-        self.change_entry_text()
+            # Then update the UI table
+            self.change_entry_text()
 
-        # Then decrease the maximum number of animals
-        current_max = self.db.get_number_animals()
-        if current_max <= 0:
-            self.raise_warning("Cannot reduce animal count below 0")
-            return
+            # Then decrease the maximum number of animals
+            current_max = self.db.get_total_number_animals()
+            current_max = current_max - 1
+            if current_max <= 0:
+                self.raise_warning("Cannot reduce animal count below 0")
+                return
+            else:
+                # Decrease the maximum number of animals by 1
+                self.db.set_number_animals(current_max)
 
-        # Decrease the maximum number of animals by 1
-        self.db.set_number_animals(current_max)
-
-class ChangeRFIDDialog():
-    '''Change RFID user interface.'''
-    def __init__(self, parent: CTk, map_rfid: MapRFIDPage):
-        self.parent = parent
-        self.map_rfid = map_rfid
-
-    def open(self):
-        '''Opens the change rfid dialog.'''
-        self.root = root = CTkToplevel(self.parent) # pylint: disable=redefined-outer-name
-        root.title("Change RFID")
-        root.geometry('400x400')
-        root.resizable(False, False)
-        root.grid_rowconfigure(0, weight=1)
-        root.grid_columnconfigure(0, weight=1)
-
-        simulate_rfid_button = CTkButton(root, text="Simulate RFID", compound=TOP,
-                                      width=15, command= self.add_random_rfid)
-        simulate_rfid_button.place(relx=0.50, rely=0.20, anchor=CENTER)
-
-        # Simulate All RFID Button
-        simulate_all_rfid_button = CTkButton(
-            self, text="Simulate All RFID", compound=TOP, width=250, height=75,
-            command=self.simulate_all_rfid)
-        simulate_all_rfid_button.place(relx=0.80, rely=0.27, anchor=CENTER)
-
-        self.root.mainloop()
-
-    def simulate_all_rfid(self):
-        while len(self.animals) != self.db.get_number_animals():
-            self.add_random_rfid()
-
-    def add_random_rfid(self):
-        '''Adds a random frid number to selected value.'''
-        rfid = get_random_rfid()
-        self.map_rfid.change_selected_value(rfid)
-        self.close()
-
-    def close(self):
-        '''Closes change RFID dialog.'''
-        self.root.destroy()
+        # Lastly, commit and save changes (After all animals sacrificed)
+        self.save()
 
 class SerialPortSelection():
     '''Serial port selection user interface.'''

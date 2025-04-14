@@ -62,7 +62,7 @@ class DatabaseController():
         self.db._c.execute("SELECT cage_max FROM experiment")
         result = self.db._c.fetchone()
         return int(result[0]) if result else 0
-    
+
     def get_animals_in_group(self, group_name):
         '''Returns list of animals in a given group/cage'''
         return self.db.get_animals_in_cage(group_name)
@@ -71,12 +71,10 @@ class DatabaseController():
         '''Returns a list of all measurement items in the database.'''
         return self.measurement_items
 
-    def get_cages_in_group(self, group):
-        '''Returns a list of all cage ids in the specified group.'''
-        if group in self.cages_in_group:
-            return self.cages_in_group[group]
-        return []
-    
+    def get_cage_number(self, cage_name):
+        '''Returns the internal number of a cage from its name'''
+        return self.db.get_cage_number(cage_name)
+
     def autosort(self):
         '''Calls the Database Autosort Function'''
         self.db.autosort()
@@ -139,8 +137,11 @@ class DatabaseController():
         self.db.update_experiment(updated_animals)
         self.reset_attributes()
 
+    def commit(self):
+        self.db._conn.commit()
+
     def close(self):
         '''Closes the database file.'''
         self.db.close()
-    
+
 

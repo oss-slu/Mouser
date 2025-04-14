@@ -1,17 +1,21 @@
 '''Contains cage configuration page and behaviour.'''
 from customtkinter import *
 from shared.tk_models import *
+from CTkMessagebox import CTkMessagebox
 from shared.scrollable_frame import ScrolledFrame
 from databases.database_controller import DatabaseController
 from shared.audio import AudioManager
+from shared.file_utils import save_temp_to_file
 
 class CageConfigurationUI(MouserPage):
     '''The Frame that allows user to configure the cages.'''
-    def __init__(self, database, parent: CTk, prev_page: CTkFrame = None):
+    def __init__(self, database, parent: CTk, prev_page: CTkFrame = None, file_path = ''):
         super().__init__(parent, "Cage Configuration", prev_page)
 
         self.prev_page = prev_page
         self.db = DatabaseController(database)
+
+        self.file_path = file_path
 
         scroll_canvas = ScrolledFrame(self)
         scroll_canvas.place(relx=0.05, rely=0.20, relheight=0.75, relwidth=0.88)
@@ -25,6 +29,8 @@ class CageConfigurationUI(MouserPage):
                             command=self.perform_swap)
         auto_button = CTkButton(input_frame, text='AutoSort', width=15,
                                 command=self.autosort)
+        move_button = CTkButton(input_frame, text='Move Cages', width=15,
+                                command=self.move_animal)
 
         self.id_input = CTkEntry(input_frame, width=110)
         self.cage_input = CTkEntry(input_frame, width=110)
@@ -40,6 +46,7 @@ class CageConfigurationUI(MouserPage):
         auto_button.grid(row=0, column=0, padx=self.pad_x, pady=self.pad_y)
         random_button.grid(row=0, column=1, padx=self.pad_x, pady=self.pad_y)
         swap_button.grid(row=0, column=2, padx=self.pad_x, pady=self.pad_y)
+        move_button.grid(row=0, column=3, padx=self.pad_x, pady=self.pad_y)
 
         for i in range(0, 3):
             input_frame.grid_columnconfigure(i, weight=1)
@@ -48,7 +55,9 @@ class CageConfigurationUI(MouserPage):
         input_frame.pack(side=TOP, fill=X, anchor='center')
         self.config_frame.pack(side=TOP, fill=BOTH, anchor='center')
         self.animal_buttons = {}
+        self.cage_buttons = {}
         self.selected_animals = set()
+        self.selected_cage = None
 
         self.update_config_frame()
 
@@ -66,9 +75,18 @@ class CageConfigurationUI(MouserPage):
         for cage_name in cages:
             cage_frame = CTkFrame(self.config_frame, border_width=3, border_color="#00e7ff", bg_color='#0097A7')
 
-            # Cage header
-            label = CTkLabel(cage_frame, text=f'Cage: {cage_name}', bg_color='#0097A7', font=label_style)
-            label.pack(side=TOP, padx=self.pad_x, pady=self.pad_y, anchor='center')
+            # Cage header - now a button instead of a label
+            cage_button = CTkButton(
+                cage_frame,
+                text=f'Cage: {cage_name}',
+                command=lambda c=cage_name: self.select_cage(c),
+                fg_color='#0097A7',
+                hover_color="#00b8d4",
+                text_color="white",
+                font=label_style
+            )
+            cage_button.pack(side=TOP, padx=self.pad_x, pady=self.pad_y, anchor='center')
+            self.cage_buttons[cage_name] = cage_button
 
             # Create header frame for labels
             header_frame = CTkFrame(cage_frame)
@@ -95,6 +113,29 @@ class CageConfigurationUI(MouserPage):
 
             cage_frame.pack(side=LEFT, expand=TRUE, fill=BOTH, anchor='center')
 
+    def select_cage(self, cage_name):
+        '''Handles cage selection by updating the cage input field and visual feedback.'''
+        button = self.cage_buttons.get(cage_name)
+        if button:
+            if self.selected_cage == cage_name:
+                # Deselect current cage
+                self.selected_cage = None
+                button.configure(fg_color="#0097A7")  # Reset to default blue
+                self.cage_input.delete(0, END)
+                self.cage_input.insert(0, 'cage id')
+                print(f"Deselected cage: {cage_name}")
+            else:
+                # Deselect previous cage if any
+                if self.selected_cage and self.selected_cage in self.cage_buttons:
+                    self.cage_buttons[self.selected_cage].configure(fg_color="#0097A7")
+
+                # Select new cage
+                self.selected_cage = cage_name
+                button.configure(fg_color="#D5E8D4")  # Selected state green
+                self.cage_input.delete(0, END)
+                self.cage_input.insert(0, cage_name)
+                print(f"Selected cage: {cage_name}")
+
     def toggle_animal_selection(self, animal_id):
         '''Toggles the selection state of an animal.'''
         button = self.animal_buttons.get(animal_id)
@@ -104,10 +145,9 @@ class CageConfigurationUI(MouserPage):
                 button.configure(fg_color="#0097A7")  # Reset to default blue
                 print(f"Deselected animal: {animal_id}")
             else:
-                if len(self.selected_animals) < 2:
-                    self.selected_animals.add(animal_id)
-                    button.configure(fg_color="#D5E8D4")  # Selected state green
-                    print(f"Selected animal: {animal_id}")
+                self.selected_animals.add(animal_id)
+                button.configure(fg_color="#D5E8D4")  # Selected state green
+                print(f"Selected animal: {animal_id}")
             print(f"Currently selected animals: {self.selected_animals}")
         else:
             print(f"Error: No button found for Animal ID: {animal_id}")
@@ -123,11 +163,20 @@ class CageConfigurationUI(MouserPage):
         '''Autosorts the animals into cages.'''
         self.db.randomize_cages()
         self.update_config_frame()
+        self.save()
 
     def autosort(self):
-        '''Calls database's autosort function.'''
-        self.db.autosort()
-        self.update_config_frame()
+        '''Calls database's autosort function after user confirmation.'''
+        confirm = CTkMessagebox(
+            title= "Confirm AutoSort",
+            message= "Are you sure you want to AutoSort? \nThis will remove measurements used to sort from the database.",
+            option_1="No",
+            option_2="Yes"
+        )
+        if confirm.get() == "Yes":
+            self.db.autosort()
+            self.update_config_frame()
+            self.save()
 
     def perform_swap(self):
         '''Swaps two selected animals between cages.'''
@@ -151,6 +200,56 @@ class CageConfigurationUI(MouserPage):
 
         self.selected_animals.clear()
         self.update_config_frame()
+        self.save()
+
+    def move_animal(self):
+        '''Moves selected animals to a specified cage.'''
+        # Check if any animals are selected
+        if not self.selected_animals:
+            self.raise_warning("Please select at least one animal to move.")
+            return
+
+        # Check if exactly one cage is selected
+        if not self.selected_cage:
+            self.raise_warning("Please select a target cage.")
+            return
+
+        target_cage = self.selected_cage  # The display name
+        target_group = self.db.get_cage_number(target_cage)  # The internal number
+
+        # Check if moving would exceed cage maximum
+        target_cage_count = len(self.db.get_animals_in_group(target_cage))
+        if target_cage_count + len(self.selected_animals) > self.db.get_cage_max():
+            self.raise_warning(f"Moving these animals would exceed the maximum cage capacity of {self.db.get_cage_max()}.")
+            return
+
+        # Track if any animals were actually moved
+        animals_moved = False
+
+        # Move each selected animal
+        for animal_id in list(self.selected_animals):  # Convert to list to avoid modifying set during iteration
+            # Get current cage of the animal
+            current_cage = self.db.get_animal_current_cage(animal_id)
+
+            # Skip if animal is already in target cage
+            if current_cage == target_group:
+                continue
+
+            # Perform the move using the database controller with internal group number
+            self.db.update_animal_cage(animal_id, target_group)
+            animals_moved = True
+
+        if not animals_moved:
+            self.raise_warning("No animals were moved. They might already be in the target cage.")
+            return
+
+        # Clear selections and update the UI
+        self.selected_animals.clear()
+        self.selected_cage = None
+        if target_cage in self.cage_buttons:  # Use display name for button lookup
+            self.cage_buttons[target_cage].configure(fg_color="#0097A7")  # Reset cage button color
+        self.update_config_frame()
+        self.save()
 
     def raise_warning(self, message):
         '''Raises a warning page with the given message.'''
@@ -176,6 +275,25 @@ class CageConfigurationUI(MouserPage):
             raise_frame(self.prev_page)
         else:
             self.raise_warning(f'Number of animals in a cage must not exceed {self.db.get_cage_max()}')
+
+    def save(self):
+        '''Saves current database state to permanent file'''
+        try:
+            current_file = self.db.db.db_file
+
+            # Ensure all changes are committed
+            self.db.commit()
+            print("Changes committed")
+
+            # Save back to original file location
+            print(f"Saving {current_file} to {self.file_path}")
+            save_temp_to_file(current_file, self.file_path)
+            print("Save successful!")
+
+        except Exception as e:
+            print(f"Error during save: {e}")
+            import traceback
+            print(f"Full traceback: {traceback.format_exc()}")
 
     def check_num_in_cage_allowed(self):
         '''Checks if the number of animals in a cage is allowed.'''
