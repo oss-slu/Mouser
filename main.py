@@ -16,7 +16,6 @@ from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment.select_experiment_ui import ExperimentsUI
 from experiment_pages.experiment.test_screen import TestScreen
-from customtkinter import CTk, CTkFrame, CTkScrollbar
 import tkinter as tk
 
 
