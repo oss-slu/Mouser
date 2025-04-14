@@ -144,11 +144,12 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         def listen():
             try:
+
                 self.rfid_reader = SerialDataHandler("reader")  # Store reference to close later
                 self.rfid_reader.start()
                 print("🔄 RFID Reader Started!")
 
-                last_rfid = None  # Track last scanned RFID to avoid duplicate reads
+                last_rfid = None
 
                 while not self.rfid_stop_event.is_set():
                     received_rfid = self.rfid_reader.get_stored_data()
@@ -160,12 +161,13 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                     last_rfid = received_rfid
                     print(f"📡 RFID Scanned: {received_rfid}")
 
+                    # ✅ Clean up garbage chars and whitespace
                     clean_rfid = received_rfid.strip().replace("\x02", "").replace("\x03", "")
                     clean_rfid = clean_rfid.strip()
 
                     if not clean_rfid:
                         print("⚠️ Empty or invalid RFID detected, skipping...")
-                        continue  # 🚫 Avoid calling add_value()
+                        continue
 
                     elif clean_rfid in self.animal_rfid_list:
                         print(f"⚠️ RFID {clean_rfid} is already in use! Skipping...")
@@ -179,14 +181,16 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                         self.animal_rfid_list.append(clean_rfid)
                         play_sound_async("shared/sounds/rfid_success.wav")
 
-            except Exception as e:
-                print(f"❌ Error in RFID listener: {e}")
 
+            except Exception as e:
+                print(f"Error in RFID listener: {e}")
             finally:
-                print("🛑 RFID listener has stopped.")
-                if self.rfid_reader:
+                if hasattr(self, 'rfid_reader') and self.rfid_reader:
                     self.rfid_reader.stop()
-                    self.rfid_reader = None  # Ensure cleanup
+                    self.rfid_reader.close()
+                    self.rfid_reader = None
+                print("🛑 RFID listener thread ended.")
+
 
         self.rfid_thread = threading.Thread(target=listen, daemon=True)
         self.rfid_thread.start()
@@ -444,8 +448,6 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
     def press_back_to_menu_button(self):
         '''Handles back to menu button press.'''
-        print("Animals mapped: ", len(self.db.get_all_animals_rfid()), "\n")
-        print("Animals needed: ", self.db.get_total_number_animals())
         if len(self.db.get_all_animals_rfid()) != self.db.get_total_number_animals():
             self.raise_warning('Not all animals have been mapped to RFIDs')
         else:

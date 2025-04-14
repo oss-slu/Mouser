@@ -177,6 +177,17 @@ class DataCollectionUI(MouserPage):
             return  # Prevent multiple listeners
 
         print("📡 Starting RFID listener...")
+        print("All RFIDs:", self.database.get_all_animals_rfid())
+        animals = self.database.get_animals()
+        print("Animals:", animals)
+
+        # Check RFIDs directly
+        print("RFIDs in database:", self.database.get_all_animals_rfid())
+
+        # Try fetching one by one
+        for rfid in self.database.get_all_animals_rfid():
+            print(f"RFID {rfid} -> ID:", self.database.get_animal_id(rfid))
+
         self.rfid_stop_event.clear()  # Reset stop flag
 
         def listen():
@@ -190,12 +201,22 @@ class DataCollectionUI(MouserPage):
                         received_rfid = self.rfid_reader.get_stored_data()
 
                         if received_rfid:
+                            import re
+                            received_rfid = re.sub(r"[^\w]", "", received_rfid)  # Keep only alphanumeric characters, gets rid of spaces and encrypted greeting messages
+
+                            if not received_rfid:
+                                print("⚠️ Empty RFID scan detected, ignoring...")
+                                continue
+
                             print(f"📡 RFID Scanned: {received_rfid}")
                             animal_id = self.database.get_animal_id(received_rfid)
 
                             if animal_id is not None:
                                 print(f"✅ Found Animal ID: {animal_id}")
                                 self.after(0, lambda: self.select_animal_by_id(animal_id))
+                            else:
+                                print("❌ No animal found for scanned RFID.")
+
 
                     time.sleep(0.1)  # Shorter sleep time for more responsive stopping
             except Exception as e:
@@ -238,6 +259,8 @@ class DataCollectionUI(MouserPage):
 
         self.rfid_thread = None
         print("✅ RFID listener cleanup completed.")
+        self.changer.stop_thread()  # Stop the changer thread if it's running
+        self.changer.close()  # Close the changer dialog if it's open
 
     def select_animal_by_id(self, animal_id):
         '''Finds and selects the animal with the given ID in the table, then opens the entry box.'''
@@ -342,7 +365,19 @@ class ChangeMeasurementsDialog():
         self.measurement_items = str(measurement_items)  # Ensure measurement_items is a single string
         self.database = data_collection.database  # Reference to the updated database
         self.uses_rfid = self.database.experiment_uses_rfid() == 1
-        self.thread_running = False
+        self.auto_animal_ids = data_collection.database.get_all_animals_rfid()  # Get all animal IDs from the database
+
+        if not self.uses_rfid:
+            # Get list of all animal IDs from the table
+            self.animal_ids = []
+            for child in self.data_collection.table.get_children():
+                values = self.data_collection.table.item(child)["values"]
+                self.animal_ids.append(values[0])  # First column contains animal IDs
+            self.current_index = 0  # Track position in animal_ids list
+            self.thread_running = False  # Add a flag to control the thread's life cycle
+
+        else:
+            self.animal_ids = [str(aid) for aid in self.database.get_all_animal_ids()]
 
     def open(self, animal_id):
         '''Opens the change measurement dialog window and handles automated submission.'''
@@ -390,12 +425,7 @@ class ChangeMeasurementsDialog():
                 def check_for_data():
                     print("Beginning check for data")
                     if self.data_collection.database.get_measurement_type() == 1:
-                        print("Inside the if statement")
-
-                        if animal_id == len(self.animal_ids) + 1:
-                            current_index = len(self.animal_ids) + 1
-                        else:
-                            current_index = self.animal_ids.index(animal_id)
+                        current_index = self.animal_ids.index(animal_id)
 
                         while current_index < len(self.animal_ids) and self.thread_running:
                             if len(data_handler.received_data) >= 2:  # Customize condition
@@ -471,3 +501,8 @@ class ChangeMeasurementsDialog():
     def close(self):
         '''Closes change value dialog window.'''
         self.root.destroy()
+
+    def stop_thread(self):
+        '''Stops the data input thread if running.'''
+        self.thread_running = False
+        print("❌Measurement thread stopped")
