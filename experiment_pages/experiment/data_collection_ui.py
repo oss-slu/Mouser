@@ -215,6 +215,7 @@ class DataCollectionUI(MouserPage):
                                 print(f"✅ Found Animal ID: {animal_id}")
                                 self.after(0, lambda: self.select_animal_by_id(animal_id))
                             else:
+                                AudioManager.play("shared/sounds/error.wav")
                                 print("❌ No animal found for scanned RFID.")
 
 
