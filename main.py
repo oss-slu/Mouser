@@ -19,29 +19,6 @@ from experiment_pages.experiment.test_screen import TestScreen
 from customtkinter import CTk, CTkFrame, CTkScrollbar
 import tkinter as tk
 
-class ScrollableFrame(CTkFrame):
-    def __init__(self, parent, **kwargs):
-        super().__init__(parent, **kwargs)
-        self.canvas = tk.Canvas(self, bg=self.cget('bg'), highlightthickness=0)
-        self.viewPort = CTkFrame(self.canvas)
-        self.vsb = CTkScrollbar(self, orientation="vertical", command=self.canvas.yview)
-        self.canvas.configure(yscrollcommand=self.vsb.set)
-
-        self.vsb.pack(side="right", fill="y")
-        self.canvas.pack(side="left", fill="both", expand=True)
-        self.canvas.create_window((0,0), window=self.viewPort, anchor="nw", tags="self.viewPort")
-
-        self.viewPort.bind("<Configure>", self.onFrameConfigure)
-
-    def onFrameConfigure(self, event):
-        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-        self.canvas.bind('<Configure>', self.onCanvasConfigure)
-
-    def onCanvasConfigure(self, event):
-        if self.viewPort.winfo_reqwidth() != self.canvas.winfo_width():
-            self.canvas.itemconfig("self.viewPort", width=self.canvas.winfo_width())
-
-
 
 # Function to resolve resource paths (must be defined before usage)
 def get_resource_path(relative_path):
