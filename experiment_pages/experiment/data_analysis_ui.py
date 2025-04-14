@@ -6,14 +6,14 @@ from customtkinter import *
 from tkinter import filedialog
 from shared.tk_models import *
 from databases.experiment_database import ExperimentDatabase
-
+from shared.audio import AudioManager
 
 class DataAnalysisUI(MouserPage):
     '''Data Exporting UI.'''
     def __init__(self, parent: CTk, prev_page: CTkFrame = None, db_file=None):
         super().__init__(parent, "Data Exporting", prev_page)
         self.db_file = db_file  # Accept the database file dynamically
-        
+
         # Create the main frame
         main_frame = CTkFrame(self, corner_radius=15)
         main_frame.grid(row=0, column=0, sticky="nsew")
@@ -21,8 +21,8 @@ class DataAnalysisUI(MouserPage):
 
         # Add a title label
         title_label = CTkLabel(
-            main_frame, 
-            text="Data Analysis & Export", 
+            main_frame,
+            text="Data Analysis & Export",
             font=("Arial", 22, "bold"),  # Larger font for clarity
             pady=20
         )
@@ -30,14 +30,28 @@ class DataAnalysisUI(MouserPage):
 
         # Add a button to export the database to CSV
         self.export_button = CTkButton(
-            main_frame, 
-            text="Export Data to CSV", 
-            command=self.export_to_csv, 
-            width=200, 
-            height=75, 
+            main_frame,
+            text="Export Data to CSV",
+            command=self.export_to_csv,
+            width=200,
+            height=75,
             font=("Arial", 20)
         )
         self.export_button.grid(row=1, column=0, padx=20, pady=30)  # Adjust padding for spacing
+
+    def show_success_message(self):
+        '''Shows a temporary success message on the screen'''
+        success_label = CTkLabel(
+            self.master,  # Use self.master to ensure it's on the main window
+            text="Export to CSV successful!",
+            text_color="green",
+            font=("Arial", 24, "bold")
+        )
+        # Position it above the export button
+        success_label.place(relx=0.5, rely=0.6, anchor=CENTER)
+
+        # Automatically remove the label after 2 seconds
+        self.after(2000, success_label.destroy)
 
     def export_to_csv(self):
         '''Handles exporting the database to CSV files.'''
@@ -45,7 +59,7 @@ class DataAnalysisUI(MouserPage):
             print(f"Database file {self.db_file} not found.")
             self.show_notification("Error", "Database file not found.")
             return
-        
+
         # Ask user for the directory to save CSV files
         save_dir = filedialog.askdirectory(title="Select Directory to Save CSV Files")
         if not save_dir:  # User cancelled the dialog
@@ -55,8 +69,9 @@ class DataAnalysisUI(MouserPage):
             db = ExperimentDatabase(self.db_file)
             db.export_to_csv(save_dir)
             print("Data exported successfully to CSV files.")
-            # Once export is done, show the success notification
-            self.show_notification("Success", "Export to CSV successful!")
+            AudioManager.play("shared/sounds/rfid_success.wav")
+            # Replace the notification with our new success message
+            self.show_success_message()
         except Exception as e:
             print(f"An error occurred while exporting data: {e}")
             self.show_notification("Error", "Export to CSV failed")
@@ -64,6 +79,7 @@ class DataAnalysisUI(MouserPage):
     def raise_frame(self):
         '''Raise the frame for this UI'''
         super().raise_frame()
+
 
     def show_notification(self, title, message):
         '''Displays a notification when export is complete.'''
@@ -74,20 +90,20 @@ class DataAnalysisUI(MouserPage):
 
         # Add a label for the message
         label = CTkLabel(
-            notification, 
-            text=message, 
-            font=("Arial", 20), 
+            notification,
+            text=message,
+            font=("Arial", 20),
             pady=20
         )
         label.pack(pady=10)
 
         # Add an OK button
         ok_button = CTkButton(
-            notification, 
-            text="OK", 
-            command=notification.destroy, 
-            width=100, 
-            height=100, 
+            notification,
+            text="OK",
+            command=notification.destroy,
+            width=100,
+            height=100,
             font=("Arial", 18)
         )
         ok_button.pack(pady=20)

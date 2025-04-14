@@ -23,10 +23,6 @@ def get_random_rfid():
     '''Returns a simulated rfid number'''
     return random.randint(1000000000, 9999999999)
 
-def play_sound_async(filename):
-    '''Plays the given filename.'''
-    threading.Thread(target=playsound, args=(filename,), daemon=True).start()
-
 class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
     '''Map RFID user interface and window.'''
     def __init__(self, database, parent: CTk, previous_page: CTkFrame = None, file_path = ""):
@@ -43,7 +39,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         file = database
         self.db = ExperimentDatabase(file)
 
-        self.animal_rfid_list = []
+        self.animal_rfid_list = [str(rfid) for rfid in self.db.get_all_animals_rfid()]
         self.animals = []
         self.animal_id = 1
 
@@ -171,7 +167,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
                     elif clean_rfid in self.animal_rfid_list:
                         print(f"⚠️ RFID {clean_rfid} is already in use! Skipping...")
-                        play_sound_async("shared/sounds/error.wav")
+                        AudioManager.play("shared/sounds/error.wav")
                         self.raise_warning("This RFID tag has already been mapped to an animal")
                         continue  # 🚫 Avoid calling add_value()
 
@@ -179,8 +175,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                         # If it's a new RFID, process it
                         self.after(0, lambda: self.add_value(clean_rfid))
                         self.animal_rfid_list.append(clean_rfid)
-                        play_sound_async("shared/sounds/rfid_success.wav")
-
+                        AudioManager.play("shared/sounds/rfid_success.wav")
 
             except Exception as e:
                 print(f"Error in RFID listener: {e}")
@@ -280,59 +275,49 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
 
     def add_value(self, rfid):
-        """Adds RFID to the table, stops listening, checks the count, then restarts or stops."""
-
+        """Adds RFID to the table, similar to add_random_rfid but with a provided RFID."""
         if rfid is None or rfid == "":
             print("🚫 Skipping None/Empty RFID value... No entry will be added.")
-            return  # ✅ Prevents adding a blank entry
+            return
 
-        item_id = self.animal_id
+        active_animals = len(self.db.get_animals())
+        if active_animals >= self.db.get_total_number_animals():
+            self.raise_warning()
+            return
 
-        # Find appropriate group with available space
-        current_group = 1
-        while True:
-            # Get cage capacity for current group
-            cage_capacity = self.db.get_cage_capacity(current_group)
+        # Get the next animal ID
+        animal_id = self.get_next_animal()
 
-            # Get current number of animals in group
-            group_count = self.db.get_group_animal_count(current_group)
+        # Find next available group
+        group_id = self.db.find_next_available_group()
 
-            # If current group has space, use it
-            if group_count < cage_capacity:
-                break
-
-            # Otherwise, try next group
-            current_group += 1
-
-        # Add to table
-        self.table.insert('', item_id, values=(item_id, rfid), tags='text_font')
-        self.animals.insert(item_id, (item_id, rfid))
-
-        # Add to database with determined group
-        self.db.add_animal(item_id, rfid, current_group, '')
+        # Add to database
+        self.db.add_animal(animal_id, rfid, group_id, '')
         self.db._conn.commit()
+
+        # Add to UI table
+        self.table.insert('', END, values=(animal_id, rfid), tags='text_font')
+        self.animals.append((animal_id, rfid))
 
         AudioManager.play("shared/sounds/rfid_success.wav")
 
-        # Stop listening before checking conditions
-        self.stop_listening()
+        # Update entry text
+        self.change_entry_text()
 
-        total_scanned = len(self.db.get_animals())  # Get count of scanned RFIDs
-        total_expected = self.db.get_total_number_animals()  # Expected count from DB
-
+        total_scanned = len(self.db.get_animals())
+        total_expected = self.db.get_total_number_animals()
         print(f"✅ Scanned: {total_scanned} / Expected: {total_expected}")
 
-        # Restart scanning if more animals need to be scanned
+        # Save changes
+        self.save()
+
+        # If we haven't scanned all animals yet, restart listening
         if total_scanned < total_expected:
             print("🔄 Restarting RFID listening...")
-            self.change_entry_text()
-            self.save()
             self.rfid_listen()
         else:
             print("🎉 All animals have been mapped to RFIDs! RFID scanning completed.")
-            self.change_entry_text()
             print("RFIDs scanned: ", self.db.get_all_animals_rfid())
-            self.save()
             self.stop_listening()
 
     def item_selected(self, _):
@@ -383,7 +368,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         '''returns the next animal in our experiment.'''
         total_animals = self.db.get_total_number_animals()
         # Get list of existing ACTIVE animal IDs from the database
-        existing_animal_ids = set(self.db.get_all_animals())
+        existing_animal_ids = self.db.get_all_animals()
 
         # Find the first gap in the sequence
         for animal_id in range(1, total_animals + 1):

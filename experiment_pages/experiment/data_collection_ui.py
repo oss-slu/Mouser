@@ -19,15 +19,20 @@ class DataCollectionUI(MouserPage):
 
         super().__init__(parent, "Data Collection", prev_page)
 
+        self.parent = parent
+
         self.rfid_reader = None
         self.rfid_stop_event = threading.Event()  # Event to stop RFID listener
         self.rfid_thread = None # Store running thread
 
         self.current_file_path = file_path
+        self.menu_page = prev_page
 
         self.database = ExperimentDatabase(database_name)
 
         self.measurement_items = self.database.get_measurement_items()
+        self.menu_button.configure(command = self.press_back_to_menu_button)
+
 
         ## ENSURE ANIMALS ARE IN DATABASE BEFORE EXPERIMENT FOR ALL EXPERIMENTS ##
         if self.database.experiment_uses_rfid() != 1 and self.database.get_animals() == []:
@@ -215,6 +220,7 @@ class DataCollectionUI(MouserPage):
                                 print(f"✅ Found Animal ID: {animal_id}")
                                 self.after(0, lambda: self.select_animal_by_id(animal_id))
                             else:
+                                AudioManager.play("shared/sounds/error.wav")
                                 print("❌ No animal found for scanned RFID.")
 
 
@@ -353,6 +359,20 @@ class DataCollectionUI(MouserPage):
                 # If no measurement found, show animal_id and rfid with None for measurement
                 self.table.item(child, values=(animal_id, None))
 
+    def raise_frame(self):
+        '''Raise the frame for this UI'''
+        super().raise_frame()
+        time.sleep(.2)
+        self.rfid_listen()
+
+    def press_back_to_menu_button(self):
+        self.stop_listening()
+
+        from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+        new_page = ExperimentMenuUI(self.parent, self.current_file_path, self.menu_page, self.current_file_path)
+        new_page.raise_frame()
+
+
     def close_connection(self):
         '''Closes database file.'''
         self.database.close()
@@ -439,7 +459,6 @@ class ChangeMeasurementsDialog():
                                     # If not at the end of the list, move to next animal
                                     self.finish(animal_id)  # Pass animal_id to finish method
                                     if current_index >= len(self.animal_ids):
-                                        print("closing!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                                         data_thread.join()
                                         break
                                     else:
@@ -487,6 +506,7 @@ class ChangeMeasurementsDialog():
             if self.data_collection.winfo_exists():
                 # Update the database with the new values
                 self.data_collection.change_selected_value(current_animal_id, values)
+                AudioManager.play("shared/sounds/rfid_success.wav")
 
     def get_all_values(self):
         '''Returns the values of all entries in self.textboxes as an array.'''
