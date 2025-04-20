@@ -1,3 +1,4 @@
+'''Custom Flash Screen to show statuses to the user'''
 from customtkinter import *
 
 class FlashOverlay:

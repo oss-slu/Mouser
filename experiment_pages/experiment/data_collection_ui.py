@@ -372,8 +372,8 @@ class DataCollectionUI(MouserPage):
 
         # Check if more data for the day needs to be collected
         if not self.database.is_data_collected_for_date(self.current_date):
-            if self.database.experiment_uses_rfid() == 1:
-            # Create Flash overlay using new Flash Overlay Class
+            if self.database.get_measurement_type() == 1:
+                # Create Flash overlay using new Flash Overlay Class
                 FlashOverlay(
                     parent=self,
                     message="Data Collection Started",
