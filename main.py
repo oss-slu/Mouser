@@ -53,10 +53,9 @@ def open_file():
     if file_path:
 
         # Close any existing db connections to respect singleton
-        if TEMP_FILE_PATH and os.path.exists(TEMP_FILE_PATH):
-            from databases.experiment_database import ExperimentDatabase
-            if ExperimentDatabase._instance is not None:
-                ExperimentDatabase._instance.close()
+        from databases.experiment_database import ExperimentDatabase
+        if TEMP_FILE_PATH in ExperimentDatabase._instances:
+            ExperimentDatabase._instances[TEMP_FILE_PATH].close()
 
         global CURRENT_FILE_PATH
         CURRENT_FILE_PATH = file_path
