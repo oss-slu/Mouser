@@ -307,7 +307,7 @@ class DataCollectionUI(MouserPage):
             print(f"Saving data point for animal {animal_id_to_change}: {new_value}")
 
             # Write change to database
-            self.database.change_data_entry(str(date.today()), animal_id_to_change, new_value)
+            self.database.change_data_entry(str(date.today()), animal_id_to_change, new_value, 1)
             print("Database entry updated")
 
             # Update display table
@@ -329,12 +329,23 @@ class DataCollectionUI(MouserPage):
                     print(f"Attempting to save {self.database.db_file} to {self.current_file_path}")
                     save_temp_to_file(self.database.db_file, self.current_file_path)
                     print("Autosave Success!")
+
                     FlashOverlay(
                         parent=self,
                         message="Data Collected",
                         duration=1000,
                         bg_color="#00FF00" # Bright Green
                     )
+
+                    # If all animals have data for today, show completion message
+                    if self.database.is_data_collected_for_date(str(date.today())):
+                        self.after(1100, lambda: FlashOverlay(  # Delay to show after the first overlay
+                            parent=self,
+                            message="All Animals Measured for Today!",
+                            duration=4000,
+                            bg_color="#FFF700"  # Different color for completion
+                        ))
+
 
                 except Exception as save_error:
                     print(f"Autosave failed: {save_error}")

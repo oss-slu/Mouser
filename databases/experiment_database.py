@@ -46,7 +46,7 @@ class ExperimentDatabase:
                                 timestamp TEXT,
                                 value REAL,
                                 FOREIGN KEY(animal_id) REFERENCES animals(animal_id),
-                                PRIMARY KEY (animal_id, timestamp));''')
+                                PRIMARY KEY (animal_id, timestamp, measurement_id));''')
 
             self._c.execute('''CREATE TABLE groups (
                                 group_id INTEGER PRIMARY KEY,
@@ -253,7 +253,7 @@ class ExperimentDatabase:
                 SELECT animal_id, value
                 FROM animal_measurements
                 WHERE timestamp = ?
-                AND measurement_id != 0
+                AND (measurement_id = 1)
             ''', (date,))
             return self._c.fetchall()
         except Exception as e:
@@ -279,6 +279,7 @@ class ExperimentDatabase:
                 WHERE a.active = 1
                 AND m.timestamp = ?
                 AND m.value IS NOT NULL
+                AND (m.measurement_id IS NULL OR m.measurement_id != 0)
             ''', (date,))
             animals_with_measurements = self._c.fetchone()[0]
 
@@ -290,7 +291,7 @@ class ExperimentDatabase:
             return False
 
 
-    def add_data_entry(self, date, animal_id, values):
+    def add_data_entry(self, date, animal_id, values, measurement_id=1):
         '''Adds a measurement entry for an animal on a specific date.'''
         try:
             # Handle both single values and lists/tuples
@@ -298,28 +299,29 @@ class ExperimentDatabase:
 
             # Insert new measurement
             self._c.execute('''
-                INSERT INTO animal_measurements (animal_id, timestamp, value)
-                VALUES (?, ?, ?)
-            ''', (animal_id, date, value))
+                INSERT INTO animal_measurements (animal_id, timestamp, value, measurement_id)
+                VALUES (?, ?, ?, ?)
+            ''', (animal_id, date, value, measurement_id))
 
             self._conn.commit()
         except Exception as e:
             print(f"Error adding data entry: {e}")
             self._conn.rollback()
 
-    def change_data_entry(self, date, animal_id, value):
+    def change_data_entry(self, date, animal_id, value, measurement_id=1):
         '''Updates a measurement entry for an animal on a specific date.'''
         try:
-
             # Update existing measurement
             self._c.execute('''
                 UPDATE animal_measurements
                 SET value = ?
-                WHERE animal_id = ? AND timestamp = ?
-            ''', (value, animal_id, date))
+                WHERE animal_id = ?
+                AND timestamp = ?
+                AND measurement_id = ?
+            ''', (value, animal_id, date, measurement_id))
 
             if self._c.rowcount == 0:  # No existing record found
-                self.add_data_entry(date, animal_id, value)
+                self.add_data_entry(date, animal_id, value, measurement_id)
 
             self._conn.commit()
         except Exception as e:
