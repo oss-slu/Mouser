@@ -178,6 +178,10 @@ class DataCollectionUI(MouserPage):
     def rfid_listen(self):
         '''Continuously listens for RFID scans until manually stopped.'''
 
+        if self.database.experiment_uses_rfid() != 1:
+            print("This experiment does not use RFID, cancelling threads")
+            return # Prevents looking for nonexistent Serial Devices
+
         if self.rfid_thread and self.rfid_thread.is_alive():
             print("⚠️ RFID listener is already running!")
             return  # Prevent multiple listeners
@@ -368,16 +372,17 @@ class DataCollectionUI(MouserPage):
 
         # Check if more data for the day needs to be collected
         if not self.database.is_data_collected_for_date(self.current_date):
-        # Create Flash overlay using new Flash Overlay Class
-            FlashOverlay(
-                parent=self,
-                message="Data Collection Started",
-                duration=1000,
-                bg_color="#00FF00" #Bright Green
-            )
+            if self.database.experiment_uses_rfid() == 1:
+            # Create Flash overlay using new Flash Overlay Class
+                FlashOverlay(
+                    parent=self,
+                    message="Data Collection Started",
+                    duration=1000,
+                    bg_color="#00FF00" #Bright Green
+                )
 
-            time.sleep(.2)
-            self.rfid_listen()
+                time.sleep(.2)
+                self.rfid_listen()
 
 
     def press_back_to_menu_button(self):
