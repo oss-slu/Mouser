@@ -106,8 +106,14 @@ def open_file():
 # Command for 'New' option in menu bar
 def create_file():
     '''Command for the 'New' option in the menue bar.
-
     Navigates to the NewExperimentUI page.'''
+
+    # Close any existing db connections to respect singleton
+    if TEMP_FILE_PATH and os.path.exists(TEMP_FILE_PATH):
+        from databases.experiment_database import ExperimentDatabase
+        if ExperimentDatabase._instance is not None:
+            ExperimentDatabase._instance.close()
+
     page = NewExperimentUI(root, experiments_frame)
     page.raise_frame()
 

@@ -10,6 +10,7 @@ from shared.scrollable_frame import ScrolledFrame
 from shared.serial_handler import SerialDataHandler
 from shared.file_utils import save_temp_to_file
 import threading
+from shared.flash_overlay import FlashOverlay
 
 #pylint: disable= undefined-variable
 class DataCollectionUI(MouserPage):
@@ -264,8 +265,11 @@ class DataCollectionUI(MouserPage):
 
         self.rfid_thread = None
         print("✅ RFID listener cleanup completed.")
-        self.changer.stop_thread()  # Stop the changer thread if it's running
-        self.changer.close()  # Close the changer dialog if it's open
+
+        # Safely stop and close the changer
+        if hasattr(self, 'changer'):
+            self.changer.stop_thread()  # Stop the changer thread if it's running
+            self.changer.close()  # Close the changer dialog if it's open
 
     def select_animal_by_id(self, animal_id):
         '''Finds and selects the animal with the given ID in the table, then opens the entry box.'''
@@ -361,8 +365,20 @@ class DataCollectionUI(MouserPage):
     def raise_frame(self):
         '''Raise the frame for this UI'''
         super().raise_frame()
-        time.sleep(.2)
-        self.rfid_listen()
+
+        # Check if more data for the day needs to be collected
+        if not self.database.is_data_collected_for_date(self.current_date):
+        # Create Flash overlay using new Flash Overlay Class
+            FlashOverlay(
+                parent=self,
+                message="Data Collection Started",
+                duration=1000,
+                bg_color="#00FF00" #Bright Green
+            )
+
+            time.sleep(.2)
+            self.rfid_listen()
+
 
     def press_back_to_menu_button(self):
         self.stop_listening()
@@ -518,8 +534,9 @@ class ChangeMeasurementsDialog():
         return tuple(values)
 
     def close(self):
-        '''Closes change value dialog window.'''
-        self.root.destroy()
+        '''Closes change value dialog window if it exists'''
+        if hasattr(self, 'root') and self.root.winfo_exists():
+            self.root.destroy()
 
     def stop_thread(self):
         '''Stops the data input thread if running.'''

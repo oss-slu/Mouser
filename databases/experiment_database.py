@@ -5,18 +5,18 @@ from datetime import datetime
 
 class ExperimentDatabase:
     '''SQLite Database Object for Experiments.'''
-    _instance  = None
-
+    _instances = {}  # Dictionary to store instances by file path
 
     def __new__(cls, file=":memory:"):
-        '''Builds Database connections if singleton does not exist'''
-        if cls._instance is None:
-            cls._instance = super(ExperimentDatabase, cls).__new__(cls)
-            cls._instance.db_file = file
-            cls._instance._conn = sqlite3.connect(file, check_same_thread=False)
-            cls._instance._c = cls._instance._conn.cursor()
-            cls._instance._initialize_tables()
-        return cls._instance
+        '''Builds Database connections if singleton does not exist for this file'''
+        if file not in cls._instances:
+            instance = super(ExperimentDatabase, cls).__new__(cls)
+            instance.db_file = file
+            instance._conn = sqlite3.connect(file, check_same_thread=False)
+            instance._c = instance._conn.cursor()
+            instance._initialize_tables()
+            cls._instances[file] = instance
+        return cls._instances[file]
 
 
     def _initialize_tables(self):  # Call to work with singleton changes
@@ -193,8 +193,9 @@ class ExperimentDatabase:
                 self._conn.close()
                 self._conn = None
 
-                # Clear the singleton instance
-                ExperimentDatabase._instance = None
+                # Remove this instance from the instances dictionary
+                if self.db_file in ExperimentDatabase._instances:
+                    del ExperimentDatabase._instances[self.db_file]
 
                 return True
         except Exception as e:
@@ -252,11 +253,42 @@ class ExperimentDatabase:
                 SELECT animal_id, value
                 FROM animal_measurements
                 WHERE timestamp = ?
+                AND measurement_id != 0
             ''', (date,))
             return self._c.fetchall()
         except Exception as e:
             print(f"Error getting data for date: {e}")
             return []
+
+    def is_data_collected_for_date(self, date):
+        '''Checks if all active animals have measurements for provided date as a TRUE/FALSE'''
+        try:
+            # First get count of active animals
+            self._c.execute('''
+                SELECT COUNT(*)
+                FROM animals
+                WHERE active = 1
+            ''')
+            total_active_animals = self._c.fetchone()[0]
+
+            # Then get count of animals with non-null measurements for the date
+            self._c.execute('''
+                SELECT COUNT(DISTINCT a.animal_id)
+                FROM animals a
+                JOIN animal_measurements m ON a.animal_id = m.animal_id
+                WHERE a.active = 1
+                AND m.timestamp = ?
+                AND m.value IS NOT NULL
+            ''', (date,))
+            animals_with_measurements = self._c.fetchone()[0]
+
+            # Return True only if all active animals have measurements
+            return animals_with_measurements >= total_active_animals
+
+        except Exception as e:
+            print(f"Error checking data collection status: {e}")
+            return False
+
 
     def add_data_entry(self, date, animal_id, values):
         '''Adds a measurement entry for an animal on a specific date.'''

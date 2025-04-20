@@ -18,6 +18,8 @@ from databases.experiment_database import ExperimentDatabase
 from shared.audio import AudioManager
 
 import shared.file_utils as file_utils
+from shared.flash_overlay import FlashOverlay
+
 
 def get_random_rfid():
     '''Returns a simulated rfid number'''
@@ -473,9 +475,21 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                 print(f"Full traceback: {traceback.format_exc()}")
 
 
-    def close_connection(self):
-        '''Closes database file.'''
-        self.db.close()
+    def raise_frame(self):
+        '''Raise the frame for this UI'''
+        super().raise_frame()
+
+        # Create Flash overlay using new Flash Overlay Class IF NEEDED
+        if len(self.db.get_animals()) != self.db.get_total_number_animals():
+            FlashOverlay(
+                parent=self,
+                message="RFID Scanning Started",
+                duration=1000,
+                bg_color="#00FF00" #Bright Green
+            )
+
+            time.sleep(.2)
+            self.rfid_listen()
 
     def save(self):
         '''Saves current database state to permanent file'''
