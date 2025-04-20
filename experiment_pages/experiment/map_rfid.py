@@ -329,12 +329,24 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             print("🔄 Restarting RFID listening...")
             self.change_entry_text()
             self.save()
+            FlashOverlay(
+                parent=self,
+                message="Scan Successful!",
+                duration=1000,
+                bg_color="#00FF00" #Bright Green
+            )
             self.rfid_listen()
         else:
             print("🎉 All animals have been mapped to RFIDs! RFID scanning completed.")
             self.change_entry_text()
             print("RFIDs scanned: ", self.db.get_all_animals_rfid())
             self.save()
+            FlashOverlay(
+                parent=self,
+                message="All RFIDs Scanned!",
+                duration=4000,
+                bg_color="#FFF700" #Yellow to indicate completion
+            )
             self.stop_listening()
 
     def item_selected(self, _):

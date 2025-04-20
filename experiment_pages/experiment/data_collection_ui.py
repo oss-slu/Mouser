@@ -329,6 +329,12 @@ class DataCollectionUI(MouserPage):
                     print(f"Attempting to save {self.database.db_file} to {self.current_file_path}")
                     save_temp_to_file(self.database.db_file, self.current_file_path)
                     print("Autosave Success!")
+                    FlashOverlay(
+                        parent=self,
+                        message="Data Collected",
+                        duration=1000,
+                        bg_color="#00FF00" # Bright Green
+                    )
 
                 except Exception as save_error:
                     print(f"Autosave failed: {save_error}")
