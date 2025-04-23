@@ -466,6 +466,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             self.raise_warning('Not all animals have been mapped to RFIDs')
         else:
             try:
+                # Close threads first
+                self.stop_listening()
                 # Save database state to permanent file
                 self.save()
 
