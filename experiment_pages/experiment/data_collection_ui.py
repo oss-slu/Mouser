@@ -223,6 +223,13 @@ class DataCollectionUI(MouserPage):
 
                             if animal_id is not None:
                                 print(f"✅ Found Animal ID: {animal_id}")
+                                FlashOverlay(
+                                    parent=self,
+                                    message="Animal Found",
+                                    duration=500,
+                                    bg_color="#00FF00" # Bright Green
+                                )
+                                AudioManager.play("shared/sounds/rfid_success.wav")
                                 self.after(0, lambda: self.select_animal_by_id(animal_id))
                             else:
                                 print("❌ No animal found for scanned RFID.")
