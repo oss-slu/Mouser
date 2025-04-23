@@ -45,7 +45,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         file = database
         self.db = ExperimentDatabase(file)
 
-        self.animal_rfid_list = []
+        self.animal_rfid_list = self.db.get_all_animals_rfid()
         self.animals = []
         self.animal_id = 1
 
@@ -220,23 +220,31 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
     def simulate_all_rfid(self):
         '''Simulates RFID for all remaining unmapped animals.'''
-        total_needed = self.db.get_total_number_animals()
-        current_count = len(self.db.get_animals())
-
-        print(f"Simulating RFIDs: {current_count} mapped, {total_needed} total needed")
-
-        if current_count >= total_needed:
-            self.raise_warning()
-            return
-
-        while current_count < total_needed:
-            self.add_random_rfid()
+        confirm = CTkMessagebox(
+            title= "Confirm Simulate All",
+            message= "Are you sure you want to SimAll? \nThis should only be used in testing.",
+            option_1="No",
+            option_2="Yes"
+        )
+        if confirm.get() == "Yes":
+            total_needed = self.db.get_total_number_animals()
             current_count = len(self.db.get_animals())
-            # Force UI update
-            self.update()
-            self.scroll_to_latest_entry()
 
-        self.save()
+            print(f"Simulating RFIDs: {current_count} mapped, {total_needed} total needed")
+
+            if current_count >= total_needed:
+                self.raise_warning()
+                return
+
+            while current_count < total_needed:
+                self.add_random_rfid()
+                current_count = len(self.db.get_animals())
+                # Force UI update
+                self.update()
+                self.scroll_to_latest_entry()
+
+            self.save()
+            AudioManager.play("shared/sounds/rfid_success.wav")
 
 
     def scroll_to_latest_entry(self):
