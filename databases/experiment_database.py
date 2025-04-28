@@ -149,13 +149,24 @@ class ExperimentDatabase:
                 m.timestamp,
                 a.animal_id,
                 a.rfid,
-                g.name as group_name,
+                g.name AS group_name,
                 m.value
             FROM animal_measurements m
             JOIN animals a ON m.animal_id = a.animal_id
             JOIN groups g ON a.group_id = g.group_id
         '''
         df = pd.read_sql_query(measurements_query, self._conn)
+
+        df.rename(columns={
+            'timestamp': 'Date Collected',
+            'animal_id': 'Animal ID',
+            'rfid': 'RFID Tag',
+            'group_name': 'Group',
+            'value': 'Weight (g)'
+        }, inplace=True)
+
+        df = df[['Animal ID', 'RFID Tag', 'Group', 'Weight (g)', 'Date Collected']]
+        
         df.to_csv(output_file, index=False)
 
     def get_experiment_id(self):
