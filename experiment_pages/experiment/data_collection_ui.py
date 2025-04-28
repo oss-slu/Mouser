@@ -186,6 +186,18 @@ class DataCollectionUI(MouserPage):
             print("⚠️ RFID listener is already running!")
             return  # Prevent multiple listeners
 
+        # Check if more data for the day needs to be collected
+        if not self.database.is_data_collected_for_date(self.current_date):
+            if self.database.get_measurement_type() == 1:
+                # Create Flash overlay using new Flash Overlay Class
+                FlashOverlay(
+                    parent=self,
+                    message="Data Collection Started",
+                    duration=1000,
+                    bg_color="#00FF00", #Bright Green
+                    text_color="black"
+                )
+
         print("📡 Starting RFID listener...")
         print("All RFIDs:", self.database.get_all_animals_rfid())
         animals = self.database.get_animals()
@@ -396,21 +408,7 @@ class DataCollectionUI(MouserPage):
     def raise_frame(self):
         '''Raise the frame for this UI'''
         super().raise_frame()
-
-        # Check if more data for the day needs to be collected
-        if not self.database.is_data_collected_for_date(self.current_date):
-            if self.database.get_measurement_type() == 1:
-                # Create Flash overlay using new Flash Overlay Class
-                FlashOverlay(
-                    parent=self,
-                    message="Data Collection Started",
-                    duration=1000,
-                    bg_color="#00FF00", #Bright Green
-                    text_color="black"
-                )
-
-                time.sleep(.2)
-                self.rfid_listen()
+        self.rfid_listen()
 
 
     def press_back_to_menu_button(self):
