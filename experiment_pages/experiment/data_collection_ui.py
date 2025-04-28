@@ -4,6 +4,7 @@ from tkinter.ttk import Treeview, Style
 import time
 from customtkinter import *
 from shared.tk_models import *
+from CTkMessagebox import CTkMessagebox
 from databases.experiment_database import ExperimentDatabase
 from shared.audio import AudioManager
 from shared.scrollable_frame import ScrolledFrame
@@ -156,6 +157,14 @@ class DataCollectionUI(MouserPage):
 
         self.changer = ChangeMeasurementsDialog(parent, self, self.measurement_strings)
 
+    def raise_warning(self, warning_message='An error occurred'):
+        '''Raises a popup warning message.'''
+        CTkMessagebox(
+            title="Warning",
+            message=warning_message,
+            icon="warning"
+        )
+        AudioManager.play("shared/sounds/error.wav")
 
     def item_selected(self, _):
         '''On item selection.
@@ -246,8 +255,8 @@ class DataCollectionUI(MouserPage):
                                 AudioManager.play("shared/sounds/rfid_success.wav")
                                 self.after(600, lambda: self.select_animal_by_id(animal_id))
                             else:
-                                AudioManager.play("shared/sounds/error.wav")
-                                print("❌ No animal found for scanned RFID.")
+                                self.raise_warning("No animal found for scanned RFID.")
+
 
 
                     time.sleep(0.1)  # Shorter sleep time for more responsive stopping
@@ -377,6 +386,7 @@ class DataCollectionUI(MouserPage):
                     import traceback
                     print(f"Full traceback: {traceback.format_exc()}")
         except Exception as e:
+            self.raise_warning("Failed to save data for animal.")
             print(f"Top level error: {e}")
             import traceback
             print(f"Full traceback: {traceback.format_exc()}")
