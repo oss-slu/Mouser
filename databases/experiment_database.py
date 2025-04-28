@@ -499,7 +499,7 @@ class ExperimentDatabase:
         return [animal[0] for animal in self._c.fetchall()]
 
     def export_to_csv(self, directory):
-        '''Exports all relevant tables in the database to a single Excel file with multiple sheets.'''
+        '''Exports all relevant tables in the database to a folder named after the experiment in the specified directory.'''
         import pandas as pd
 
         # Get the experiment name
@@ -513,21 +513,19 @@ class ExperimentDatabase:
 
         # Define the tables to export
         tables = {
-            'experiment': 'Experiment',
-            'animals': 'Animals',
-            'animal_measurements': 'Measurements',
-            'groups': 'Groups'
+            'experiment': 'experiment.csv',
+            'animals': 'animals.csv',
+            'animal_measurements': 'animal_measurements.csv',
+            'groups': 'groups.csv'
         }
 
-        # Create Excel writer object
-        excel_file_path = os.path.join(experiment_folder, f"{experiment_name}.xlsx")
-        with pd.ExcelWriter(excel_file_path, engine='openpyxl') as writer:
-            for table, sheet_name in tables.items():
-                query = f"SELECT * FROM {table}"
-                df = pd.read_sql_query(query, self._conn)
-                df.to_excel(writer, sheet_name=sheet_name, index=False)
+        for table, filename in tables.items():
+            query = f"SELECT * FROM {table}"
+            df = pd.read_sql_query(query, self._conn)
+            csv_file_path = os.path.join(experiment_folder, filename)
+            df.to_csv(csv_file_path, index=False)
 
-        print(f"All tables exported successfully to {excel_file_path}")
+        print(f"All tables exported successfully to {experiment_folder}.")
 
     def set_animal_active_status(self, animal_id, status):
         '''Sets the active status of an animal.'''
