@@ -197,6 +197,7 @@ class DataCollectionUI(MouserPage):
                     bg_color="#00FF00", #Bright Green
                     text_color="black"
                 )
+                AudioManager.play("shared/sounds/rfid_success.wav")
 
         print("📡 Starting RFID listener...")
         print("All RFIDs:", self.database.get_all_animals_rfid())
