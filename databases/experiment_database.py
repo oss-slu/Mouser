@@ -136,39 +136,6 @@ class ExperimentDatabase:
         result = self._c.fetchone()
         return result[0] if result else None
 
-    def export_data(self, output_file):
-        '''Exports experiment data to CSV files.'''
-        import pandas as pd
-
-        # Create base directory
-        os.makedirs(os.path.dirname(output_file), exist_ok=True)
-
-        # Export measurements with animal info
-        measurements_query = '''
-            SELECT
-                m.timestamp,
-                a.animal_id,
-                a.rfid,
-                g.name AS group_name,
-                m.value
-            FROM animal_measurements m
-            JOIN animals a ON m.animal_id = a.animal_id
-            JOIN groups g ON a.group_id = g.group_id
-        '''
-        df = pd.read_sql_query(measurements_query, self._conn)
-
-        df.rename(columns={
-            'timestamp': 'Date Collected',
-            'animal_id': 'Animal ID',
-            'rfid': 'RFID Tag',
-            'group_name': 'Group',
-            'value': 'Weight (g)'
-        }, inplace=True)
-
-        df = df[['Animal ID', 'RFID Tag', 'Group', 'Weight (g)', 'Date Collected']]
-        
-        df.to_csv(output_file, index=False)
-
     def get_experiment_id(self):
         '''Returns the experiment id from the experiment table.'''
         self._c.execute("SELECT id FROM experiment")
@@ -474,6 +441,45 @@ class ExperimentDatabase:
             WHERE rfid IS NOT NULL
         ''')
         return [animal[0] for animal in self._c.fetchall()]
+
+    def export_to_single_formatted_csv(self, directory):
+        """
+        Exports specific tables into a single, well-formatted CSV file.
+        Each table is clearly labeled, includes its own headers, and is separated by a blank line.
+        """
+        import os
+        import pandas as pd
+
+        # Get experiment name
+        self._c.execute("SELECT name FROM experiment")
+        experiment_name = self._c.fetchone()
+        experiment_name = experiment_name[0] if experiment_name else "default_experiment"
+
+        # Create folder
+        experiment_folder = os.path.join(directory, experiment_name)
+        os.makedirs(experiment_folder, exist_ok=True)
+
+        # Tables to export
+        tables = ['experiment', 'animals', 'animal_measurements', 'groups']
+
+        # Output file path
+        output_file = os.path.join(experiment_folder, f"{experiment_name}_formatted_data.csv")
+
+        with open(output_file, 'w', encoding='utf-8') as f:
+            for table in tables:
+                # Read table into DataFrame
+                df = pd.read_sql_query(f"SELECT * FROM {table}", self._conn)
+
+                # Write table section header
+                f.write(f"### Table: {table} ###\n")
+
+                # Write the DataFrame to the file (include headers)
+                df.to_csv(f, index=False)
+
+                # Add blank line for readability
+                f.write("\n")
+
+        print(f"All tables exported to a single formatted CSV: {output_file}")
 
     def export_to_csv(self, directory):
         '''Exports all relevant tables in the database to a folder named after the experiment in the specified directory.'''

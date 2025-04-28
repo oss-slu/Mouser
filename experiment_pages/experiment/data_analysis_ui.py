@@ -67,7 +67,7 @@ class DataAnalysisUI(MouserPage):
 
         try:
             db = ExperimentDatabase(self.db_file)
-            db.export_to_csv(save_dir)
+            db.export_to_single_formatted_csv(save_dir)
             print("Data exported successfully to CSV files.")
             AudioManager.play("shared/sounds/rfid_success.wav")
             # Replace the notification with our new success message
