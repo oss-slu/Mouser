@@ -140,6 +140,17 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             self.stop_listening()
             time.sleep(0.5)  # Allow OS to release the port
 
+        if len(self.db.get_animals()) != self.db.get_total_number_animals():
+            FlashOverlay(
+                parent=self,
+                message="RFID Scanning Started",
+                duration=1000,
+                bg_color="#00FF00", #Bright Green
+                text_color="black"
+            )
+
+        time.sleep(.1)
+
         print("📡 Starting a fresh RFID listener...")
         print("RFIDs already scanned: ", self.animal_rfid_list)
         self.rfid_stop_event.clear()  # Reset the stop flag
@@ -502,19 +513,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
     def raise_frame(self):
         '''Raise the frame for this UI'''
         super().raise_frame()
-
-        # Create Flash overlay using new Flash Overlay Class IF NEEDED
-        if len(self.db.get_animals()) != self.db.get_total_number_animals():
-            FlashOverlay(
-                parent=self,
-                message="RFID Scanning Started",
-                duration=1000,
-                bg_color="#00FF00", #Bright Green
-                text_color="black"
-            )
-
-            time.sleep(.2)
-            self.rfid_listen()
+        self.rfid_listen()
 
     def save(self):
         '''Saves current database state to permanent file'''
