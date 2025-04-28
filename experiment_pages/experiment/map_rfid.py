@@ -341,7 +341,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                 parent=self,
                 message="Scan Successful!",
                 duration=1000,
-                bg_color="#00FF00" #Bright Green
+                bg_color="#00FF00", #Bright Green
+                text_color="black"
             )
             self.rfid_listen()
         else:
@@ -353,7 +354,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                 parent=self,
                 message="All RFIDs Scanned!",
                 duration=4000,
-                bg_color="#FFF700" #Yellow to indicate completion
+                bg_color="#FFF700", #Yellow to indicate completion
+                text_color="black"
             )
             self.stop_listening()
 
@@ -507,7 +509,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                 parent=self,
                 message="RFID Scanning Started",
                 duration=1000,
-                bg_color="#00FF00" #Bright Green
+                bg_color="#00FF00", #Bright Green
+                text_color="black"
             )
 
             time.sleep(.2)

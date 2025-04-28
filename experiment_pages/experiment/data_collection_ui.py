@@ -227,7 +227,8 @@ class DataCollectionUI(MouserPage):
                                     parent=self,
                                     message="Animal Found",
                                     duration=500,
-                                    bg_color="#00FF00" # Bright Green
+                                    bg_color="#00FF00", # Bright Green
+                                    text_color="black"
                                 )
                                 AudioManager.play("shared/sounds/rfid_success.wav")
                                 self.after(0, lambda: self.select_animal_by_id(animal_id))
@@ -341,7 +342,8 @@ class DataCollectionUI(MouserPage):
                         parent=self,
                         message="Data Collected",
                         duration=1000,
-                        bg_color="#00FF00" # Bright Green
+                        bg_color="#00FF00", # Bright Green
+                        text_color="black"
                     )
 
                     # If all animals have data for today, show completion message
@@ -350,7 +352,8 @@ class DataCollectionUI(MouserPage):
                             parent=self,
                             message="All Animals Measured for Today!",
                             duration=4000,
-                            bg_color="#FFF700"  # Different color for completion
+                            bg_color="#FFF700",  # Different color for completion
+                            text_color="black"
                         ))
 
 
@@ -402,7 +405,8 @@ class DataCollectionUI(MouserPage):
                     parent=self,
                     message="Data Collection Started",
                     duration=1000,
-                    bg_color="#00FF00" #Bright Green
+                    bg_color="#00FF00", #Bright Green
+                    text_color="black"
                 )
 
                 time.sleep(.2)
