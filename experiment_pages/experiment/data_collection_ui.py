@@ -243,7 +243,7 @@ class DataCollectionUI(MouserPage):
                                     text_color="black"
                                 )
                                 AudioManager.play("shared/sounds/rfid_success.wav")
-                                self.after(0, lambda: self.select_animal_by_id(animal_id))
+                                self.after(600, lambda: self.select_animal_by_id(animal_id))
                             else:
                                 print("❌ No animal found for scanned RFID.")
 
