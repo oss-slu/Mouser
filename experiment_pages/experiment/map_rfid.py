@@ -18,6 +18,8 @@ from databases.experiment_database import ExperimentDatabase
 from shared.audio import AudioManager
 
 import shared.file_utils as file_utils
+from shared.flash_overlay import FlashOverlay
+
 
 def get_random_rfid():
     '''Returns a simulated rfid number'''
@@ -39,7 +41,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         file = database
         self.db = ExperimentDatabase(file)
 
-        self.animal_rfid_list = [str(rfid) for rfid in self.db.get_all_animals_rfid()]
+        self.animal_rfid_list = self.db.get_all_animals_rfid()
         self.animals = []
         self.animal_id = 1
 
@@ -134,6 +136,17 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             self.stop_listening()
             time.sleep(0.5)  # Allow OS to release the port
 
+        if len(self.db.get_animals()) != self.db.get_total_number_animals():
+            FlashOverlay(
+                parent=self,
+                message="RFID Scanning Started",
+                duration=1000,
+                bg_color="#00FF00", #Bright Green
+                text_color="black"
+            )
+
+        time.sleep(.1)
+
         print("📡 Starting a fresh RFID listener...")
         print("RFIDs already scanned: ", self.animal_rfid_list)
         self.rfid_stop_event.clear()  # Reset the stop flag
@@ -213,23 +226,31 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
     def simulate_all_rfid(self):
         '''Simulates RFID for all remaining unmapped animals.'''
-        total_needed = self.db.get_total_number_animals()
-        current_count = len(self.db.get_animals())
-
-        print(f"Simulating RFIDs: {current_count} mapped, {total_needed} total needed")
-
-        if current_count >= total_needed:
-            self.raise_warning()
-            return
-
-        while current_count < total_needed:
-            self.add_random_rfid()
+        confirm = CTkMessagebox(
+            title= "Confirm Simulate All",
+            message= "Are you sure you want to SimAll? \nThis should only be used in testing.",
+            option_1="No",
+            option_2="Yes"
+        )
+        if confirm.get() == "Yes":
+            total_needed = self.db.get_total_number_animals()
             current_count = len(self.db.get_animals())
-            # Force UI update
-            self.update()
-            self.scroll_to_latest_entry()
 
-        self.save()
+            print(f"Simulating RFIDs: {current_count} mapped, {total_needed} total needed")
+
+            if current_count >= total_needed:
+                self.raise_warning()
+                return
+
+            while current_count < total_needed:
+                self.add_random_rfid()
+                current_count = len(self.db.get_animals())
+                # Force UI update
+                self.update()
+                self.scroll_to_latest_entry()
+
+            self.save()
+            AudioManager.play("shared/sounds/rfid_success.wav")
 
 
     def scroll_to_latest_entry(self):
@@ -314,10 +335,27 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         # If we haven't scanned all animals yet, restart listening
         if total_scanned < total_expected:
             print("🔄 Restarting RFID listening...")
+            self.change_entry_text()
+            self.save()
+            FlashOverlay(
+                parent=self,
+                message="Scan Successful!",
+                duration=1000,
+                bg_color="#00FF00", #Bright Green
+                text_color="black"
+            )
             self.rfid_listen()
         else:
             print("🎉 All animals have been mapped to RFIDs! RFID scanning completed.")
             print("RFIDs scanned: ", self.db.get_all_animals_rfid())
+            self.save()
+            FlashOverlay(
+                parent=self,
+                message="All RFIDs Scanned!",
+                duration=4000,
+                bg_color="#FFF700", #Yellow to indicate completion
+                text_color="black"
+            )
             self.stop_listening()
 
     def item_selected(self, _):
@@ -437,6 +475,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             self.raise_warning('Not all animals have been mapped to RFIDs')
         else:
             try:
+                # Close threads first
+                self.stop_listening()
                 # Save database state to permanent file
                 self.save()
 
@@ -458,9 +498,10 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                 print(f"Full traceback: {traceback.format_exc()}")
 
 
-    def close_connection(self):
-        '''Closes database file.'''
-        self.db.close()
+    def raise_frame(self):
+        '''Raise the frame for this UI'''
+        super().raise_frame()
+        self.rfid_listen()
 
     def save(self):
         '''Saves current database state to permanent file'''

@@ -164,6 +164,7 @@ class CageConfigurationUI(MouserPage):
         self.db.randomize_cages()
         self.update_config_frame()
         self.save()
+        AudioManager.play("shared/sounds/rfid_success.wav")
 
     def autosort(self):
         '''Calls database's autosort function after user confirmation.'''
@@ -177,6 +178,7 @@ class CageConfigurationUI(MouserPage):
             self.db.autosort()
             self.update_config_frame()
             self.save()
+            AudioManager.play("shared/sounds/rfid_success.wav")
 
     def perform_swap(self):
         '''Swaps two selected animals between cages.'''
@@ -201,6 +203,7 @@ class CageConfigurationUI(MouserPage):
         self.selected_animals.clear()
         self.update_config_frame()
         self.save()
+        AudioManager.play("shared/sounds/rfid_success.wav")
 
     def move_animal(self):
         '''Moves selected animals to a specified cage.'''
@@ -250,6 +253,7 @@ class CageConfigurationUI(MouserPage):
             self.cage_buttons[target_cage].configure(fg_color="#0097A7")  # Reset cage button color
         self.update_config_frame()
         self.save()
+        AudioManager.play("shared/sounds/rfid_success.wav")
 
     def raise_warning(self, message):
         '''Raises a warning page with the given message.'''
@@ -265,7 +269,7 @@ class CageConfigurationUI(MouserPage):
                             command=lambda: message_window.destroy())
         ok_button.grid(row=2, column=0, padx=10, pady=10)
 
-        AudioManager.play(filepath='sounds/error.wav')
+        AudioManager.play("shared/sounds/error.wav")
         message_window.mainloop()
 
     def save_to_database(self):

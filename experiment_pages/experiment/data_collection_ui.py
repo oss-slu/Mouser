@@ -10,6 +10,7 @@ from shared.scrollable_frame import ScrolledFrame
 from shared.serial_handler import SerialDataHandler
 from shared.file_utils import save_temp_to_file
 import threading
+from shared.flash_overlay import FlashOverlay
 
 #pylint: disable= undefined-variable
 class DataCollectionUI(MouserPage):
@@ -177,9 +178,26 @@ class DataCollectionUI(MouserPage):
     def rfid_listen(self):
         '''Continuously listens for RFID scans until manually stopped.'''
 
+        if self.database.experiment_uses_rfid() != 1:
+            print("This experiment does not use RFID, cancelling threads")
+            return # Prevents looking for nonexistent Serial Devices
+
         if self.rfid_thread and self.rfid_thread.is_alive():
             print("⚠️ RFID listener is already running!")
             return  # Prevent multiple listeners
+
+        # Check if more data for the day needs to be collected
+        if not self.database.is_data_collected_for_date(self.current_date):
+            if self.database.get_measurement_type() == 1:
+                # Create Flash overlay using new Flash Overlay Class
+                FlashOverlay(
+                    parent=self,
+                    message="Data Collection Started",
+                    duration=1000,
+                    bg_color="#00FF00", #Bright Green
+                    text_color="black"
+                )
+                AudioManager.play("shared/sounds/rfid_success.wav")
 
         print("📡 Starting RFID listener...")
         print("All RFIDs:", self.database.get_all_animals_rfid())
@@ -218,7 +236,15 @@ class DataCollectionUI(MouserPage):
 
                             if animal_id is not None:
                                 print(f"✅ Found Animal ID: {animal_id}")
-                                self.after(0, lambda: self.select_animal_by_id(animal_id))
+                                FlashOverlay(
+                                    parent=self,
+                                    message="Animal Found",
+                                    duration=500,
+                                    bg_color="#00FF00", # Bright Green
+                                    text_color="black"
+                                )
+                                AudioManager.play("shared/sounds/rfid_success.wav")
+                                self.after(600, lambda: self.select_animal_by_id(animal_id))
                             else:
                                 AudioManager.play("shared/sounds/error.wav")
                                 print("❌ No animal found for scanned RFID.")
@@ -265,8 +291,11 @@ class DataCollectionUI(MouserPage):
 
         self.rfid_thread = None
         print("✅ RFID listener cleanup completed.")
-        self.changer.stop_thread()  # Stop the changer thread if it's running
-        self.changer.close()  # Close the changer dialog if it's open
+
+        # Safely stop and close the changer
+        if hasattr(self, 'changer'):
+            self.changer.stop_thread()  # Stop the changer thread if it's running
+            self.changer.close()  # Close the changer dialog if it's open
 
     def select_animal_by_id(self, animal_id):
         '''Finds and selects the animal with the given ID in the table, then opens the entry box.'''
@@ -300,7 +329,7 @@ class DataCollectionUI(MouserPage):
             print(f"Saving data point for animal {animal_id_to_change}: {new_value}")
 
             # Write change to database
-            self.database.change_data_entry(str(date.today()), animal_id_to_change, new_value)
+            self.database.change_data_entry(str(date.today()), animal_id_to_change, new_value, 1)
             print("Database entry updated")
 
             # Update display table
@@ -322,6 +351,25 @@ class DataCollectionUI(MouserPage):
                     print(f"Attempting to save {self.database.db_file} to {self.current_file_path}")
                     save_temp_to_file(self.database.db_file, self.current_file_path)
                     print("Autosave Success!")
+
+                    FlashOverlay(
+                        parent=self,
+                        message="Data Collected",
+                        duration=1000,
+                        bg_color="#00FF00", # Bright Green
+                        text_color="black"
+                    )
+
+                    # If all animals have data for today, show completion message
+                    if self.database.is_data_collected_for_date(str(date.today())):
+                        self.after(1100, lambda: FlashOverlay(  # Delay to show after the first overlay
+                            parent=self,
+                            message="All Animals Measured for Today!",
+                            duration=4000,
+                            bg_color="#FFF700",  # Different color for completion
+                            text_color="black"
+                        ))
+
 
                 except Exception as save_error:
                     print(f"Autosave failed: {save_error}")
@@ -362,8 +410,8 @@ class DataCollectionUI(MouserPage):
     def raise_frame(self):
         '''Raise the frame for this UI'''
         super().raise_frame()
-        time.sleep(.2)
         self.rfid_listen()
+
 
     def press_back_to_menu_button(self):
         self.stop_listening()
@@ -519,8 +567,9 @@ class ChangeMeasurementsDialog():
         return tuple(values)
 
     def close(self):
-        '''Closes change value dialog window.'''
-        self.root.destroy()
+        '''Closes change value dialog window if it exists'''
+        if hasattr(self, 'root') and self.root.winfo_exists():
+            self.root.destroy()
 
     def stop_thread(self):
         '''Stops the data input thread if running.'''

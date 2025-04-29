@@ -53,10 +53,9 @@ def open_file():
     if file_path:
 
         # Close any existing db connections to respect singleton
-        if TEMP_FILE_PATH and os.path.exists(TEMP_FILE_PATH):
-            from databases.experiment_database import ExperimentDatabase
-            if ExperimentDatabase._instance is not None:
-                ExperimentDatabase._instance.close()
+        from databases.experiment_database import ExperimentDatabase
+        if TEMP_FILE_PATH in ExperimentDatabase._instances:
+            ExperimentDatabase._instances[TEMP_FILE_PATH].close()
 
         global CURRENT_FILE_PATH
         CURRENT_FILE_PATH = file_path
@@ -106,8 +105,13 @@ def open_file():
 # Command for 'New' option in menu bar
 def create_file():
     '''Command for the 'New' option in the menue bar.
-
     Navigates to the NewExperimentUI page.'''
+
+    # Close any existing db connections to respect singleton
+    from databases.experiment_database import ExperimentDatabase
+    if TEMP_FILE_PATH in ExperimentDatabase._instances:
+        ExperimentDatabase._instances[TEMP_FILE_PATH].close()
+
     page = NewExperimentUI(root, experiments_frame)
     page.raise_frame()
 
