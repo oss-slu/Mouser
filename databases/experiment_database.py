@@ -136,28 +136,6 @@ class ExperimentDatabase:
         result = self._c.fetchone()
         return result[0] if result else None
 
-    def export_data(self, output_file):
-        '''Exports experiment data to CSV files.'''
-        import pandas as pd
-
-        # Create base directory
-        os.makedirs(os.path.dirname(output_file), exist_ok=True)
-
-        # Export measurements with animal info
-        measurements_query = '''
-            SELECT
-                m.timestamp,
-                a.animal_id,
-                a.rfid,
-                g.name as group_name,
-                m.value
-            FROM animal_measurements m
-            JOIN animals a ON m.animal_id = a.animal_id
-            JOIN groups g ON a.group_id = g.group_id
-        '''
-        df = pd.read_sql_query(measurements_query, self._conn)
-        df.to_csv(output_file, index=False)
-
     def get_experiment_id(self):
         '''Returns the experiment id from the experiment table.'''
         self._c.execute("SELECT id FROM experiment")
@@ -497,6 +475,69 @@ class ExperimentDatabase:
             WHERE rfid IS NOT NULL
         ''')
         return [animal[0] for animal in self._c.fetchall()]
+
+    def export_to_single_formatted_csv(self, directory):
+        """
+        Exports the experiment data into a structured CSV:
+        1. Experiment metadata
+        2. Pivoted measurement matrix (group, animal, date columns)
+        3. Groups table with header
+        """
+        import os
+        import pandas as pd
+
+        # Get experiment name
+        self._c.execute("SELECT name FROM experiment")
+        experiment_name = self._c.fetchone()
+        experiment_name = experiment_name[0] if experiment_name else "default_experiment"
+
+        # Create folder
+        experiment_folder = os.path.join(directory, experiment_name)
+        os.makedirs(experiment_folder, exist_ok=True)
+
+        # Output file path
+        output_file = os.path.join(experiment_folder, f"{experiment_name}_formatted_data.csv")
+
+        # Load data
+        experiment_df = pd.read_sql_query("SELECT * FROM experiment", self._conn)
+        animals_df = pd.read_sql_query("SELECT * FROM animals", self._conn)
+        groups_df = pd.read_sql_query("SELECT * FROM groups", self._conn)
+        measurements_df = pd.read_sql_query("SELECT * FROM animal_measurements", self._conn)
+
+        # Add fixed metadata (like measurement name) to experiment table if needed
+        experiment_df["measurement"] = "Weight"  # or fetch from DB if stored
+
+        # Join measurements with animal and group info
+        merged_df = measurements_df.merge(animals_df, on="animal_id", how="left")
+        merged_df = merged_df.merge(groups_df, on="group_id", how="left")
+
+        # Ensure timestamp is datetime
+        merged_df["timestamp"] = pd.to_datetime(merged_df["timestamp"])
+
+        # Pivot the data
+        pivot_df = merged_df.pivot_table(
+            index=["name", "animal_id"],  # group name and animal id
+            columns="timestamp",
+            values="value"
+        ).reset_index()
+        pivot_df.columns.name = None  # remove pivot name
+
+        # Write to CSV
+        with open(output_file, 'w', encoding='utf-8', newline='') as f:
+            # Write experiment metadata (header + single row)
+            experiment_df.to_csv(f, index=False)
+            f.write("\n")
+
+            # Write measurement matrix
+            pivot_df.to_csv(f, index=False)
+            f.write("\n")
+
+            # Write groups section
+            f.write("### Table: groups ###\n")
+            groups_df.to_csv(f, index=False)
+
+        print(f"Exported to formatted CSV: {output_file}")
+
 
     def export_to_csv(self, directory):
         '''Exports all relevant tables in the database to a folder named after the experiment in the specified directory.'''
