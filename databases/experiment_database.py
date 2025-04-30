@@ -444,8 +444,10 @@ class ExperimentDatabase:
 
     def export_to_single_formatted_csv(self, directory):
         """
-        Exports specific tables into a single, well-formatted CSV file.
-        Each table is clearly labeled, includes its own headers, and is separated by a blank line.
+        Exports the experiment data into a structured CSV:
+        1. Experiment metadata
+        2. Pivoted measurement matrix (group, animal, date columns)
+        3. Groups table with header
         """
         import os
         import pandas as pd
@@ -459,27 +461,49 @@ class ExperimentDatabase:
         experiment_folder = os.path.join(directory, experiment_name)
         os.makedirs(experiment_folder, exist_ok=True)
 
-        # Tables to export
-        tables = ['experiment', 'animals', 'animal_measurements', 'groups']
-
         # Output file path
         output_file = os.path.join(experiment_folder, f"{experiment_name}_formatted_data.csv")
 
-        with open(output_file, 'w', encoding='utf-8') as f:
-            for table in tables:
-                # Read table into DataFrame
-                df = pd.read_sql_query(f"SELECT * FROM {table}", self._conn)
+        # Load data
+        experiment_df = pd.read_sql_query("SELECT * FROM experiment", self._conn)
+        animals_df = pd.read_sql_query("SELECT * FROM animals", self._conn)
+        groups_df = pd.read_sql_query("SELECT * FROM groups", self._conn)
+        measurements_df = pd.read_sql_query("SELECT * FROM animal_measurements", self._conn)
 
-                # Write table section header
-                f.write(f"### Table: {table} ###\n")
+        # Add fixed metadata (like measurement name) to experiment table if needed
+        experiment_df["measurement"] = "Weight"  # or fetch from DB if stored
 
-                # Write the DataFrame to the file (include headers)
-                df.to_csv(f, index=False)
+        # Join measurements with animal and group info
+        merged_df = measurements_df.merge(animals_df, on="animal_id", how="left")
+        merged_df = merged_df.merge(groups_df, on="group_id", how="left")
 
-                # Add blank line for readability
-                f.write("\n")
+        # Ensure timestamp is datetime
+        merged_df["timestamp"] = pd.to_datetime(merged_df["timestamp"])
 
-        print(f"All tables exported to a single formatted CSV: {output_file}")
+        # Pivot the data
+        pivot_df = merged_df.pivot_table(
+            index=["name", "animal_id"],  # group name and animal id
+            columns="timestamp",
+            values="value"
+        ).reset_index()
+        pivot_df.columns.name = None  # remove pivot name
+
+        # Write to CSV
+        with open(output_file, 'w', encoding='utf-8', newline='') as f:
+            # Write experiment metadata (header + single row)
+            experiment_df.to_csv(f, index=False)
+            f.write("\n")
+
+            # Write measurement matrix
+            pivot_df.to_csv(f, index=False)
+            f.write("\n")
+
+            # Write groups section
+            f.write("### Table: groups ###\n")
+            groups_df.to_csv(f, index=False)
+
+        print(f"Exported to formatted CSV: {output_file}")
+
 
     def export_to_csv(self, directory):
         '''Exports all relevant tables in the database to a folder named after the experiment in the specified directory.'''
