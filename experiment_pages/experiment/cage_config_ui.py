@@ -8,14 +8,18 @@ from shared.audio import AudioManager
 from shared.file_utils import save_temp_to_file
 
 class CageConfigurationUI(MouserPage):
-    '''The Frame that allows user to configure the cages.'''
+    '''The Frame that allows user to configure the Groups.'''
     def __init__(self, database, parent: CTk, prev_page: CTkFrame = None, file_path = ''):
-        super().__init__(parent, "Cage Configuration", prev_page)
+        super().__init__(parent, "Group Configuration", prev_page)
 
         self.prev_page = prev_page
         self.db = DatabaseController(database)
+        self.parent = parent
+        self.menu_page = parent
 
         self.file_path = file_path
+
+        self.menu_button.configure(command=self.back_to_menu)
 
         scroll_canvas = ScrolledFrame(self)
         scroll_canvas.place(relx=0.05, rely=0.20, relheight=0.75, relwidth=0.88)
@@ -29,7 +33,7 @@ class CageConfigurationUI(MouserPage):
                             command=self.perform_swap)
         auto_button = CTkButton(input_frame, text='AutoSort', width=15,
                                 command=self.autosort)
-        move_button = CTkButton(input_frame, text='Move Cages', width=15,
+        move_button = CTkButton(input_frame, text='Move Groups', width=15,
                                 command=self.move_animal)
 
         self.id_input = CTkEntry(input_frame, width=110)
@@ -78,7 +82,7 @@ class CageConfigurationUI(MouserPage):
             # Cage header - now a button instead of a label
             cage_button = CTkButton(
                 cage_frame,
-                text=f'Cage: {cage_name}',
+                text=f'Group: {cage_name}',
                 command=lambda c=cage_name: self.select_cage(c),
                 fg_color='#0097A7',
                 hover_color="#00b8d4",
@@ -134,7 +138,7 @@ class CageConfigurationUI(MouserPage):
                 button.configure(fg_color="#D5E8D4")  # Selected state green
                 self.cage_input.delete(0, END)
                 self.cage_input.insert(0, cage_name)
-                print(f"Selected cage: {cage_name}")
+                print(f"Selected Group: {cage_name}")
 
     def toggle_animal_selection(self, animal_id):
         '''Toggles the selection state of an animal.'''
@@ -181,7 +185,7 @@ class CageConfigurationUI(MouserPage):
             AudioManager.play("shared/sounds/rfid_success.wav")
 
     def perform_swap(self):
-        '''Swaps two selected animals between cages.'''
+        '''Swaps two selected animals between Groups.'''
         if len(self.selected_animals) != 2:
             self.raise_warning("Please select exactly two animals to swap.")
             return
@@ -193,7 +197,7 @@ class CageConfigurationUI(MouserPage):
         cage2 = self.db.get_animal_current_cage(animal_id2)
 
         if cage1 == cage2:
-            self.raise_warning("Both animals are in the same cage.")
+            self.raise_warning("Both animals are in the same group.")
             return
 
         # Perform the swap using the database controller
@@ -206,7 +210,7 @@ class CageConfigurationUI(MouserPage):
         AudioManager.play("shared/sounds/rfid_success.wav")
 
     def move_animal(self):
-        '''Moves selected animals to a specified cage.'''
+        '''Moves selected animals to a specified group.'''
         # Check if any animals are selected
         if not self.selected_animals:
             self.raise_warning("Please select at least one animal to move.")
@@ -214,7 +218,7 @@ class CageConfigurationUI(MouserPage):
 
         # Check if exactly one cage is selected
         if not self.selected_cage:
-            self.raise_warning("Please select a target cage.")
+            self.raise_warning("Please select a target group.")
             return
 
         target_cage = self.selected_cage  # The display name
@@ -223,7 +227,7 @@ class CageConfigurationUI(MouserPage):
         # Check if moving would exceed cage maximum
         target_cage_count = len(self.db.get_animals_in_group(target_cage))
         if target_cage_count + len(self.selected_animals) > self.db.get_cage_max():
-            self.raise_warning(f"Moving these animals would exceed the maximum cage capacity of {self.db.get_cage_max()}.")
+            self.raise_warning(f"Moving these animals would exceed the maximum group capacity of {self.db.get_cage_max()}.")
             return
 
         # Track if any animals were actually moved
@@ -243,7 +247,7 @@ class CageConfigurationUI(MouserPage):
             animals_moved = True
 
         if not animals_moved:
-            self.raise_warning("No animals were moved. They might already be in the target cage.")
+            self.raise_warning("No animals were moved. They might already be in the target group.")
             return
 
         # Clear selections and update the UI
@@ -278,7 +282,7 @@ class CageConfigurationUI(MouserPage):
             self.db.update_experiment()
             raise_frame(self.prev_page)
         else:
-            self.raise_warning(f'Number of animals in a cage must not exceed {self.db.get_cage_max()}')
+            self.raise_warning(f'Number of animals in a group must not exceed {self.db.get_cage_max()}')
 
     def save(self):
         '''Saves current database state to permanent file'''
@@ -300,8 +304,23 @@ class CageConfigurationUI(MouserPage):
             print(f"Full traceback: {traceback.format_exc()}")
 
     def check_num_in_cage_allowed(self):
-        '''Checks if the number of animals in a cage is allowed.'''
+        '''Checks if the number of animals in a group is allowed.'''
         return self.db.check_num_in_cage_allowed()
+
+    def back_to_menu(self):
+        '''Handles back to menu button press.'''
+        try:
+            self.save()
+            self.close_connection()
+
+            from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+
+            # Create new ExperimentMenuUI instance with the same file
+            new_page = ExperimentMenuUI(self.parent, self.file_path, self.menu_page, self.file_path)
+            new_page.raise_frame()
+
+        except Exception as e:
+            print(f"Error during save and close: {e}")
 
     def close_connection(self):
         '''Closes database file.'''

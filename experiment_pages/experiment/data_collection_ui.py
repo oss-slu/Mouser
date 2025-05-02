@@ -95,7 +95,7 @@ class DataCollectionUI(MouserPage):
                                                width=250, height=75,
                                                font=("Georgia", 65),
                                                command= start_function)
-        self.auto_increment_button.place(relx=0.35, rely=0.30, anchor=CENTER)
+        self.auto_increment_button.place(relx=0.20, rely=0.30, anchor=CENTER)
         self.auto_inc_id = -1
 
         self.stop_button = CTkButton(self,
@@ -104,7 +104,15 @@ class DataCollectionUI(MouserPage):
                                      width=250, height=75,
                                      font=("Georgia", 65),
                                      command= self.stop_listening)
-        self.stop_button.place(relx=0.55, rely=0.30, anchor=CENTER)
+        self.stop_button.place(relx=0.50, rely=0.30, anchor=CENTER)
+
+        self.sacrifice_button = CTkButton(self,
+                                      text="Sacrifice",
+                                      compound=TOP,
+                                      width=250, height=75,
+                                      font=("Georgia", 65),
+                                      command=self.sacrifice_selected_items)
+        self.sacrifice_button.place(relx=0.80, rely=0.30, anchor=CENTER)
 
         self.animals = self.database.get_animals()
         self.table_frame = ScrolledFrame(self)
@@ -411,6 +419,92 @@ class DataCollectionUI(MouserPage):
         '''Raise the frame for this UI'''
         super().raise_frame()
         self.rfid_listen()
+
+    def sacrifice_selected_items(self):
+        '''Decreases the maximum number of animals in the experiment by 1 for each selected animal'''
+        # Get selected items from table
+        selected_items = self.table.selection()
+
+        if not selected_items:
+            FlashOverlay(
+                parent=self,
+                message="No items selected. Please select animals to sacrifice.",
+                duration=2000,
+                bg_color="#FF0000",  # Red for error
+                text_color="black"
+            )
+            AudioManager.play("shared/sounds/error.wav")
+            return
+
+        # Ask for confirmation
+        confirm = CTkMessagebox(
+            title="Confirm Sacrifice",
+            message="Are you sure you want to sacrifice the selected animals?\nThis action cannot be undone.",
+            option_1="No",
+            option_2="Yes"
+        )
+
+        if confirm.get() == "Yes":
+            # Stop any running threads temporarily
+            was_listening = False
+            if hasattr(self, 'rfid_reader') and self.rfid_reader:
+                was_listening = True
+                self.stop_listening()
+
+            try:
+                # Process each selected animal
+                for item in selected_items:
+                    animal_id = int(self.table.item(item, 'values')[0])
+                    self.table.selection_remove(item)
+                    self.table.delete(item)
+
+                    # Mark animal as inactive in database
+                    self.database.set_animal_active_status(animal_id, 0)
+
+                    # Decrease total number of animals
+                    current_max = self.database.get_total_number_animals()
+                    if current_max <= 0:
+                        FlashOverlay(
+                            parent=self,
+                            message="Cannot reduce animal count below 0",
+                            duration=2000,
+                            bg_color="#FF0000",  # Red for error
+                            text_color="white"
+                        )
+                        return
+
+                    self.database.set_number_animals(current_max - 1)
+
+                # Save changes to database
+                self.database._conn.commit()
+                save_temp_to_file(self.database.db_file, self.current_file_path)
+
+                FlashOverlay(
+                    parent=self,
+                    message="Animals Sacrificed Successfully",
+                    duration=2000,
+                    bg_color="#00FF00",  # Green for success
+                    text_color="black"
+                )
+                AudioManager.play("shared/sounds/rfid_success.wav")
+
+            except Exception as e:
+                print(f"Error during sacrifice: {e}")
+                import traceback
+                print(f"Full traceback: {traceback.format_exc()}")
+                FlashOverlay(
+                    parent=self,
+                    message="Error during sacrifice operation",
+                    duration=2000,
+                    bg_color="#FF0000",  # Red for error
+                    text_color="black"
+                )
+                AudioManager.play("shared/sounds/error.wav")
+
+            finally:
+                # Restart listening if it was active before
+                if was_listening:
+                    self.rfid_listen()
 
 
     def press_back_to_menu_button(self):
