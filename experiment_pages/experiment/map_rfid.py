@@ -214,13 +214,15 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         if self.rfid_thread and self.rfid_thread.is_alive():
             self.rfid_thread.join(timeout=1)  # Ensure the thread fully stops
 
-        if self.rfid_reader:  # Make sure the serial reader is released
+        if self.rfid_reader:
             try:
                 print("🔌 Closing serial connection...")
                 self.rfid_reader.stop()
-                self.rfid_reader = None  # Reset the reader instance
+                self.rfid_reader = None
             except Exception as e:
+                self.raise_warning("Failed to close the serial port properly.")
                 print(f"⚠️ Error closing serial port: {e}")
+
 
         time.sleep(0.5)  # Allow OS to release the port
 
@@ -436,6 +438,13 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                         command= lambda: [message.destroy()])
         ok_button.grid(row=2, column=0, padx=10, pady=10)
 
+        FlashOverlay(
+            parent=self,
+            message=warning_message,
+            duration=2000,
+            bg_color="red",
+            text_color="black"
+        )
         AudioManager.play("shared/sounds/error.wav")
 
         message.mainloop()
@@ -493,9 +502,9 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                 new_page.raise_frame()
 
             except Exception as e:
+                self.raise_warning("An error occurred while saving or cleaning up.")
                 print(f"Error during save and cleanup: {e}")
-                import traceback
-                print(f"Full traceback: {traceback.format_exc()}")
+
 
 
     def raise_frame(self):
@@ -519,7 +528,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             print("Save successful!")
 
         except Exception as e:
-            print(f"Error during save: {e}")
+            self.raise_warning("An error occurred while saving or cleaning up.")
+            print(f"Error during save and cleanup: {e}")
             import traceback
             print(f"Full traceback: {traceback.format_exc()}")
 
