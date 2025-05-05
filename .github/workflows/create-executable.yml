@@ -4,8 +4,7 @@ on:
   push:
     branches:
       - main
-      - DatabaseRework
-      - SaveSettings
+      - test-exe
 
 jobs:
   build:
@@ -26,14 +25,14 @@ jobs:
       - run: python -m pip install --upgrade pip
       - run: pip install --upgrade setuptools wheel
       - run: pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
-          
+
       # Only run this on macOS as brew isn't available on Windows
       # - run: brew install mysql pkg-config portaudio
         # if: ${{ matrix.os == 'macos-latest' }}
-      
+
       # Uninstalling typing for compatibility with Python 3.11
       - run: pip uninstall -y typing
-      
+
       # Modify PyInstaller command to include additional data
       - run: |
           pyinstaller --noconfirm --noconsole --onedir -c \
