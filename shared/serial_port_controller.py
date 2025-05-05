@@ -185,7 +185,7 @@ class SerialPortController():
         '''Sets the setting of the serial port opened by converting the
         setting from csv file to actual setting used.'''
         from main import get_resource_path
-        preference_dir = get_resource_path(os.path.join(os.getcwd(), "settings", "serial ports", "preference"))
+        preference_dir = get_resource_path(os.path.join("settings", "serial ports", "preference"))
 
         if setting_type == "reader":
             setting_file = "rfid_config.txt"
