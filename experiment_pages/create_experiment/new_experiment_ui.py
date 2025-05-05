@@ -197,7 +197,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         elif option == 4:
             label4 = CTkLabel(message, text='''Unequal Group Size: Please allow the total number of animals to be
             less than or equal to the total number of
-            animals allowed in all combined cages''')
+            animals allowed in Groups''')
             label4.grid(row=0, column=0, padx=10, pady=10)
 
         # Play the error sound

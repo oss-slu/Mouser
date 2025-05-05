@@ -10,7 +10,7 @@ from shared.file_utils import save_temp_to_file
 class CageConfigurationUI(MouserPage):
     '''The Frame that allows user to configure the cages.'''
     def __init__(self, database, parent: CTk, prev_page: CTkFrame = None, file_path = ''):
-        super().__init__(parent, "Cage Configuration", prev_page)
+        super().__init__(parent, "Group Configuration", prev_page)
 
         self.prev_page = prev_page
         self.db = DatabaseController(database)
@@ -29,17 +29,17 @@ class CageConfigurationUI(MouserPage):
                             command=self.perform_swap)
         auto_button = CTkButton(input_frame, text='AutoSort', width=15,
                                 command=self.autosort)
-        move_button = CTkButton(input_frame, text='Move Cages', width=15,
+        move_button = CTkButton(input_frame, text='Move groups', width=15,
                                 command=self.move_animal)
 
         self.id_input = CTkEntry(input_frame, width=110)
         self.cage_input = CTkEntry(input_frame, width=110)
 
         self.id_input.insert(END, 'animal id')
-        self.cage_input.insert(END, 'cage id')
+        self.cage_input.insert(END, 'group id')
 
         self.id_input.bind("<Button-1>", lambda arg='id': self.clear_entry(arg))
-        self.cage_input.bind("<Button-1>", lambda arg='cage': self.clear_entry(arg))
+        self.cage_input.bind("<Button-1>", lambda arg='group': self.clear_entry(arg))
 
         self.pad_x, self.pad_y = 10, 10
 
@@ -78,7 +78,7 @@ class CageConfigurationUI(MouserPage):
             # Cage header - now a button instead of a label
             cage_button = CTkButton(
                 cage_frame,
-                text=f'Cage: {cage_name}',
+                text=f'Group: {cage_name}',
                 command=lambda c=cage_name: self.select_cage(c),
                 fg_color='#0097A7',
                 hover_color="#00b8d4",
@@ -123,7 +123,7 @@ class CageConfigurationUI(MouserPage):
                 button.configure(fg_color="#0097A7")  # Reset to default blue
                 self.cage_input.delete(0, END)
                 self.cage_input.insert(0, 'cage id')
-                print(f"Deselected cage: {cage_name}")
+                print(f"Deselected Group: {cage_name}")
             else:
                 # Deselect previous cage if any
                 if self.selected_cage and self.selected_cage in self.cage_buttons:
@@ -134,7 +134,7 @@ class CageConfigurationUI(MouserPage):
                 button.configure(fg_color="#D5E8D4")  # Selected state green
                 self.cage_input.delete(0, END)
                 self.cage_input.insert(0, cage_name)
-                print(f"Selected cage: {cage_name}")
+                print(f"Selected group: {cage_name}")
 
     def toggle_animal_selection(self, animal_id):
         '''Toggles the selection state of an animal.'''
@@ -223,7 +223,7 @@ class CageConfigurationUI(MouserPage):
         # Check if moving would exceed cage maximum
         target_cage_count = len(self.db.get_animals_in_group(target_cage))
         if target_cage_count + len(self.selected_animals) > self.db.get_cage_max():
-            self.raise_warning(f"Moving these animals would exceed the maximum cage capacity of {self.db.get_cage_max()}.")
+            self.raise_warning(f"Moving these animals would exceed the maximum capacity of {self.db.get_cage_max()}.")
             return
 
         # Track if any animals were actually moved
@@ -278,7 +278,7 @@ class CageConfigurationUI(MouserPage):
             self.db.update_experiment()
             raise_frame(self.prev_page)
         else:
-            self.raise_warning(f'Number of animals in a cage must not exceed {self.db.get_cage_max()}')
+            self.raise_warning(f'Number of animals in a Group must not exceed {self.db.get_cage_max()}')
 
     def save(self):
         '''Saves current database state to permanent file'''
@@ -300,7 +300,7 @@ class CageConfigurationUI(MouserPage):
             print(f"Full traceback: {traceback.format_exc()}")
 
     def check_num_in_cage_allowed(self):
-        '''Checks if the number of animals in a cage is allowed.'''
+        '''Checks if the number of animals in a group is allowed.'''
         return self.db.check_num_in_cage_allowed()
 
     def close_connection(self):

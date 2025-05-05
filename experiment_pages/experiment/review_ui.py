@@ -50,7 +50,7 @@ class ReviewUI(MouserPage):
 
         # Animals per cage
         cage_max = self.database.get_cage_capacity(1)  # assuming all groups have same cage cap
-        CTkLabel(self.main_frame, text="Animals per Cage:", font=font).grid(row=5, column=0, sticky=W, padx=pad_x, pady=pad_y)
+        CTkLabel(self.main_frame, text="Animals per Group:", font=font).grid(row=5, column=0, sticky=W, padx=pad_x, pady=pad_y)
         CTkLabel(self.main_frame, text=str(cage_max), font=font).grid(row=5, column=1, sticky=W, padx=pad_x, pady=pad_y)
 
         # Group names
