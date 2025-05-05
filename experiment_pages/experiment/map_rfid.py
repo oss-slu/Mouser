@@ -438,6 +438,13 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                         command= lambda: [message.destroy()])
         ok_button.grid(row=2, column=0, padx=10, pady=10)
 
+        FlashOverlay(
+            parent=self,
+            message=warning_message,
+            duration=2000,
+            bg_color="red",
+            text_color="black"
+        )
         AudioManager.play("shared/sounds/error.wav")
 
         message.mainloop()
