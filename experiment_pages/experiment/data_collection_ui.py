@@ -169,6 +169,24 @@ class DataCollectionUI(MouserPage):
         '''On item selection.
 
         Records the value selected and opens the changer frame.'''
+        current_selection = self.table.selection()
+
+        # If nothing is selected, return
+        if not current_selection:
+            return
+
+        new_selection = current_selection[0]
+
+        # If we already are changing this selection, do not open another changer
+        if hasattr(self, 'changing_value') and self.changing_value == new_selection:
+            print("Item already being processed, ignoring")
+            return
+
+        # If we already have an automatic measurement in progress, also do not open other changer
+        if hasattr(self, 'changer') and hasattr(self.changer, 'thread_running') and self.changer.thread_running:
+            print("Already running changer on thread")
+            return
+
         self.auto_inc_id = -1
         self.changing_value = self.table.selection()[0]
         self.open_changer()
@@ -543,7 +561,14 @@ class ChangeMeasurementsDialog():
 
     def open(self, animal_id):
         '''Opens the change measurement dialog window and handles automated submission.'''
-         # Initialize animal_ids unconditionally - we need this list for both RFID and non-RFID cases
+
+        if hasattr(self, 'root') and self.root.winfo_exists():
+            self.close()
+
+        if hasattr(self, 'thread_running') and self.thread_running:
+            self.stop_thread()
+
+        # Initialize animal_ids unconditionally - we need this list for both RFID and non-RFID cases
         self.animal_ids = []
         for child in self.data_collection.table.get_children():
             values = self.data_collection.table.item(child)["values"]
