@@ -35,7 +35,7 @@ class SerialPortSetting(SettingPage):
 
         read_path = self.get_read_path()
         write_path = self.get_write_path()
-        self.port_setting_configuration_path = os.path.join(write_path, "settings", "serial ports")
+        self.port_setting_configuration_path = get_resource_path(os.path.join(write_path, "settings", "serial ports"))
 
 
         # setting value element
@@ -49,9 +49,9 @@ class SerialPortSetting(SettingPage):
 
         if preference:
             if preference == "device":
-                self.preference_path = os.path.join(read_path, "settings", "serial ports", "preference", "device", "preferred_config.txt")
+                self.preference_path = get_resource_path(os.path.join(read_path, "settings", "serial ports", "preference", "device", "preferred_config.txt"))
             elif preference == "reader":
-                self.preference_path = os.path.join(read_path, "settings", "serial ports", "preference", "reader", "rfid_config.txt")
+                self.preference_path = get_resource_path(os.path.join(read_path, "settings", "serial ports", "preference", "reader", "rfid_config.txt"))
 
             else:
                 self.preference_path = None  # Fallback if no valid type
@@ -83,8 +83,8 @@ class SerialPortSetting(SettingPage):
         self.summary_page("Serial Settings")
 
         self.available_configuration = []
-        read_config_path = os.path.join(self.get_read_path(), "settings", "serial ports")
-        write_config_path = os.path.join(self.get_write_path(), "settings", "serial ports")
+        read_config_path = get_resource_path(os.path.join(self.get_read_path(), "settings", "serial ports"))
+        write_config_path = get_resource_path(os.path.join(self.get_write_path(), "settings", "serial ports"))
 
         # Read from both
         for path in [read_config_path, write_config_path]:
@@ -300,10 +300,10 @@ class SerialPortSetting(SettingPage):
 
         base_path = self.get_write_path()
 
-        settings_dir = os.path.join(base_path, "settings", "serial ports")
+        settings_dir = get_resource_path(os.path.join(base_path, "settings", "serial ports"))
         os.makedirs(settings_dir, exist_ok=True)
 
-        settings_path = os.path.join(settings_dir, f"{configuration_name}.csv")
+        settings_path = get_resource_path(os.path.join(settings_dir, f"{configuration_name}.csv"))
 
         try:
             with open(settings_path, "w", newline="", encoding="utf-8") as file:
@@ -337,9 +337,9 @@ class SerialPortSetting(SettingPage):
         '''Save a specific configuration for a given port in its own preference folder.'''
         base_path = self.get_write_path()
 
-        preference_dir = os.path.join(base_path, "settings", "serial ports", "preference", "device")
+        preference_dir = get_resource_path(os.path.join(base_path, "settings", "serial ports", "preference", "device"))
         os.makedirs(preference_dir, exist_ok=True)
-        preference_path = os.path.join(preference_dir, "preferred_config.txt")
+        preference_path = get_resource_path(os.path.join(preference_dir, "preferred_config.txt"))
 
         try:
             with open(preference_path, "w") as file:
@@ -352,9 +352,9 @@ class SerialPortSetting(SettingPage):
         '''Save a specific configuration for a given port in its own preference folder.'''
         base_path = self.get_write_path()
 
-        preference_dir = os.path.join(base_path, "settings", "serial ports", "preference", "reader")
+        preference_dir = get_resource_path(os.path.join(base_path, "settings", "serial ports", "preference", "reader"))
         os.makedirs(preference_dir, exist_ok=True)
-        preference_path = os.path.join(preference_dir, "rfid_config.txt")
+        preference_path = get_resource_path(os.path.join(preference_dir, "rfid_config.txt"))
 
         try:
             with open(preference_path, "w") as file:
@@ -368,17 +368,17 @@ class SerialPortSetting(SettingPage):
         read_path = self.get_read_path()
         write_path = self.get_write_path()
 
-        read_config_dir = os.path.join(read_path, "settings", "serial ports")
-        write_config_dir = os.path.join(write_path, "settings", "serial ports")
+        read_config_dir = get_resource_path(os.path.join(read_path, "settings", "serial ports"))
+        write_config_dir = get_resource_path(os.path.join(write_path, "settings", "serial ports"))
 
         if f:
             file_name = f
         else:
             file_name = self.current_configuration_name.get()
 
-        full_path = os.path.join(write_config_dir, file_name)
+        full_path = get_resource_path(os.path.join(write_config_dir, file_name))
         if not os.path.exists(full_path):
-            full_path = os.path.join(read_config_dir, file_name)
+            full_path = get_resource_path(os.path.join(read_config_dir, file_name))
 
         try:
             with open(full_path) as file:
