@@ -277,7 +277,47 @@ class ExperimentDatabase:
 
     def change_data_entry(self, date, animal_id, value):
         '''Updates a measurement entry for an animal on a specific date.'''
+        
+        now = datetime.now()
+        today_str = now.date().isoformat()
+        
         try:
+            self._c.execute('''
+                SELECT timestamp, value FROM animal_measurements
+                WHERE animal_id = ? AND DATE(timestamp) = ?
+            ''', (animal_id, today_str))
+            existing = self._c.fetchone()
+
+            if existing:
+                old_timestamp, old_value = existing
+                print(f"Already scanned today at {old_timestamp} with value {old_value}.")
+
+                # Show overwrite or discard prompt
+                while True:
+                    choice = input("Do you want to update the measurement (u) or ignore this scan (i)? ").strip().lower()
+                    if choice == 'u':
+                        self._c.execute('''
+                            UPDATE animal_measurements
+                            SET value = ?
+                            WHERE animal_id = ? AND DATE(timestamp) = ?
+                        ''', (value, animal_id, today_str))
+                        print("✅ Measurement updated.")
+                        break
+                    elif choice == 'i':
+                        print("ℹ️ Scan ignored. No changes made.")
+                        break
+                    else:
+                        print("Please enter 'u' to update or 'i' to ignore.")
+            else:
+                # No existing entry for today, insert new measurement
+                self._c.execute('''
+                    INSERT INTO animal_measurements (timestamp, animal_id, value)
+                    VALUES (?, ?, ?)
+                ''', (date, animal_id, value))
+                print("✅ New measurement recorded.")
+
+        except Exception as e:
+            print(f"❌ Error updating data entry: {e}")
 
             # Update existing measurement
             self._c.execute('''
