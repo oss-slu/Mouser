@@ -36,7 +36,7 @@ class SerialPortController():
             else:
                 available_ports.append((f'{port_.device}', f'{port_.description}'))
         return available_ports
-    
+
     def get_available_ports_name(self):
         '''Returns a list of available system ports.'''
         available_ports = []
@@ -47,7 +47,7 @@ class SerialPortController():
             else:
                 available_ports.append(f'{port_.device}')
         return available_ports
-    
+
     def get_num_ports(self):
         '''Returns the number of available ports.'''
         return len(list(serial.tools.list_ports.comports()))
@@ -71,7 +71,7 @@ class SerialPortController():
         elif self.flow_control == 2:
             rtscts = True
 
-        self.writer_port = serial.Serial(port, baudrate=self.baud_rate, 
+        self.writer_port = serial.Serial(port, baudrate=self.baud_rate,
                                          bytesize=self.byte_size, parity=self.parity, stopbits=self.stop_bits
                                          ,xonxoff=xonoxoff, rtscts=rtscts, timeout = 1 )
         self.ports_in_used.append(self.writer_port)
@@ -85,7 +85,7 @@ class SerialPortController():
         elif self.flow_control == 2:
             rtscts = True
 
-        self.reader_port = serial.Serial(port, baudrate=self.baud_rate, 
+        self.reader_port = serial.Serial(port, baudrate=self.baud_rate,
                                          bytesize=self.byte_size, parity=self.parity, stopbits=self.stop_bits
                                          ,xonxoff=xonoxoff, rtscts=rtscts, timeout = 1 )
         self.ports_in_used.append(self.reader_port)
@@ -182,10 +182,11 @@ class SerialPortController():
             print(e)
 
     def retrieve_setting(self, setting_type):
-        '''Sets the setting of the serial port opened by converting the 
+        '''Sets the setting of the serial port opened by converting the
         setting from csv file to actual setting used.'''
-        preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference")
-        
+        from main import get_resource_path
+        preference_dir = get_resource_path(os.path.join(os.getcwd(), "settings", "serial ports", "preference"))
+
         if setting_type == "reader":
             setting_file = "rfid_config.txt"
             setting_folder = "reader"
