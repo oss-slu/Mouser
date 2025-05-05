@@ -496,7 +496,7 @@ class ChangeMeasurementsDialog():
                         current_index = self.animal_ids.index(animal_id)
 
                         while current_index < len(self.animal_ids) and self.thread_running:
-                            if len(data_handler.received_data) >= 2:  # Customize condition
+                            if len(data_handler.received_data) >= 2 and data_handler.received_data != " " and data_handler.received_data is not None and data_handler.received_data != 0:
                                 received_data = data_handler.get_stored_data()
                                 entry.insert(1, received_data)
                                 data_handler.stop()
