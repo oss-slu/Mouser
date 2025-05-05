@@ -79,9 +79,9 @@ class ExperimentDatabase:
     def add_measurement(self, animal_id, value):
         '''Adds a new measurement for an animal.'''
         timestamp = datetime.now()
-        self._c.execute('''INSERT INTO animal_measurements (animal_id, timestamp, value)
-                        VALUES (?, ?, ?)''',
-                        (animal_id, timestamp, value))
+        self._c.execute('''INSERT INTO animal_measurements (animal_id, timestamp, value, measurement_id)
+                        VALUES (?, ?, ?,?)''',
+                        (animal_id, timestamp, value, 1))
         self._conn.commit()
 
     def get_measurements_by_date(self, date):
@@ -502,7 +502,7 @@ class ExperimentDatabase:
         experiment_df = pd.read_sql_query("SELECT * FROM experiment", self._conn)
         animals_df = pd.read_sql_query("SELECT * FROM animals", self._conn)
         groups_df = pd.read_sql_query("SELECT * FROM groups", self._conn)
-        measurements_df = pd.read_sql_query("SELECT * FROM animal_measurements", self._conn)
+        measurements_df = pd.read_sql_query("SELECT * FROM animal_measurements WHERE measurement_id IS NOT 0", self._conn)
 
         # Add fixed metadata (like measurement name) to experiment table if needed
         experiment_df["measurement"] = "Weight"  # or fetch from DB if stored
@@ -510,9 +510,6 @@ class ExperimentDatabase:
         # Join measurements with animal and group info
         merged_df = measurements_df.merge(animals_df, on="animal_id", how="left")
         merged_df = merged_df.merge(groups_df, on="group_id", how="left")
-
-        # Ensure timestamp is datetime
-        merged_df["timestamp"] = pd.to_datetime(merged_df["timestamp"])
 
         # Pivot the data
         pivot_df = merged_df.pivot_table(
@@ -540,7 +537,7 @@ class ExperimentDatabase:
 
 
     def export_to_csv(self, directory):
-        '''Exports all relevant tables in the database to a folder named after the experiment in the specified directory.'''
+        '''Exports the full database for testing purposes. Exports each table as a separate file to a folder in the specified directory.'''
         import pandas as pd
 
         # Get the experiment name
