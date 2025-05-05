@@ -11,6 +11,7 @@ nothing even if you write to writer port already
 import os
 import serial
 import serial.tools.list_ports
+from shared.file_utils import get_resource_path
 
 class SerialPortController():
     '''Serial Port control functions.'''
@@ -184,7 +185,6 @@ class SerialPortController():
     def retrieve_setting(self, setting_type):
         '''Sets the setting of the serial port opened by converting the
         setting from csv file to actual setting used.'''
-        from main import get_resource_path
         preference_dir = get_resource_path(os.path.join("settings", "serial ports", "preference"))
 
         if setting_type == "reader":
@@ -197,7 +197,7 @@ class SerialPortController():
             print("Invalid setting type. Must be 'reader' or 'device'.")
             return
 
-        preference_path = os.path.join(preference_dir, setting_folder, setting_file)
+        preference_path = get_resource_path(os.path.join(preference_dir, setting_folder, setting_file))
         print(f"🔍 Looking for settings in: {preference_path}")
 
         if not os.path.exists(preference_path):
@@ -207,7 +207,7 @@ class SerialPortController():
         try:
             with open(preference_path, "r") as file:
                 settings_file_name = file.readline().strip()
-                settings_path = os.path.join(os.getcwd(), "settings", "serial ports", settings_file_name)
+                settings_path = get_resource_path(os.path.join("settings", "serial ports", settings_file_name))
 
                 if not os.path.exists(settings_path):
                     print(f"Settings file {settings_path} not found.")

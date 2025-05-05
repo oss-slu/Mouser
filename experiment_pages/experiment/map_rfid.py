@@ -10,6 +10,7 @@ from customtkinter import *
 from CTkMessagebox import CTkMessagebox
 from playsound import playsound
 from serial import serialutil
+from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
 from shared.tk_models import *
 from shared.serial_port_controller import SerialPortController
 from shared.serial_handler import SerialDataHandler
@@ -180,7 +181,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
                     elif clean_rfid in self.animal_rfid_list:
                         print(f"⚠️ RFID {clean_rfid} is already in use! Skipping...")
-                        AudioManager.play("shared/sounds/error.wav")
+                        AudioManager.play(ERROR_SOUND)
                         self.raise_warning("This RFID tag has already been mapped to an animal")
                         continue  # 🚫 Avoid calling add_value()
 
@@ -188,7 +189,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                         # If it's a new RFID, process it
                         self.after(0, lambda: self.add_value(clean_rfid))
                         self.animal_rfid_list.append(clean_rfid)
-                        AudioManager.play("shared/sounds/rfid_success.wav")
+                        AudioManager.play(SUCCESS_SOUND)
 
             except Exception as e:
                 print(f"Error in RFID listener: {e}")
@@ -252,7 +253,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                 self.scroll_to_latest_entry()
 
             self.save()
-            AudioManager.play("shared/sounds/rfid_success.wav")
+            AudioManager.play(SUCCESS_SOUND)
 
 
     def scroll_to_latest_entry(self):
@@ -322,7 +323,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.table.insert('', END, values=(animal_id, rfid), tags='text_font')
         self.animals.append((animal_id, rfid))
 
-        AudioManager.play("shared/sounds/rfid_success.wav")
+        AudioManager.play(SUCCESS_SOUND)
 
         # Update entry text
         self.change_entry_text()
@@ -445,7 +446,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             bg_color="red",
             text_color="black"
         )
-        AudioManager.play("shared/sounds/error.wav")
+        AudioManager.play(ERROR_SOUND)
 
         message.mainloop()
 
@@ -787,6 +788,6 @@ class SerialSimulator():
         ok_button = CTkButton(message, text="OK", width=10, command=dismiss_warning)
         ok_button.grid(row=2, column=0, padx=10, pady=10)
 
-        AudioManager.play("shared/sounds/error.wav")
+        AudioManager.play(ERROR_SOUND)
 
         message.mainloop()
