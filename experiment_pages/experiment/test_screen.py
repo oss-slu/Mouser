@@ -3,6 +3,7 @@ import os
 import time
 import threading
 from customtkinter import *
+from shared.file_utils import get_resource_path
 from shared.tk_models import *
 from shared.serial_handler import SerialDataHandler
 
@@ -35,9 +36,9 @@ class TestScreen(CTkToplevel):
         rfid_label = CTkLabel(self, text="RFID Reader", font=("Arial", 16, "bold"))
         rfid_label.grid(row=1, column=0, columnspan=2, pady=10)
 
-        preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference")
+        preference_dir = get_resource_path(os.path.join("settings", "serial ports", "preference"))
         rfid_readers = [d for d in os.listdir(preference_dir) if os.path.exists(os.path.join(preference_dir, d, "rfid_config.txt"))]
-        
+
         for index, com_port in enumerate(rfid_readers, start=2):
             test_button = CTkButton(self, text="Test RFID", command=lambda p=com_port: self.test_reader(p))
             test_button.grid(row=index, column=0, padx=10, pady=5, sticky="ew")
@@ -47,7 +48,7 @@ class TestScreen(CTkToplevel):
 
             reading_label = CTkLabel(self, text="-----", padx=10, pady=5)
             reading_label.grid(row=index, column=2, sticky="ew")
-            
+
             self.reading_labels[com_port] = reading_label
 
     def setup_device_section(self):
@@ -55,7 +56,7 @@ class TestScreen(CTkToplevel):
         device_label = CTkLabel(self, text="Serial Device", font=("Arial", 16, "bold"))
         device_label.grid(row=10, column=0, columnspan=2, pady=10)
 
-        preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference")
+        preference_dir = get_resource_path(os.path.join("settings", "serial ports", "preference"))
         serial_devices = [d for d in os.listdir(preference_dir) if os.path.exists(os.path.join(preference_dir, d, "preferred_config.txt"))]
 
         for index, com_port in enumerate(serial_devices, start=11):
