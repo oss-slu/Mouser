@@ -6,6 +6,7 @@ from shared.scrollable_frame import ScrolledFrame
 from experiment_pages.experiment.group_config_ui import GroupConfigUI
 from shared.experiment import Experiment
 from shared.audio import AudioManager
+from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
 
 
 class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
@@ -201,7 +202,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
             label4.grid(row=0, column=0, padx=10, pady=10)
 
         # Play the error sound
-        AudioManager.play("sounds/error.wav")
+        AudioManager.play(ERROR_SOUND)
 
         # Bind key and mouse events to dismiss the warning
         message.bind("<KeyPress>", dismiss_warning)  # Captures any key press

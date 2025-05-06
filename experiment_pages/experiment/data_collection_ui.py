@@ -6,6 +6,7 @@ from customtkinter import *
 from shared.tk_models import *
 from CTkMessagebox import CTkMessagebox
 from databases.experiment_database import ExperimentDatabase
+from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
 from shared.audio import AudioManager
 from shared.scrollable_frame import ScrolledFrame
 from shared.serial_handler import SerialDataHandler
@@ -164,7 +165,7 @@ class DataCollectionUI(MouserPage):
             message=warning_message,
             icon="warning"
         )
-        AudioManager.play("shared/sounds/error.wav")
+        AudioManager.play(ERROR_SOUND)
 
     def item_selected(self, _):
         '''On item selection.
@@ -206,7 +207,7 @@ class DataCollectionUI(MouserPage):
                     bg_color="#00FF00", #Bright Green
                     text_color="black"
                 )
-                AudioManager.play("shared/sounds/rfid_success.wav")
+                AudioManager.play(SUCCESS_SOUND)
 
         print("📡 Starting RFID listener...")
         print("All RFIDs:", self.database.get_all_animals_rfid())
@@ -252,7 +253,7 @@ class DataCollectionUI(MouserPage):
                                     bg_color="#00FF00", # Bright Green
                                     text_color="black"
                                 )
-                                AudioManager.play("shared/sounds/rfid_success.wav")
+                                AudioManager.play(SUCCESS_SOUND)
                                 self.after(600, lambda: self.select_animal_by_id(animal_id))
                             else:
                                 self.raise_warning("No animal found for scanned RFID.")
@@ -564,7 +565,7 @@ class ChangeMeasurementsDialog():
             if self.data_collection.winfo_exists():
                 # Update the database with the new values
                 self.data_collection.change_selected_value(current_animal_id, values)
-                AudioManager.play("shared/sounds/rfid_success.wav")
+                AudioManager.play(SUCCESS_SOUND)
 
     def get_all_values(self):
         '''Returns the values of all entries in self.textboxes as an array.'''
