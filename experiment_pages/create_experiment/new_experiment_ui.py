@@ -197,7 +197,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         elif option == 4:
             label4 = CTkLabel(message, text='''Unequal Group Size: Please allow the total number of animals to be
             less than or equal to the total number of
-            animals allowed in Groups''')
+            animals allowed in groups.''')
             label4.grid(row=0, column=0, padx=10, pady=10)
 
         # Play the error sound
@@ -237,13 +237,13 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         if self.password.get():
             self.input.set_password(self.password.get())
         self.input.set_unique_id()
-        
+
         # Combine added investigators with any remaining text in the text box
         all_investigators = self.added_invest.copy()
         if self.investigators.get().strip():
             all_investigators.append(self.investigators.get().strip())
         self.input.set_investigators(all_investigators)
-        
+
         self.input.set_species(self.species.get())
         self.input.set_measurement_item(self.measure_items.get())
         self.input.set_uses_rfid(self.rfid.get())

@@ -426,7 +426,7 @@ class ExperimentDatabase:
                 self._conn.commit()
                 return True
         except Exception as e:
-            print(f"Error updating animal Group: {e}")
+            print(f"Error updating animal group: {e}")
             self._conn.rollback()
             return False
 

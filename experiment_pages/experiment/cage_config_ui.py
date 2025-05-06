@@ -29,7 +29,7 @@ class CageConfigurationUI(MouserPage):
                             command=self.perform_swap)
         auto_button = CTkButton(input_frame, text='AutoSort', width=15,
                                 command=self.autosort)
-        move_button = CTkButton(input_frame, text='Move groups', width=15,
+        move_button = CTkButton(input_frame, text='Move Groups', width=15,
                                 command=self.move_animal)
 
         self.id_input = CTkEntry(input_frame, width=110)
@@ -278,7 +278,7 @@ class CageConfigurationUI(MouserPage):
             self.db.update_experiment()
             raise_frame(self.prev_page)
         else:
-            self.raise_warning(f'Number of animals in a Group must not exceed {self.db.get_cage_max()}')
+            self.raise_warning(f'Number of animals in a group must not exceed {self.db.get_cage_max()}')
 
     def save(self):
         '''Saves current database state to permanent file'''
