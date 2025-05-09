@@ -7,6 +7,7 @@ from tkinter import filedialog
 from shared.tk_models import *
 from databases.experiment_database import ExperimentDatabase
 from shared.audio import AudioManager
+from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
 
 class DataAnalysisUI(MouserPage):
     '''Data Exporting UI.'''
@@ -69,7 +70,7 @@ class DataAnalysisUI(MouserPage):
             db = ExperimentDatabase(self.db_file)
             db.export_to_single_formatted_csv(save_dir)
             print("Data exported successfully to CSV files.")
-            AudioManager.play("shared/sounds/rfid_success.wav")
+            AudioManager.play(SUCCESS_SOUND)
             # Replace the notification with our new success message
             self.show_success_message()
         except Exception as e:

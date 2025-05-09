@@ -1,8 +1,8 @@
 '''Contains functions to create and save from temporary files.'''
 import tempfile
 import os
+import sys
 from shared.password_utils import PasswordManager
-from datetime import datetime
 
 
 TEMP_FOLDER_NAME = "Mouser"
@@ -74,18 +74,35 @@ def save_temp_to_encrypted(temp_file_path: str, permanent_file_path: str, passwo
     # Ensure paths are absolute and properly resolved
     temp_file_path = os.path.abspath(temp_file_path)
     permanent_file_path = os.path.abspath(permanent_file_path)
-    
+
     # Split the path into base and extension
     base, ext = os.path.splitext(permanent_file_path)
     # Take only the part before the first underscore if it exists
     base = base.split('_')[0]
     permanent_file_path = f"{base}{ext}"  # Updated line
-    
+
     manager = PasswordManager(password)
 
     manager.encrypt_file(temp_file_path)
     with open(temp_file_path, 'rb') as encrypted:
         data = encrypted.read()
-    
+
     with open(permanent_file_path, 'wb') as file:
         file.write(data)
+
+def get_resource_path(relative_path):
+    ''' Get the absolute path to a resource. Works for development and PyInstaller executables. '''
+    try:
+        # Check if we're running as a PyInstaller bundle
+        if hasattr(sys, '_MEIPASS'):
+            # PyInstaller places all bundled files in _MEIPASS
+            return os.path.join(sys._MEIPASS, relative_path)
+        else:
+            # Return the absolute path when in development mode
+            return os.path.abspath(relative_path)  # Use absolute path in development mode
+    except Exception as e:
+        print(f"Error accessing resource: {relative_path}")
+        raise e
+
+SUCCESS_SOUND = get_resource_path("shared/sounds/rfid_success.wav")
+ERROR_SOUND = get_resource_path("shared/sounds/error.wav")

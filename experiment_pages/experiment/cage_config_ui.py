@@ -5,6 +5,7 @@ from CTkMessagebox import CTkMessagebox
 from shared.scrollable_frame import ScrolledFrame
 from databases.database_controller import DatabaseController
 from shared.audio import AudioManager
+from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
 from shared.file_utils import save_temp_to_file
 
 class CageConfigurationUI(MouserPage):
@@ -164,7 +165,7 @@ class CageConfigurationUI(MouserPage):
         self.db.randomize_cages()
         self.update_config_frame()
         self.save()
-        AudioManager.play("shared/sounds/rfid_success.wav")
+        AudioManager.play(SUCCESS_SOUND)
 
     def autosort(self):
         '''Calls database's autosort function after user confirmation.'''
@@ -178,7 +179,7 @@ class CageConfigurationUI(MouserPage):
             self.db.autosort()
             self.update_config_frame()
             self.save()
-            AudioManager.play("shared/sounds/rfid_success.wav")
+            AudioManager.play(SUCCESS_SOUND)
 
     def perform_swap(self):
         '''Swaps two selected animals between cages.'''
@@ -203,7 +204,7 @@ class CageConfigurationUI(MouserPage):
         self.selected_animals.clear()
         self.update_config_frame()
         self.save()
-        AudioManager.play("shared/sounds/rfid_success.wav")
+        AudioManager.play(SUCCESS_SOUND)
 
     def move_animal(self):
         '''Moves selected animals to a specified cage.'''
@@ -253,7 +254,7 @@ class CageConfigurationUI(MouserPage):
             self.cage_buttons[target_cage].configure(fg_color="#0097A7")  # Reset cage button color
         self.update_config_frame()
         self.save()
-        AudioManager.play("shared/sounds/rfid_success.wav")
+        AudioManager.play(SUCCESS_SOUND)
 
     def raise_warning(self, message):
         '''Raises a warning page with the given message.'''
@@ -269,7 +270,7 @@ class CageConfigurationUI(MouserPage):
                             command=lambda: message_window.destroy())
         ok_button.grid(row=2, column=0, padx=10, pady=10)
 
-        AudioManager.play("shared/sounds/error.wav")
+        AudioManager.play(ERROR_SOUND)
         message_window.mainloop()
 
     def save_to_database(self):

@@ -17,21 +17,6 @@ from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment.select_experiment_ui import ExperimentsUI
 from experiment_pages.experiment.test_screen import TestScreen
 
-# Function to resolve resource paths (must be defined before usage)
-def get_resource_path(relative_path):
-    ''' Get the absolute path to a resource. Works for development and PyInstaller executables. '''
-    try:
-        # Check if we're running as a PyInstaller bundle
-        if hasattr(sys, '_MEIPASS'):
-            # PyInstaller places all bundled files in _MEIPASS
-            return os.path.join(sys._MEIPASS, relative_path)
-        else:
-            # Return the absolute path when in development mode
-            return os.path.abspath(relative_path)  # Use absolute path in development mode
-    except Exception as e:
-        print(f"Error accessing resource: {relative_path}")
-        raise e
-
 rfid_serial_port_controller = SerialPortController("reader")
 
 TEMP_FOLDER_NAME = "Mouser"
