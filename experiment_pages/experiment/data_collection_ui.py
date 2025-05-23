@@ -325,22 +325,45 @@ class DataCollectionUI(MouserPage):
 
     def handle_measurement(self, value):
         '''Handle incoming measurement value by updating the dialog and closing it.'''
-        if self.changer_open and self.current_animal_id:
-            # If measurement is auto, directly submit the value
-            if self.database.get_measurement_type() == 1:
-                # Submit the value (updates database and table)
-                self.change_selected_value(self.current_animal_id, [value])
-                AudioManager.play(SUCCESS_SOUND)
+        if not self.current_animal_id:
+            # No animal selected when measurement came in
+            FlashOverlay(
+                parent=self,
+                message="Please scan an animal first!",
+                duration=2000,
+                bg_color="#FF0000",  # Red to indicate error
+                text_color="black"
+            )
+            AudioManager.play(ERROR_SOUND)
+            return
 
-                # Close the dialog after processing the measurement
-                self.changer.close()
-                self.changer_open = False
+        if not self.changer_open:
+            # Animal is selected but dialog isn't open
+            FlashOverlay(
+                parent=self,
+                message="Please wait for dialog to open...",
+                duration=2000,
+                bg_color="#FF0000",
+                text_color="black"
+            )
+            AudioManager.play(ERROR_SOUND)
+            return
 
-                # Flash a notification that measurement was recorded
-                FlashOverlay(
-                    parent=self,
-                    message=f"Measurement Recorded: {value}",
-                    duration=1000,
+        # If measurement is auto, directly submit the value
+        if self.database.get_measurement_type() == 1:
+            # Submit the value (updates database and table)
+            self.change_selected_value(self.current_animal_id, [value])
+            AudioManager.play(SUCCESS_SOUND)
+
+            # Close the dialog after processing the measurement
+            self.changer.close()
+            self.changer_open = False
+
+            # Flash a notification that measurement was recorded
+            FlashOverlay(
+                parent=self,
+                message=f"Measurement Recorded: {value}",
+                duration=1000,
                     bg_color="#00FF00",  # Bright Green
                     text_color="black"
                 )

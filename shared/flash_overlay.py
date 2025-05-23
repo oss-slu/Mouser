@@ -3,7 +3,8 @@ import threading
 from customtkinter import *
 
 class FlashOverlay:
-    '''A reusable flash overlay that can be used to show temporary full-screen messages'''    def __init__(self, parent, message, duration=1000, bg_color="#00FF00", text_color="black"):
+    '''A reusable flash overlay that can be used to show temporary full-screen messages'''
+    def __init__(self, parent, message, duration=1000, bg_color="#00FF00", text_color="black"):
         self._lock = threading.Lock()
         self.parent = parent
         self.message = message
@@ -16,20 +17,22 @@ class FlashOverlay:
     def _create_overlay(self):
         '''Creates and displays the overlay message.'''
         with self._lock:
-            # Create the overlay frame
+            # Create the overlay frame that covers the entire parent window
             self.overlay = CTkFrame(self.parent)
-            self.overlay.place(relx=0.5, rely=0.5, anchor=CENTER)
+            self.overlay.place(relx=0, rely=0, relwidth=1, relheight=1)  # Cover entire parent
+
+            # Create a semi-transparent background
+            self.overlay.configure(fg_color=self.bg_color)
 
             # Create the message label
             label = CTkLabel(
                 self.overlay,
                 text=self.message,
                 font=("Arial", 24, "bold"),
-                bg_color=self.bg_color,
                 text_color=self.text_color,
                 corner_radius=10
             )
-            label.pack(padx=20, pady=20)
+            label.place(relx=0.5, rely=0.5, anchor=CENTER)  # Center the message
 
             # Schedule the removal of the overlay
             self.parent.after(self.duration, self.remove)
