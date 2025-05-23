@@ -2,61 +2,66 @@
 import sqlite3
 import os
 from datetime import datetime
+import threading
 
 class ExperimentDatabase:
     '''SQLite Database Object for Experiments.'''
     _instances = {}  # Dictionary to store instances by file path
+    _lock = threading.Lock()  # Class-level lock for instance management
 
     def __new__(cls, file=":memory:"):
         '''Builds Database connections if singleton does not exist for this file'''
-        if file not in cls._instances:
-            instance = super(ExperimentDatabase, cls).__new__(cls)
-            instance.db_file = file
-            instance._conn = sqlite3.connect(file, check_same_thread=False)
-            instance._c = instance._conn.cursor()
-            instance._initialize_tables()
-            cls._instances[file] = instance
-        return cls._instances[file]
+        with cls._lock:
+            if file not in cls._instances:
+                instance = super(ExperimentDatabase, cls).__new__(cls)
+                instance.db_file = file
+                instance._conn = sqlite3.connect(file, check_same_thread=False)
+                instance._c = instance._conn.cursor()
+                instance._instance_lock = threading.Lock()  # Instance-level lock for database operations
+                instance._initialize_tables()
+                cls._instances[file] = instance
+            return cls._instances[file]
 
+    def _initialize_tables(self):
+        '''Initialize database tables with thread safety.'''
+        with self._instance_lock:
+            try:
+                self._c.execute('''CREATE TABLE experiment (
+                                    name TEXT,
+                                    species TEXT,
+                                    uses_rfid INTEGER,
+                                    num_animals INTEGER,
+                                    num_groups INTEGER,
+                                    cage_max INTEGER,
+                                    measurement_type INTEGER,
+                                    id TEXT,
+                                    investigators TEXT,
+                                    measurement TEXT);''')
 
-    def _initialize_tables(self):  # Call to work with singleton changes
-        try:
-            self._c.execute('''CREATE TABLE experiment (
-                                name TEXT,
-                                species TEXT,
-                                uses_rfid INTEGER,
-                                num_animals INTEGER,
-                                num_groups INTEGER,
-                                cage_max INTEGER,
-                                measurement_type INTEGER,
-                                id TEXT,
-                                investigators TEXT,
-                                measurement TEXT);''')
+                self._c.execute('''CREATE TABLE animals (
+                                    animal_id INTEGER PRIMARY KEY,
+                                    group_id INTEGER,
+                                    rfid TEXT UNIQUE,
+                                    remarks TEXT,
+                                    active INTEGER);''')
 
-            self._c.execute('''CREATE TABLE animals (
-                                animal_id INTEGER PRIMARY KEY,
-                                group_id INTEGER,
-                                rfid TEXT UNIQUE,
-                                remarks TEXT,
-                                active INTEGER);''')
+                self._c.execute('''CREATE TABLE animal_measurements (
+                                    measurement_id INTEGER,
+                                    animal_id INTEGER,
+                                    timestamp TEXT,
+                                    value REAL,
+                                    FOREIGN KEY(animal_id) REFERENCES animals(animal_id),
+                                    PRIMARY KEY (animal_id, timestamp, measurement_id));''')
 
-            self._c.execute('''CREATE TABLE animal_measurements (
-                                measurement_id INTEGER,
-                                animal_id INTEGER,
-                                timestamp TEXT,
-                                value REAL,
-                                FOREIGN KEY(animal_id) REFERENCES animals(animal_id),
-                                PRIMARY KEY (animal_id, timestamp, measurement_id));''')
+                self._c.execute('''CREATE TABLE groups (
+                                    group_id INTEGER PRIMARY KEY,
+                                    name TEXT,
+                                    num_animals INTEGER,
+                                    cage_capacity INTEGER);''')
 
-            self._c.execute('''CREATE TABLE groups (
-                                group_id INTEGER PRIMARY KEY,
-                                name TEXT,
-                                num_animals INTEGER,
-                                cage_capacity INTEGER);''')
-
-            self._conn.commit()
-        except sqlite3.OperationalError:
-            pass
+                self._conn.commit()
+            except sqlite3.OperationalError:
+                pass
 
     def setup_experiment(self, name, species, uses_rfid, num_animals, num_groups, cage_max, measurement_type, experiment_id, investigators, measurement):
         '''Initializes Experiment'''
@@ -156,29 +161,30 @@ class ExperimentDatabase:
         return result
 
     def close(self):
-        '''Closes database connection and cleans up singleton instance.'''
-        try:
-            if self._conn is not None:
-                # Commit any pending transactions
-                self._conn.commit()
+        '''Thread-safe method to close database connection and clean up singleton instance.'''
+        with self._lock:  # Use class-level lock for instance management
+            try:
+                if self._conn is not None:
+                    # Commit any pending transactions
+                    self._conn.commit()
 
-                # Close the cursor if it exists
-                if self._c is not None:
-                    self._c.close()
-                    self._c = None
+                    # Close the cursor if it exists
+                    if self._c is not None:
+                        self._c.close()
+                        self._c = None
 
-                # Close the connection
-                self._conn.close()
-                self._conn = None
+                    # Close the connection
+                    self._conn.close()
+                    self._conn = None
 
-                # Remove this instance from the instances dictionary
-                if self.db_file in ExperimentDatabase._instances:
-                    del ExperimentDatabase._instances[self.db_file]
+                    # Remove this instance from the instances dictionary
+                    if self.db_file in ExperimentDatabase._instances:
+                        del ExperimentDatabase._instances[self.db_file]
 
-                return True
-        except Exception as e:
-            print(f"Error during database cleanup: {e}")
-            return False
+                    return True
+            except Exception as e:
+                print(f"Error during database cleanup: {e}")
+                return False
 
     def experiment_uses_rfid(self):
         '''Returns whether the experiment uses RFID (0 or 1).'''
@@ -239,72 +245,74 @@ class ExperimentDatabase:
             return []
 
     def is_data_collected_for_date(self, date):
-        '''Checks if all active animals have measurements for provided date as a TRUE/FALSE'''
-        try:
-            # First get count of active animals
-            self._c.execute('''
-                SELECT COUNT(*)
-                FROM animals
-                WHERE active = 1
-            ''')
-            total_active_animals = self._c.fetchone()[0]
+        '''Thread-safe method to check if data is collected for a date.'''
+        with self._instance_lock:
+            try:
+                # First get count of active animals
+                self._c.execute('''
+                    SELECT COUNT(*)
+                    FROM animals
+                    WHERE active = 1
+                ''')
+                total_active_animals = self._c.fetchone()[0]
 
-            # Then get count of animals with non-null measurements for the date
-            self._c.execute('''
-                SELECT COUNT(DISTINCT a.animal_id)
-                FROM animals a
-                JOIN animal_measurements m ON a.animal_id = m.animal_id
-                WHERE a.active = 1
-                AND m.timestamp = ?
-                AND m.value IS NOT NULL
-                AND (m.measurement_id IS NULL OR m.measurement_id != 0)
-            ''', (date,))
-            animals_with_measurements = self._c.fetchone()[0]
+                # Then get count of animals with non-null measurements for the date
+                self._c.execute('''
+                    SELECT COUNT(DISTINCT a.animal_id)
+                    FROM animals a
+                    JOIN animal_measurements m ON a.animal_id = m.animal_id
+                    WHERE a.active = 1
+                    AND m.timestamp = ?
+                    AND m.value IS NOT NULL
+                    AND (m.measurement_id IS NULL OR m.measurement_id != 0)
+                ''', (date,))
+                animals_with_measurements = self._c.fetchone()[0]
 
-            # Return True only if all active animals have measurements
-            return animals_with_measurements >= total_active_animals
+                return animals_with_measurements >= total_active_animals
 
-        except Exception as e:
-            print(f"Error checking data collection status: {e}")
-            return False
+            except Exception as e:
+                print(f"Error checking data collection status: {e}")
+                return False
 
 
     def add_data_entry(self, date, animal_id, values, measurement_id=1):
-        '''Adds a measurement entry for an animal on a specific date.'''
-        try:
-            # Handle both single values and lists/tuples
-            value = values[0] if isinstance(values, (list, tuple)) else values
+        '''Thread-safe method to add a measurement entry.'''
+        with self._instance_lock:
+            try:
+                # Handle both single values and lists/tuples
+                value = values[0] if isinstance(values, (list, tuple)) else values
 
-            # Insert new measurement
-            self._c.execute('''
-                INSERT INTO animal_measurements (animal_id, timestamp, value, measurement_id)
-                VALUES (?, ?, ?, ?)
-            ''', (animal_id, date, value, measurement_id))
+                # Insert new measurement
+                self._c.execute('''
+                    INSERT INTO animal_measurements (animal_id, timestamp, value, measurement_id)
+                    VALUES (?, ?, ?, ?)
+                ''', (animal_id, date, value, measurement_id))
 
-            self._conn.commit()
-        except Exception as e:
-            print(f"Error adding data entry: {e}")
-            self._conn.rollback()
+                self._conn.commit()
+            except Exception as e:
+                print(f"Error adding data entry: {e}")
+                self._conn.rollback()
 
     def change_data_entry(self, date, animal_id, value, measurement_id=1):
-        '''Updates a measurement entry for an animal on a specific date.'''
-        try:
-            # Update existing measurement
-            self._c.execute('''
-                UPDATE animal_measurements
-                SET value = ?
-                WHERE animal_id = ?
-                AND timestamp = ?
-                AND measurement_id = ?
-            ''', (value, animal_id, date, measurement_id))
+        '''Thread-safe method to update a measurement entry.'''
+        with self._instance_lock:
+            try:
+                # Update existing measurement
+                self._c.execute('''
+                    UPDATE animal_measurements
+                    SET value = ?
+                    WHERE animal_id = ?
+                    AND timestamp = ?
+                    AND measurement_id = ?
+                ''', (value, animal_id, date, measurement_id))
 
-            if self._c.rowcount == 0:  # No existing record found
-                self.add_data_entry(date, animal_id, value, measurement_id)
+                if self._c.rowcount == 0:  # No existing record found
+                    self.add_data_entry(date, animal_id, value, measurement_id)
 
-            self._conn.commit()
-        except Exception as e:
-            print(f"Error changing data entry: {e}")
-            self._conn.rollback()
+                self._conn.commit()
+            except Exception as e:
+                print(f"Error changing data entry: {e}")
+                self._conn.rollback()
 
     def get_cages_by_group(self):
         '''Returns a dictionary of group IDs mapped to their cage information.'''
