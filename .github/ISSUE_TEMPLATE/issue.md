@@ -20,13 +20,13 @@
 - [ ] **The change is targeted.**
 - [ ] **The change is justified.**
 - [ ] **The change is valuable.**
-- [ ] **The change improves safety.**
+- [ ] **The change improves the ability of the team to make changes to the code safely.**
 - [ ] **The change is clear and understandable.**
 - [ ] **The change works as intended.**
-- [ ] **The change follows coding standards.**
-- [ ] **The change uses good naming.**
-- [ ] **This Issue uses our standard template.**
-- [ ] **The forthcoming Pull Request**
+- [ ] **The change follows established coding standards established for the project.**
+- [ ] **The change uses good naming practices and established style conventions.**
+- [ ] **The change has a well formed GitHub Issue that uses the standard templates and practices established for this class.**
+- [ ] **The change is in a Pull Request that contains a clear and concise explanation of the work and the justification for it.**
 
 ---
 
