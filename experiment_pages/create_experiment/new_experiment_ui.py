@@ -1,5 +1,7 @@
 '''New Experiment Module'''
 from os.path import *
+
+from CTkMessagebox import CTkMessagebox
 from customtkinter import *
 from shared.tk_models import *
 from shared.scrollable_frame import ScrolledFrame
@@ -98,7 +100,50 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
                 self.main_frame.grid_columnconfigure(i, weight=1)
             self.main_frame.grid_rowconfigure(i, weight=1)
 
+        self.annotation_button = CTkButton(self.main_frame, text="Add Annotation", command=self.open_annotation_dialog)
+        self.annotation_button.grid(
+            row=10,
+            column=0,
+            columnspan=3,
+            pady=(20, 10),
+            padx=10,
+            sticky="n"
+        )
+
         self.bind_all_entries()
+
+    def open_annotation_dialog(self):
+        # Annotation dialog pop-up
+        annotation_dialog = CTkToplevel(self)
+        annotation_dialog.title("Add Annotation")
+        annotation_dialog.geometry("400x220")
+
+        label = CTkLabel(annotation_dialog, text="Enter your annotation:")
+        label.pack(pady=10)
+
+        annotation_entry = CTkTextbox(annotation_dialog, height=80, width=350)
+        annotation_entry.pack(pady=10)
+
+        def submit_annotation():
+            annotation_text = annotation_entry.get("1.0", "end").strip()
+            if annotation_text:
+                # TODO: Integrate RERUM API call here!
+                print("Annotation submitted:", annotation_text)
+                CTkMessagebox(
+                    message="Annotation submitted!",
+                    title="Success",
+                    icon="check"
+                )
+                annotation_dialog.destroy()
+            else:
+                CTkMessagebox(
+                    message="Annotation cannot be empty.",
+                    title="Error",
+                    icon="cancel"
+                )
+
+        submit_btn = CTkButton(annotation_dialog, text="Submit", command=submit_annotation)
+        submit_btn.pack(pady=10)
 
     def bind_all_entries(self):
         self.exper_name.bind("<KeyRelease>", lambda event: self.enable_next_button())
