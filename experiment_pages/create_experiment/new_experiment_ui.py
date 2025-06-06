@@ -124,6 +124,19 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         annotation_entry = CTkTextbox(annotation_dialog, height=80, width=350)
         annotation_entry.pack(pady=10)
 
+        char_count_label = CTkLabel(annotation_dialog, text="Characters: 0/100")
+        char_count_label.pack(pady=(0, 10))
+
+        def update_char_count(event=None):
+            current_text = annotation_entry.get("1.0", "end")[:-1]
+            char_count = len(current_text)
+            if char_count > 100:
+                annotation_entry.delete("1.0+100c", "end")
+                char_count = 100
+            char_count_label.configure(text=f"Characters: {char_count}/100")
+
+        annotation_entry.bind("<KeyRelease>", update_char_count)
+
         def submit_annotation():
             annotation_text = annotation_entry.get("1.0", "end").strip()
             if annotation_text:
