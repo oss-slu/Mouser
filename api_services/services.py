@@ -67,3 +67,30 @@ def update_annotation(annotation_id, new_text):
             return False, response.text
     except Exception as e:
         return False, str(e)
+
+def delete_annotations_by_experiment(experiment_id):
+    token = get_token()
+    headers = {"Authorization": f"Bearer {token}"}
+    query = {"target": experiment_id}
+    try:
+        # First, query annotations for the experiment_id
+        response = requests.post(f"{RERUM_BASE}/query", json=query, headers=headers)
+        if response.status_code != 200:
+            return False, f"Failed to query annotations: {response.text}"
+
+        annotations = response.json()
+        if not annotations:
+            return True, None 
+
+        # Delete each annotation
+        for annotation in annotations:
+            annotation_id = annotation.get("@id")
+            if not annotation_id:
+                continue
+            delete_response = requests.delete(f"{RERUM_BASE}/delete/{annotation_id}", headers=headers)
+            if delete_response.status_code not in (200, 204):
+                return False, f"Failed to delete annotation {annotation_id}: {delete_response.text}"
+
+        return True, None
+    except Exception as e:
+        return False, str(e)
