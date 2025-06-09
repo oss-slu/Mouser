@@ -45,3 +45,25 @@ def get_annotations(experiment_id):
     except Exception as e:
         return None, str(e)
 
+def update_annotation(annotation_id, new_text):
+    token = get_token()
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    updated_annotation = {
+        "@id": annotation_id,
+        "body": {
+            "type": "TextualBody",
+            "value": new_text,
+            "format": "text/plain"
+        }
+    }
+
+    try:
+        response = requests.post(f"{RERUM_BASE}/update", json=updated_annotation, headers=headers)
+        
+        if response.status_code == 200:
+            return True, response.json()
+        else:
+            return False, response.text
+    except Exception as e:
+        return False, str(e)
