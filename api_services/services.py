@@ -1,13 +1,15 @@
+from tokenize import String
+
 import requests
 
 RERUM_BASE = "http://localhost:3001/v1/api"
 
-def get_bearer_token_from_file(path="rerum_server_nodejs/token.txt"):
+def get_token(path="rerum_server_nodejs/token.txt"):
     with open(path, "r") as f:
         return f.read().strip()
 
 def submit_annotation(annotation_text, experiment_id):
-    token = get_bearer_token_from_file()
+    token = get_token()
     annotation = {
         "@context": "http://www.w3.org/ns/anno.jsonld",
         "type": "Annotation",
@@ -31,7 +33,7 @@ def submit_annotation(annotation_text, experiment_id):
         return False, str(e)
 
 def get_annotations(experiment_id):
-    token = get_bearer_token_from_file()
+    token = get_token()
     headers = {"Authorization": f"Bearer {token}"}
     query = {"target": experiment_id}
     try:
@@ -42,3 +44,4 @@ def get_annotations(experiment_id):
             return None, response.text
     except Exception as e:
         return None, str(e)
+

@@ -105,7 +105,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
 
         self.button_row_frame = CTkFrame(self.main_frame)
         self.button_row_frame.grid(
-            row=10,  # Use the same row for both buttons
+            row=10,
             column=0,
             columnspan=3,
             pady=(20, 10),
@@ -189,7 +189,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         submit_btn.pack(pady=10)
 
     def open_load_annotations_dialog(self):
-        # Dialog for entering experiment ID and viewing annotations
+
         load_dialog = CTkToplevel(self)
         load_dialog.title("Load Annotations")
         load_dialog.geometry("400x300")
@@ -217,8 +217,8 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
             annotations_box.configure(state="normal")
             annotations_box.delete("1.0", "end")
             if annotations:
-                for ann in annotations:
-                    value = ann.get("body", {}).get("value", "[No Value]")
+                for i in annotations:
+                    value = i.get("body", {}).get("value", "[No Value]")
                     annotations_box.insert("end", f"{value}\n")
             else:
                 annotations_box.insert("end", f"No annotations found.\nError: {error if error else ''}")
