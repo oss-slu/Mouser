@@ -11,7 +11,7 @@ from shared.audio import AudioManager
 from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
 
 import random
-from api_services.services import submit_annotation, get_annotations
+from api_services.services import submit_annotation, get_annotations,update_annotation
 
 
 class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
@@ -130,6 +130,14 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.load_annotations_button.grid(
             row=0, column=1, padx=10, pady=0, sticky="ew"
         )
+        self.edit_annotations_button = CTkButton(
+        self.button_row_frame,
+        text="Edit Annotations",
+        command=self.open_edit_annotations_dialog
+)
+        self.edit_annotations_button.grid(
+        row=0, column=2, padx=10, pady=0, sticky="ew"
+)
 
         self.bind_all_entries()
 
@@ -187,6 +195,72 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
 
         submit_btn = CTkButton(annotation_dialog, text="Submit", command=submit_annotation_ui)
         submit_btn.pack(pady=10)
+
+    def open_edit_annotations_dialog(self):
+        edit_dialog = CTkToplevel(self)
+        edit_dialog.title("Edit Annotations")
+        edit_dialog.geometry("400x350")
+
+        label = CTkLabel(edit_dialog, text="Enter 4-digit Experiment ID:")
+        label.pack(pady=10)
+
+        id_entry = CTkEntry(edit_dialog, width=80)
+        id_entry.pack(pady=5)
+
+        listbox = CTkTextbox(edit_dialog, height=120, width=350)
+        listbox.pack(pady=10)
+        listbox.configure(state="disabled")
+
+        selected_index = [None]  # Store selected annotation index
+
+        def load_annotations_for_editing():
+            experiment_id = id_entry.get().strip()
+            annotations, error = get_annotations(experiment_id)
+            listbox.configure(state="normal")
+            listbox.delete("1.0", "end")
+            if annotations:
+                for idx, ann in enumerate(annotations):
+                    text = ann.get("body", {}).get("value", "[No Value]")
+                    listbox.insert("end", f"{idx + 1}. {text}\n")
+                selected_index[0] = annotations  # Save full list
+            else:
+                listbox.insert("end", f"Error: {error or 'No annotations found.'}")
+            listbox.configure(state="disabled")
+
+        def edit_selected_annotation():
+            annotation_list = selected_index[0]
+            if not annotation_list:
+                return
+            # For simplicity, edit the first annotation (index 0)
+            old = annotation_list[0]
+            edit_box = CTkToplevel(self)
+            edit_box.title("Edit Annotation")
+            edit_box.geometry("400x200")
+
+            textbox = CTkTextbox(edit_box, height=80, width=350)
+            textbox.insert("1.0", old["body"]["value"])
+            textbox.pack(pady=10)
+
+            def update_annotation():
+                new_text = textbox.get("1.0", "end").strip()
+                if new_text and new_text != old["body"]["value"]:
+                    updated = old.copy()
+                    updated["body"]["value"] = new_text
+                    success, error = update_annotation(old["@id"], new_text)
+                    if success:
+                        CTkMessagebox(title="Success", message="Annotation updated!", icon="check")
+                        edit_box.destroy()
+                    else:
+                        CTkMessagebox(title="Error", message=f"Failed to update: {error}", icon="cancel")
+
+            submit_btn = CTkButton(edit_box, text="Submit", command=update_annotation)
+            submit_btn.pack(pady=10)
+
+        fetch_btn = CTkButton(edit_dialog, text="Fetch", command=load_annotations_for_editing)
+        fetch_btn.pack(pady=5)
+
+        edit_btn = CTkButton(edit_dialog, text="Edit First Annotation", command=edit_selected_annotation)
+        edit_btn.pack(pady=5)
 
     def open_load_annotations_dialog(self):
 
