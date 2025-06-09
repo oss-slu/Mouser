@@ -1,5 +1,7 @@
 '''New Experiment Module'''
 from os.path import *
+
+from CTkMessagebox import CTkMessagebox
 from customtkinter import *
 from shared.tk_models import *
 from shared.scrollable_frame import ScrolledFrame
@@ -7,6 +9,9 @@ from experiment_pages.experiment.group_config_ui import GroupConfigUI
 from shared.experiment import Experiment
 from shared.audio import AudioManager
 from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
+
+import random
+from api_services.services import submit_annotation, get_annotations
 
 
 class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
@@ -98,7 +103,129 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
                 self.main_frame.grid_columnconfigure(i, weight=1)
             self.main_frame.grid_rowconfigure(i, weight=1)
 
+        self.button_row_frame = CTkFrame(self.main_frame)
+        self.button_row_frame.grid(
+            row=10,
+            column=0,
+            columnspan=3,
+            pady=(20, 10),
+            padx=10,
+            sticky="n"
+        )
+
+        self.annotation_button = CTkButton(
+            self.button_row_frame,
+            text="Add Annotation",
+            command=self.open_annotation_dialog
+        )
+        self.annotation_button.grid(
+            row=0, column=0, padx=10, pady=0, sticky="ew"
+        )
+
+        self.load_annotations_button = CTkButton(
+            self.button_row_frame,
+            text="Load Annotations",
+            command=self.open_load_annotations_dialog
+        )
+        self.load_annotations_button.grid(
+            row=0, column=1, padx=10, pady=0, sticky="ew"
+        )
+
         self.bind_all_entries()
+
+    def open_annotation_dialog(self):
+        # Annotation dialog pop-up
+        annotation_dialog = CTkToplevel(self)
+        annotation_dialog.title("Add Annotation")
+        annotation_dialog.geometry("400x220")
+
+        label = CTkLabel(annotation_dialog, text="Enter your annotation:")
+        label.pack(pady=10)
+
+        annotation_entry = CTkTextbox(annotation_dialog, height=80, width=350)
+        annotation_entry.pack(pady=10)
+
+        char_count_label = CTkLabel(annotation_dialog, text="Characters: 0/100")
+        char_count_label.pack(pady=(0, 10))
+
+        def update_char_count(event=None):
+            current_text = annotation_entry.get("1.0", "end")[:-1]
+            char_count = len(current_text)
+            if char_count > 100:
+                annotation_entry.delete("1.0+100c", "end")
+                char_count = 100
+            char_count_label.configure(text=f"Characters: {char_count}/100")
+
+        annotation_entry.bind("<KeyRelease>", update_char_count)
+
+        def submit_annotation_ui():
+            annotation_text = annotation_entry.get("1.0", "end").strip()
+            if annotation_text:
+                # Generate a random 4-digit experiment id
+                experiment_id = str(random.randint(1000, 9999))
+                success, error = submit_annotation(annotation_text, experiment_id)
+                if success:
+                    CTkMessagebox(
+                        message=f"Annotation submitted and stored!\nExperiment ID: {experiment_id}",
+                        title="Success",
+                        icon="check"
+                    )
+                    print(f"Experiment ID used: {experiment_id}")
+                    annotation_dialog.destroy()
+                else:
+                    CTkMessagebox(
+                        message=f"Failed to store annotation: {error}",
+                        title="Error",
+                        icon="cancel"
+                    )
+            else:
+                CTkMessagebox(
+                    message="Annotation cannot be empty.",
+                    title="Error",
+                    icon="cancel"
+                )
+
+        submit_btn = CTkButton(annotation_dialog, text="Submit", command=submit_annotation_ui)
+        submit_btn.pack(pady=10)
+
+    def open_load_annotations_dialog(self):
+
+        load_dialog = CTkToplevel(self)
+        load_dialog.title("Load Annotations")
+        load_dialog.geometry("400x300")
+
+        label = CTkLabel(load_dialog, text="Enter 4-digit Experiment ID:")
+        label.pack(pady=10)
+
+        e_id = CTkEntry(load_dialog, width=80)
+        e_id.pack(pady=5)
+
+        annotations_box = CTkTextbox(load_dialog, height=120, width=350, state="disabled")
+        annotations_box.pack(pady=10)
+
+        def fetch_and_display():
+            experiment_id = e_id.get().strip()
+            if len(experiment_id) != 4 or not experiment_id.isdigit():
+                CTkMessagebox(
+                    message="Please enter a valid 4-digit Experiment ID.",
+                    title="Error",
+                    icon="cancel"
+                )
+                return
+
+            annotations, error = get_annotations(experiment_id)
+            annotations_box.configure(state="normal")
+            annotations_box.delete("1.0", "end")
+            if annotations:
+                for i in annotations:
+                    value = i.get("body", {}).get("value", "[No Value]")
+                    annotations_box.insert("end", f"{value}\n")
+            else:
+                annotations_box.insert("end", f"No annotations found.\nError: {error if error else ''}")
+            annotations_box.configure(state="disabled")
+
+        fetch_btn = CTkButton(load_dialog, text="Fetch", command=fetch_and_display)
+        fetch_btn.pack(pady=5)
 
     def bind_all_entries(self):
         self.exper_name.bind("<KeyRelease>", lambda event: self.enable_next_button())

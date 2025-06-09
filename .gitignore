@@ -1,3 +1,7 @@
-/__pycache__
-/.vs
-/exports
+.idea/
+*.iml
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+.venv/
