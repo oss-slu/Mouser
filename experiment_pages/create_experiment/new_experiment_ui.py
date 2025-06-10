@@ -11,7 +11,7 @@ from shared.audio import AudioManager
 from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
 
 import random
-from api_services.services import submit_annotation, get_annotations,update_annotation
+from api_services.services import delete_annotations_by_experiment, submit_annotation, get_annotations,update_annotation
 
 
 class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
@@ -263,10 +263,9 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         edit_btn.pack(pady=5)
 
     def open_load_annotations_dialog(self):
-
         load_dialog = CTkToplevel(self)
         load_dialog.title("Load Annotations")
-        load_dialog.geometry("400x300")
+        load_dialog.geometry("400x340")  # Height accommodates button layout
 
         label = CTkLabel(load_dialog, text="Enter 4-digit Experiment ID:")
         label.pack(pady=10)
@@ -277,7 +276,38 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         annotations_box = CTkTextbox(load_dialog, height=120, width=350, state="disabled")
         annotations_box.pack(pady=10)
 
+        # Store annotations for display
+        self.annotation_data = []
+
         def fetch_and_display():
+            experiment_id = e_id.get().strip()
+            if len(experiment_id) != 4 or not experiment_id.isdigit():
+                CTkMessagebox(
+                    message="Please enter a valid 4-digit Experiment ID.",
+                    title="Error",
+                    icon="cancel"
+                )
+                delete_btn.configure(state="disabled")  # Disable button on invalid input
+                return
+
+            annotations, error = get_annotations(experiment_id)
+            annotations_box.configure(state="normal")
+            annotations_box.delete("1.0", "end")
+            self.annotation_data = []
+            delete_btn.configure(state="disabled")  # Disable until annotations are fetched
+
+            if annotations:
+                self.annotation_data = annotations
+                for i in annotations:
+                    value = i.get("body", {}).get("value", "[No Value]")
+                    annotations_box.insert("end", f"{value}\n")
+                delete_btn.configure(state="normal")  # Enable delete button if annotations exist
+            else:
+                annotations_box.insert("end", f"No annotations found.\nError: {error if error else ''}")
+                delete_btn.configure(state="disabled")  # Keep disabled if no annotations
+            annotations_box.configure(state="disabled")  # Read-only after display
+
+        def delete_annotations_ui():
             experiment_id = e_id.get().strip()
             if len(experiment_id) != 4 or not experiment_id.isdigit():
                 CTkMessagebox(
@@ -287,19 +317,36 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
                 )
                 return
 
-            annotations, error = get_annotations(experiment_id)
-            annotations_box.configure(state="normal")
-            annotations_box.delete("1.0", "end")
-            if annotations:
-                for i in annotations:
-                    value = i.get("body", {}).get("value", "[No Value]")
-                    annotations_box.insert("end", f"{value}\n")
+            success, error = delete_annotations_by_experiment(experiment_id)
+            if success:
+                CTkMessagebox(
+                    message="All annotations for this experiment deleted successfully!",
+                    title="Success",
+                    icon="check"
+                )
+                # Refresh the annotations list
+                fetch_and_display()
             else:
-                annotations_box.insert("end", f"No annotations found.\nError: {error if error else ''}")
-            annotations_box.configure(state="disabled")
+                CTkMessagebox(
+                    message=f"Failed to delete annotations: {error}",
+                    title="Error",
+                    icon="cancel"
+                )
 
-        fetch_btn = CTkButton(load_dialog, text="Fetch", command=fetch_and_display)
-        fetch_btn.pack(pady=5)
+        button_frame = CTkFrame(load_dialog)  # Frame to align buttons
+        button_frame.pack(pady=5)
+
+        fetch_btn = CTkButton(button_frame, text="Fetch", command=fetch_and_display)
+        fetch_btn.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
+
+        delete_btn = CTkButton(button_frame, text="Delete", command=delete_annotations_ui, state="disabled")
+        delete_btn.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+
+        # Configure button_frame to make buttons equal width
+        button_frame.grid_columnconfigure(0, weight=1)
+        button_frame.grid_columnconfigure(1, weight=1)
+
+
 
     def bind_all_entries(self):
         self.exper_name.bind("<KeyRelease>", lambda event: self.enable_next_button())
