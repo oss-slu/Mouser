@@ -84,7 +84,8 @@ def delete_annotations_by_experiment(experiment_id):
 
         # Delete each annotation
         for annotation in annotations:
-            annotation_id = annotation.get("@id")
+            full_id = annotation['id']
+            annotation_id = full_id.split("/")[-1]
             if not annotation_id:
                 continue
             delete_response = requests.delete(f"{RERUM_BASE}/delete/{annotation_id}", headers=headers)
