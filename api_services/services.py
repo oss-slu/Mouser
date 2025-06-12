@@ -59,7 +59,7 @@ def update_annotation(annotation_id, new_text):
     }
 
     try:
-        response = requests.post(f"{RERUM_BASE}/update", json=updated_annotation, headers=headers)
+        response = requests.put(f"{RERUM_BASE}/update", json=updated_annotation, headers=headers)
         
         if response.status_code == 200:
             return True, response.json()

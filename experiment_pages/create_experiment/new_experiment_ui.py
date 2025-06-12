@@ -10,10 +10,6 @@ from shared.experiment import Experiment
 from shared.audio import AudioManager
 from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
 
-import random
-from api_services.services import delete_annotations_by_experiment, submit_annotation, get_annotations,update_annotation
-
-
 class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
     '''New Experiment user interface.'''
     def __init__(self, parent: CTk, menu_page: CTkFrame = None):

@@ -8,6 +8,7 @@ from shared.scrollable_frame import ScrolledFrame
 from shared.experiment import Experiment
 from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from shared.password_utils import PasswordManager
+from .annotation_methods import *
 
 class CreateExperimentButton(CTkButton):
     '''Button to save a new experiment.'''
@@ -75,6 +76,14 @@ class SummaryUI(MouserPage):# pylint: disable=undefined-variable
         self.main_frame = CTkFrame(scroll_canvas)
         self.main_frame.pack(side=LEFT, expand=True)
 
+        # Annotation Panel (Right Side)
+        self.annotation_frame = CTkFrame(self, width=200)
+        self.annotation_frame.place(relx=0.75, rely=0.25, relheight=0.5, relwidth=0.22)
+
+        CTkLabel(self.annotation_frame, text="Annotations").pack(pady=5)
+        CTkButton(self.annotation_frame, text="Add Annotation", command=lambda: open_annotation_dialog(self)).pack(pady=5)
+        CTkButton(self.annotation_frame, text="Load Annotations", command=lambda: open_load_annotations_dialog(self)).pack(pady=5)
+        
     def update_page(self):
         '''Updates the frame.'''
         for widget in self.main_frame.winfo_children():
