@@ -8,6 +8,8 @@ from shared.scrollable_frame import ScrolledFrame
 from shared.experiment import Experiment
 from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from shared.password_utils import PasswordManager
+from .annotation_methods import *
+from shared.tooltip_utils import ToolTip
 
 class CreateExperimentButton(CTkButton):
     '''Button to save a new experiment.'''
@@ -18,6 +20,9 @@ class CreateExperimentButton(CTkButton):
         self.place(relx=0.85, rely=0.15, anchor=CENTER)
         self.experiment = experiment
         self.next_page = menu_page
+        
+        # Add tooltip
+        ToolTip(self, "Save and create the new experiment")
 
     def create_experiment(self):
         '''Saves an experiment as a new .mouser file.'''
@@ -75,6 +80,22 @@ class SummaryUI(MouserPage):# pylint: disable=undefined-variable
         self.main_frame = CTkFrame(scroll_canvas)
         self.main_frame.pack(side=LEFT, expand=True)
 
+        # Annotation Panel (Right Side)
+        self.annotation_frame = CTkFrame(self, width=200)
+        self.annotation_frame.place(relx=0.75, rely=0.25, relheight=0.5, relwidth=0.22)
+
+        CTkLabel(self.annotation_frame, text="Annotations").pack(pady=5)
+        
+        # Add annotation button with tooltip
+        add_annotation_btn = CTkButton(self.annotation_frame, text="Add Annotation", command=lambda: open_annotation_dialog(self))
+        add_annotation_btn.pack(pady=5)
+        ToolTip(add_annotation_btn, "Add a new annotation to the experiment")
+        
+        # Load annotations button with tooltip
+        load_annotation_btn = CTkButton(self.annotation_frame, text="Load Annotations", command=lambda: open_load_annotations_dialog(self))
+        load_annotation_btn.pack(pady=5)
+        ToolTip(load_annotation_btn, "Load existing annotations from a file")
+        
     def update_page(self):
         '''Updates the frame.'''
         for widget in self.main_frame.winfo_children():

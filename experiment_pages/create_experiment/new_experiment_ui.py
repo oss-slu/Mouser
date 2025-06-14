@@ -1,5 +1,7 @@
 '''New Experiment Module'''
 from os.path import *
+
+from CTkMessagebox import CTkMessagebox
 from customtkinter import *
 from shared.tk_models import *
 from shared.scrollable_frame import ScrolledFrame
@@ -7,7 +9,6 @@ from experiment_pages.experiment.group_config_ui import GroupConfigUI
 from shared.experiment import Experiment
 from shared.audio import AudioManager
 from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
-
 
 class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
     '''New Experiment user interface.'''
@@ -97,6 +98,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
             if i < 3:
                 self.main_frame.grid_columnconfigure(i, weight=1)
             self.main_frame.grid_rowconfigure(i, weight=1)
+
 
         self.bind_all_entries()
 
