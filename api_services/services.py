@@ -49,6 +49,9 @@ def update_annotation(annotation_id, new_text):
     token = get_token()
     headers = {"Authorization": f"Bearer {token}"}
     
+    if not annotation_id.startswith("http"):
+        annotation_id = f"http://localhost:3001/{annotation_id.lstrip('/')}"
+
     updated_annotation = {
         "@id": annotation_id,
         "body": {
