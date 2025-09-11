@@ -11,8 +11,16 @@ class ExperimentDatabase:
         '''Builds Database connections if singleton does not exist for this file'''
         if file not in cls._instances:
             instance = super(ExperimentDatabase, cls).__new__(cls)
-            instance.db_file = file
-            instance._conn = sqlite3.connect(file, check_same_thread=False)
+            # Absolute path prevents file locking issues caused by relative path resolution differences
+            # check_same_thread=False allows access from multiple Tkinter callbacks
+            # timeout=5.0 allows retry if DB is briefly locked by another thread
+            if file == ":memory:":
+                abs_path = file
+            else:
+                abs_path = os.path.abspath(file)
+            abs_path = os.path.abspath(file)
+            instance.db_file = abs_path
+            instance._conn = sqlite3.connect(abs_path, timeout=5.0, check_same_thread=False)
             instance._c = instance._conn.cursor()
             instance._initialize_tables()
             cls._instances[file] = instance

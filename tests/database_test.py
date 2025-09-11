@@ -1,13 +1,16 @@
+from datetime import datetime
+import os
+import time
+import tempfile
+
 '''Database Unit Tests'''
 from databases.experiment_database import ExperimentDatabase
 
 class TestDatabaseSetup:
     '''Test Basic Setup of Database'''
-    db = ExperimentDatabase()
-    db.setup_experiment("Test", "Test Mouse", False, 16, 4, 4, "A")
-    db.setup_groups(["Control", "Group 1", "Group 2", "Group 3"])
-    db.setup_cages(16, 4, 4)
-    db.setup_measurement_items({"Weight"})
+    db = ExperimentDatabase(file=tempfile.NamedTemporaryFile(suffix=".db", delete=False).name)
+    db.setup_experiment("Test", "Test Mouse", False, 16, 4, 4, "A", "test-123", ["Tester"], "Weight")
+    db.setup_groups(["Control", "Group 1", "Group 2", "Group 3"], cage_capacity=4)
 
     def test_num_animals(self):
         '''Checks if num animals equals expected.'''
@@ -31,13 +34,11 @@ class TestDatabaseSetup:
 
 class TestAnimalRFIDMethods:
     '''Test if the animal RFID methods work'''
-    db = ExperimentDatabase()
-    db.setup_experiment("Test", "Test Mouse", True, 4, 2, 2, "A")
-    db.setup_groups(["Control", "Group 1"])
-    db.setup_cages(4, 2, 2)
-    db.setup_measurement_items({"Weight"})
+    db = ExperimentDatabase(file=tempfile.NamedTemporaryFile(suffix=".db", delete=False).name)
+    db.setup_experiment("Test", "Test Mouse", False, 16, 4, 4, "A", "test-123", ["Tester"], "Weight")
+    db.setup_groups(["Control", "Group 1"], cage_capacity=4)
     for i in range(0,4):
-        db.add_animal(i, 10 + i)
+        db.add_animal(animal_id=i, rfid=str(10 + i), group_id=1)
 
     def test_add_animal_ids(self):
         '''Test if animal id of particular animal matches expected.'''
@@ -57,13 +58,11 @@ class TestAnimalRFIDMethods:
 
 class TestCageFunctions:
     '''Tests the cage functions.'''
-    db = ExperimentDatabase()
-    db.setup_experiment("Test", "Test Mouse", True, 4, 2, 2, "A")
-    db.setup_groups(["Control", "Group 1"])
-    db.setup_cages(4, 2, 2)
-    db.setup_measurement_items({"Weight"})
+    db = ExperimentDatabase(file=tempfile.NamedTemporaryFile(suffix=".db", delete=False).name)
+    db.setup_experiment("Test", "Test Mouse", False, 16, 4, 4, "A", "test-123", ["Tester"], "Weight")
+    db.setup_groups(["Control", "Group 1"], cage_capacity=4)
     for i in range(0,4):
-        db.add_animal(i, 10 + i)
+        db.add_animal(animal_id=i, rfid=str(10 + i), group_id=1)
 
     def test_get_cages(self):
         '''Tests if cages match expected.'''
@@ -79,13 +78,11 @@ class TestCageFunctions:
 
 class TestGroupFunctions:
     '''Test Group Functions.'''
-    db = ExperimentDatabase()
-    db.setup_experiment("Test", "Test Mouse", True, 4, 2, 2, "A")
-    db.setup_groups(["Control", "Group 1"])
-    db.setup_cages(4, 2, 2)
-    db.setup_measurement_items({"Weight"})
+    db = ExperimentDatabase(file=tempfile.NamedTemporaryFile(suffix=".db", delete=False).name)
+    db.setup_experiment("Test", "Test Mouse", False, 16, 4, 4, "A", "test-123", ["Tester"], "Weight")
+    db.setup_groups(["Control", "Group 1"], cage_capacity=4)
     for i in range(0,4):
-        db.add_animal(i, 10 + i)
+        db.add_animal(animal_id=i, rfid=str(10 + i), group_id=1)
 
     def test_get_all_groups(self):
         '''Test if groups match expected.'''
@@ -102,3 +99,31 @@ class TestGroupFunctions:
     def test_get_cages_by_group(self):
         '''Tests if cages by group dict matches expected.'''
         assert {'Control': ['1'], 'Group 1': ['2']} == self.db.get_cages_by_group()
+
+class TestWindowsSQLiteBehavior:
+    '''Simulates rapid reads/writes to test for SQLite locking and path issues on Windows.'''
+    def test_simulated_instrument_input(self):
+        test_db_file = "windows_test_sim.db"
+
+        if os.path.exists(test_db_file):
+            os.remove(test_db_file)
+
+        db = ExperimentDatabase(file=tempfile.NamedTemporaryFile(delete=False).name)
+
+        db.setup_experiment("Windows Test", "Rat", True, 5, 1, 5, "B")
+        db.setup_groups(["RFID Group"], cage_capacity=4)
+
+        for i in range(1, 6):
+            db.add_animal(animal_id=i, rfid=f"RFID-{i}", group_id=1)
+
+
+        for i in range(1, 6):
+            db.add_measurement(animal_id=i, value=25 + i)
+            time.sleep(0.05)  
+
+        today = datetime.now().strftime("%Y-%m-%d")
+        data = db.get_measurements_by_date(today)
+
+        assert len(data) == 5  
+        db.close()
+        os.remove(test_db_file)
