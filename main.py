@@ -16,6 +16,7 @@ from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment.select_experiment_ui import ExperimentsUI
 from experiment_pages.experiment.test_screen import TestScreen
+import tkinter.font as tkFont
 
 rfid_serial_port_controller = SerialPortController("reader")
 
@@ -127,15 +128,47 @@ temp_folder_path = os.path.join(tempfile.gettempdir(), TEMP_FOLDER_NAME)
 if os.path.exists(temp_folder_path):
     shutil.rmtree(temp_folder_path)
 
-
+#Create root
 root = CTk()
 
+#If windowing system is on mac, set scaling factor for main window
+if root.tk.call('tk', 'windowingsystem') == 'aqua':
+    #Calculate scale factor
+    DPI_factor = root.winfo_pixels('1i') / 72
+    root.tk.call('tk', 'scaling', DPI_factor)
+
+    #Set default font
+    default_font = tkFont.nametofont("TkDefaultFont")
+    current_size = default_font.cget("size")
+    new = int(current_size*DPI_factor)
+    default_font.configure(size = new)
+
+#Get screen width and height
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 
+
 root.title("Mouser")
-root.geometry(f"{screen_width}x{screen_height}+0+0")
-root.minsize(900,600)
+#Set window and popup scaling factor
+mainwindow_width = 900
+mainwindow_height = 600
+root.minsize(mainwindow_width, mainwindow_height)
+
+x = int((screen_width - mainwindow_width)/2)
+y = int((screen_height - mainwindow_height)/2)
+
+base1 = 200
+base2 = 150
+popup_width = int(base1*DPI_factor)
+popup_height = int(base2*DPI_factor)
+
+popup_x = int((screen_width - popup_width)/2)
+popup_y = int((screen_height - popup_height)/2)
+
+popup = CTkToplevel(root)
+
+root.geometry(f"{mainwindow_width}x{mainwindow_height}+{x}+{y}")
+popup.geometry(f"{popup_width}x{popup_height}+{popup_x}+{popup_y}")
 
 # Adds menu bar to root and binds the function to file_menu
 menu_bar = CTkMenuBar(root)
