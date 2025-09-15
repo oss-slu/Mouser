@@ -7,6 +7,14 @@ class ExperimentDatabase:
     '''SQLite Database Object for Experiments.'''
     _instances = {}  # Dictionary to store instances by file path
 
+
+    def get_number_groups(self):
+        '''Returns the number of groups in the experiment.'''
+        self._c.execute("SELECT COUNT(*) FROM groups")
+        result = self._c.fetchone()
+        return result[0] if result else 0
+
+
     def __new__(cls, file=":memory:"):
         '''Builds Database connections if singleton does not exist for this file'''
         if file not in cls._instances:

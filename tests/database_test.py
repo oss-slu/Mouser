@@ -12,12 +12,20 @@ class TestDatabaseSetup:
     db.setup_experiment("Test", "Test Mouse", False, 16, 4, 4, "A", "test-123", ["Tester"], "Weight")
     db.setup_groups(["Control", "Group 1", "Group 2", "Group 3"], cage_capacity=4)
 
+    #Add 16 animals to match test expectations
+    for i in range(16):
+        db.add_animal(animal_id=i+1, rfid=str(100 + i), group_id=1)
+
     def test_num_animals(self):
         '''Checks if num animals equals expected.'''
+        print("Returned animal count:", self.db.get_number_animals())
         assert 16 == self.db.get_number_animals()
 
     def test_num_groups(self):
         '''Checks if num groups equals expected.'''
+        self.db._c.execute("SELECT COUNT(*) FROM groups")
+        result = self.db._c.fetchone()[0]
+        print("Returned group count:", result)
         assert 4 == self.db.get_number_groups()
 
     def test_cage_max(self):
@@ -127,3 +135,9 @@ class TestWindowsSQLiteBehavior:
         assert len(data) == 5  
         db.close()
         os.remove(test_db_file)
+
+if __name__ == "__main__":
+    setup = TestDatabaseSetup()
+    setup.test_num_animals()
+    setup.test_num_groups()
+    print("Tests ran successfully.")
