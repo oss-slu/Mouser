@@ -1,10 +1,15 @@
-name: Builds and Packages Mouser
+name: Builds and Packages Mouser (SLSA3)
 
 on:
   push:
     branches:
       - main
       - test-exe
+
+permissions:
+  id-token: write   # needed for provenance
+  contents: write   # needed for uploading provenance
+  actions: read
 
 jobs:
   build:
@@ -13,11 +18,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # os: ["windows-latest", "macos-latest"]
         os: ["windows-latest"]
 
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v4
         with:
           python-version: 3.11
@@ -26,14 +31,9 @@ jobs:
       - run: pip install --upgrade setuptools wheel
       - run: pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
 
-      # Only run this on macOS as brew isn't available on Windows
-      # - run: brew install mysql pkg-config portaudio
-        # if: ${{ matrix.os == 'macos-latest' }}
-
       # Uninstalling typing for compatibility with Python 3.11
       - run: pip uninstall -y typing
 
-      # Modify PyInstaller command to include additional data
       - run: |
           pyinstaller --noconfirm --noconsole --onedir -c \
             --copy-metadata tqdm \
@@ -50,15 +50,19 @@ jobs:
             --add-data "shared/sounds/*:shared/sounds" \
             --add-data "settings:settings" \
             main.py
-        shell: bash #run in bash to avoid syntax error
+        shell: bash
 
-      # Rename the executable on Windows for clarity
       - shell: cmd
         if: ${{ matrix.os == 'windows-latest' }}
-        run: |
-          ren dist\main\main.exe Mouser.exe
+        run: ren dist\main\main.exe Mouser.exe
+
       - uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: Mouser_${{ matrix.os }}
           path: dist/main/*
+
+      # 🔑 SLSA Provenance Generation
+      - name: Generate SLSA Provenance
+        uses: slsa-framework/slsa-github-generator/actions/attest-build-provenance@v1
+        with:
+          subject-path: "dist/main/Mouser.exe"
