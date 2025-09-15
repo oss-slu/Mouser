@@ -134,13 +134,13 @@ root = CTk()
 #If windowing system is on mac, set scaling factor for main window
 if root.tk.call('tk', 'windowingsystem') == 'aqua':
     #Calculate scale factor
-    DPI_factor = root.winfo_pixels('1i') / 72
-    root.tk.call('tk', 'scaling', DPI_factor)
+    scale_factor = 2
+    root.tk.call('tk', 'scaling', scale_factor)
 
     #Set default font
     default_font = tkFont.nametofont("TkDefaultFont")
     current_size = default_font.cget("size")
-    new = int(current_size*DPI_factor)
+    new = int(current_size*scale_factor)
     default_font.configure(size = new)
 
 #Get screen width and height
@@ -149,7 +149,7 @@ screen_height = root.winfo_screenheight()
 
 
 root.title("Mouser")
-#Set window and popup scaling factor
+#Set window width and height
 mainwindow_width = 900
 mainwindow_height = 600
 root.minsize(mainwindow_width, mainwindow_height)
@@ -157,18 +157,7 @@ root.minsize(mainwindow_width, mainwindow_height)
 x = int((screen_width - mainwindow_width)/2)
 y = int((screen_height - mainwindow_height)/2)
 
-base1 = 200
-base2 = 150
-popup_width = int(base1*DPI_factor)
-popup_height = int(base2*DPI_factor)
-
-popup_x = int((screen_width - popup_width)/2)
-popup_y = int((screen_height - popup_height)/2)
-
-popup = CTkToplevel(root)
-
 root.geometry(f"{mainwindow_width}x{mainwindow_height}+{x}+{y}")
-popup.geometry(f"{popup_width}x{popup_height}+{popup_x}+{popup_y}")
 
 # Adds menu bar to root and binds the function to file_menu
 menu_bar = CTkMenuBar(root)
