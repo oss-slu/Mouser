@@ -1,6 +1,6 @@
 import os, sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
+#test for ports
 from unittest.mock import MagicMock
 import pytest
 import shared.serial_port_controller as spc
