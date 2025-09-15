@@ -1,4 +1,7 @@
 '''Screen for testing functionality of RFID Readers and Serial Devices.'''
+# Prevent pytest from collecting this module as a test file. It is a GUI screen, not a test.
+__test__ = False
+
 import os
 import time
 import threading
