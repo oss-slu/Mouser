@@ -55,12 +55,17 @@ jobs:
         run: |
           ren dist\main\main.exe Mouser.exe
 
+      - name: Zip the build directory
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: powershell
+        run: Compress-Archive -Path dist/main/* -DestinationPath dist/Mouser_${{ matrix.os }}.zip -Force
+
       - uses: actions/attest-build-provenance@v1
         with:
-          subject-path: 'dist/main/**'
+          subject-path: dist/Mouser_${{ matrix.os }}.zip
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: Mouser_${{ matrix.os }}
-          path: dist/main/*
+          path: dist/Mouser_${{ matrix.os }}.zip
