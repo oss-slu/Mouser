@@ -4,7 +4,6 @@ getmac
 pyaudio
 pyserial
 pysound
-wave
 cryptography
 customtkinter
 CTkMessagebox
