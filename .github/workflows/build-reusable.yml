@@ -1,0 +1,66 @@
+name: Build and Package Mouser Reusable
+
+on:
+  workflow_call:
+
+permissions:
+  attestations: write
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["windows-latest"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - run: python -m pip install --upgrade pip
+
+      - run: pip install --upgrade setuptools wheel
+
+      - run: pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
+
+      - run: pip uninstall -y typing
+
+      - run: |
+          pyinstaller --noconfirm --noconsole --onedir -c \
+            --copy-metadata tqdm \
+            --copy-metadata regex \
+            --copy-metadata sacremoses \
+            --copy-metadata requests \
+            --copy-metadata packaging \
+            --copy-metadata filelock \
+            --copy-metadata tokenizers \
+            --copy-metadata importlib_metadata \
+            --collect-data sv_ttk \
+            --hidden-import "babel.numbers" \
+            --add-data "shared/images/*:shared/images" \
+            --add-data "shared/sounds/*:shared/sounds" \
+            --add-data "settings:settings" \
+            main.py
+        shell: bash
+
+      - shell: cmd
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: |
+          ren dist\main\main.exe Mouser.exe
+
+      - uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: 'dist/main/**'
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Mouser_${{ matrix.os }}
+          path: dist/main/*
