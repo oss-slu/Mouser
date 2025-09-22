@@ -138,7 +138,7 @@ class DatabaseController():
         self.reset_attributes()
 
     def commit(self):
-        self.db._conn.commit()
+                self.db._conn.commit()
 
     def close(self):
         '''Closes the database file.'''

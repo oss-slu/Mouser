@@ -9,13 +9,15 @@ you write to a port, else reading from the reader port will return
 nothing even if you write to writer port already
 '''
 import os
+import glob
+import platform
 import serial
 import serial.tools.list_ports
 from shared.file_utils import get_resource_path
 
 class SerialPortController():
     '''Serial Port control functions.'''
-    def __init__(self, setting_type=None):
+    def __init__(self, setting_type=None, comports_fn=None):
         self.ports_in_used = []
         self.baud_rate = None
         self.byte_size = None
@@ -24,18 +26,35 @@ class SerialPortController():
         self.flow_control = None
         self.writer_port = None
         self.reader_port = None
+        self.comports_fn = comports_fn or serial.tools.list_ports.comports
         print(f"🔍 Initializing SerialPortController with setting type: {setting_type}")
         self.retrieve_setting(setting_type)
 
     def get_available_ports(self):
-        '''Returns a list of available system ports.'''
+        '''Returns a list of available system ports.
+        Linux-specific note: Some USB serial devices (e.g. RFID readers / balances) intermittently fail to appear in
+        pyserial.tools.list_ports results on certain distributions (udev timing or driver latency). As a fallback on
+        Linux we manually glob common device patterns if the primary enumeration returns nothing. This has no impact
+        on Windows/macOS because the fallback only runs when platform.system() == 'Linux'.'''
+        ports = list(self.comports_fn())
         available_ports = []
-        ports = list(serial.tools.list_ports.comports())
+        # Linux fallback if pyserial returns nothing
+        if not ports and platform.system() == 'Linux':
+            # fallback addresses intermittent pyserial empty list issue
+            for pattern in ("/dev/ttyUSB*", "/dev/ttyACM*"):
+                for dev in glob.glob(pattern):
+                    # Avoid duplicates if device somehow also in ports later
+                    if dev not in [p.device for p in ports]:
+                        # Create a lightweight shim with .device and .description attributes
+                        class _Shim:  # noqa: D401 short-lived internal helper
+                            def __init__(self, device):
+                                self.device = device
+                                self.description = "Unknown (glob fallback)"
+                        ports.append(_Shim(dev))
         for port_ in ports:
-            if port_ in self.ports_in_used:       #prevention
-                pass
-            else:
-                available_ports.append((f'{port_.device}', f'{port_.description}'))
+            if port_ in self.ports_in_used:
+                continue
+            available_ports.append((port_.device, getattr(port_, 'description', '')))  # robust attribute access
         return available_ports
 
     def get_available_ports_name(self):
@@ -205,7 +224,7 @@ class SerialPortController():
             return
 
         try:
-            with open(preference_path, "r") as file:
+            with open(preference_path, "r", encoding="utf-8") as file:
                 settings_file_name = file.readline().strip()
                 settings_path = get_resource_path(os.path.join("settings", "serial ports", settings_file_name))
 
@@ -213,7 +232,7 @@ class SerialPortController():
                     print(f"Settings file {settings_path} not found.")
                     return
 
-                with open(settings_path, "r") as settings_file:
+                with open(settings_path, "r", encoding="utf-8") as settings_file:
                     settings = settings_file.readline().strip().split(',')
                     print("Successfully retrieved settings:", settings)
 
@@ -231,3 +250,17 @@ class SerialPortController():
 
         except Exception as e:
             print(f"An error occurred while retrieving settings: {e}")
+
+    def classify_ports(self):
+        '''Classifies available ports into categories: rfid, balance, unknown.
+        Heuristics are based on description keywords. Safe on all OS; adds no side effects.'''
+        categories = {"rfid": [], "balance": [], "unknown": []}
+        for device, desc in self.get_available_ports():
+            d_upper = desc.upper()
+            if any(k in d_upper for k in ["RFID"]):
+                categories["rfid"].append((device, desc))
+            elif any(k in d_upper for k in ["BALANCE", "SCALE", "METTLER"]):
+                categories["balance"].append((device, desc))
+            else:
+                categories["unknown"].append((device, desc))
+        return categories
