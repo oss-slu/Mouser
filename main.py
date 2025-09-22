@@ -16,6 +16,7 @@ from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment.select_experiment_ui import ExperimentsUI
 from experiment_pages.experiment.test_screen import TestScreen
+import tkinter.font as tkFont
 
 rfid_serial_port_controller = SerialPortController("reader")
 
@@ -127,15 +128,36 @@ temp_folder_path = os.path.join(tempfile.gettempdir(), TEMP_FOLDER_NAME)
 if os.path.exists(temp_folder_path):
     shutil.rmtree(temp_folder_path)
 
-
+#Create root
 root = CTk()
 
+#If windowing system is on mac, set scaling factor for main window
+if root.tk.call('tk', 'windowingsystem') == 'aqua':
+    #Calculate scale factor
+    scale_factor = 2
+    root.tk.call('tk', 'scaling', scale_factor)
+
+    #Set default font
+    default_font = tkFont.nametofont("TkDefaultFont")
+    current_size = default_font.cget("size")
+    new = int(current_size*scale_factor)
+    default_font.configure(size = new)
+
+#Get screen width and height
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 
+
 root.title("Mouser")
-root.geometry(f"{screen_width}x{screen_height}+0+0")
-root.minsize(900,600)
+#Set window width and height
+mainwindow_width = 900
+mainwindow_height = 600
+root.minsize(mainwindow_width, mainwindow_height)
+
+x = int((screen_width - mainwindow_width)/2)
+y = int((screen_height - mainwindow_height)/2)
+
+root.geometry(f"{mainwindow_width}x{mainwindow_height}+{x}+{y}")
 
 # Adds menu bar to root and binds the function to file_menu
 menu_bar = CTkMenuBar(root)
