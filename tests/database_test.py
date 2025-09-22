@@ -1,7 +1,3 @@
-# Added module-level skip (Option A) to disable outdated tests.
-import pytest
-pytest.skip("Outdated database tests skipped (Option A).", allow_module_level=True)
-
 '''Database Unit Tests'''
 from databases.experiment_database import ExperimentDatabase
 
