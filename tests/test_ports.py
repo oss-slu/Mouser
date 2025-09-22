@@ -1,13 +1,19 @@
-import os, sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-#test for ports
+"""Unit and integration tests for the SerialPortController."""
+import os
+import sys
 from unittest.mock import MagicMock
+
 import pytest
-import shared.serial_port_controller as spc
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from shared.serial_port_controller import SerialPortController
+import shared.serial_port_controller as spc
+
 
 @pytest.mark.skipif(not sys.platform.startswith("linux"), reason="Linux-only behavior")
 def test_linux_fallback_when_no_pyserial_results(monkeypatch):
+    """Test the Linux-specific glob fallback for serial port detection."""
     monkeypatch.setattr(spc.serial.tools.list_ports, "comports", lambda: [])
     monkeypatch.setattr(spc.glob, "glob",
                         lambda pattern: ["/dev/ttyUSB0"] if "ttyUSB" in pattern else [])
@@ -16,6 +22,7 @@ def test_linux_fallback_when_no_pyserial_results(monkeypatch):
     assert ("/dev/ttyUSB0", "Unknown (glob fallback)") in ports
 
 def test_classification_heuristics():
+    """Test the port classification based on description keywords."""
     fake = [
         MagicMock(device="COM7", description="FTDI USB Serial RFID Reader"),
         MagicMock(device="COM8", description="Mettler Toledo Balance"),
@@ -28,6 +35,7 @@ def test_classification_heuristics():
     assert any("Generic" in d for _, d in classified["unknown"])
 
 def test_injection_unit():
+    """Test the injection of a fake comports function."""
     fake = [
         MagicMock(device="COM1", description="USB Serial Port"),
         MagicMock(device="COM2", description="Arduino Mega 2560"),

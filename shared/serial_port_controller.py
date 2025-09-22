@@ -9,10 +9,10 @@ you write to a port, else reading from the reader port will return
 nothing even if you write to writer port already
 '''
 import os
-import serial
-import serial.tools.list_ports
 import glob
 import platform
+import serial
+import serial.tools.list_ports
 from shared.file_utils import get_resource_path
 
 class SerialPortController():
@@ -224,7 +224,7 @@ class SerialPortController():
             return
 
         try:
-            with open(preference_path, "r") as file:
+            with open(preference_path, "r", encoding="utf-8") as file:
                 settings_file_name = file.readline().strip()
                 settings_path = get_resource_path(os.path.join("settings", "serial ports", settings_file_name))
 
@@ -232,7 +232,7 @@ class SerialPortController():
                     print(f"Settings file {settings_path} not found.")
                     return
 
-                with open(settings_path, "r") as settings_file:
+                with open(settings_path, "r", encoding="utf-8") as settings_file:
                     settings = settings_file.readline().strip().split(',')
                     print("Successfully retrieved settings:", settings)
 

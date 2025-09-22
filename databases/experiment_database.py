@@ -58,7 +58,8 @@ class ExperimentDatabase:
         except sqlite3.OperationalError:
             pass
 
-    def setup_experiment(self, name, species, uses_rfid, num_animals, num_groups, cage_max, measurement_type, experiment_id, investigators, measurement):
+    def setup_experiment(self, name, species, uses_rfid, num_animals, num_groups,
+                         cage_max, measurement_type, experiment_id, investigators, measurement):
         '''Initializes Experiment'''
         investigators_str = ', '.join(investigators)  # Convert list to comma-separated string
         self._c.execute('''INSERT INTO experiment (name, species, uses_rfid, num_animals,
@@ -176,7 +177,7 @@ class ExperimentDatabase:
                     del ExperimentDatabase._instances[self.db_file]
 
                 return True
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Error during database cleanup: {e}")
             return False
 
@@ -234,7 +235,7 @@ class ExperimentDatabase:
                 AND (measurement_id = 1)
             ''', (date,))
             return self._c.fetchall()
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Error getting data for date: {e}")
             return []
 
@@ -264,7 +265,7 @@ class ExperimentDatabase:
             # Return True only if all active animals have measurements
             return animals_with_measurements >= total_active_animals
 
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Error checking data collection status: {e}")
             return False
 
@@ -282,7 +283,7 @@ class ExperimentDatabase:
             ''', (animal_id, date, value, measurement_id))
 
             self._conn.commit()
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Error adding data entry: {e}")
             self._conn.rollback()
 
@@ -302,7 +303,7 @@ class ExperimentDatabase:
                 self.add_data_entry(date, animal_id, value, measurement_id)
 
             self._conn.commit()
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Error changing data entry: {e}")
             self._conn.rollback()
 
@@ -425,7 +426,7 @@ class ExperimentDatabase:
 
                 self._conn.commit()
                 return True
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Error updating animal group: {e}")
             self._conn.rollback()
             return False
@@ -480,7 +481,6 @@ class ExperimentDatabase:
         """
         Exports the experiment data into a structured CSV:
         1. Experiment metadata
-        2. Pivoted measurement matrix (group, animal, date columns)
         3. Groups table with header
         """
         import os
