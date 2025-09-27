@@ -10,6 +10,7 @@ from customtkinter import CTk
 
 
 def create_root_window():
+    """Creates and returns the CTk root window with platform scaling."""
     root = CTk()
 
     if root.tk.call('tk', 'windowingsystem') == 'aqua':
