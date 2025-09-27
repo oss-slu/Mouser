@@ -1,13 +1,11 @@
 """
 Contains all UI-related command callbacks (button/menu actions).
-
 Functions include:
 - open_file: handles loading .mouser/.pmouser files
 - create_file: navigates to NewExperimentUI
 - open_test: opens the serial test screen
 - open_serial_port_setting: opens the settings popup
 - save_file: writes back to .mouser/.pmouser
-
 These handlers are now centralized here, replacing inline logic in main.py.
 """
 from customtkinter import CTkLabel, CTkButton

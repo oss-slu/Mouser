@@ -1,11 +1,9 @@
 """
-    Builds and configures the application menu bar using CTkMenuBar.
-
-    Adds 'File' and 'Settings' menus with dropdowns, and binds commands 
-    (e.g., New, Open, Save, Serial Port settings, etc.) via lambdas to pass context.
-
-    Extracted from main.py to modularize top-level navigation UI.
-    """
+Builds and configures the application menu bar using CTkMenuBar.
+Adds 'File' and 'Settings' menus with dropdowns, and binds commands 
+(e.g., New, Open, Save, Serial Port settings, etc.) via lambdas to pass context.
+Extracted from main.py to modularize top-level navigation UI.
+"""
 
 from CTkMenuBar import CTkMenuBar, CustomDropdownMenu
 from ui.commands import open_file, create_file, save_file, open_serial_port_setting, open_test
@@ -38,10 +36,3 @@ def build_menu(root, experiments_frame, rfid_serial_port_controller):
         )
 
     root.config(menu=menu_bar)
-
-
-
-
-
-
-

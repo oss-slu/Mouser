@@ -1,9 +1,7 @@
 """
 Initializes and returns the main Tkinter application window (root).
-
 Includes platform-specific scaling (e.g., macOS Retina support) and 
 default font resizing for consistent cross-platform appearance.
-
 Extracted from main.py to isolate root window logic.
 """
 import os

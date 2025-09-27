@@ -1,13 +1,10 @@
 """
 Creates the welcome screen layout including logo and main navigation buttons.
-
 Sets up the initial frame (ExperimentsUI) and populates it with:
 - 'New Experiment' button
 - 'Open Experiment' button
 - 'Test Serials' button
-
 Each button callback uses lambda to pass necessary context (root, frame).
-
 Modularized from main.py for clarity and separation of UI layout.
 """
 from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkImage
@@ -53,6 +50,3 @@ def setup_welcome_screen(root, main_frame):
         ).pack(pady=(5, 10), padx=20, fill='x', expand=True)
 
     return experiments_frame
-
-
-
