@@ -30,7 +30,6 @@ TEMP_FILE_PATH = None
 CURRENT_FILE_PATH = None
 PASSWORD = None
 
-
 #Clear any old Temp folders
 temp_folder_path = os.path.join(tempfile.gettempdir(), TEMP_FOLDER_NAME)
 if os.path.exists(temp_folder_path):
@@ -64,7 +63,6 @@ build_menu(
     experiments_frame=experiments_frame,
     rfid_serial_port_controller=rfid_serial_port_controller
 )
-
 
 # Final Grid Config and Launch
 raise_frame(experiments_frame)

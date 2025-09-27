@@ -1,16 +1,3 @@
-
-from customtkinter import CTkLabel, CTkButton
-from shared.tk_models import *
-import os
-from tkinter.filedialog import *
-from CTkMessagebox import CTkMessagebox
-from shared.serial_port_settings import SerialPortSetting
-import shared.file_utils as file_utils
-from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
-from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
-from experiment_pages.experiment.select_experiment_ui import ExperimentsUI
-from experiment_pages.experiment.test_screen import TestScreen
-
 """
 Contains all UI-related command callbacks (button/menu actions).
 
@@ -23,12 +10,22 @@ Functions include:
 
 These handlers are now centralized here, replacing inline logic in main.py.
 """
+from customtkinter import CTkLabel, CTkButton
+from shared.tk_models import *
+import os
+from tkinter.filedialog import *
+from CTkMessagebox import CTkMessagebox
+from shared.serial_port_settings import SerialPortSetting
+import shared.file_utils as file_utils
+from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
+from experiment_pages.experiment.select_experiment_ui import ExperimentsUI
+from experiment_pages.experiment.test_screen import TestScreen
 
 # Reference global variables defined in main.py
 TEMP_FILE_PATH = None
 CURRENT_FILE_PATH = None
 PASSWORD = None
-
 
 def open_file(root, experiments_frame):
     '''Command for 'Open' option in menu bar.
@@ -88,6 +85,7 @@ def open_file(root, experiments_frame):
             TEMP_FILE_PATH = temp_file
             page = ExperimentMenuUI(root, temp_file, experiments_frame, file_path)
             page.raise_frame()
+
 # Command for 'New' option in menu bar
 def create_file(root, experiments_frame):
     '''Command for the 'New' option in the menue bar.

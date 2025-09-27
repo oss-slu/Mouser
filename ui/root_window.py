@@ -1,18 +1,17 @@
+"""
+Initializes and returns the main Tkinter application window (root).
+
+Includes platform-specific scaling (e.g., macOS Retina support) and 
+default font resizing for consistent cross-platform appearance.
+
+Extracted from main.py to isolate root window logic.
+"""
 import os
 import tkinter.font as tkFont
 from customtkinter import CTk
 
-
-
 def create_root_window():
-    """
-    Initializes and returns the main Tkinter application window (root).
 
-    Includes platform-specific scaling (e.g., macOS Retina support) and 
-    default font resizing for consistent cross-platform appearance.
-
-    Extracted from main.py to isolate root window logic.
-    """
     root = CTk()
 
     if root.tk.call('tk', 'windowingsystem') == 'aqua':
