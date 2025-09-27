@@ -17,14 +17,13 @@ from customtkinter import CTkLabel, CTkButton, CTkToplevel, CTkEntry
 from CTkMessagebox import CTkMessagebox
 
 from shared.serial_port_settings import SerialPortSetting
-from shared.tk_models import raise_frame
 import shared.file_utils as file_utils
 
 from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment.test_screen import TestScreen
 
-# Reference global variables (shared state)
+# Reference global state (used throughout GUI)
 TEMP_FILE_PATH = None
 CURRENT_FILE_PATH = None
 PASSWORD = None
@@ -40,6 +39,7 @@ def open_file(root, experiments_frame):
     if file_path:
         from databases.experiment_database import ExperimentDatabase  # pylint: disable=import-outside-toplevel
 
+        # Close existing database connection if open
         if TEMP_FILE_PATH in ExperimentDatabase._instances:  # pylint: disable=protected-access
             ExperimentDatabase._instances[TEMP_FILE_PATH].close()
 
@@ -55,13 +55,13 @@ def open_file(root, experiments_frame):
             password_entry.pack(pady=5)
 
             def handle_password():
-                password = password_entry.get()
+                pw = password_entry.get()
                 try:
-                    temp_file_path = file_utils.create_temp_from_encrypted(file_path, password)
-                    PASSWORD = password
-                    if os.path.exists(temp_file_path):
-                        TEMP_FILE_PATH = temp_file_path
-                        page = ExperimentMenuUI(root, temp_file_path, experiments_frame)
+                    temp_path = file_utils.create_temp_from_encrypted(file_path, pw)
+                    if os.path.exists(temp_path):
+                        PASSWORD = pw
+                        TEMP_FILE_PATH = temp_path
+                        page = ExperimentMenuUI(root, temp_path, experiments_frame)
                         page.raise_frame()
                         password_prompt.destroy()
                 except Exception as e:  # pylint: disable=broad-exception-caught
