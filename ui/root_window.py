@@ -4,12 +4,12 @@ Includes platform-specific scaling (e.g., macOS Retina support) and
 default font resizing for consistent cross-platform appearance.
 Extracted from main.py to isolate root window logic.
 """
-import os
+
 import tkinter.font as tkFont
 from customtkinter import CTk
 
-def create_root_window():
 
+def create_root_window():
     root = CTk()
 
     if root.tk.call('tk', 'windowingsystem') == 'aqua':
@@ -22,3 +22,4 @@ def create_root_window():
         default_font.configure(size=int(current_size * scale_factor))
 
     return root
+
