@@ -6,6 +6,19 @@ from ui.commands import create_file, open_file, open_test
 
 
 def setup_welcome_screen(root, main_frame):
+    """
+    Creates the welcome screen layout including logo and main navigation buttons.
+
+    Sets up the initial frame (ExperimentsUI) and populates it with:
+    - 'New Experiment' button
+    - 'Open Experiment' button
+    - 'Test Serials' button
+
+    Each button callback uses lambda to pass necessary context (root, frame).
+
+    Modularized from main.py for clarity and separation of UI layout.
+    """
+
     
     experiments_frame = ExperimentsUI(root, main_frame)
 

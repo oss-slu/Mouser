@@ -11,6 +11,18 @@ from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment.select_experiment_ui import ExperimentsUI
 from experiment_pages.experiment.test_screen import TestScreen
 
+"""
+Contains all UI-related command callbacks (button/menu actions).
+
+Functions include:
+- open_file: handles loading .mouser/.pmouser files
+- create_file: navigates to NewExperimentUI
+- open_test: opens the serial test screen
+- open_serial_port_setting: opens the settings popup
+- save_file: writes back to .mouser/.pmouser
+
+These handlers are now centralized here, replacing inline logic in main.py.
+"""
 
 # Reference global variables defined in main.py
 TEMP_FILE_PATH = None
