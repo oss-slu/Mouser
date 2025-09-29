@@ -21,6 +21,56 @@ from shared.audio import AudioManager
 import shared.file_utils as file_utils
 from shared.flash_overlay import FlashOverlay
 
+class RFIDHandler:
+    def __init__(self):
+        # initialize serial port and flags
+        try:
+            self.rfid_serial_port_controller = SerialPortController("reader")
+            self.flag_listening = False
+            self.thread = None
+            self.content = None
+        except Exception as e:
+            print(f"An exception occurred {e}")
+            self.flag_listening = False
+
+
+
+    def start_listening(self):
+        # start hardware RFID scanning in a thread
+        self.thread = threading.Thread(target=self.scan_rfid)
+        if self.flag_listening is False:
+            self.flag_listening = True
+            self.thread.start()
+
+    def stop_listening(self):
+        # stop thread and clean up resources
+        if self.flag_listening is True:
+            self.flag_listening = False
+            self.thread.join()
+            self.rfid_serial_port_controller.close()
+        
+
+    def scan_rfid(self):
+        # loop and read RFID data
+        while self.flag_listening is True:
+            self.content = self.rfid_serial_port_controller.read_data()
+            if self.content:
+                print("Valid data")
+            else:
+                try:
+                    print(self.content)
+                except Exception as e:
+                    print(f"An exception occurred: {e}")
+
+            time.sleep(0.1)  
+
+def simulate_rfid():
+    # generate fake RFID for testing
+    process_id = os.getpid()
+    random_id = get_random_rfid()
+    print(random_id)
+    print(process_id)
+    return random_id
 
 def get_random_rfid():
     '''Returns a simulated rfid number'''
@@ -45,7 +95,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.animal_rfid_list = self.db.get_all_animals_rfid()
         self.animals = []
         self.animal_id = 1
-
+        
         self.animal_id_entry_text = StringVar(value="1")
 
         # Simulate All RFID Button

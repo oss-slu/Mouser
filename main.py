@@ -17,6 +17,7 @@ from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment.select_experiment_ui import ExperimentsUI
 from experiment_pages.experiment.test_screen import TestScreen
 import tkinter.font as tkFont
+from experiment_pages.experiment.map_rfid import RFIDHandler
 
 rfid_serial_port_controller = SerialPortController("reader")
 
@@ -212,3 +213,6 @@ main_frame.grid_rowconfigure(1, weight=1)
 main_frame.grid_columnconfigure(0, weight=1)
 
 root.mainloop()
+
+
+
