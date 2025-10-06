@@ -15,22 +15,6 @@ import os
 import shutil
 import tempfile
 
-"""
-Main entry point for the Mouser application.
-
-Responsible for:
-- Creating the root window
-- Setting app geometry and title
-- Initializing shared state (e.g., TEMP_FILE_PATH)
-- Building menu and welcome screen
-- Launching the app loop via root.mainloop()
-
-All UI setup is now modularized under /ui for maintainability.
-"""
-
-import os
-import shutil
-import tempfile
 
 from shared.tk_models import MouserPage, raise_frame
 from shared.serial_port_controller import SerialPortController
