@@ -14,11 +14,15 @@ All UI setup is now modularized under /ui for maintainability.
 import os
 import shutil
 import tempfile
+import tkinter.font as tkFont
+
+from customtkinter import CTk
 from shared.tk_models import MouserPage, raise_frame
 from shared.serial_port_controller import SerialPortController
 from ui.root_window import create_root_window
 from ui.menu_bar import build_menu
 from ui.welcome_screen import setup_welcome_screen
+
 
 # Global app variables
 TEMP_FOLDER_NAME = "Mouser"
