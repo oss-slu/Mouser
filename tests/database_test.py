@@ -14,7 +14,8 @@ class TestUIComponents(unittest.TestCase):
 
     def tearDown(self):
         self.root.destroy()
-    
+
+    #Test if the buttons in experiment menu ui exists
     def test_buttons_exist(self):
         self.assertIsNotNone(self.experiment_menu.collection_button)
         self.assertIsNotNone(self.experiment_menu.analysis_button)
@@ -22,6 +23,7 @@ class TestUIComponents(unittest.TestCase):
         self.assertIsNotNone(self.experiment_menu.rfid_button)
         self.assertIsNotNone(self.experiment_menu.summary_button)
 
+    #Test button states
     def test_button_states(self):
         if not self.experiment_menu.all_rfid_mapped():
             self.assertEqual(self.experiment_menu.collection_button.cget("state"), "disabled")
@@ -35,7 +37,7 @@ class TestUIComponents(unittest.TestCase):
         self.experiment_menu.data_page.raise_frame()
         self.experiment_menu.analysis_page.raise_frame()
 
-
+    #Test scaling factor of the font on mac
     def test_platform_scaling(self):
         if self.root.tk.call('tk', 'windowingsystem') == 'aqua':
             default_font = self.root.option_get("font", None)
