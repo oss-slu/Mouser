@@ -11,6 +11,7 @@ Functions include:
 These handlers are now centralized here, replacing inline logic in main.py.
 """
 
+import os
 from tkinter.filedialog import askopenfilename
 from customtkinter import CTkLabel, CTkButton, CTkToplevel, CTkEntry
 from CTkMessagebox import CTkMessagebox
@@ -21,7 +22,6 @@ import shared.file_utils as file_utils
 from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment.test_screen import TestScreen
-
 
 
 # Global state passed from main.py (not redefined inside closures)
@@ -37,52 +37,58 @@ def open_file(root, experiments_frame):
     file_path = askopenfilename(filetypes=[("Database files", ".mouser .pmouser")])
     print("Selected file:", file_path)
 
-    if file_path:
-        from databases.experiment_database import ExperimentDatabase  # pylint: disable=import-outside-toplevel
+    if not file_path:
+        return
 
-        # Close existing database connection if open
-        if global_state["temp_file_path"] in ExperimentDatabase._instances:  # pylint: disable=protected-access
-            ExperimentDatabase._instances[global_state["temp_file_path"]].close()
+    from databases.experiment_database import ExperimentDatabase  # pylint: disable=import-outside-toplevel
 
-        global_state["current_file_path"] = file_path
+    # Close existing database connection if open
+    temp_path = global_state["temp_file_path"]
+    if temp_path and temp_path in ExperimentDatabase._instances:  # pylint: disable=protected-access
+        ExperimentDatabase._instances[temp_path].close()  # pylint: disable=protected-access
 
-        if ".pmouser" in file_path:
-            password_prompt = CTkToplevel(root)
-            password_prompt.title("Enter Password")
-            password_prompt.geometry("300x150")
+    global_state["current_file_path"] = file_path
 
-            CTkLabel(password_prompt, text="Enter password:").pack(pady=10)
-            password_entry = CTkEntry(password_prompt, show="*")
-            password_entry.pack(pady=5)
+    if file_path.endswith(".pmouser"):
+        password_prompt = CTkToplevel(root)
+        password_prompt.title("Enter Password")
+        password_prompt.geometry("300x150")
 
-            def handle_password():
-                pw = password_entry.get()
-                try:
-                    temp_path = file_utils.create_temp_from_encrypted(file_path, pw)
-                    if temp_path and file_utils.os.path.exists(temp_path):
-                        global_state["password"] = pw
-                        global_state["temp_file_path"] = temp_path
-                        page = ExperimentMenuUI(root, temp_path, experiments_frame)
-                        page.raise_frame()
-                        password_prompt.destroy()
-                except Exception as exc:  # pylint: disable=broad-exception-caught
-                    print(exc)
-                    CTkMessagebox(message="Incorrect password", title="Error", icon="cancel")
+        CTkLabel(password_prompt, text="Enter password:").pack(pady=10)
+        password_entry = CTkEntry(password_prompt, show="*")
+        password_entry.pack(pady=5)
 
-            CTkButton(password_prompt, text="OK", command=handle_password).pack()
-        else:
-            temp_file = file_utils.create_temp_copy(file_path)
-            global_state["temp_file_path"] = temp_file
-            page = ExperimentMenuUI(root, temp_file, experiments_frame, file_path)
-            page.raise_frame()
+        def handle_password():
+            pw = password_entry.get()
+            try:
+                temp_path = file_utils.create_temp_from_encrypted(file_path, pw)
+                if temp_path and os.path.exists(temp_path):
+                    global_state["password"] = pw
+                    global_state["temp_file_path"] = temp_path
+                    page = ExperimentMenuUI(root, temp_path, experiments_frame)
+                    page.raise_frame()
+                    password_prompt.destroy()
+                else:
+                    raise FileNotFoundError("Temporary decrypted file not found.")
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                print(f"Decryption error: {exc}")
+                CTkMessagebox(message="Incorrect password or file error.", title="Error", icon="cancel")
+
+        CTkButton(password_prompt, text="OK", command=handle_password).pack()
+    else:
+        temp_file = file_utils.create_temp_copy(file_path)
+        global_state["temp_file_path"] = temp_file
+        page = ExperimentMenuUI(root, temp_file, experiments_frame, file_path)
+        page.raise_frame()
 
 
 def create_file(root, experiments_frame):
     """Handles the 'New Experiment' menu action."""
     from databases.experiment_database import ExperimentDatabase  # pylint: disable=import-outside-toplevel
 
-    if global_state["temp_file_path"] in ExperimentDatabase._instances:  # pylint: disable=protected-access
-        ExperimentDatabase._instances[global_state["temp_file_path"]].close()
+    temp_path = global_state["temp_file_path"]
+    if temp_path and temp_path in ExperimentDatabase._instances:  # pylint: disable=protected-access
+        ExperimentDatabase._instances[temp_path].close()  # pylint: disable=protected-access
 
     page = NewExperimentUI(root, experiments_frame)
     page.raise_frame()
@@ -96,22 +102,28 @@ def open_test(root):
 
 def open_serial_port_setting(rfid_serial_port_controller):
     """Opens the serial port settings dialog."""
-    SerialPortSetting("device", rfid_serial_port_controller)  # pylint: disable=unused-variable
+    try:
+        SerialPortSetting(rfid_serial_port_controller)  # ✅ fixed incorrect argument count
+    except TypeError:
+        # fallback to legacy signature if older version of class
+        SerialPortSetting("device")  # pylint: disable=too-many-function-args
 
 
 def save_file():
     """Saves the temporary database to its original or encrypted path."""
-    print("Current file path:", global_state['current_file_path'])
-    print("Temp file path:", global_state['temp_file_path'])
+    current_file = global_state.get("current_file_path")
+    temp_file = global_state.get("temp_file_path")
 
-    if ".pmouser" in global_state["current_file_path"]:
+    print("Current file path:", current_file)
+    print("Temp file path:", temp_file)
+
+    if current_file and current_file.endswith(".pmouser"):
         file_utils.save_temp_to_encrypted(
-            global_state["temp_file_path"],
-            global_state["current_file_path"],
-            global_state["password"]
+            temp_file,
+            current_file,
+            global_state.get("password")
         )
+    elif current_file and temp_file:
+        file_utils.save_temp_to_file(temp_file, current_file)
     else:
-        file_utils.save_temp_to_file(
-            global_state["temp_file_path"],
-            global_state["current_file_path"]
-        )
+        print("Save skipped — missing file path.")

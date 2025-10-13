@@ -6,7 +6,6 @@ Applies global light/dark/system theme support and platform-specific scaling adj
 import tkinter.font as tkFont
 from customtkinter import CTk, set_appearance_mode, set_default_color_theme
 
-
 def create_root_window():
     """Creates and returns the CTk root window with global theming and scaling."""
     # Configure global CTk appearance
