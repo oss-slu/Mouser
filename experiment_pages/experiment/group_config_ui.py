@@ -1,7 +1,6 @@
 """
 Modernized Group Configuration UI.
 
-- Clean top navigation with Back button to welcome screen
 - Card-based layout consistent with the modern theme
 - Improved spacing, alignment, and color consistency
 - Inline comments for clarity (no functionality changed)
@@ -20,33 +19,10 @@ class GroupConfigUI(MouserPage):
         self.file_path = file_path
         self.menu_page = menu_page
 
-        # --- Remove inherited giant back button from MouserPage ---
-        try:
-            if hasattr(self, "back_button") and self.back_button.winfo_exists():
-                self.back_button.destroy()
-        except Exception:
-            pass
-
         # --- Base Layout ---
         self.configure(fg_color=("white", "#1a1a1a"))
         self.grid_rowconfigure((0, 1, 2, 3), weight=1)
         self.grid_columnconfigure(0, weight=1)
-
-        # --- Modern Back Button ---
-        self.back_button = CTkButton(
-            self,
-            text="← Back to Menu",
-            font=("Segoe UI Semibold", 18),
-            fg_color="#2563eb",
-            hover_color="#1e40af",
-            text_color="white",
-            corner_radius=8,
-            width=160,
-            height=40,
-            command=lambda: self.back_to_menu()
-        )
-        self.back_button.place(x=25, y=25)
-
 
         # --- Title ---
         title_font = CTkFont(family="Segoe UI", size=32, weight="bold")
@@ -116,10 +92,4 @@ class GroupConfigUI(MouserPage):
         """Display existing groups."""
         from experiment_pages.experiment.review_ui import ReviewUI
         page = ReviewUI(self.root, self.file_path, self)
-        page.raise_frame()
-
-    def back_to_menu(self):
-        """Return to main experiment menu."""
-        from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
-        page = ExperimentMenuUI(self.root, self.file_path, self)
         page.raise_frame()
