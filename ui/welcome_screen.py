@@ -1,12 +1,9 @@
 """
-Creates the welcome screen layout including logo and main navigation buttons.
-Sets up the initial frame (ExperimentsUI) and populates it with:
-- 'New Experiment' button
-- 'Open Experiment' button
-- 'Test Serials' button
+Modernized, responsive welcome screen.
 
-Each button callback uses lambda to pass necessary context (root, frame).
-Modularized from main.py for clarity and separation of UI layout.
+- Clean two-section layout (logo + buttons)
+- Fully responsive with grid weights and minimum size
+- Compatible with all screen sizes on launch
 """
 
 from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkImage
@@ -17,49 +14,61 @@ from ui.commands import create_file, open_file, open_test
 
 
 def setup_welcome_screen(root, main_frame):
+    """Builds a responsive, visually consistent welcome screen."""
     experiments_frame = ExperimentsUI(root, main_frame)
+    experiments_frame.configure(fg_color="#f5f6fa")
 
-    mouse_image = CTkImage(
-        light_image=Image.open(get_resource_path("shared/images/MouseLogo.png")),
-        size=(850, 275)
+    # --- Configure grid layout with minimum heights ---
+    experiments_frame.grid_rowconfigure(0, weight=1, minsize=150)  # Logo
+    experiments_frame.grid_rowconfigure(1, weight=2, minsize=300)  # Buttons
+    experiments_frame.grid_rowconfigure(2, weight=1, minsize=80)   # Tagline
+    experiments_frame.grid_columnconfigure(0, weight=1)
+
+    # --- Logo section ---
+    logo_path = get_resource_path("shared/images/MouseLogo.png")
+    logo_image = CTkImage(Image.open(logo_path), size=(500, 150))
+
+    logo_label = CTkLabel(
+        experiments_frame,
+        image=logo_image,
+        text="",
+        fg_color="transparent"
     )
-    mouse_label = CTkLabel(experiments_frame, image=mouse_image)
-    mouse_label.grid(row=1, column=0, pady=(20, 10))
+    logo_label.grid(row=0, column=0, pady=(40, 10), sticky="n")
 
-    welcome_frame = CTkFrame(experiments_frame)
-    welcome_frame.place(relx=0.5, rely=0.50, anchor="center")
+    # --- Button container ---
+    welcome_card = CTkFrame(
+        experiments_frame,
+        fg_color="white",
+        corner_radius=25,
+        border_width=1,
+        border_color="#d1d5db"
+    )
+    welcome_card.grid(row=1, column=0, padx=60, pady=20, sticky="nsew")
+    welcome_card.grid_rowconfigure((0, 1, 2), weight=1)
+    welcome_card.grid_columnconfigure(0, weight=1)
 
-    image_label = CTkLabel(welcome_frame, image=mouse_image, text="")
-    image_label.pack(pady=(20, 10))
+    # --- Unified button style ---
+    button_style = {
+        "corner_radius": 20,
+        "font": ("Segoe UI Semibold", 26),
+        "text_color": "white",
+        "fg_color": "#2563eb",     # Modern blue
+        "hover_color": "#1e40af",  # Slightly darker hover
+        "height": 300
+    }
 
-    height = main_frame.winfo_screenheight() / 6
-    width = main_frame.winfo_screenwidth() * 0.9
+    # --- Buttons (stay centered + expand if resized) ---
+    CTkButton(welcome_card, text="New Experiment",
+              command=lambda: create_file(root, experiments_frame),
+              **button_style).grid(row=0, column=0, padx=80, pady=15, sticky="nsew")
 
-    CTkButton(
-        welcome_frame,
-        text="New Experiment",
-        font=("Georgia", 80),
-        command=lambda: create_file(root, experiments_frame),
-        width=width,
-        height=height
-    ).pack(pady=(10, 5), padx=20, fill='x', expand=True)
+    CTkButton(welcome_card, text="Open Experiment",
+              command=lambda: open_file(root, experiments_frame),
+              **button_style).grid(row=1, column=0, padx=80, pady=15, sticky="nsew")
 
-    CTkButton(
-        welcome_frame,
-        text="Open Experiment",
-        font=("Georgia", 80),
-        command=lambda: open_file(root, experiments_frame),
-        width=width,
-        height=height
-    ).pack(pady=(5, 10), padx=20, fill='x', expand=True)
-
-    CTkButton(
-        welcome_frame,
-        text="Test Serials",
-        font=("Georgia", 80),
-        command=lambda: open_test(root),
-        width=width,
-        height=height
-    ).pack(pady=(5, 10), padx=20, fill='x', expand=True)
+    CTkButton(welcome_card, text="Test Serials",
+              command=lambda: open_test(root),
+              **button_style).grid(row=2, column=0, padx=80, pady=15, sticky="nsew")
 
     return experiments_frame
