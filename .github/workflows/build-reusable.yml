@@ -1,10 +1,12 @@
-name: Builds and Packages Mouser
+name: Build and Package Mouser Reusable
 
 on:
-  push:
-    branches:
-      - main
-      - test-exe
+  workflow_call:
+
+permissions:
+  attestations: write
+  contents: read
+  id-token: write
 
 jobs:
   build:
@@ -13,27 +15,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # os: ["windows-latest", "macos-latest"]
         os: ["windows-latest"]
 
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v4
         with:
           python-version: 3.11
 
       - run: python -m pip install --upgrade pip
+
       - run: pip install --upgrade setuptools wheel
+
       - run: pip install -r requirements.txt pyinstaller importlib-metadata sacremoses tokenizers
 
-      # Only run this on macOS as brew isn't available on Windows
-      # - run: brew install mysql pkg-config portaudio
-        # if: ${{ matrix.os == 'macos-latest' }}
-
-      # Uninstalling typing for compatibility with Python 3.11
       - run: pip uninstall -y typing
 
-      # Modify PyInstaller command to include additional data
       - run: |
           pyinstaller --noconfirm --noconsole --onedir -c \
             --copy-metadata tqdm \
@@ -50,15 +48,24 @@ jobs:
             --add-data "shared/sounds/*:shared/sounds" \
             --add-data "settings:settings" \
             main.py
-        shell: bash #run in bash to avoid syntax error
+        shell: bash
 
-      # Rename the executable on Windows for clarity
       - shell: cmd
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
           ren dist\main\main.exe Mouser.exe
+
+      - name: Zip the build directory
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: powershell
+        run: Compress-Archive -Path dist/main/* -DestinationPath dist/Mouser_${{ matrix.os }}.zip -Force
+
+      - uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: dist/Mouser_${{ matrix.os }}.zip
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: Mouser_${{ matrix.os }}
-          path: dist/main/*
+          path: dist/Mouser_${{ matrix.os }}.zip
