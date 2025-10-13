@@ -1,6 +1,6 @@
 '''Now unused select experiment ui'''
 from customtkinter import *
-from shared.tk_models import *
+from shared.tk_models import MouserPage
 from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 
 class NewExperimentButton(CTkButton):
