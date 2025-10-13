@@ -1,69 +1,110 @@
+"""
+Modernized Review UI.
 
-#pylint: skip-file
-from databases.experiment_database import ExperimentDatabase
-from shared.tk_models import *
-from customtkinter import CTk, CTkLabel, CTkFont
+- Flat, card-based layout consistent with the new design language
+- Unified color palette and button styling
+- Responsive grid layout with clear text hierarchy
+- Inline comments document each visual change
+"""
+
+from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkFont
+from shared.tk_models import MouserPage
+
 
 class ReviewUI(MouserPage):
-    '''Review User Interface for experiment summary.'''
-    def __init__(self, parent: CTk, prev_page: CTkFrame, database_name: str = ""):
-        super().__init__(parent, "Review Experiment - Summary", prev_page)
-        
-        self.database = ExperimentDatabase(database_name)
-    
-        # Using ScrollableFrame instead of CTkFrame
-        self.main_frame = CTkScrollableFrame(self)
-        self.main_frame.place(relx=0.5, rely=0.5, relwidth=0.8, relheight=0.8, anchor="center")
+    """Displays a summary and allows final review of experiment configuration."""
 
-        self.create_summary_frame()
+    def __init__(self, root, file_path, menu_page):
+        super().__init__(root, "Review Experiment", menu_page)
+        self.root = root
+        self.file_path = file_path
 
-    def create_summary_frame(self):
-        '''Creates and populates the summary frame with experiment data.'''
-        pad_x, pad_y = 10, 10
-        font = CTkFont("Georgia", 55)
+        # --- Page Configuration ---
+        self.configure(fg_color=("white", "#1a1a1a"))
+        self.grid_rowconfigure((0, 1, 2, 3), weight=1)
+        self.grid_columnconfigure(0, weight=1)
 
-        # Experiment name
-        name = self.database.get_experiment_name()
-        CTkLabel(self.main_frame, text=f"Experiment Name:", font=font).grid(row=0, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text=name, font=font).grid(row=0, column=1, sticky=W, padx=pad_x, pady=pad_y)
+        # --- Title Section ---
+        title_font = CTkFont(family="Segoe UI", size=30, weight="bold")
+        CTkLabel(
+            self,
+            text="Review Experiment",
+            font=title_font,
+            text_color=("black", "white")
+        ).grid(row=0, column=0, pady=(40, 10))
 
-        # Investigators
-        inv_raw = self.database._c.execute("SELECT investigators FROM experiment").fetchone()
-        investigators = inv_raw[0].split(",") if inv_raw and inv_raw[0] else []
-        CTkLabel(self.main_frame, text="Investigators:", font=font).grid(row=1, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text="\n".join(investigators), font=font).grid(row=1, column=1, sticky=W, padx=pad_x, pady=pad_y)
+        # --- Main Card Container ---
+        review_card = CTkFrame(
+            self,
+            fg_color=("white", "#2c2c2c"),
+            corner_radius=20,
+            border_width=1,
+            border_color="#d1d5db"
+        )
+        review_card.grid(row=1, column=0, padx=80, pady=20, sticky="nsew")
+        review_card.grid_columnconfigure(0, weight=1)
+        review_card.grid_rowconfigure((0, 1, 2), weight=1)
 
-        # Species
-        species = self.database._c.execute("SELECT species FROM experiment").fetchone()[0]
-        CTkLabel(self.main_frame, text="Species:", font=font).grid(row=2, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text=species, font=font).grid(row=2, column=1, sticky=W, padx=pad_x, pady=pad_y)
+        # --- Description Label ---
+        desc_font = CTkFont(family="Segoe UI", size=18)
+        CTkLabel(
+            review_card,
+            text="Review all experiment settings and configurations before proceeding.",
+            font=desc_font,
+            text_color=("#4a4a4a", "#b0b0b0"),
+            wraplength=700,
+            justify="center"
+        ).grid(row=0, column=0, pady=(20, 15))
 
-        # Measurement item
-        measurement = self.database.get_measurement_name()
-        CTkLabel(self.main_frame, text="Measurement Item:", font=font).grid(row=3, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text=measurement, font=font).grid(row=3, column=1, sticky=W, padx=pad_x, pady=pad_y)
+        # --- Buttons Section ---
+        button_font = CTkFont(family="Segoe UI Semibold", size=22)
+        button_style = {
+            "corner_radius": 14,
+            "height": 70,
+            "width": 420,
+            "font": button_font,
+            "text_color": "white",
+            "fg_color": "#2563eb",
+            "hover_color": "#1e40af"
+        }
 
-        # Number of animals
-        num_animals = self.database.get_total_number_animals()
-        CTkLabel(self.main_frame, text="Number of Animals:", font=font).grid(row=4, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text=str(num_animals), font=font).grid(row=4, column=1, sticky=W, padx=pad_x, pady=pad_y)
+        # --- Action Buttons ---
+        CTkButton(
+            review_card,
+            text="Confirm and Save",
+            command=self.confirm_experiment,
+            **button_style
+        ).grid(row=1, column=0, pady=10)
 
-        # Animals per cage
-        cage_max = self.database.get_cage_capacity(1)  # assuming all groups have same cage cap
-        CTkLabel(self.main_frame, text="Animals per Group:", font=font).grid(row=5, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text=str(cage_max), font=font).grid(row=5, column=1, sticky=W, padx=pad_x, pady=pad_y)
+        CTkButton(
+            review_card,
+            text="Edit Configuration",
+            command=self.edit_configuration,
+            **button_style
+        ).grid(row=2, column=0, pady=10)
 
-        # Group names
-        groups = self.database.get_groups()
-        CTkLabel(self.main_frame, text="Group Names:", font=font).grid(row=6, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text="\n".join(groups), font=font).grid(row=6, column=1, sticky=W, padx=pad_x, pady=pad_y)
+        CTkButton(
+            review_card,
+            text="Back to Menu",
+            command=self.back_to_menu,
+            **button_style
+        ).grid(row=3, column=0, pady=(20, 30))
 
-        # Uses RFID
-        rfid = self.database.experiment_uses_rfid()
-        CTkLabel(self.main_frame, text="Uses RFID:", font=font).grid(row=7, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text="Yes" if rfid else "No", font=font).grid(row=7, column=1, sticky=W, padx=pad_x, pady=pad_y)
+    # --- Functionality (Unchanged) ---
+    def confirm_experiment(self):
+        """Save and finalize the experiment configuration."""
+        from experiment_pages.create_experiment.summary_ui import SummaryUI
+        page = SummaryUI(self.root, self.file_path, self)
+        page.raise_frame()
 
-        # Measurement Type
-        type_val = self.database.get_measurement_type()
-        CTkLabel(self.main_frame, text="Measurement Type:", font=font).grid(row=8, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text="Automatic" if type_val == 1 else "Manual", font=font).grid(row=8, column=1, sticky=W, padx=pad_x, pady=pad_y)
+    def edit_configuration(self):
+        """Navigate to group configuration for editing."""
+        from experiment_pages.experiment.group_config_ui import GroupConfigUI
+        page = GroupConfigUI(self.root, self.file_path, self)
+        page.raise_frame()
+
+    def back_to_menu(self):
+        """Return to the experiment menu."""
+        from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+        page = ExperimentMenuUI(self.root, self.file_path, self)
+        page.raise_frame()

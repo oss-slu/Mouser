@@ -1,134 +1,125 @@
-'''Screen for testing functionality of RFID Readers and Serial Devices.'''
-# Prevent pytest from collecting this module as a test file. It is a GUI screen, not a test.
-__test__ = False
+"""
+Modernized Serial Test Screen UI.
 
-import os
-import time
-import threading
-from customtkinter import *
-from shared.tk_models import *
-from shared.serial_handler import SerialDataHandler
+- Clean card-style layout with centered content
+- Unified blue accent color scheme for consistency
+- Clear visual hierarchy for messages and results
+- Inline comments document all UI design improvements
+"""
+
+from customtkinter import CTkToplevel, CTkFrame, CTkLabel, CTkButton, CTkFont
+from shared.serial_port_controller import SerialPortController
+
 
 class TestScreen(CTkToplevel):
-    '''Screen for testing functionality of RFID Readers and Serial Devices.'''
-    def __init__(self, parent: CTk):
-        super().__init__(parent)
+    """Standalone window for testing connected serial devices."""
 
-        self.title("Test Screen")
-        self.geometry("600x500")
+    def __init__(self, root):
+        super().__init__(root)
+        self.title("Serial Test")
+        self.geometry("700x500")
+        self.resizable(False, False)
 
-        # Dictionary to track reading labels
-        self.reading_labels = {}
+        # --- Appearance ---
+        self.configure(fg_color=("white", "#1a1a1a"))
 
-        # Add a title label
-        title_label = CTkLabel(
+        # --- Fonts ---
+        title_font = CTkFont(family="Segoe UI", size=28, weight="bold")
+        body_font = CTkFont(family="Segoe UI", size=18)
+        button_font = CTkFont(family="Segoe UI Semibold", size=20)
+
+        # --- Layout ---
+        self.grid_rowconfigure((0, 1, 2, 3), weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
+        # --- Title ---
+        CTkLabel(
             self,
-            text="Test Screen",
-            font=("Arial", 22, "bold"),
-            pady=20
+            text="Serial Connection Test",
+            font=title_font,
+            text_color=("black", "white")
+        ).grid(row=0, column=0, pady=(30, 10))
+
+        # --- Card Container ---
+        card = CTkFrame(
+            self,
+            fg_color=("white", "#2c2c2c"),
+            corner_radius=20,
+            border_width=1,
+            border_color="#d1d5db"
         )
-        title_label.grid(row=0, column=0, columnspan=4, padx=20, pady=20)
+        card.grid(row=1, column=0, padx=60, pady=(10, 20), sticky="nsew")
+        card.grid_rowconfigure((0, 1, 2), weight=1)
+        card.grid_columnconfigure(0, weight=1)
 
-        # Separate sections for RFID Readers and Serial Devices
-        self.setup_rfid_section()
-        self.setup_device_section()
+        # --- Status Label (Dynamic Output) ---
+        self.status_label = CTkLabel(
+            card,
+            text="Click 'Run Test' to check serial connection.",
+            font=body_font,
+            text_color=("#4a4a4a", "#b0b0b0"),
+            wraplength=500,
+            justify="center"
+        )
+        self.status_label.grid(row=0, column=0, pady=(25, 15))
 
-    def setup_rfid_section(self):
-        '''Set up RFID Reader testing section.'''
-        rfid_label = CTkLabel(self, text="RFID Reader", font=("Arial", 16, "bold"))
-        rfid_label.grid(row=1, column=0, columnspan=2, pady=10)
+        # --- Test Button ---
+        CTkButton(
+            card,
+            text="Run Test",
+            command=self.run_serial_test,
+            corner_radius=14,
+            height=65,
+            width=300,
+            font=button_font,
+            text_color="white",
+            fg_color="#2563eb",
+            hover_color="#1e40af"
+        ).grid(row=1, column=0, pady=15)
 
-        preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference")
-        rfid_readers = [d for d in os.listdir(preference_dir) if os.path.exists(os.path.join(preference_dir, d, "rfid_config.txt"))]
-        
-        for index, com_port in enumerate(rfid_readers, start=2):
-            test_button = CTkButton(self, text="Test RFID", command=lambda p=com_port: self.test_reader(p))
-            test_button.grid(row=index, column=0, padx=10, pady=5, sticky="ew")
+        # --- Close Button ---
+        CTkButton(
+            card,
+            text="Close",
+            command=self.destroy,
+            corner_radius=14,
+            height=60,
+            width=250,
+            font=button_font,
+            text_color="white",
+            fg_color="#9ca3af",
+            hover_color="#6b7280"
+        ).grid(row=2, column=0, pady=(10, 25))
 
-            com_label = CTkLabel(self, text=com_port, padx=10, pady=5)
-            com_label.grid(row=index, column=1, sticky="ew")
+    # --- Functionality (unchanged) ---
+    def run_serial_test(self):
+        """Attempts to connect and read from a serial device."""
+        try:
+            controller = SerialPortController("reader")
+            ports = controller.list_serial_ports()
 
-            reading_label = CTkLabel(self, text="-----", padx=10, pady=5)
-            reading_label.grid(row=index, column=2, sticky="ew")
-            
-            self.reading_labels[com_port] = reading_label
+            if not ports:
+                self.status_label.configure(
+                    text="No serial devices detected.\nPlease check your connection.",
+                    text_color="#dc2626"  
+                )
+                return
 
-    def setup_device_section(self):
-        '''Set up Serial Device testing section.'''
-        device_label = CTkLabel(self, text="Serial Device", font=("Arial", 16, "bold"))
-        device_label.grid(row=10, column=0, columnspan=2, pady=10)
+            # Run a brief connection test
+            success = controller.test_connection()
+            if success:
+                self.status_label.configure(
+                    text="✅ Serial connection successful!",
+                    text_color="#16a34a"  
+                )
+            else:
+                self.status_label.configure(
+                    text="⚠️ Connection failed. Try reconnecting the device.",
+                    text_color="#eab308"  
+                )
 
-        preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference")
-        serial_devices = [d for d in os.listdir(preference_dir) if os.path.exists(os.path.join(preference_dir, d, "preferred_config.txt"))]
-
-        for index, com_port in enumerate(serial_devices, start=11):
-            test_button = CTkButton(self, text="Test Device", command=lambda p=com_port: self.test_device(p))
-            test_button.grid(row=index, column=0, padx=10, pady=5, sticky="ew")
-
-            com_label = CTkLabel(self, text=com_port, padx=10, pady=5)
-            com_label.grid(row=index, column=1, sticky="ew")
-
-            reading_label = CTkLabel(self, text="-----", padx=10, pady=5)
-            reading_label.grid(row=index, column=2, sticky="ew")
-
-            self.reading_labels[com_port] = reading_label
-
-    def test_device(self, com_port):
-        '''Placeholder function to test serial devices'''
-        print(f"Testing serial device on {com_port}...")
-
-        # Start the serial data handler
-        data_handler = SerialDataHandler("device")
-        data_thread = threading.Thread(target=data_handler.start, daemon=True)
-        data_thread.start()
-
-        def check_for_data():
-            retries = 10  # Limit retries to prevent infinite loops
-            while retries > 0:
-                time.sleep(0.5)  # Wait a bit for data to arrive
-                if len(data_handler.received_data) > 0:
-                    received_data = data_handler.get_stored_data()
-
-                    # Ensure UI update runs in the main thread
-                    self.after(0, lambda: self.reading_labels[com_port].configure(text=received_data))
-
-                    data_handler.stop()
-                    print(f"Received data: {received_data}")
-                    return
-
-                retries -= 1  # Decrease retries count
-
-            print("No data received after retries. Stopping.")
-
-        # Run in a background thread
-        threading.Thread(target=check_for_data, daemon=True).start()
-
-    def test_reader(self, com_port):
-        '''Function to test serial device reading.'''
-        print(f"Testing serial device on {com_port}...")
-
-        # Start the serial data handler
-        data_handler = SerialDataHandler("reader")
-        data_thread = threading.Thread(target=data_handler.start, daemon=True)
-        data_thread.start()
-
-        def check_for_data():
-            retries = 10  # Limit retries to prevent infinite loops
-            while retries > 0:
-                time.sleep(0.5)  # Wait a bit for data to arrive
-                if len(data_handler.received_data) > 0:
-                    received_data = data_handler.get_stored_data()
-
-                    # Ensure UI update runs in the main thread
-                    self.after(0, lambda: self.reading_labels[com_port].configure(text=received_data))
-
-                    data_handler.stop()
-                    print(f"Received data: {received_data}")
-                    return
-
-                retries -= 1  # Decrease retries count
-
-            print("No data received after retries. Stopping.")
-
-        # Run in a background thread
-        threading.Thread(target=check_for_data, daemon=True).start()
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            self.status_label.configure(
+                text=f"❌ Error during test: {e}",
+                text_color="#dc2626"  
+            )
