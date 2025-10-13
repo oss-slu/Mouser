@@ -3,7 +3,7 @@ from customtkinter import *
 from shared.tk_models import *
 from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 
-class NewExperimentButton(CTkButton):# pylint: disable= undefined-variable
+class NewExperimentButton(CTkButton):
     '''New Experiment Button widgit'''
     def __init__(self, parent: CTk, page: CTkFrame):
         super().__init__(page, text="Create New Experiment", compound=TOP,
@@ -20,7 +20,7 @@ class NewExperimentButton(CTkButton):# pylint: disable= undefined-variable
         '''Raises next page.'''
         self.next_page.raise_frame()
 
-class ExperimentsUI(MouserPage): #pylint: disable= undefined-variable
+class ExperimentsUI(MouserPage):
     '''Experiments UI'''
     def __init__(self, parent: CTk, prev_page: CTkFrame = None):
         super().__init__(parent, "Mouser")

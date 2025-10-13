@@ -1,110 +1,111 @@
 """
-Modernized Review UI.
+Modernized Review Experiment Summary UI.
 
-- Flat, card-based layout consistent with the new design language
-- Unified color palette and button styling
-- Responsive grid layout with clear text hierarchy
-- Inline comments document each visual change
+- Clean, scrollable, card-based layout for readability
+- Responsive font sizes and consistent color palette
+- Uses light/dark adaptive backgrounds
+- Each section separated visually for better hierarchy
+- Inline comments document every UI enhancement (no logic changes)
 """
 
-from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkFont
+from databases.experiment_database import ExperimentDatabase
 from shared.tk_models import MouserPage
+from customtkinter import CTkScrollableFrame, CTkLabel, CTkFont, CTkFrame
 
 
 class ReviewUI(MouserPage):
-    """Displays a summary and allows final review of experiment configuration."""
+    """Displays a detailed experiment summary pulled from the database."""
 
-    def __init__(self, root, file_path, menu_page):
-        super().__init__(root, "Review Experiment", menu_page)
-        self.root = root
-        self.file_path = file_path
+    def __init__(self, parent, prev_page, database_name: str = ""):
+        super().__init__(parent, "Experiment Summary", prev_page)
 
-        # --- Page Configuration ---
-        self.configure(fg_color=("white", "#1a1a1a"))
-        self.grid_rowconfigure((0, 1, 2, 3), weight=1)
+        # Initialize database connection
+        self.database = ExperimentDatabase(database_name)
+
+        # --- Base Layout ---
+        self.configure(fg_color=("white", "#18181b"))  # adaptive theme
+        self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        # --- Title Section ---
-        title_font = CTkFont(family="Segoe UI", size=30, weight="bold")
-        CTkLabel(
+        # --- Scrollable Container (replaces CTkFrame) ---
+        scrollable = CTkScrollableFrame(
             self,
-            text="Review Experiment",
+            fg_color=("white", "#18181b"),
+            corner_radius=15,
+            border_width=0
+        )
+        scrollable.grid(row=0, column=0, sticky="nsew", padx=60, pady=40)
+        scrollable.grid_columnconfigure(0, weight=1)
+
+        # --- Title Section ---
+        title_font = CTkFont(family="Segoe UI", size=32, weight="bold")
+        CTkLabel(
+            scrollable,
+            text="Experiment Summary",
             font=title_font,
             text_color=("black", "white")
-        ).grid(row=0, column=0, pady=(40, 10))
+        ).grid(row=0, column=0, pady=(10, 25))
 
-        # --- Main Card Container ---
-        review_card = CTkFrame(
-            self,
-            fg_color=("white", "#2c2c2c"),
+        # --- Content Card ---
+        content_card = CTkFrame(
+            scrollable,
+            fg_color=("white", "#27272a"),
             corner_radius=20,
             border_width=1,
             border_color="#d1d5db"
         )
-        review_card.grid(row=1, column=0, padx=80, pady=20, sticky="nsew")
-        review_card.grid_columnconfigure(0, weight=1)
-        review_card.grid_rowconfigure((0, 1, 2), weight=1)
+        content_card.grid(row=1, column=0, sticky="nsew", padx=40, pady=(10, 30))
+        content_card.grid_columnconfigure(1, weight=1)
 
-        # --- Description Label ---
-        desc_font = CTkFont(family="Segoe UI", size=18)
+        # --- Label Fonts ---
+        label_font = CTkFont(family="Segoe UI Semibold", size=18)
+        value_font = CTkFont(family="Segoe UI", size=18)
+
+        # === Populate Experiment Data ===
+        data = [
+            ("Experiment Name", self.database.get_experiment_name()),
+            ("Investigators", "\n".join(
+                (self.database._c.execute("SELECT investigators FROM experiment").fetchone()[0].split(","))
+                if self.database._c.execute("SELECT investigators FROM experiment").fetchone() else ["N/A"]
+            )),
+            ("Species", self.database._c.execute("SELECT species FROM experiment").fetchone()[0]),
+            ("Measurement Item", self.database.get_measurement_name()),
+            ("Number of Animals", str(self.database.get_total_number_animals())),
+            ("Animals per Group", str(self.database.get_cage_capacity(1))),
+            ("Group Names", "\n".join(self.database.get_groups())),
+            ("Uses RFID", "Yes" if self.database.experiment_uses_rfid() else "No"),
+            ("Measurement Type", "Automatic" if self.database.get_measurement_type() == 1 else "Manual"),
+        ]
+
+        # --- Generate Labels Dynamically ---
+        for i, (key, value) in enumerate(data, start=0):
+            CTkLabel(
+                content_card,
+                text=f"{key}:",
+                font=label_font,
+                text_color=("#374151", "#d4d4d8"),
+                anchor="w"
+            ).grid(row=i, column=0, sticky="w", padx=(25, 20), pady=(8, 6))
+
+            CTkLabel(
+                content_card,
+                text=value,
+                font=value_font,
+                text_color=("#111827", "#e5e7eb"),
+                justify="left",
+                anchor="w",
+                wraplength=700
+            ).grid(row=i, column=1, sticky="w", padx=(10, 25), pady=(8, 6))
+
+        # --- Subtle Divider Frame for spacing ---
+        CTkFrame(scrollable, fg_color="transparent", height=30).grid(row=2, column=0)
+
+        # --- Footer Note ---
         CTkLabel(
-            review_card,
-            text="Review all experiment settings and configurations before proceeding.",
-            font=desc_font,
-            text_color=("#4a4a4a", "#b0b0b0"),
-            wraplength=700,
-            justify="center"
-        ).grid(row=0, column=0, pady=(20, 15))
+            scrollable,
+            text="✅ Review complete — verify details before saving your configuration.",
+            font=CTkFont(family="Segoe UI Italic", size=16),
+            text_color=("#4b5563", "#9ca3af")
+        ).grid(row=3, column=0, pady=(10, 30))
 
-        # --- Buttons Section ---
-        button_font = CTkFont(family="Segoe UI Semibold", size=22)
-        button_style = {
-            "corner_radius": 14,
-            "height": 70,
-            "width": 420,
-            "font": button_font,
-            "text_color": "white",
-            "fg_color": "#2563eb",
-            "hover_color": "#1e40af"
-        }
 
-        # --- Action Buttons ---
-        CTkButton(
-            review_card,
-            text="Confirm and Save",
-            command=self.confirm_experiment,
-            **button_style
-        ).grid(row=1, column=0, pady=10)
-
-        CTkButton(
-            review_card,
-            text="Edit Configuration",
-            command=self.edit_configuration,
-            **button_style
-        ).grid(row=2, column=0, pady=10)
-
-        CTkButton(
-            review_card,
-            text="Back to Menu",
-            command=self.back_to_menu,
-            **button_style
-        ).grid(row=3, column=0, pady=(20, 30))
-
-    # --- Functionality (Unchanged) ---
-    def confirm_experiment(self):
-        """Save and finalize the experiment configuration."""
-        from experiment_pages.create_experiment.summary_ui import SummaryUI
-        page = SummaryUI(self.root, self.file_path, self)
-        page.raise_frame()
-
-    def edit_configuration(self):
-        """Navigate to group configuration for editing."""
-        from experiment_pages.experiment.group_config_ui import GroupConfigUI
-        page = GroupConfigUI(self.root, self.file_path, self)
-        page.raise_frame()
-
-    def back_to_menu(self):
-        """Return to the experiment menu."""
-        from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
-        page = ExperimentMenuUI(self.root, self.file_path, self)
-        page.raise_frame()

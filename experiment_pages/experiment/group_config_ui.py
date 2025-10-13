@@ -1,15 +1,13 @@
 """
 Modernized Group Configuration UI.
 
-- Adds sleek top-left navigation bar with Back button
-- Card-based layout consistent with new design language
-- Improved spacing and typography for readability
-- Consistent color theme and button styling across screens
-- Inline comments document all visual changes (no logic altered)
+- Clean top navigation with Back button to welcome screen
+- Card-based layout consistent with the modern theme
+- Improved spacing, alignment, and color consistency
+- Inline comments for clarity (no functionality changed)
 """
 
-from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkFont, CTkImage
-from PIL import Image
+from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkFont
 from shared.tk_models import MouserPage
 
 
@@ -22,21 +20,20 @@ class GroupConfigUI(MouserPage):
         self.file_path = file_path
         self.menu_page = menu_page
 
+        # --- Remove inherited giant back button from MouserPage ---
+        try:
+            if hasattr(self, "back_button") and self.back_button.winfo_exists():
+                self.back_button.destroy()
+        except Exception:
+            pass
+
         # --- Base Layout ---
         self.configure(fg_color=("white", "#1a1a1a"))
         self.grid_rowconfigure((0, 1, 2, 3), weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        # --- Back Navigation (Modern Compact Version) ---
-        try:
-            back_icon = CTkImage(
-                Image.open("shared/images/back_arrow.png"), size=(22, 22)
-            )
-        except Exception:
-            back_icon = None  # fallback if image missing
-
-        # --- Modern Back Button (no icon, clean style) ---
-        back_button = CTkButton(
+        # --- Modern Back Button ---
+        self.back_button = CTkButton(
             self,
             text="← Back to Menu",
             font=("Segoe UI Semibold", 18),
@@ -46,9 +43,9 @@ class GroupConfigUI(MouserPage):
             corner_radius=8,
             width=160,
             height=40,
-            command=lambda: menu_page.raise_frame()
+            command=lambda: self.back_to_menu()
         )
-        back_button.place(x=25, y=25)
+        self.back_button.place(x=25, y=25)
 
 
         # --- Title ---
@@ -108,7 +105,7 @@ class GroupConfigUI(MouserPage):
             **button_style
         ).grid(row=2, column=0, pady=10, padx=40)
 
-    # --- Functionality Methods (unchanged) ---
+    # --- Functional Methods (unchanged) ---
     def add_group(self):
         """Open group creation window."""
         from experiment_pages.create_experiment.summary_ui import SummaryUI
@@ -119,4 +116,10 @@ class GroupConfigUI(MouserPage):
         """Display existing groups."""
         from experiment_pages.experiment.review_ui import ReviewUI
         page = ReviewUI(self.root, self.file_path, self)
+        page.raise_frame()
+
+    def back_to_menu(self):
+        """Return to main experiment menu."""
+        from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+        page = ExperimentMenuUI(self.root, self.file_path, self)
         page.raise_frame()

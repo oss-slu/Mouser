@@ -22,6 +22,8 @@ from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment.test_screen import TestScreen
 
+
+
 # Global state passed from main.py (not redefined inside closures)
 global_state = {
     "temp_file_path": None,

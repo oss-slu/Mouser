@@ -166,10 +166,10 @@ class NewExperimentUI(MouserPage):  # pylint: disable= undefined-variable
         # Enable only when all five key fields have valid input
         if exper_name and species and animal_num and group_num and num_per_cage:
             self.next_button.configure(state="normal")
-            print("✅ Next button enabled — ready to continue.")
+            print("Next button enabled — ready to continue.")
         else:
             self.next_button.configure(state="disabled")
-            print("⚠️ Waiting for required inputs...")
+            print("Waiting for required inputs...")
 
     def set_next_button(self, next_page):
         """Kept for backward compatibility; now routed to create_next_button()."""
