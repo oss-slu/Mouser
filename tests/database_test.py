@@ -5,7 +5,7 @@ from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from databases.experiment_database import ExperimentDatabase
 
-#Test class for UI components
+'''Test class for UI components'''
 class TestUIComponents(unittest.TestCase):
    def setUp(self):
        self.root = CTk()
@@ -17,7 +17,7 @@ class TestUIComponents(unittest.TestCase):
        self.root.destroy()
 
 
-   #Test if the buttons in experiment menu ui exists
+   '''Test if the buttons in experiment menu ui exists'''
    def test_buttons_exist(self):
        self.assertIsNotNone(self.experiment_menu.collection_button)
        self.assertIsNotNone(self.experiment_menu.analysis_button)
@@ -26,7 +26,7 @@ class TestUIComponents(unittest.TestCase):
        self.assertIsNotNone(self.experiment_menu.summary_button)
 
 
-   #Test button states
+   '''Test button states'''
    def test_button_states(self):
        if not self.experiment_menu.all_rfid_mapped():
            self.assertEqual(self.experiment_menu.collection_button.cget("state"), "disabled")
@@ -39,12 +39,13 @@ class TestUIComponents(unittest.TestCase):
        self.experiment_menu.analysis_page.raise_frame()
 
 
-   #Test scaling factor of the font on mac
+   '''Test scaling factor of the font on mac'''
    def test_platform_scaling(self):
        if self.root.tk.call('tk', 'windowingsystem') == 'aqua':
            default_font = self.root.option_get("font", None)
            self.assertTrue(default_font)
 
+   '''Test to check if new_experiment ui exist'''
    def test_new_experiment_ui(self):
        self.assertIsNotNone(self.new_experiment)
 
