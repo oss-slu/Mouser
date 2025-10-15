@@ -58,7 +58,8 @@ class ExperimentDatabase:
         except sqlite3.OperationalError:
             pass
 
-    def setup_experiment(self, name, species, uses_rfid, num_animals, num_groups, cage_max, measurement_type, experiment_id, investigators, measurement):
+    def setup_experiment(self, name, species, uses_rfid, num_animals, num_groups, cage_max, 
+                         measurement_type, experiment_id, investigators, measurement):
         '''Initializes Experiment'''
         investigators_str = ', '.join(investigators)  # Convert list to comma-separated string
         self._c.execute('''INSERT INTO experiment (name, species, uses_rfid, num_animals,
@@ -540,7 +541,8 @@ class ExperimentDatabase:
 
 
     def export_to_csv(self, directory):
-        '''Exports all relevant tables in the database to a folder named after the experiment in the specified directory.'''
+        '''Exports all relevant tables in the database to a folder named
+          after the experiment in the specified directory.'''
         import pandas as pd
 
         # Get the experiment name
@@ -601,7 +603,8 @@ class ExperimentDatabase:
             return None
 
     def randomize_cages(self):
-        '''Automatically and randomly sorts animals into cages within their groups, respecting cage capacity limits.'''
+        '''Automatically and randomly sorts animals into cages within 
+        their groups, respecting cage capacity limits.'''
         import random
 
         try:
