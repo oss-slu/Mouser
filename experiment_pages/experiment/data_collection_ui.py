@@ -1,18 +1,22 @@
-'''Data collection ui module.'''
+'''Data collection UI module.'''
 from datetime import date
-from tkinter.ttk import Treeview, Style
+import threading
 import time
+import re
+import traceback
+
 from customtkinter import *
-from shared.tk_models import *
 from CTkMessagebox import CTkMessagebox
+
+from shared.tk_models import *
 from databases.experiment_database import ExperimentDatabase
-from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
+from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND, save_temp_to_file
 from shared.audio import AudioManager
 from shared.scrollable_frame import ScrolledFrame
 from shared.serial_handler import SerialDataHandler
-from shared.file_utils import save_temp_to_file
-import threading
 from shared.flash_overlay import FlashOverlay
+
 
 #pylint: disable= undefined-variable
 class DataCollectionUI(MouserPage):
@@ -234,8 +238,9 @@ class DataCollectionUI(MouserPage):
                         received_rfid = self.rfid_reader.get_stored_data()
 
                         if received_rfid:
-                            import re
-                            received_rfid = re.sub(r"[^\w]", "", received_rfid)  # Keep only alphanumeric characters, gets rid of spaces and encrypted greeting messages
+                            # Keep only alphanumeric characters, 
+                            # gets rid of spaces and encrypted greeting messages
+                            received_rfid = re.sub(r"[^\w]", "", received_rfid)  
 
                             if not received_rfid:
                                 print("⚠️ Empty RFID scan detected, ignoring...")
@@ -254,7 +259,7 @@ class DataCollectionUI(MouserPage):
                                     text_color="black"
                                 )
                                 AudioManager.play(SUCCESS_SOUND)
-                                self.after(600, lambda: self.select_animal_by_id(animal_id))
+                                self.after(600, lambda a=animal_id: self.select_animal_by_id(a))
                             else:
                                 self.raise_warning("No animal found for scanned RFID.")
 
@@ -312,7 +317,7 @@ class DataCollectionUI(MouserPage):
         for child in self.table.get_children():
             item_values = self.table.item(child)["values"]
             if str(item_values[0]) == str(animal_id):  # Ensure IDs match as strings
-                self.after(0, lambda: self._open_changer_on_main_thread(child))
+                self.after(0, lambda c = child: self._open_changer_on_main_thread(c))
                 return
 
         print(f"⚠️ Animal ID {animal_id} not found in table.")
@@ -384,12 +389,10 @@ class DataCollectionUI(MouserPage):
                 except Exception as save_error:
                     print(f"Autosave failed: {save_error}")
                     print(f"Error type: {type(save_error)}")
-                    import traceback
                     print(f"Full traceback: {traceback.format_exc()}")
         except Exception as e:
             self.raise_warning("Failed to save data for animal.")
             print(f"Top level error: {e}")
-            import traceback
             print(f"Full traceback: {traceback.format_exc()}")
 
     def get_values_for_date(self):
@@ -425,9 +428,9 @@ class DataCollectionUI(MouserPage):
 
 
     def press_back_to_menu_button(self):
+        '''Stops listening and navigates to the new page in ExperimentMenuUI'''
         self.stop_listening()
 
-        from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
         new_page = ExperimentMenuUI(self.parent, self.current_file_path, self.menu_page, self.current_file_path)
         new_page.raise_frame()
 
@@ -444,7 +447,8 @@ class ChangeMeasurementsDialog():
         self.measurement_items = str(measurement_items)  # Ensure measurement_items is a single string
         self.database = data_collection.database  # Reference to the updated database
         self.uses_rfid = self.database.experiment_uses_rfid() == 1
-        self.auto_animal_ids = data_collection.database.get_all_animals_rfid()  # Get all animal IDs from the database
+        # Get all animal IDs from the database
+        self.auto_animal_ids = data_collection.database.get_all_animals_rfid()  
 
         if not self.uses_rfid:
             # Get list of all animal IDs from the table
@@ -497,7 +501,7 @@ class ChangeMeasurementsDialog():
 
                 # Start data handling in a separate thread
                 data_handler = SerialDataHandler("device")
-                data_thread = threading.Thread(target=data_handler.start)
+                data_thread = threading.Thread(target=lambda d=d: d.start())
                 data_thread.start()
 
                 # Automated handling of data input
@@ -507,7 +511,10 @@ class ChangeMeasurementsDialog():
                         current_index = self.animal_ids.index(animal_id)
 
                         while current_index < len(self.animal_ids) and self.thread_running:
-                            if len(data_handler.received_data) >= 2 and data_handler.received_data != " " and data_handler.received_data is not None and data_handler.received_data != 0:
+                            if (len(data_handler.received_data) >= 2
+                                 and data_handler.received_data != " " 
+                                 and data_handler.received_data is not None 
+                                 and data_handler.received_data != 0):
                                 received_data = data_handler.get_stored_data()
                                 entry.insert(1, received_data)
                                 data_handler.stop()
