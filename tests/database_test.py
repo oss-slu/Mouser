@@ -7,47 +7,47 @@ from databases.experiment_database import ExperimentDatabase
 
 '''Test class for UI components'''
 class TestUIComponents(unittest.TestCase):
-   def setUp(self):
-       self.root = CTk()
-       self.experiment_menu = ExperimentMenuUI(self.root, "test_file.mouser")
-       self.new_experiment = NewExperimentUI(self.root)
+    def setUp(self):
+        self.root = CTk()
+        self.experiment_menu = ExperimentMenuUI(self.root, "test_file.mouser")
+        self.new_experiment = NewExperimentUI(self.root)
 
 
-   def tearDown(self):
-       self.root.destroy()
+    def tearDown(self):
+        self.root.destroy()
 
 
-   '''Test if the buttons in experiment menu ui exists'''
-   def test_buttons_exist(self):
-       self.assertIsNotNone(self.experiment_menu.collection_button)
-       self.assertIsNotNone(self.experiment_menu.analysis_button)
-       self.assertIsNotNone(self.experiment_menu.group_button)
-       self.assertIsNotNone(self.experiment_menu.rfid_button)
-       self.assertIsNotNone(self.experiment_menu.summary_button)
+    '''Test if the buttons in experiment menu ui exists'''
+    def test_buttons_exist(self):
+        self.assertIsNotNone(self.experiment_menu.collection_button)
+        self.assertIsNotNone(self.experiment_menu.analysis_button)
+        self.assertIsNotNone(self.experiment_menu.group_button)
+        self.assertIsNotNone(self.experiment_menu.rfid_button)
+        self.assertIsNotNone(self.experiment_menu.summary_button)
 
 
-   '''Test button states'''
-   def test_button_states(self):
-       if not self.experiment_menu.all_rfid_mapped():
-           self.assertEqual(self.experiment_menu.collection_button.cget("state"), "disabled")
-           self.assertEqual(self.experiment_menu.analysis_button.cget("state"), "disabled")
-       else:
-           self.assertEqual(self.experiment_menu.rfid_button.cget("state"), "disabled")
+    '''Test button states'''
+    def test_button_states(self):
+        if not self.experiment_menu.all_rfid_mapped():
+            self.assertEqual(self.experiment_menu.collection_button.cget("state"), "disabled")
+            self.assertEqual(self.experiment_menu.analysis_button.cget("state"), "disabled")
+        else:
+            self.assertEqual(self.experiment_menu.rfid_button.cget("state"), "disabled")
 
-   def test_frame_navigation(self):
-       self.experiment_menu.data_page.raise_frame()
-       self.experiment_menu.analysis_page.raise_frame()
+    def test_frame_navigation(self):
+        self.experiment_menu.data_page.raise_frame()
+        self.experiment_menu.analysis_page.raise_frame()
 
 
-   '''Test scaling factor of the font on mac'''
-   def test_platform_scaling(self):
-       if self.root.tk.call('tk', 'windowingsystem') == 'aqua':
-           default_font = self.root.option_get("font", None)
-           self.assertTrue(default_font)
+    '''Test scaling factor of the font on mac'''
+    def test_platform_scaling(self):
+        if self.root.tk.call('tk', 'windowingsystem') == 'aqua':
+            default_font = self.root.option_get("font", None)
+            self.assertTrue(default_font)
 
-   '''Test to check if new_experiment ui exist'''
-   def test_new_experiment_ui(self):
-       self.assertIsNotNone(self.new_experiment)
+    '''Test to check if new_experiment ui exist'''
+    def test_new_experiment_ui(self):
+        self.assertIsNotNone(self.new_experiment)
 
 class TestDatabaseSetup:
     '''Test Basic Setup of Database'''
