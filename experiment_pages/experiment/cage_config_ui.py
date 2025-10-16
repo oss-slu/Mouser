@@ -1,12 +1,13 @@
 '''Contains cage configuration page and behaviour.'''
+import traceback
 from customtkinter import *
-from shared.tk_models import *
 from CTkMessagebox import CTkMessagebox
+from shared.tk_models import *
 from shared.scrollable_frame import ScrolledFrame
-from databases.database_controller import DatabaseController
 from shared.audio import AudioManager
-from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
-from shared.file_utils import save_temp_to_file
+from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND, save_temp_to_file
+from databases.database_controller import DatabaseController
+from experiment_pages.mouser_page import MouserPage
 
 class CageConfigurationUI(MouserPage):
     '''The Frame that allows user to configure the cages.'''
@@ -171,7 +172,8 @@ class CageConfigurationUI(MouserPage):
         '''Calls database's autosort function after user confirmation.'''
         confirm = CTkMessagebox(
             title= "Confirm AutoSort",
-            message= "Are you sure you want to AutoSort? \nThis will remove measurements used to sort from the database.",
+            message= "Are you sure you want to AutoSort? \n" 
+            "This will remove measurements used to sort from the database.",
             option_1="No",
             option_2="Yes"
         )
@@ -187,7 +189,7 @@ class CageConfigurationUI(MouserPage):
             self.raise_warning("Please select exactly two animals to swap.")
             return
 
-        animal_id1, animal_id2 = self.selected_animals
+        animal_id1, animal_id2 = list(self.selected_animals)
 
         # Get the current cages through the database controller
         cage1 = self.db.get_animal_current_cage(animal_id1)
@@ -224,7 +226,8 @@ class CageConfigurationUI(MouserPage):
         # Check if moving would exceed cage maximum
         target_cage_count = len(self.db.get_animals_in_group(target_cage))
         if target_cage_count + len(self.selected_animals) > self.db.get_cage_max():
-            self.raise_warning(f"Moving these animals would exceed the maximum capacity of {self.db.get_cage_max()}.")
+            self.raise_warning(f"Moving these animals would exceed "
+                               f"the maximum capacity of {self.db.get_cage_max()}.")
             return
 
         # Track if any animals were actually moved
@@ -267,7 +270,7 @@ class CageConfigurationUI(MouserPage):
         label.grid(row=0, column=0, padx=10, pady=10)
 
         ok_button = CTkButton(message_window, text="OK", width=10,
-                            command=lambda: message_window.destroy())
+                            command= message_window.destroy())
         ok_button.grid(row=2, column=0, padx=10, pady=10)
 
         AudioManager.play(ERROR_SOUND)
@@ -277,7 +280,7 @@ class CageConfigurationUI(MouserPage):
         '''Saves updated values to database.'''
         if self.check_num_in_cage_allowed():
             self.db.update_experiment()
-            raise_frame(self.prev_page)
+            self.raise_frame(self.prev_page)
         else:
             self.raise_warning(f'Number of animals in a group must not exceed {self.db.get_cage_max()}')
 
@@ -295,9 +298,8 @@ class CageConfigurationUI(MouserPage):
             save_temp_to_file(current_file, self.file_path)
             print("Save successful!")
 
-        except Exception as e:
+        except FileNotFoundError as e:
             print(f"Error during save: {e}")
-            import traceback
             print(f"Full traceback: {traceback.format_exc()}")
 
     def check_num_in_cage_allowed(self):

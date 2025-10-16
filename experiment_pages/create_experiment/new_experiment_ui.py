@@ -6,7 +6,7 @@ from shared.scrollable_frame import ScrolledFrame
 from experiment_pages.experiment.group_config_ui import GroupConfigUI
 from shared.experiment import Experiment
 from shared.audio import AudioManager
-from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
+from shared.file_utils import ERROR_SOUND
 
 
 class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
@@ -101,6 +101,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.bind_all_entries()
 
     def bind_all_entries(self):
+        '''Function to bind all enteries'''
         self.exper_name.bind("<KeyRelease>", lambda event: self.enable_next_button())
         self.password.bind("<KeyRelease>", lambda event: self.enable_next_button())
         self.species.bind("<KeyRelease>", lambda event: self.enable_next_button())
@@ -108,9 +109,11 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.animal_num.bind("<KeyRelease>", lambda event: self.enable_next_button())
         self.group_num.bind("<KeyRelease>", lambda event: self.enable_next_button())
         self.num_per_cage.bind("<KeyRelease>", lambda event: self.enable_next_button())
-        self.investigators.bind("<Return>", lambda event: [self.add_investigator(), self.investigators.delete(0, END)])
+        self.investigators.bind("<Return>", lambda event: [self.add_investigator(), 
+                                                           self.investigators.delete(0, END)])
 
     def enable_next_button(self):
+        '''Function to enable all buttons'''
         if self.exper_name.get() and self.species.get() \
                 and self.animal_num.get() and self.group_num.get() and self.num_per_cage.get() \
                 and ((self.added_invest or self.investigators.get()) and (self.items or self.measure_items.get())):
@@ -127,7 +130,8 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
             self.next_button.destroy()
         self.next_button = ChangePageButton(self, next_page, False)#pylint: disable= undefined-variable
         #pylint: enable= access-member-before-definition
-        self.next_button.configure(command= lambda: [self.check_animals_divisible(), self.next_button.navigate()], state="disabled")
+        self.next_button.configure(command= lambda: [self.check_animals_divisible(), 
+                                                     self.next_button.navigate()], state="disabled")
         self.next_button.place(relx=0.85, rely=0.15)
 
     def update_invest_frame(self):
@@ -160,6 +164,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         return user_list
 
     def add_investigator(self):
+        '''Function to add the investigator to the frame'''
         if self.investigators.get() and self.investigators.get() not in self.added_invest:
 
             self.added_invest.append(self.investigators.get())
