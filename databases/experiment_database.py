@@ -1,7 +1,9 @@
 '''SQLite Database module for Mouser.'''
 import sqlite3
 import os
+import random
 from datetime import datetime
+import pandas as pd
 
 class ExperimentDatabase:
     '''SQLite Database Object for Experiments.'''
@@ -58,7 +60,7 @@ class ExperimentDatabase:
         except sqlite3.OperationalError:
             pass
 
-    def setup_experiment(self, name, species, uses_rfid, num_animals, num_groups, cage_max, 
+    def setup_experiment(self, name, species, uses_rfid, num_animals, num_groups, cage_max,
                          measurement_type, experiment_id, investigators, measurement):
         '''Initializes Experiment'''
         investigators_str = ', '.join(investigators)  # Convert list to comma-separated string
@@ -484,8 +486,6 @@ class ExperimentDatabase:
         2. Pivoted measurement matrix (group, animal, date columns)
         3. Groups table with header
         """
-        import os
-        import pandas as pd
 
         # Get experiment name
         self._c.execute("SELECT name FROM experiment")
@@ -543,7 +543,6 @@ class ExperimentDatabase:
     def export_to_csv(self, directory):
         '''Exports all relevant tables in the database to a folder named
           after the experiment in the specified directory.'''
-        import pandas as pd
 
         # Get the experiment name
         self._c.execute("SELECT name FROM experiment")
@@ -605,7 +604,6 @@ class ExperimentDatabase:
     def randomize_cages(self):
         '''Automatically and randomly sorts animals into cages within 
         their groups, respecting cage capacity limits.'''
-        import random
 
         try:
             # Get all groups and their cage capacities
@@ -750,6 +748,7 @@ class ExperimentDatabase:
             return False
 
     def get_cage_number(self, cage_name):
+        '''Function to sort group id'''
         self._c.execute('''
                         SELECT group_id FROM groups
                         WHERE name = ?''', (cage_name,))
