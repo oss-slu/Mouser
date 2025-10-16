@@ -238,9 +238,9 @@ class DataCollectionUI(MouserPage):
                         received_rfid = self.rfid_reader.get_stored_data()
 
                         if received_rfid:
-                            # Keep only alphanumeric characters, 
+                            # Keep only alphanumeric characters,
                             # gets rid of spaces and encrypted greeting messages
-                            received_rfid = re.sub(r"[^\w]", "", received_rfid)  
+                            received_rfid = re.sub(r"[^\w]", "", received_rfid)
 
                             if not received_rfid:
                                 print("⚠️ Empty RFID scan detected, ignoring...")
@@ -448,7 +448,7 @@ class ChangeMeasurementsDialog():
         self.database = data_collection.database  # Reference to the updated database
         self.uses_rfid = self.database.experiment_uses_rfid() == 1
         # Get all animal IDs from the database
-        self.auto_animal_ids = data_collection.database.get_all_animals_rfid()  
+        self.auto_animal_ids = data_collection.database.get_all_animals_rfid() 
 
         if not self.uses_rfid:
             # Get list of all animal IDs from the table
@@ -512,8 +512,8 @@ class ChangeMeasurementsDialog():
 
                         while current_index < len(self.animal_ids) and self.thread_running:
                             if (len(data_handler.received_data) >= 2
-                                 and data_handler.received_data != " " 
-                                 and data_handler.received_data is not None 
+                                 and data_handler.received_data != " "
+                                 and data_handler.received_data is not None
                                  and data_handler.received_data != 0):
                                 received_data = data_handler.get_stored_data()
                                 entry.insert(1, received_data)

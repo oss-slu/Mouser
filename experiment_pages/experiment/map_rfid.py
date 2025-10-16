@@ -1,5 +1,6 @@
 '''Map RFID module.'''
 import time
+import traceback
 from tkinter import Menu
 from tkinter.ttk import Style, Treeview
 import tkinter.font as tkfont
@@ -48,7 +49,6 @@ class RFIDHandler:
             self.flag_listening = False
             self.thread.join()
             self.rfid_serial_port_controller.close()
-        
 
     def scan_rfid(self):
         # loop and read RFID data
@@ -62,7 +62,7 @@ class RFIDHandler:
                 except Exception as e:
                     print(f"An exception occurred: {e}")
 
-            time.sleep(0.1)  
+            time.sleep(0.1) 
 
 def simulate_rfid():
     # generate fake RFID for testing
@@ -95,7 +95,6 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.animal_rfid_list = self.db.get_all_animals_rfid()
         self.animals = []
         self.animal_id = 1
-        
         self.animal_id_entry_text = StringVar(value="1")
 
         # Simulate All RFID Button
@@ -151,12 +150,12 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         # Add Sacrifice button with normal state
         self.sacrifice_button = CTkButton(self, text="Sacrifice Selected", compound=TOP,
-                                      width=250, height=75, font=("Georgia", 65), command=self.sacrifice_selected_items,
+                width=250, height=75, font=("Georgia", 65), command=self.sacrifice_selected_items,
                                       state="normal")  # Initialize as enabled
         self.sacrifice_button.place(relx=0.80, rely=0.80, anchor=CENTER)
 
         self.stop_scanning_button = CTkButton(self, text="Stop Listening", compound=TOP,
-                                  width=250, height=75, font=("Georgia", 65), command=self.stop_listening)
+                    width=250, height=75, font=("Georgia", 65), command=self.stop_listening)
         self.stop_scanning_button.place(relx=0.10, rely=0.80, anchor=CENTER)
 
         self.item_selected(None)
@@ -581,7 +580,6 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         except Exception as e:
             self.raise_warning("An error occurred while saving or cleaning up.")
             print(f"Error during save and cleanup: {e}")
-            import traceback
             print(f"Full traceback: {traceback.format_exc()}")
 
     def sacrifice_selected_items(self):
