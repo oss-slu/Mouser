@@ -225,9 +225,10 @@ class SerialPortController():
                     self.byte_size = getattr(serial, f"{settings[3].upper()}BITS", serial.EIGHTBITS)
                     self.parity = getattr(serial, f"PARITY_{settings[1].upper()}", serial.PARITY_NONE)
                     self.flow_control = 1 if settings[2] == "Xon/Xoff" else 2 if settings[2] == "Hardware" else None
-                    self.stop_bits = getattr(serial, f"STOPBITS_{settings[4].replace('.', '_').upper()}", serial.STOPBITS_ONE)
+                    self.stop_bits = getattr(serial, 
+                                f"STOPBITS_{settings[4].replace('.', '_').upper()}", serial.STOPBITS_ONE)
                     self.reader_port = settings[6]
                     return settings
 
-        except Exception as e:
+        except FileNotFoundError as e:
             print(f"An error occurred while retrieving settings: {e}")

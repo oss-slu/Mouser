@@ -109,7 +109,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.animal_num.bind("<KeyRelease>", lambda event: self.enable_next_button())
         self.group_num.bind("<KeyRelease>", lambda event: self.enable_next_button())
         self.num_per_cage.bind("<KeyRelease>", lambda event: self.enable_next_button())
-        self.investigators.bind("<Return>", lambda event: [self.add_investigator(), 
+        self.investigators.bind("<Return>", lambda event: [self.add_investigator(),
                                                            self.investigators.delete(0, END)])
 
     def enable_next_button(self):
@@ -130,7 +130,7 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
             self.next_button.destroy()
         self.next_button = ChangePageButton(self, next_page, False)#pylint: disable= undefined-variable
         #pylint: enable= access-member-before-definition
-        self.next_button.configure(command= lambda: [self.check_animals_divisible(), 
+        self.next_button.configure(command= lambda: [self.check_animals_divisible(),
                                                      self.next_button.navigate()], state="disabled")
         self.next_button.place(relx=0.85, rely=0.15)
 

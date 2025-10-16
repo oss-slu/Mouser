@@ -198,14 +198,14 @@ image_label.pack(pady=(20, 10))
 
 main_menu_button_height = main_frame.winfo_screenheight()/6
 main_menu_button_width = main_frame.winfo_screenwidth()*0.9
-new_file_button = CTkButton(welcome_frame, text="New Experiment", 
-                            font=("Georgia", 80), command=create_file, 
+new_file_button = CTkButton(welcome_frame, text="New Experiment",
+                            font=("Georgia", 80), command=create_file,
                             width=main_menu_button_width, height=main_menu_button_height)
 open_file_button = CTkButton(welcome_frame, text="Open Experiment",
-                            font=("Georgia", 80), command=open_file, 
+                            font=("Georgia", 80), command=open_file,
                             width=main_menu_button_width, height=main_menu_button_height)
-test_screen_button = CTkButton(welcome_frame, text="Test Serials", 
-                            font=("Georgia", 80), command= open_test, 
+test_screen_button = CTkButton(welcome_frame, text="Test Serials",
+                            font=("Georgia", 80), command= open_test,
                             width=main_menu_button_width, height=main_menu_button_height)
 
 new_file_button.pack(pady=(10, 5), padx=20, fill='x', expand=True)
@@ -219,6 +219,3 @@ main_frame.grid_rowconfigure(1, weight=1)
 main_frame.grid_columnconfigure(0, weight=1)
 
 root.mainloop()
-
-
-

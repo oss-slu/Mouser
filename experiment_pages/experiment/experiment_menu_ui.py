@@ -14,7 +14,7 @@ from experiment_pages.experiment.review_ui import ReviewUI
 class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
     '''Experiment Menu Page Frame'''
     def __init__(self, parent: CTk, name: str, prev_page: ChangeableFrame = None,
-                  full_path: str = "", controller: SerialPortController = None): 
+                  full_path: str = "", controller: SerialPortController = None):
         #pylint: disable= undefined-variable
 
         #review imported here to prevent a reference loop from occuring
@@ -59,20 +59,20 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         button_font = ("Arial Black", 35)
 
 
-        self.collection_button = CTkButton(main_frame, text='Data Collection', width=button_width, 
+        self.collection_button = CTkButton(main_frame, text='Data Collection', width=button_width,
                                             height= button_height, border_width=2.5,
                                             command= self.data_page.raise_frame, font=button_font)
-        self.analysis_button = CTkButton(main_frame, text='Data Exporting', width=button_width, 
+        self.analysis_button = CTkButton(main_frame, text='Data Exporting', width=button_width,
                                             height= button_height, border_width=2.5,
                                             command= self.analysis_page.raise_frame, font=button_font)
-        self.group_button = CTkButton(main_frame, text='Group Configuration', width=button_width, 
+        self.group_button = CTkButton(main_frame, text='Group Configuration', width=button_width,
                                         height= button_height, border_width=2.5,
                                         command= lambda: [self.cage_page.raise_frame(),
                                         self.cage_page.update_config_frame()], font=button_font)
-        self.rfid_button = CTkButton(main_frame, text='Map RFID', width=button_width, 
+        self.rfid_button = CTkButton(main_frame, text='Map RFID', width=button_width,
                                         height= button_height, border_width=2.5,
                                         command=  self.rfid_page.raise_frame, font=button_font)
-        self.summary_button = CTkButton(main_frame, text='Summary View', width=button_width, 
+        self.summary_button = CTkButton(main_frame, text='Summary View', width=button_width,
                                         height= button_height, border_width=2.5,
                                         command= self.summary_page.raise_frame, font=button_font)
 

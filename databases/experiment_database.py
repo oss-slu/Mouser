@@ -179,7 +179,7 @@ class ExperimentDatabase:
                     del ExperimentDatabase._instances[self.db_file]
 
                 return True
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Error during database cleanup: {e}")
             return False
 
@@ -237,7 +237,7 @@ class ExperimentDatabase:
                 AND (measurement_id = 1)
             ''', (date,))
             return self._c.fetchall()
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Error getting data for date: {e}")
             return []
 
@@ -267,7 +267,7 @@ class ExperimentDatabase:
             # Return True only if all active animals have measurements
             return animals_with_measurements >= total_active_animals
 
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Error checking data collection status: {e}")
             return False
 
@@ -285,7 +285,7 @@ class ExperimentDatabase:
             ''', (animal_id, date, value, measurement_id))
 
             self._conn.commit()
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Error adding data entry: {e}")
             self._conn.rollback()
 
@@ -305,7 +305,7 @@ class ExperimentDatabase:
                 self.add_data_entry(date, animal_id, value, measurement_id)
 
             self._conn.commit()
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Error changing data entry: {e}")
             self._conn.rollback()
 
@@ -428,7 +428,7 @@ class ExperimentDatabase:
 
                 self._conn.commit()
                 return True
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Error updating animal group: {e}")
             self._conn.rollback()
             return False
@@ -587,7 +587,7 @@ class ExperimentDatabase:
                                 VALUES (?, ?, ?)''',
                                 (animal_id, date, None))  # Insert None for blank value
             self._conn.commit()
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Error inserting blank data: {e}")
             self._conn.rollback()
 
@@ -597,7 +597,7 @@ class ExperimentDatabase:
             self._c.execute("SELECT measurement FROM experiment")
             result = self._c.fetchone()
             return result[0] if result else None  # Return the measurement type or None if not found
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Error retrieving measurement value: {e}")
             return None
 
@@ -653,7 +653,7 @@ class ExperimentDatabase:
             self._conn.commit()
             return True
 
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Error during randomization: {e}")
             self._conn.rollback()
             return False
@@ -742,7 +742,7 @@ class ExperimentDatabase:
             self._conn.commit()
             return True
 
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Error during autosort: {e}")
             self._conn.rollback()
             return False

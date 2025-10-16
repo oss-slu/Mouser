@@ -448,7 +448,7 @@ class ChangeMeasurementsDialog():
         self.database = data_collection.database  # Reference to the updated database
         self.uses_rfid = self.database.experiment_uses_rfid() == 1
         # Get all animal IDs from the database
-        self.auto_animal_ids = data_collection.database.get_all_animals_rfid() 
+        self.auto_animal_ids = data_collection.database.get_all_animals_rfid()
 
         if not self.uses_rfid:
             # Get list of all animal IDs from the table
