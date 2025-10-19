@@ -14,25 +14,6 @@ All UI setup is now modularized under /ui for maintainability.
 import os
 import shutil
 import tempfile
-import sys
-from tkinter.filedialog import *
-from PIL import Image
-from customtkinter import *
-from CTkMenuBar import *
-from CTkMessagebox import CTkMessagebox
-from shared.serial_port_settings import SerialPortSetting
-from shared.tk_models import *
-from shared.serial_port_controller import *
-import shared.file_utils as file_utils
-from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
-from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
-from experiment_pages.experiment.select_experiment_ui import ExperimentsUI
-from experiment_pages.experiment.test_screen import TestScreen
-import tkinter.font as tkFont
-from experiment_pages.experiment.map_rfid import RFIDHandler
-
-rfid_serial_port_controller = SerialPortController("reader")
-
 
 from shared.tk_models import MouserPage, raise_frame
 from shared.serial_port_controller import SerialPortController
