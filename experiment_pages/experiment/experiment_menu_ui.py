@@ -53,14 +53,15 @@ class ExperimentMenuUI(MouserPage):
         # --- Buttons Section ---
         button_font = CTkFont("Segoe UI Semibold", 22)
         button_style = {
-            "corner_radius": 14,
-            "height": 70,
-            "width": 450,
+            "corner_radius": 12,
+            "height": 50,
+            "width": 350,
             "font": button_font,
             "text_color": "white",
             "fg_color": "#2563eb",
             "hover_color": "#1e40af"
         }
+
 
         CTkButton(
             menu_card, text="Group Configuration", command=self.open_group_config, **button_style

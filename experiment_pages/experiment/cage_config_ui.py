@@ -67,9 +67,9 @@ class CageConfigUI(MouserPage):
         # --- Buttons ---
         button_font = CTkFont("Segoe UI Semibold", 20)
         button_style = {
-            "corner_radius": 14,
-            "height": 60,
-            "width": 400,
+            "corner_radius": 12,
+            "height": 5,
+            "width": 3,
             "font": button_font,
             "text_color": "white",
             "fg_color": "#2563eb",
@@ -84,7 +84,7 @@ class CageConfigUI(MouserPage):
         ).grid(row=6, column=0, pady=(5, 25))
         CTkButton(
             cage_card, text="Back to Menu", command=self.back_to_menu, **button_style
-        ).grid(row=7, column=0, pady=(10, 20))
+        ).grid(row=7, column=0, pady=(10, 20), sticky="")
 
     # --- Core Functions (unchanged logic) ---
     def add_cage(self):

@@ -57,9 +57,9 @@ class GroupConfigUI(MouserPage):
         # --- Button Styles ---
         button_font = CTkFont(family="Segoe UI Semibold", size=22)
         button_style = {
-            "corner_radius": 14,
-            "height": 70,
-            "width": 400,
+            "corner_radius": 12,
+            "height": 50,
+            "width": 350,
             "font": button_font,
             "text_color": "white",
             "fg_color": "#2563eb",
@@ -72,14 +72,31 @@ class GroupConfigUI(MouserPage):
             text="Add New Group",
             command=self.add_group,
             **button_style
-        ).grid(row=1, column=0, pady=10, padx=40)
+        ).grid(row=1, column=0, pady=(10, 10), padx=40, sticky="n")
 
         CTkButton(
             card,
             text="View Groups",
             command=self.view_groups,
             **button_style
-        ).grid(row=2, column=0, pady=10, padx=40)
+        ).grid(row=2, column=0, pady=(10, 25), padx=40, sticky="n")
+        # Ensure buttons are centered and compact
+        card.grid_rowconfigure((1, 2), weight=0)
+        card.grid_columnconfigure(0, weight=1)
+
+        # Restyle inherited Back to Menu button for consistency
+        if hasattr(self, "menu_button") and self.menu_button:
+            self.menu_button.configure(
+                corner_radius=12,
+                height=50,
+                width=180,
+                font=("Segoe UI Semibold", 18),
+                text_color="white",
+                fg_color="#2563eb",
+                hover_color="#1e40af"
+            )
+            self.menu_button.place_configure(relx=0.15, rely=0.18, anchor="w")
+
 
     # --- Functional Methods (unchanged) ---
     def add_group(self):

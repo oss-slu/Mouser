@@ -70,14 +70,15 @@ class DataCollectionUI(MouserPage):
         # --- Control Buttons ---
         button_font = CTkFont("Segoe UI Semibold", 20)
         button_style = {
-            "corner_radius": 14,
-            "height": 60,
-            "width": 400,
+            "corner_radius": 12,
+            "height": 50,
+            "width": 350,
             "font": button_font,
             "text_color": "white",
             "fg_color": "#2563eb",
             "hover_color": "#1e40af"
         }
+
 
         CTkButton(
             main_card, text="Start Collection", command=self.start_collection, **button_style
@@ -86,7 +87,7 @@ class DataCollectionUI(MouserPage):
             main_card, text="Stop Collection", command=self.stop_collection, **button_style
         ).grid(row=3, column=0, pady=(5, 10))
         CTkButton(
-            main_card, text="Back to Menu", command=self.back_to_menu, **button_style
+            main_card, text="Back", command=self.back_to_menu, **button_style
         ).grid(row=4, column=0, pady=(15, 25))
 
     # --- Functional Logic (unchanged) ---

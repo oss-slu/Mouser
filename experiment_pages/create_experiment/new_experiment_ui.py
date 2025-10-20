@@ -18,6 +18,19 @@ class NewExperimentUI(MouserPage):  # pylint: disable= undefined-variable
     def __init__(self, parent: CTk, menu_page: CTkFrame = None):
         super().__init__(parent, "New Experiment", menu_page)
 
+        if hasattr(self, "menu_button") and self.menu_button:
+            self.menu_button.configure(
+                corner_radius=12,
+                height=50,
+                width=180,
+                font=("Segoe UI Semibold", 18),
+                text_color="white",
+                fg_color="#2563eb",
+                hover_color="#1e40af"
+            )
+            # Optional: reposition so it looks consistent with other screens
+            self.menu_button.place_configure(relx=0.15, rely=0.18, anchor="w")
+
         # Original model/state
         self.input = Experiment()
         self.menu_page = menu_page  # keep a handle for safe navigation
@@ -140,6 +153,17 @@ class NewExperimentUI(MouserPage):  # pylint: disable= undefined-variable
             state="disabled"
         )
         self.next_button.place(relx=0.85, rely=0.15)
+
+        self.next_button.configure(
+            corner_radius=12,
+            height=50,
+            width=180,
+            font=("Segoe UI Semibold", 18),
+            text_color="white",
+            fg_color="#2563eb",
+            hover_color="#1e40af"
+        )
+        self.next_button.place_configure(relx=0.87, rely=0.18, anchor="e")
 
     # ---------------------------
     # Original behavior preserved
