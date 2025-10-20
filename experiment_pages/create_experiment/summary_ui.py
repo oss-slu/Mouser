@@ -83,7 +83,7 @@ class SummaryUI(MouserPage):  # pylint: disable= undefined-variable
     # Core Methods
     # ------------------------------------------------------------
     def display_summary(self):
-        '''Populates the summary UI with experiment details.'''
+        '''Populates the summary UI with experiment details and notes.'''
         details = {
             "Experiment Name": self.experiment.get_name(),
             "Investigators": ", ".join(self.experiment.get_investigators()),
@@ -96,7 +96,6 @@ class SummaryUI(MouserPage):  # pylint: disable= undefined-variable
             "Uses RFID": "Yes" if self.experiment.uses_rfid() else "No",
         }
 
-        # Inner grid layout for summary
         grid = CTkFrame(self.summary_card, fg_color="transparent")
         grid.pack(pady=(10, 10), padx=15, anchor="w")
 
@@ -109,6 +108,28 @@ class SummaryUI(MouserPage):  # pylint: disable= undefined-variable
             CTkLabel(grid, text=value or "—", font=font_value).grid(
                 row=i, column=1, sticky="w", padx=10, pady=5)
 
+        # --- Notes section ---
+        CTkLabel(
+            self.summary_card,
+            text="Additional Notes:",
+            font=("Segoe UI Semibold", 18)
+        ).pack(pady=(15, 5), anchor="w", padx=20)
+
+        self.notes_entry = CTkTextbox(
+            self.summary_card,
+            width=600,
+            height=100,
+            font=("Segoe UI", 15),
+            wrap="word",
+            corner_radius=10
+        )
+        self.notes_entry.pack(padx=20, pady=(0, 20), fill="x")
+
+        # Load existing notes if any
+        existing_notes = getattr(self.experiment, "notes", "")
+        if existing_notes:
+            self.notes_entry.insert("1.0", existing_notes)
+
     def update_page(self):
         '''Refresh summary when experiment data changes.'''
         for widget in self.summary_card.winfo_children():
@@ -117,6 +138,13 @@ class SummaryUI(MouserPage):  # pylint: disable= undefined-variable
 
     def create_experiment(self):
         '''Handles final experiment creation.'''
+        # Save notes back to experiment
+        self.experiment.notes = self.notes_entry.get("1.0", "end-1c").strip()
+
+        # Save the experiment
+        self.experiment.save_to_database(".") 
+        AudioManager.play(SUCCESS_SOUND)
+
         # Save the experiment to file
         save_dir = filedialog.askdirectory(title="Select Directory to Save Experiment")
         if save_dir:

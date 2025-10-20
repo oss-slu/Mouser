@@ -80,30 +80,6 @@ class GroupConfigUI(MouserPage):
         self.item_frame.pack(pady=(5, 20))
         self.create_item_frame(self.experiment.get_measurement_items())
 
-        # --- Bottom Buttons (inside card) ---
-        button_frame = CTkFrame(content_card, fg_color="transparent")
-        button_frame.pack(pady=(10, 20))
-
-        button_style = {
-            "corner_radius": 12,
-            "height": 45,
-            "width": 200,
-            "font": ("Segoe UI Semibold", 18),
-            "text_color": "white",
-            "fg_color": "#2563eb",
-            "hover_color": "#1e40af",
-        }
-
-        self.add_group_button = CTkButton(
-            button_frame, text="Add New Group", command=self.add_group, **button_style
-        )
-        self.add_group_button.pack(side=LEFT, padx=10)
-
-        self.view_groups_button = CTkButton(
-            button_frame, text="View Groups", command=self.view_groups, **button_style
-        )
-        self.view_groups_button.pack(side=LEFT, padx=10)
-
     # ------------------------------------------------------------
     # Navigation / Buttons
     # ------------------------------------------------------------
@@ -183,18 +159,6 @@ class GroupConfigUI(MouserPage):
 
         self.item_auto_buttons.append(auto)
         self.item_man_buttons.append(man)
-
-    def add_group(self):
-        '''Adds an additional blank group input row dynamically.'''
-        row = len(self.group_input) + 1
-        entry = CTkEntry(self.group_frame, width=220, font=("Segoe UI", 16))
-        entry.grid(row=row, column=0, padx=10, pady=8)
-        self.group_input.append(entry)
-        self.experiment.set_num_groups(str(len(self.group_input)))
-
-    def view_groups(self):
-        '''Placeholder for viewing groups (can open summary or popup).'''
-        print("Group names:", [e.get() for e in self.group_input])
 
     def update_page(self):
         '''Updates the UI when experiment data changes.'''
