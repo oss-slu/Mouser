@@ -1,18 +1,24 @@
 '''Group configuration module (modernized UI, full logic retained).'''
-from customtkinter import *
-from shared.tk_models import *
+# pylint: disable=too-many-instance-attributes, import-error
+
+from customtkinter import (
+    CTk, CTkFrame, CTkLabel, CTkEntry,
+    CTkButton, CTkRadioButton, BooleanVar, W, LEFT
+)
+from shared.tk_models import MouserPage, ChangePageButton
 from shared.scrollable_frame import ScrolledFrame
-from experiment_pages.create_experiment.summary_ui import SummaryUI
 from shared.experiment import Experiment
+from experiment_pages.create_experiment.summary_ui import SummaryUI
 
 
-class GroupConfigUI(MouserPage):  # pylint: disable= undefined-variable
+class GroupConfigUI(MouserPage):
     '''Group Configuration user interface (preserves all logic).'''
 
     def __init__(self, experiment: Experiment, parent: CTk, prev_page: CTkFrame, menu_page: CTkFrame):
         super().__init__(parent, "New Experiment - Group Configuration", prev_page)
         self.experiment = experiment
         self.menu_page = menu_page
+        self.next_button = None
 
         # ----------------------------
         # Top Navigation Buttons
@@ -25,7 +31,7 @@ class GroupConfigUI(MouserPage):  # pylint: disable= undefined-variable
                 font=("Segoe UI Semibold", 18),
                 text_color="white",
                 fg_color="#2563eb",
-                hover_color="#1e40af"
+                hover_color="#1e40af",
             )
             self.menu_button.place_configure(relx=0.05, rely=0.13, anchor="w")
 
@@ -45,7 +51,7 @@ class GroupConfigUI(MouserPage):  # pylint: disable= undefined-variable
             corner_radius=16,
             border_width=1,
             border_color="#d1d5db",
-            fg_color=("white", "#2c2c2c")
+            fg_color=("white", "#2c2c2c"),
         )
         self.main_frame.pack(expand=True, pady=10)
 
@@ -57,7 +63,11 @@ class GroupConfigUI(MouserPage):  # pylint: disable= undefined-variable
         ).pack(pady=(15, 10))
 
         # --- Inner content card ---
-        content_card = CTkFrame(self.main_frame, fg_color=("white", "#1f2937"), corner_radius=12)
+        content_card = CTkFrame(
+            self.main_frame,
+            fg_color=("white", "#1f2937"),
+            corner_radius=12,
+        )
         content_card.pack(padx=40, pady=(5, 15), fill="x")
 
         # --- Group Name entries ---
@@ -74,20 +84,24 @@ class GroupConfigUI(MouserPage):  # pylint: disable= undefined-variable
         button_frame = CTkFrame(content_card, fg_color="transparent")
         button_frame.pack(pady=(10, 20))
 
-        button_style = dict(
-            corner_radius=12,
-            height=45,
-            width=200,
-            font=("Segoe UI Semibold", 18),
-            text_color="white",
-            fg_color="#2563eb",
-            hover_color="#1e40af"
-        )
+        button_style = {
+            "corner_radius": 12,
+            "height": 45,
+            "width": 200,
+            "font": ("Segoe UI Semibold", 18),
+            "text_color": "white",
+            "fg_color": "#2563eb",
+            "hover_color": "#1e40af",
+        }
 
-        self.add_group_button = CTkButton(button_frame, text="Add New Group", command=self.add_group, **button_style)
+        self.add_group_button = CTkButton(
+            button_frame, text="Add New Group", command=self.add_group, **button_style
+        )
         self.add_group_button.pack(side=LEFT, padx=10)
 
-        self.view_groups_button = CTkButton(button_frame, text="View Groups", command=self.view_groups, **button_style)
+        self.view_groups_button = CTkButton(
+            button_frame, text="View Groups", command=self.view_groups, **button_style
+        )
         self.view_groups_button.pack(side=LEFT, padx=10)
 
     # ------------------------------------------------------------
@@ -95,7 +109,7 @@ class GroupConfigUI(MouserPage):  # pylint: disable= undefined-variable
     # ------------------------------------------------------------
     def create_next_button(self):
         '''Creates a Next button aligned top-right.'''
-        if hasattr(self, "next_button") and self.next_button:
+        if self.next_button:
             self.next_button.destroy()
 
         self.next_button = ChangePageButton(self, self.next_page, previous=False)
@@ -107,7 +121,7 @@ class GroupConfigUI(MouserPage):  # pylint: disable= undefined-variable
             text_color="white",
             fg_color="#2563eb",
             hover_color="#1e40af",
-            command=lambda: [self.save_experiment(), self.next_button.navigate()]
+            command=lambda: [self.save_experiment(), self.next_button.navigate()],
         )
         self.next_button.place_configure(relx=0.93, rely=0.13, anchor="e")
 
@@ -119,7 +133,7 @@ class GroupConfigUI(MouserPage):  # pylint: disable= undefined-variable
         CTkLabel(
             self.group_frame,
             text="Group Name",
-            font=("Segoe UI", 18, "bold")
+            font=("Segoe UI", 18, "bold"),
         ).grid(row=0, column=0, padx=10, pady=10, sticky=W)
 
         self.group_input = []
@@ -137,7 +151,7 @@ class GroupConfigUI(MouserPage):  # pylint: disable= undefined-variable
         CTkLabel(
             self.item_frame,
             text="Input Method",
-            font=("Segoe UI", 18, "bold")
+            font=("Segoe UI", 18, "bold"),
         ).grid(row=0, column=0, columnspan=3, pady=10)
 
         self.type = BooleanVar(value=True)
@@ -146,14 +160,22 @@ class GroupConfigUI(MouserPage):  # pylint: disable= undefined-variable
         CTkLabel(
             self.item_frame,
             text=item,
-            font=("Segoe UI", 16)
+            font=("Segoe UI", 16),
         ).grid(row=1, column=0, padx=10, pady=10, sticky=W)
 
         auto = CTkRadioButton(
-            self.item_frame, text='Automatic', variable=self.type, value=True, font=("Segoe UI", 16)
+            self.item_frame,
+            text='Automatic',
+            variable=self.type,
+            value=True,
+            font=("Segoe UI", 16),
         )
         man = CTkRadioButton(
-            self.item_frame, text='Manual', variable=self.type, value=False, font=("Segoe UI", 16)
+            self.item_frame,
+            text='Manual',
+            variable=self.type,
+            value=False,
+            font=("Segoe UI", 16),
         )
 
         auto.grid(row=1, column=1, padx=10, pady=10)
