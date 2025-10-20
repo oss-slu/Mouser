@@ -3,10 +3,11 @@ UI Performance Tests - Measures actual widget creation and renderings.
 pytest tests/test_ui_rendering.py -v -s
 """
 
-import pytest
-import time
 import os
 import sys
+import time
+
+import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -37,7 +38,7 @@ class TestRealUIRendering:
         # Cleanup
         try:
             root.destroy()
-        except:
+        except Exception:
             pass
 
     @pytest.fixture
@@ -261,7 +262,7 @@ class TestUIScaling:
 
         try:
             root.destroy()
-        except:
+        except Exception:
             pass
 
     @pytest.mark.parametrize("num_animals,expected_max_ms", [
@@ -323,6 +324,7 @@ class TestUIScaling:
 
 
 class TestUIResponsivenessSummary:
+    """Summary of UI performance requirements and test results."""
 
     def test_performance_requirements_summary(self):
         """
