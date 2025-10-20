@@ -7,7 +7,6 @@ from shared.scrollable_frame import ScrolledFrame
 from shared.audio import AudioManager
 from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND, save_temp_to_file
 from databases.database_controller import DatabaseController
-from experiment_pages.mouser_page import MouserPage
 
 class CageConfigurationUI(MouserPage):
     '''The Frame that allows user to configure the cages.'''

@@ -10,7 +10,6 @@ from CTkMessagebox import CTkMessagebox
 
 from shared.tk_models import *
 from databases.experiment_database import ExperimentDatabase
-from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND, save_temp_to_file
 from shared.audio import AudioManager
 from shared.scrollable_frame import ScrolledFrame
@@ -430,6 +429,8 @@ class DataCollectionUI(MouserPage):
     def press_back_to_menu_button(self):
         '''Stops listening and navigates to the new page in ExperimentMenuUI'''
         self.stop_listening()
+
+        from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 
         new_page = ExperimentMenuUI(self.parent, self.current_file_path, self.menu_page, self.current_file_path)
         new_page.raise_frame()
