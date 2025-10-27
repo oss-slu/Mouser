@@ -2,3 +2,10 @@
 /.vs
 /exports
 venv/
+
+#Pyinstaller build outputs
+/build/
+ /dist/
+*.spec
+*.exe
+*.pkg
