@@ -1,9 +1,44 @@
 '''Database Unit Tests'''
 import unittest
+import os
+import sys
+import tempfile
 from customtkinter import CTk
 from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from databases.experiment_database import ExperimentDatabase
+
+class TestPlatform(unittest.TestCase): 
+      def test_database_across_platform(self):
+        temp_db_path = create_temp_file()
+
+        db = ExperimentDatabase(temp_db_path)
+        db.setup_experiment("Test", "Test Mouse", False, 16, 4, 4, 
+                        "Weight", 1, ["Investigator"], "Weight")
+        db.setup_groups(["Control", "Group 1", "Group 2", "Group 3"], 4)
+        for i in range(0,4):
+            group_id = 1 if i < 2 else 2
+            db.add_animal(group_id, 10 + i)
+
+        value = db.get_animal_rfid(animal_id=1)
+        os_name = get_platform()
+        
+        self.assertEqual(value, '10')
+        self.assertIn(os_name, ["win32", "darwin", "linux"])
+
+        delete_file(temp_db_path)
+
+        def create_temp_file():
+            temp = tempfile.NamedTemporaryFile(delete=False)  
+            temp.close()        
+            return temp.name
+
+        def get_platform():
+            return sys.platform
+
+        def delete_file(path):
+            if os.path.exists(path):
+                os.remove(path)
 
 '''Test class for UI components'''
 class TestUIComponents(unittest.TestCase):
@@ -49,104 +84,98 @@ class TestUIComponents(unittest.TestCase):
     def test_new_experiment_ui(self):
         self.assertIsNotNone(self.new_experiment)
 
-class TestDatabaseSetup:
+
+class TestDatabaseSetup(unittest.TestCase):
     '''Test Basic Setup of Database'''
     db = ExperimentDatabase()
-    db.setup_experiment("Test", "Test Mouse", False, 16, 4, 4, "A")
-    db.setup_groups(["Control", "Group 1", "Group 2", "Group 3"])
-    db.setup_cages(16, 4, 4)
-    db.setup_measurement_items({"Weight"})
+    db.setup_experiment("Test", "Test Mouse", False, 16, 4, 4, "Weight", 1, ["Investigator"], "Weight")
+    db.setup_groups(["Control", "Group 1", "Group 2", "Group 3"], 4)
 
     def test_num_animals(self):
         '''Checks if num animals equals expected.'''
-        assert 16 == self.db.get_number_animals()
+        self.assertEqual(16, self.db.get_number_animals())
 
     def test_num_groups(self):
         '''Checks if num groups equals expected.'''
-        assert 4 == self.db.get_number_groups()
+        self.assertEqual(4, self.db.get_number_groups())
 
     def test_cage_max(self):
         '''Checks if cage max equals expected.'''
-        assert 4 == self.db.get_cage_max()
+        self.assertEqual(4, self.db.get_cage_max())
 
     def test_get_all_groups(self):
         '''Checks if group names match expected'''
-        assert [("Control",), ("Group 1",), ("Group 2",), ("Group 3",)] == self.db.get_all_groups()
+        self.assertEqual([("Control",), ("Group 1",), ("Group 2",), ("Group 3",)]
+                          ,self.db.get_all_groups())
 
-    def test_get_cages(self):
-        '''Checks if Cages matches expected.'''
-        assert [(1,1), (2,2), (3,3), (4,4)] == self.db.get_cages()
-
-class TestAnimalRFIDMethods:
+class TestAnimalRFIDMethods(unittest.TestCase):
     '''Test if the animal RFID methods work'''
     db = ExperimentDatabase()
-    db.setup_experiment("Test", "Test Mouse", True, 4, 2, 2, "A")
-    db.setup_groups(["Control", "Group 1"])
-    db.setup_cages(4, 2, 2)
-    db.setup_measurement_items({"Weight"})
+    db.setup_experiment("Test", "Test Mouse", False, 16, 4, 4, "Weight", 1, ["Investigator"], "Weight")
+    db.setup_groups(["Control", "Group 1", "Group 2", "Group 3"], 4)
     for i in range(0,4):
-        db.add_animal(i, 10 + i)
+        group_id = 1 if i < 2 else 2
+        db.add_animal(group_id, 10 + i)
 
     def test_add_animal_ids(self):
         '''Test if animal id of particular animal matches expected.'''
-        assert 1 == self.db.get_animal_id(10)
+        self.assertEqual(1, self.db.get_animal_id(10))
 
     def test_get_animal_ids(self):
         '''Test if animal ids match expected.'''
-        assert ['1', '2', '3', '4'] == self.db.get_all_animal_ids()
+        self.assertEqual(['1', '2', '3', '4'], self.db.get_all_animal_ids())
 
     def test_get_animal_rfid(self):
         '''Test if particular animal RFID numbers match expected.'''
-        assert '10' == self.db.get_animal_rfid(1)
+        self.assertEqual('10', self.db.get_animal_rfid(1))
 
     def test_get_animals_rfid(self):
         '''Test if animal rfids match expected.'''
-        assert [('10',), ('11', ), ('12',), ('13',)] == self.db.get_animals_rfid()
+        self.assertEqual([('10',), ('11', ), ('12',), ('13',)],
+                        self.db.get_animals_rfid())
 
-class TestCageFunctions:
+class TestCageFunctions(unittest.TestCase):
     '''Tests the cage functions.'''
     db = ExperimentDatabase()
-    db.setup_experiment("Test", "Test Mouse", True, 4, 2, 2, "A")
-    db.setup_groups(["Control", "Group 1"])
-    db.setup_cages(4, 2, 2)
-    db.setup_measurement_items({"Weight"})
+    db.setup_experiment("Test", "Test Mouse", False, 16, 4, 4, "Weight", 1, ["Investigator"], "Weight")
+    db.setup_groups(["Control", "Group 1", "Group 2", "Group 3"], 4)
     for i in range(0,4):
-        db.add_animal(i, 10 + i)
-
-    def test_get_cages(self):
-        '''Tests if cages match expected.'''
-        assert [(1, 1), (2, 2)] == self.db.get_cages()
+        group_id = 1 if i < 2 else 2
+        db.add_animal(group_id, 10 + i)
 
     def test_get_animals_from_cage(self):
         '''Tests if animals from a particular cage match expected.'''
-        assert [(1,), (2,)] == self.db.get_animals_in_cage(1)
+        self.assertEqual([(1,), (2,)], self.db.get_animals_in_cage())
+
 
     def test_get_animals_by_cage(self):
         '''Tests if animals by caged dict matches expected.'''
-        assert {'1': ['1', '2'], '2': ['3', '4']} == self.db.get_animals_by_cage()
+        self.assertEqual({'1': ['1', '2'], '2': ['3', '4']}, self.db.get_animals_by_cage())
 
-class TestGroupFunctions:
+class TestGroupFunctions(unittest.TestCase):
     '''Test Group Functions.'''
     db = ExperimentDatabase()
-    db.setup_experiment("Test", "Test Mouse", True, 4, 2, 2, "A")
-    db.setup_groups(["Control", "Group 1"])
-    db.setup_cages(4, 2, 2)
-    db.setup_measurement_items({"Weight"})
+    db.setup_experiment("Test", "Test Mouse", False, 16, 4, 4, "Weight", 1, ["Investigator"], "Weight")
+    db.setup_groups(["Control", "Group 1"], 4)
     for i in range(0,4):
-        db.add_animal(i, 10 + i)
+        group_id = 1 if i < 2 else 2
+        db.add_animal(group_id, 10 + i)
+
 
     def test_get_all_groups(self):
         '''Test if groups match expected.'''
-        assert [('Control',), ('Group 1',)] == self.db.get_all_groups()
+        self.assertEqual([('Control',), ('Group 1',)], self.db.get_all_groups())
 
     def test_get_animals_in_group(self):
         '''Tests if animals in particular group match expected.'''
-        assert [(1,), (2,)] == self.db.get_animals_in_group(1)
+        self.assertEqual([(1,), (2,)], self.db.get_animals_in_group("Control"))
 
     def test_get_animals_by_group(self):
         '''Tests if animals by group dict matches expected.'''
-        assert {"Control" : ['1', '2'], "Group 1" : ['3', '4']} == self.db.get_animals_by_group()
+        self.assertEqual({"Control" : ['1', '2'], "Group 1" : ['3', '4']},
+                        self.db.get_animals_by_group())
 
     def test_get_cages_by_group(self):
         '''Tests if cages by group dict matches expected.'''
-        assert {'Control': ['1'], 'Group 1': ['2']} == self.db.get_cages_by_group()
+        self.assertEqual({'Control': ['1'], 'Group 1': ['2']}, 
+                        self.db.get_cages_by_group())

@@ -11,6 +11,7 @@ from experiment_pages.experiment.experiment_invest_ui import InvestigatorsUI
 from databases.experiment_database import ExperimentDatabase
 from experiment_pages.experiment.review_ui import ReviewUI
 
+
 class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
     '''Experiment Menu Page Frame'''
     def __init__(self, parent: CTk, name: str, prev_page: ChangeableFrame = None,
