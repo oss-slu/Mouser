@@ -10,6 +10,7 @@ from databases.experiment_database import ExperimentDatabase
 
 class TestPlatform(unittest.TestCase): 
       def test_database_across_platform(self):
+        '''Test to validate SQLite operations across Windows, macOS, and Linux'''
         temp_db_path = create_temp_file()
 
         db = ExperimentDatabase(temp_db_path)
@@ -29,14 +30,17 @@ class TestPlatform(unittest.TestCase):
         delete_file(temp_db_path)
 
         def create_temp_file():
+            '''Function to create temporary file and return it'''
             temp = tempfile.NamedTemporaryFile(delete=False)  
             temp.close()        
             return temp.name
 
         def get_platform():
+            '''Function that returns identifier for operating system'''
             return sys.platform
 
         def delete_file(path):
+            '''Function to check if a file exist in path and deletes it'''
             if os.path.exists(path):
                 os.remove(path)
 
