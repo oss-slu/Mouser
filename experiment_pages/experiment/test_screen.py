@@ -14,6 +14,7 @@ from customtkinter import (
     CTkToplevel, CTkFrame, CTkLabel, CTkButton, CTkFont, set_appearance_mode
 )
 from shared.serial_handler import SerialDataHandler
+from shared.tk_models import get_resource_path
 
 
 class TestScreen(CTkToplevel):
@@ -78,7 +79,10 @@ class TestScreen(CTkToplevel):
     # --- RFID Section ---
     def setup_rfid_section(self, parent):
         """Create RFID test controls."""
-        preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference")
+        # Resolve the settings preference directory using get_resource_path so
+        # the path works both during development and when bundled by
+        # PyInstaller (which uses a temporary _MEIPASS base directory).
+        preference_dir = get_resource_path(os.path.join("settings", "serial ports", "preference"))
         rfid_readers = [
             d for d in os.listdir(preference_dir)
             if os.path.exists(os.path.join(preference_dir, d, "rfid_config.txt"))
@@ -95,7 +99,8 @@ class TestScreen(CTkToplevel):
     # --- Serial Section ---
     def setup_device_section(self, parent):
         """Create Serial device test controls."""
-        preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference")
+        # Use get_resource_path here as well for bundled execution.
+        preference_dir = get_resource_path(os.path.join("settings", "serial ports", "preference"))
         serial_devices = [
             d for d in os.listdir(preference_dir)
             if os.path.exists(os.path.join(preference_dir, d, "preferred_config.txt"))
