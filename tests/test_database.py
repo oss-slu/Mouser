@@ -8,6 +8,21 @@ from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from databases.experiment_database import ExperimentDatabase
 
+def create_temp_file():
+    '''Function to create temporary file and return it'''
+    temp = tempfile.NamedTemporaryFile(delete=False)  
+    temp.close()        
+    return temp.name
+
+def get_platform():
+    '''Function that returns identifier for operating system'''
+    return sys.platform
+
+def delete_file(path):
+    '''Function to check if a file exist in path and deletes it'''
+    if os.path.exists(path):
+        os.remove(path)
+
 class TestPlatform(unittest.TestCase): 
       def test_database_across_platform(self):
         '''Test to validate SQLite operations across Windows, macOS, and Linux'''
@@ -28,21 +43,6 @@ class TestPlatform(unittest.TestCase):
         self.assertIn(os_name, ["win32", "darwin", "linux"])
 
         delete_file(temp_db_path)
-
-        def create_temp_file():
-            '''Function to create temporary file and return it'''
-            temp = tempfile.NamedTemporaryFile(delete=False)  
-            temp.close()        
-            return temp.name
-
-        def get_platform():
-            '''Function that returns identifier for operating system'''
-            return sys.platform
-
-        def delete_file(path):
-            '''Function to check if a file exist in path and deletes it'''
-            if os.path.exists(path):
-                os.remove(path)
 
 '''Test class for UI components'''
 class TestUIComponents(unittest.TestCase):
