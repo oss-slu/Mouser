@@ -1,0 +1,105 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on version tags like v1.0.0, v1.2.3, etc.
+
+permissions:
+  contents: write
+  attestations: write
+  id-token: write
+
+jobs:
+  # First, build the executables for all platforms
+  build:
+    uses: ./.github/workflows/build-reusable.yml
+
+  # Then, create a GitHub release and upload the artifacts
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          # Remove 'v' prefix from tag (e.g., v1.2.0 -> 1.2.0)
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Mouser_windows-latest
+          path: ./artifacts/windows
+
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Mouser_macos-latest
+          path: ./artifacts/macos
+
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Mouser_ubuntu-latest
+          path: ./artifacts/linux
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Mouser ${{ steps.version.outputs.version }}
+          body: |
+            # Mouser ${{ steps.version.outputs.version }}
+            
+            ## Downloads
+            Choose the download for your operating system:
+            
+            - **Windows**: `Mouser_windows.zip`
+            - **macOS**: `Mouser_macos.zip`
+            - **Linux**: `Mouser_linux.zip`
+            
+            ## Installation
+            1. Download the appropriate zip file for your platform
+            2. Extract the zip file
+            3. Run the `Mouser` executable (or `Mouser.exe` on Windows)
+            
+            ## Auto-Update
+            This release supports automatic updates. If you're using an older version, you can update through the application:
+            - Go to **Help → Check for Updates**
+            - Click **Update Now** to download and install this version
+            
+            ## What's Changed
+            <!-- Add release notes here when creating the tag -->
+            
+            ---
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/v${{ steps.version.outputs.version }}...v${{ steps.version.outputs.version }}
+          draft: false
+          prerelease: false
+          files: |
+            ./artifacts/windows/Mouser_windows.zip
+            ./artifacts/macos/Mouser_macos.zip
+            ./artifacts/linux/Mouser_linux.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release Summary
+        run: |
+          echo "## Release Created Successfully! 🎉" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version**: ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag**: ${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Artifacts Published:" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Mouser_windows.zip" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Mouser_macos.zip" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Mouser_linux.zip" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Users can now download from: https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
