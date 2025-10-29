@@ -12,10 +12,10 @@ import sys
 def get_platform():
     """
     Detect the current operating system.
-    
+
     Returns:
         str: One of 'windows', 'macos', or 'linux'
-        
+
     Examples:
         >>> get_platform()
         'windows'  # On Windows
@@ -23,7 +23,7 @@ def get_platform():
         'linux'    # On Linux
     """
     system = platform.system().lower()
-    
+
     if system == "darwin":
         return "macos"
     elif system == "windows":
@@ -38,10 +38,10 @@ def get_platform():
 def get_executable_extension():
     """
     Get the executable file extension for the current platform.
-    
+
     Returns:
         str: '.exe' on Windows, empty string on Unix-like systems
-        
+
     Examples:
         >>> get_executable_extension()
         '.exe'  # On Windows
@@ -53,13 +53,13 @@ def get_executable_extension():
 def get_executable_name(base_name="Mouser"):
     """
     Get the full executable name for the current platform.
-    
+
     Args:
         base_name (str): Base name of the executable (default: 'Mouser')
-        
+
     Returns:
         str: Executable name with appropriate extension
-        
+
     Examples:
         >>> get_executable_name()
         'Mouser.exe'  # On Windows
@@ -72,10 +72,10 @@ def get_executable_name(base_name="Mouser"):
 def get_download_filename():
     """
     Get the appropriate download filename for the current platform.
-    
+
     Returns:
         str: Zip filename matching the platform-specific build artifact
-        
+
     Examples:
         >>> get_download_filename()
         'Mouser_windows.zip'  # On Windows
@@ -89,10 +89,10 @@ def get_download_filename():
 def is_frozen():
     """
     Check if the application is running as a PyInstaller bundle.
-    
+
     Returns:
         bool: True if running as compiled executable, False if running as script
-        
+
     Examples:
         >>> is_frozen()
         True   # When running Mouser.exe
@@ -104,10 +104,10 @@ def is_frozen():
 def get_platform_info():
     """
     Get comprehensive platform information for debugging.
-    
+
     Returns:
         dict: Dictionary containing platform details
-        
+
     Example:
         >>> get_platform_info()
         {

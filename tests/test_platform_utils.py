@@ -29,7 +29,7 @@ class TestPlatformDetection:
         """Platform detection should match actual system."""
         system = platform.system().lower()
         result = get_platform()
-        
+
         if system == "darwin":
             assert result == "macos"
         elif system == "windows":
@@ -41,7 +41,7 @@ class TestPlatformDetection:
         """Extension should be .exe on Windows, empty otherwise."""
         ext = get_executable_extension()
         current_platform = get_platform()
-        
+
         if current_platform == "windows":
             assert ext == ".exe"
         else:
@@ -51,7 +51,7 @@ class TestPlatformDetection:
         """Default executable name should be Mouser with platform extension."""
         name = get_executable_name()
         current_platform = get_platform()
-        
+
         if current_platform == "windows":
             assert name == "Mouser.exe"
         else:
@@ -61,7 +61,7 @@ class TestPlatformDetection:
         """Custom base name should work with platform extension."""
         name = get_executable_name("TestApp")
         current_platform = get_platform()
-        
+
         if current_platform == "windows":
             assert name == "TestApp.exe"
         else:
@@ -71,7 +71,7 @@ class TestPlatformDetection:
         """Download filename should match platform build artifact."""
         filename = get_download_filename()
         current_platform = get_platform()
-        
+
         expected = f"Mouser_{current_platform}.zip"
         assert filename == expected
 
@@ -84,16 +84,16 @@ class TestPlatformDetection:
     def test_get_platform_info_structure(self):
         """Platform info should return complete dictionary."""
         info = get_platform_info()
-        
+
         # Check all required keys exist
         required_keys = [
             'platform', 'system', 'release', 'version',
             'machine', 'executable', 'download_filename', 'is_frozen'
         ]
-        
+
         for key in required_keys:
             assert key in info, f"Missing key: {key}"
-        
+
         # Validate values
         assert info['platform'] in ["windows", "macos", "linux"]
         assert isinstance(info['executable'], str)

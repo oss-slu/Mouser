@@ -11,7 +11,7 @@ from ui.settings_dialog import show_settings_dialog
 def build_menu(root, experiments_frame, rfid_serial_port_controller):
     """Constructs the main menu bar with modern CTk styling."""
     menu_bar = CTkMenuBar(root)
-    menu_bar.configure(bg_color="#8efcfe")  
+    menu_bar.configure(bg_color="#8efcfe")
 
     # --- File Menu ---
     file_menu = menu_bar.add_cascade("File")

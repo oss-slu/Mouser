@@ -24,7 +24,7 @@ class TestConfigDefaults:
         with tempfile.TemporaryDirectory() as tmpdir:
             config_file = Path(tmpdir) / "test_config.json"
             config = Config(config_file)
-            
+
             assert config.get_auto_update_enabled() == False
 
     def test_default_auto_download_enabled(self):
@@ -32,7 +32,7 @@ class TestConfigDefaults:
         with tempfile.TemporaryDirectory() as tmpdir:
             config_file = Path(tmpdir) / "test_config.json"
             config = Config(config_file)
-            
+
             assert config.get_auto_download_enabled() == False
 
     def test_default_auto_install_enabled(self):
@@ -40,7 +40,7 @@ class TestConfigDefaults:
         with tempfile.TemporaryDirectory() as tmpdir:
             config_file = Path(tmpdir) / "test_config.json"
             config = Config(config_file)
-            
+
             assert config.get_auto_install_enabled() == False
 
 
@@ -52,23 +52,23 @@ class TestConfigReadWrite:
         with tempfile.TemporaryDirectory() as tmpdir:
             config_file = Path(tmpdir) / "test_config.json"
             config = Config(config_file)
-            
+
             config.set_auto_update_enabled(True)
-            
+
             assert config.get_auto_update_enabled() == True
 
     def test_config_persists(self):
         """Configuration should persist across instances."""
         with tempfile.TemporaryDirectory() as tmpdir:
             config_file = Path(tmpdir) / "test_config.json"
-            
+
             # Create first config and modify
             config1 = Config(config_file)
             config1.set_auto_update_enabled(True)
-            
+
             # Create second config from same file
             config2 = Config(config_file)
-            
+
             assert config2.get_auto_update_enabled() == True
 
     def test_get_with_dot_notation(self):
@@ -76,9 +76,9 @@ class TestConfigReadWrite:
         with tempfile.TemporaryDirectory() as tmpdir:
             config_file = Path(tmpdir) / "test_config.json"
             config = Config(config_file)
-            
+
             value = config.get('auto_update.enabled')
-            
+
             assert value == False
 
     def test_set_with_dot_notation(self):
@@ -86,9 +86,9 @@ class TestConfigReadWrite:
         with tempfile.TemporaryDirectory() as tmpdir:
             config_file = Path(tmpdir) / "test_config.json"
             config = Config(config_file)
-            
+
             config.set('auto_update.enabled', True)
-            
+
             assert config.get('auto_update.enabled') == True
 
     def test_get_with_default(self):
@@ -96,9 +96,9 @@ class TestConfigReadWrite:
         with tempfile.TemporaryDirectory() as tmpdir:
             config_file = Path(tmpdir) / "test_config.json"
             config = Config(config_file)
-            
+
             value = config.get('nonexistent.key', 'default')
-            
+
             assert value == 'default'
 
 
@@ -109,34 +109,34 @@ class TestConfigFileHandling:
         """Should create config file if it doesn't exist."""
         with tempfile.TemporaryDirectory() as tmpdir:
             config_file = Path(tmpdir) / "subdir" / "test_config.json"
-            
+
             assert not config_file.exists()
-            
+
             config = Config(config_file)
-            
+
             assert config_file.exists()
 
     def test_creates_parent_directory(self):
         """Should create parent directories if they don't exist."""
         with tempfile.TemporaryDirectory() as tmpdir:
             config_file = Path(tmpdir) / "a" / "b" / "c" / "test_config.json"
-            
+
             config = Config(config_file)
-            
+
             assert config_file.parent.exists()
 
     def test_handles_corrupted_file(self):
         """Should use defaults if config file is corrupted."""
         with tempfile.TemporaryDirectory() as tmpdir:
             config_file = Path(tmpdir) / "test_config.json"
-            
+
             # Create corrupted JSON file
             with open(config_file, 'w') as f:
                 f.write("{ invalid json }")
-            
+
             # Should not crash, should use defaults
             config = Config(config_file)
-            
+
             assert config.get_auto_update_enabled() == False
 
     def test_config_file_format(self):
@@ -144,11 +144,11 @@ class TestConfigFileHandling:
         with tempfile.TemporaryDirectory() as tmpdir:
             config_file = Path(tmpdir) / "test_config.json"
             config = Config(config_file)
-            
+
             # Read file directly
             with open(config_file, 'r') as f:
                 data = json.load(f)
-            
+
             assert 'auto_update' in data
             assert 'enabled' in data['auto_update']
             assert 'check_on_startup' in data['auto_update']

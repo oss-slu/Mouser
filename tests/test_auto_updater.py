@@ -102,9 +102,9 @@ class TestGitHubAPIIntegration:
 
         updater = AutoUpdater()
         updater.current_version = "1.0.0"  # Set to older version
-        
+
         result = updater.check_for_updates()
-        
+
         assert result == True
         assert updater.latest_version == "1.2.0"
         assert updater.download_url is not None
@@ -128,9 +128,9 @@ class TestGitHubAPIIntegration:
 
         updater = AutoUpdater()
         updater.current_version = "1.0.0"
-        
+
         result = updater.check_for_updates()
-        
+
         assert result == False
 
     @patch('requests.get')
@@ -141,7 +141,7 @@ class TestGitHubAPIIntegration:
 
         updater = AutoUpdater()
         result = updater.check_for_updates()
-        
+
         assert result == False
         assert updater.latest_version is None
 
@@ -155,7 +155,7 @@ class TestGitHubAPIIntegration:
 
         updater = AutoUpdater()
         result = updater.check_for_updates()
-        
+
         assert result == False
 
 
@@ -180,9 +180,9 @@ class TestUpdateDownload:
 
         updater = AutoUpdater()
         updater.download_url = "https://github.com/test/download.zip"
-        
+
         result = updater.download_update()
-        
+
         assert result == True
         mock_get.assert_called_once()
         mock_zip_instance.extractall.assert_called_once()
@@ -191,9 +191,9 @@ class TestUpdateDownload:
         """Should fail when no download URL is set."""
         updater = AutoUpdater()
         updater.download_url = None
-        
+
         result = updater.download_update()
-        
+
         assert result == False
 
     @patch('requests.get')
@@ -204,9 +204,9 @@ class TestUpdateDownload:
 
         updater = AutoUpdater()
         updater.download_url = "https://github.com/test/download.zip"
-        
+
         result = updater.download_update()
-        
+
         assert result == False
 
 
@@ -220,7 +220,7 @@ class TestUpdateInstallation:
 
         updater = AutoUpdater()
         result = updater.install_update()
-        
+
         assert result == False
 
     @patch('shared.auto_updater.is_frozen')
@@ -240,7 +240,7 @@ class TestUpdateInstallation:
         (extract_dir / "Mouser.exe").touch()
 
         updater.install_update()
-        
+
         mock_popen.assert_called_once()
         mock_exit.assert_called_once_with(0)
 
@@ -256,7 +256,7 @@ class TestConvenienceFunctions:
         mock_get_version.return_value = "1.2.0"
 
         available, version = check_for_updates()
-        
+
         assert available == True
         assert version == "1.2.0"
 
@@ -278,7 +278,7 @@ class TestReleaseNotes:
 
         updater = AutoUpdater()
         updater.check_for_updates()
-        
+
         notes = updater.get_release_notes()
         assert "feature X" in notes
         assert "bug Y" in notes
@@ -296,26 +296,26 @@ class TestCleanup:
     def test_cleanup_removes_temp_dir(self):
         """Should remove temporary directory."""
         updater = AutoUpdater()
-        
+
         # Create temp directory
         updater.temp_dir.mkdir(parents=True, exist_ok=True)
         test_file = updater.temp_dir / "test.txt"
         test_file.write_text("test")
-        
+
         assert updater.temp_dir.exists()
-        
+
         updater.cleanup()
-        
+
         assert not updater.temp_dir.exists()
 
     def test_cleanup_handles_missing_dir(self):
         """Should handle cleanup when directory doesn't exist."""
         updater = AutoUpdater()
-        
+
         # Ensure temp dir doesn't exist
         if updater.temp_dir.exists():
             import shutil
             shutil.rmtree(updater.temp_dir)
-        
+
         # Should not raise exception
         updater.cleanup()

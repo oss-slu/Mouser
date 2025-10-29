@@ -31,7 +31,7 @@ class TestVersion:
         """Version should have valid major, minor, and patch numbers."""
         parts = __version__.split('.')
         assert len(parts) == 3, "Version should have exactly 3 parts (major.minor.patch)"
-        
+
         # Each part should be a valid integer
         for part in parts:
             assert part.isdigit(), f"Version part '{part}' is not a valid number"

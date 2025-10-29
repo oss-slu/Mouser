@@ -29,42 +29,42 @@ from ui.welcome_screen import setup_welcome_screen
 def check_for_updates_on_startup():
     """
     Check for updates in background thread on app startup.
-    
+
     If auto-update is enabled in config, will automatically:
     1. Check for updates
     2. Download update
     3. Install and restart
-    
+
     If auto-update is disabled, will only notify user.
     """
     try:
         config = get_config()
-        
+
         # Check if auto-update is enabled
         if not config.get_auto_update_enabled():
             return  # Auto-update disabled, skip check
-        
+
         updater = AutoUpdater()
-        
+
         # Check for updates
         if updater.check_for_updates():
             latest_version = updater.get_latest_version()
             print(f"\n{'='*60}")
             print(f"UPDATE AVAILABLE: Version {latest_version}")
             print(f"Current version: {__version__}")
-            
+
             # Auto-download if enabled
             if config.get_auto_download_enabled():
                 print("Downloading update...")
-                
+
                 def progress_callback(downloaded, total):
                     percent = (downloaded / total) * 100
                     if int(percent) % 10 == 0:  # Print every 10%
                         print(f"  Download progress: {percent:.0f}%")
-                
+
                 if updater.download_update(progress_callback):
                     print("Download complete!")
-                    
+
                     # Auto-install if enabled
                     if config.get_auto_install_enabled():
                         print("Installing update and restarting...")
@@ -80,7 +80,7 @@ def check_for_updates_on_startup():
                 print("Auto-download disabled.")
                 print(f"Download from: https://github.com/oss-slu/Mouser/releases")
                 print(f"{'='*60}\n")
-        
+
     except Exception as e:
         # Silently fail - don't interrupt app startup
         print(f"Note: Could not check for updates ({e})")
