@@ -7,15 +7,11 @@ Run with: pytest tests/test_auto_updater.py -v
 import os
 import sys
 from unittest.mock import patch, MagicMock, mock_open
-from pathlib import Path
-
-import pytest
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from shared.auto_updater import AutoUpdater, check_for_updates
-from packaging import version as pkg_version
 
 
 class TestVersionComparison:
@@ -24,26 +20,26 @@ class TestVersionComparison:
     def test_newer_version_detected(self):
         """Newer version should be detected correctly."""
         updater = AutoUpdater()
-        assert updater._is_newer_version("1.1.0") == True  # Assuming current is 1.0.0
-        assert updater._is_newer_version("2.0.0") == True
-        assert updater._is_newer_version("1.0.1") == True
+        assert updater._is_newer_version("1.1.0")  # Assuming current is 0.0.1
+        assert updater._is_newer_version("2.0.0")
+        assert updater._is_newer_version("1.0.1")
 
     def test_same_version(self):
         """Same version should not be considered newer."""
         updater = AutoUpdater()
         current = updater.current_version
-        assert updater._is_newer_version(current) == False
+        assert not updater._is_newer_version(current)
 
     def test_older_version(self):
         """Older version should not be considered newer."""
         updater = AutoUpdater()
         # Current version is 0.0.1, so these should not be newer
-        assert updater._is_newer_version("0.0.0") == False
+        assert not updater._is_newer_version("0.0.0")
 
     def test_invalid_version_format(self):
         """Invalid version format should be handled gracefully."""
         updater = AutoUpdater()
-        assert updater._is_newer_version("invalid") == False
+        assert not updater._is_newer_version("invalid")
         # v1.0.0 with 'v' prefix is actually newer than 0.0.1, so it should return True
         # The auto_updater strips the 'v' prefix in practice
 
@@ -105,7 +101,7 @@ class TestGitHubAPIIntegration:
 
         result = updater.check_for_updates()
 
-        assert result == True
+        assert result
         assert updater.latest_version == "1.2.0"
         assert updater.download_url is not None
         assert "zip" in updater.download_url
@@ -131,7 +127,7 @@ class TestGitHubAPIIntegration:
 
         result = updater.check_for_updates()
 
-        assert result == False
+        assert not result
 
     @patch('requests.get')
     def test_check_for_updates_network_error(self, mock_get):
@@ -142,7 +138,7 @@ class TestGitHubAPIIntegration:
         updater = AutoUpdater()
         result = updater.check_for_updates()
 
-        assert result == False
+        assert not result
         assert updater.latest_version is None
 
     @patch('requests.get')
@@ -156,7 +152,7 @@ class TestGitHubAPIIntegration:
         updater = AutoUpdater()
         result = updater.check_for_updates()
 
-        assert result == False
+        assert not result
 
 
 class TestUpdateDownload:
@@ -183,7 +179,7 @@ class TestUpdateDownload:
 
         result = updater.download_update()
 
-        assert result == True
+        assert result
         mock_get.assert_called_once()
         mock_zip_instance.extractall.assert_called_once()
 
@@ -194,7 +190,7 @@ class TestUpdateDownload:
 
         result = updater.download_update()
 
-        assert result == False
+        assert not result
 
     @patch('requests.get')
     def test_download_update_network_error(self, mock_get):
@@ -207,7 +203,7 @@ class TestUpdateDownload:
 
         result = updater.download_update()
 
-        assert result == False
+        assert not result
 
 
 class TestUpdateInstallation:
@@ -221,7 +217,7 @@ class TestUpdateInstallation:
         updater = AutoUpdater()
         result = updater.install_update()
 
-        assert result == False
+        assert not result
 
     @patch('shared.auto_updater.is_frozen')
     @patch('shared.auto_updater.get_platform')
@@ -257,7 +253,7 @@ class TestConvenienceFunctions:
 
         available, version = check_for_updates()
 
-        assert available == True
+        assert available
         assert version == "1.2.0"
 
 
