@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["windows-latest"]
+        os: ["windows-latest", "macos-latest", "ubuntu-latest"]
 
     steps:
       - uses: actions/checkout@v4
@@ -47,25 +47,49 @@ jobs:
             --add-data "shared/images/*:shared/images" \
             --add-data "shared/sounds/*:shared/sounds" \
             --add-data "settings:settings" \
+            --add-data "version.py:." \
             main.py
         shell: bash
 
-      - shell: cmd
+      # Platform-specific executable renaming
+      - name: Rename executable (Windows)
         if: ${{ matrix.os == 'windows-latest' }}
-        run: |
-          ren dist\main\main.exe Mouser.exe
+        shell: cmd
+        run: ren dist\main\main.exe Mouser.exe
 
-      - name: Zip the build directory
+      - name: Rename executable (macOS)
+        if: ${{ matrix.os == 'macos-latest' }}
+        shell: bash
+        run: mv dist/main/main dist/main/Mouser
+
+      - name: Rename executable (Linux)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        shell: bash
+        run: mv dist/main/main dist/main/Mouser
+
+      # Platform-specific packaging
+      - name: Package build (Windows)
         if: ${{ matrix.os == 'windows-latest' }}
         shell: powershell
-        run: Compress-Archive -Path dist/main/* -DestinationPath dist/Mouser_${{ matrix.os }}.zip -Force
+        run: Compress-Archive -Path dist/main/* -DestinationPath dist/Mouser_windows.zip -Force
 
+      - name: Package build (macOS)
+        if: ${{ matrix.os == 'macos-latest' }}
+        shell: bash
+        run: cd dist && zip -r Mouser_macos.zip main/
+
+      - name: Package build (Linux)
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        shell: bash
+        run: cd dist && zip -r Mouser_linux.zip main/
+
+      # Attestation and upload
       - uses: actions/attest-build-provenance@v1
         with:
-          subject-path: dist/Mouser_${{ matrix.os }}.zip
+          subject-path: dist/Mouser_*.zip
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: Mouser_${{ matrix.os }}
-          path: dist/Mouser_${{ matrix.os }}.zip
+          path: dist/Mouser_*.zip

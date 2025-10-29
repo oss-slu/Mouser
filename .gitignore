@@ -2,3 +2,5 @@
 /.vs
 /exports
 venv/
+.venv/
+settings/app_config.json
