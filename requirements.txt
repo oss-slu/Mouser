@@ -9,7 +9,7 @@ cryptography
 customtkinter
 CTkMessagebox
 CTkMenuBar
-playsound
+playsound3
 packaging
 requests
 pyyaml
