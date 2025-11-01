@@ -1,0 +1,27 @@
+name: Sandbox – Test Windows Installer
+
+on:
+  workflow_dispatch:      # Manual run only
+  pull_request:
+    branches:
+      - ci-sandbox        # Or your chosen branch name
+
+jobs:
+  build-windows-sandbox:
+    uses: ./.github/workflows/build-reusable.yml
+    with: {}
+
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Upload Windows Installer Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sandbox-windows-installer
+          path: dist/**/*.zip
+          if-no-files-found: warn
