@@ -1,27 +1,68 @@
-name: Sandbox – Test Windows Installer
+name: Sandbox – Build Windows Installer (No Prod Impact)
 
 on:
-  workflow_dispatch:      # Manual run only
+  workflow_dispatch:           # manual runs only
   pull_request:
     branches:
-      - ci-sandbox        # Or your chosen branch name
+      - ci-sandbox            
+
+permissions:
+  contents: read
 
 jobs:
   build-windows-sandbox:
-    uses: ./.github/workflows/build-reusable.yml
-    with: {}
-
-    permissions:
-      contents: read
-      id-token: write
-      attestations: write
+    runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Upload Windows Installer Artifact
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Upgrade pip/setuptools/wheel
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade setuptools wheel
+
+      - name: Install dependencies (bypass playsound failures)
+        run: |
+          pip install -r requirements.txt || true
+          pip install pyinstaller importlib-metadata sacremoses tokenizers || true
+          pip install playsound || true
+
+      - name: Build with PyInstaller
+        shell: bash
+        run: |
+          pyinstaller --noconfirm --noconsole --onedir -c \
+            --copy-metadata tqdm \
+            --copy-metadata regex \
+            --copy-metadata sacremoses \
+            --copy-metadata requests \
+            --copy-metadata packaging \
+            --copy-metadata filelock \
+            --copy-metadata tokenizers \
+            --copy-metadata importlib_metadata \
+            --collect-data sv_ttk \
+            --hidden-import "babel.numbers" \
+            --add-data "shared/images/*:shared/images" \
+            --add-data "shared/sounds/*:shared/sounds" \
+            --add-data "settings:settings" \
+            main.py
+
+      - name: Rename EXE
+        shell: cmd
+        run: ren dist\main\main.exe Mouser.exe
+
+      - name: Zip artifact
+        shell: powershell
+        run: Compress-Archive -Path dist/main/* -DestinationPath dist/Mouser_windows-latest.zip -Force
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sandbox-windows-installer
-          path: dist/**/*.zip
-          if-no-files-found: warn
+          name: Mouser_windows-latest
+          path: dist/Mouser_windows-latest.zip
+          if-no-files-found: error
