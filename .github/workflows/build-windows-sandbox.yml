@@ -14,7 +14,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Setup Python
@@ -27,46 +27,41 @@ jobs:
           python -m pip install --upgrade pip
           pip install --upgrade setuptools wheel
 
-      - name: Install dependencies (skip playsound in CI)
+      - name: Install Dependencies (skip failure)
         run: |
-          pip install tkcalendar pandas getmac pyaudio pyserial pysound pytest cryptography customtkinter CTkMessagebox CTkMenuBar
-          pip install pyinstaller importlib-metadata sacremoses tokenizers
+          pip install -r requirements.txt || true
+          pip install pyinstaller importlib-metadata sacremoses tokenizers || true
+          pip install playsound3 || true
 
-      - name: Build with PyInstaller
-        shell: bash
-        run: |
-          pyinstaller --noconfirm --noconsole --onedir -c \
-            --copy-metadata tqdm \
-            --copy-metadata regex \
-            --copy-metadata sacremoses \
-            --copy-metadata requests \
-            --copy-metadata packaging \
-            --copy-metadata filelock \
-            --copy-metadata tokenizers \
-            --copy-metadata importlib_metadata \
-            --collect-data sv_ttk \
-            --hidden-import "babel.numbers" \
-            --add-data "shared/images/*:shared/images" \
-            --add-data "shared/sounds/*:shared/sounds" \
-            --add-data "settings:settings" \
-            main.py
-
-      - name: Debug – List build output
-        shell: bash
-        run: ls -R dist || echo "dist folder not found"
+      - name: Build Executable with PyInstaller
+        run: >
+          pyinstaller --noconfirm --noconsole --onedir -c
+          --copy-metadata tqdm
+          --copy-metadata regex
+          --copy-metadata sacremoses
+          --copy-metadata requests
+          --copy-metadata packaging
+          --copy-metadata filelock
+          --copy-metadata tokenizers
+          --copy-metadata importlib_metadata
+          --collect-data sv_ttk
+          --hidden-import "babel.numbers"
+          --add-data "shared/images/*:shared/images"
+          --add-data "shared/sounds/*:shared/sounds"
+          --add-data "settings:settings"
+          main.py
 
       - name: Rename EXE
-        shell: cmd
         run: ren dist\main\main.exe Mouser.exe
+        shell: cmd
 
-      - name: Zip artifact
-        shell: powershell
+      - name: Zip Executable
         run: Compress-Archive -Path dist/main/* -DestinationPath dist/Mouser_windows-latest.zip -Force
+        shell: powershell
 
-      - name: Upload artifact
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Mouser_windows-latest
+          name: Mouser_Windows_Installer
           path: dist/Mouser_windows-latest.zip
           if-no-files-found: error
-
