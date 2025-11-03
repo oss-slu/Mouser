@@ -1,7 +1,8 @@
 '''Database Unit Tests'''
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import unittest
-import os
-import sys
 import tempfile
 from customtkinter import CTk
 from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
@@ -27,6 +28,7 @@ class TestPlatform(unittest.TestCase):
       def test_database_across_platform(self):
         '''Test to validate SQLite operations across Windows, macOS, and Linux'''
         temp_db_path = create_temp_file()
+        temp_db = tempfile.NamedTemporaryFile(delete=False)
 
         db = ExperimentDatabase(temp_db_path)
         db.setup_experiment("Test", "Test Mouse", False, 16, 4, 4, 
@@ -34,7 +36,7 @@ class TestPlatform(unittest.TestCase):
         db.setup_groups(["Control", "Group 1", "Group 2", "Group 3"], 4)
         for i in range(0,4):
             group_id = 1 if i < 2 else 2
-            db.add_animal(group_id, 10 + i)
+            db.add_animal(animal_id=i + 1, rfid=str(10 + i), group_id=group_id)
 
         value = db.get_animal_rfid(animal_id=1)
         os_name = get_platform()
@@ -53,7 +55,8 @@ class TestUIComponents(unittest.TestCase):
 
 
     def tearDown(self):
-        self.root.destroy()
+        self.db.close_connection()
+        os.remove(self.temp_db.name)
 
 
     '''Test if the buttons in experiment menu ui exists'''
@@ -91,9 +94,11 @@ class TestUIComponents(unittest.TestCase):
 
 class TestDatabaseSetup(unittest.TestCase):
     '''Test Basic Setup of Database'''
-    db = ExperimentDatabase()
-    db.setup_experiment("Test", "Test Mouse", False, 16, 4, 4, "Weight", 1, ["Investigator"], "Weight")
-    db.setup_groups(["Control", "Group 1", "Group 2", "Group 3"], 4)
+    def setUp(self):
+        self.temp_db = tempfile.NamedTemporaryFile(delete=False)
+        self.db = ExperimentDatabase(self.temp_db.name)
+        self.db.setup_experiment("Test", "Test Mouse", False, 16, 4, 4, "Weight", 1, ["Investigator"], "Weight")
+        self.db.setup_groups(["Control", "Group 1", "Group 2", "Group 3"], 4)
 
     def test_num_animals(self):
         '''Checks if num animals equals expected.'''
@@ -119,7 +124,7 @@ class TestAnimalRFIDMethods(unittest.TestCase):
     db.setup_groups(["Control", "Group 1", "Group 2", "Group 3"], 4)
     for i in range(0,4):
         group_id = 1 if i < 2 else 2
-        db.add_animal(group_id, 10 + i)
+        db.add_animal(animal_id=i + 1, rfid=str(10 + i), group_id=group_id)
 
     def test_add_animal_ids(self):
         '''Test if animal id of particular animal matches expected.'''
@@ -145,7 +150,7 @@ class TestCageFunctions(unittest.TestCase):
     db.setup_groups(["Control", "Group 1", "Group 2", "Group 3"], 4)
     for i in range(0,4):
         group_id = 1 if i < 2 else 2
-        db.add_animal(group_id, 10 + i)
+        db.add_animal(animal_id=i + 1, rfid=str(10 + i), group_id=group_id)
 
     def test_get_animals_from_cage(self):
         '''Tests if animals from a particular cage match expected.'''
@@ -163,7 +168,7 @@ class TestGroupFunctions(unittest.TestCase):
     db.setup_groups(["Control", "Group 1"], 4)
     for i in range(0,4):
         group_id = 1 if i < 2 else 2
-        db.add_animal(group_id, 10 + i)
+        db.add_animal(animal_id=i + 1, rfid=str(10 + i), group_id=group_id)
 
 
     def test_get_all_groups(self):

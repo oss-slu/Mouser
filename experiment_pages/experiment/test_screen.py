@@ -1,10 +1,13 @@
 '''Screen for testing functionality of RFID Readers and Serial Devices.'''
 import os
+import sys
 import time
 import threading
 from customtkinter import *
-from shared.tk_models import *
-from shared.serial_handler import SerialDataHandler
+from tk_models import *
+from serial_handler import SerialDataHandler
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 class TestScreen(CTkToplevel):
     '''Screen for testing functionality of RFID Readers and Serial Devices.'''

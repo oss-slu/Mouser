@@ -1,10 +1,12 @@
 import sys
 import os
-import unittest
+
 from unittest import TestLoader, TestSuite, TextTestRunner
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 
 #Import all test classes from your database test file
-from tests.test_database import (
+from tests.database_test import (
     TestPlatform,
     TestUIComponents,
     TestDatabaseSetup,
@@ -12,6 +14,7 @@ from tests.test_database import (
     TestCageFunctions,
     TestGroupFunctions
 )
+
 
 def test_database_suite_execution():
     """Ensures all database-related tests pass when executed together."""
