@@ -5,3 +5,4 @@ venv/
 .venv/
 settings/app_config.json
 .pylintrc
+tests/database_test.py
