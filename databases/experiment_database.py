@@ -840,13 +840,13 @@ class ExperimentDatabase:
                         WHERE name = ?''', (cage_name,))
         result = self._c.fetchone()
         return result[0] if result else None
-    
+
     def close_connection(self):
         """Safely close the SQLite connection or cursor."""
         try:
             if hasattr(self, "_c") and self._c:
                 self._c.close()
-        except Exception as e:
+        except sqlite3.Error as e:            
             print(f"Error closing database connection: {e}")
 
     def get_all_groups(self):
@@ -858,7 +858,7 @@ class ExperimentDatabase:
         except sqlite3.Error as e:
             print(f"Error in get_all_groups: {e}")
             return []
-        
+  
     def get_cage_max(self):
         """Return the maximum animals per cage from the experiment table."""
         self._ensure_connection()
@@ -869,7 +869,7 @@ class ExperimentDatabase:
         except sqlite3.Error as e:
             print(f"Error in get_cage_max: {e}")
             return 0
-        
+ 
     def get_animals_by_cage(self):
         """Return a dict mapping each group_id (as str) → list of animal_id (as str)."""
         self._ensure_connection()
@@ -914,5 +914,3 @@ class ExperimentDatabase:
         except sqlite3.Error as e:
             print(f"Error in get_animals_by_group: {e}")
             return {}
-
-

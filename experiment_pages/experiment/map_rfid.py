@@ -1,6 +1,7 @@
 '''Map RFID module.'''
 import time
 import traceback
+import sqlite3 as sql
 from tkinter import Menu
 from tkinter.ttk import Style, Treeview
 import tkinter.font as tkfont
@@ -24,34 +25,34 @@ from shared.flash_overlay import FlashOverlay
 
 class RFIDHandler:
     def __init__(self):
-        # initialize serial port and flags
+        '''initialize serial port and flags'''
         try:
             self.rfid_serial_port_controller = SerialPortController("reader")
             self.flag_listening = False
             self.thread = None
             self.content = None
-        except Exception as e:
+        except sql.Error as e:
             print(f"An exception occurred {e}")
             self.flag_listening = False
 
 
 
     def start_listening(self):
-        # start hardware RFID scanning in a thread
+        ''' start hardware RFID scanning in a thread'''
         self.thread = threading.Thread(target=self.scan_rfid)
         if self.flag_listening is False:
             self.flag_listening = True
             self.thread.start()
 
     def stop_listening(self):
-        # stop thread and clean up resources
+        '''stop thread and clean up resources'''
         if self.flag_listening is True:
             self.flag_listening = False
             self.thread.join()
             self.rfid_serial_port_controller.close()
 
     def scan_rfid(self):
-        # loop and read RFID data
+        '''loop and read RFID data'''
         while self.flag_listening is True:
             self.content = self.rfid_serial_port_controller.read_data()
             if self.content:
@@ -62,10 +63,10 @@ class RFIDHandler:
                 except Exception as e:
                     print(f"An exception occurred: {e}")
 
-            time.sleep(0.1) 
+            time.sleep(0.1)
 
 def simulate_rfid():
-    # generate fake RFID for testing
+    '''generate fake RFID for testing'''
     process_id = os.getpid()
     random_id = get_random_rfid()
     print(random_id)
@@ -144,7 +145,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.table.bind("<Button-3>", self.right_click_menu)
 
         self.delete_button = CTkButton(self, text="Remove Selection(s)", compound=TOP,
-                                       width=250, height=75, font=("Georgia", 65), command=self.remove_selected_items,
+                                       width=250, height=75, font=("Georgia", 65), 
+                                       command=self.remove_selected_items,
                                        state="normal")  # Initialize button as disabled
         self.delete_button.place(relx=0.45, rely=0.80, anchor=CENTER)
 
@@ -240,7 +242,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                         self.animal_rfid_list.append(clean_rfid)
                         AudioManager.play(SUCCESS_SOUND)
 
-            except Exception as e:
+            except sql.Error as e:
                 print(f"Error in RFID listener: {e}")
             finally:
                 if hasattr(self, 'rfid_reader') and self.rfid_reader:
@@ -269,7 +271,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                 print("🔌 Closing serial connection...")
                 self.rfid_reader.stop()
                 self.rfid_reader = None
-            except Exception as e:
+            except sql.Error as e:
                 self.raise_warning("Failed to close the serial port properly.")
                 print(f"⚠️ Error closing serial port: {e}")
 
@@ -411,6 +413,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             self.stop_listening()
 
     def item_selected(self, _):
+        '''Check if any item selected has changed'''
         selected = self.table.selection()
         print("Selection ", selected, " changed.")
 
@@ -551,7 +554,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                 new_page = ExperimentMenuUI(self.parent, self.file_path, self.menu_page, self.file_path)
                 new_page.raise_frame()
 
-            except Exception as e:
+            except sql.Error as e:
                 self.raise_warning("An error occurred while saving or cleaning up.")
                 print(f"Error during save and cleanup: {e}")
 
@@ -577,7 +580,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             file_utils.save_temp_to_file(current_file, self.file_path)
             print("Save successful!")
 
-        except Exception as e:
+        except sql.Error as e:
             self.raise_warning("An error occurred while saving or cleaning up.")
             print(f"Error during save and cleanup: {e}")
             print(f"Full traceback: {traceback.format_exc()}")

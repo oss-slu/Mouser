@@ -4,11 +4,11 @@ import threading
 import time
 import re
 import traceback
+import sqlite3 as sql
 
+from tkinter.ttk import Treeview, Style
 from customtkinter import *
 from CTkMessagebox import CTkMessagebox
-from tkinter.ttk import Treeview, Style
-
 
 from shared.tk_models import *
 from databases.experiment_database import ExperimentDatabase
@@ -267,7 +267,7 @@ class DataCollectionUI(MouserPage):
 
 
                     time.sleep(0.1)  # Shorter sleep time for more responsive stopping
-            except Exception as e:
+            except sql.Error as e:            
                 print(f"Error in RFID listener: {e}")
             finally:
                 if hasattr(self, 'rfid_reader') and self.rfid_reader:
@@ -291,7 +291,7 @@ class DataCollectionUI(MouserPage):
             try:
                 self.rfid_reader.stop()
                 self.rfid_reader.close()
-            except Exception as e:
+            except sql.Error as e:
                 print(f"Error closing RFID reader: {e}")
             finally:
                 self.rfid_reader = None
@@ -302,7 +302,7 @@ class DataCollectionUI(MouserPage):
                 self.rfid_thread.join(timeout=2)  # Wait up to 2 seconds
                 if self.rfid_thread.is_alive():
                     print("⚠️ Warning: RFID thread did not stop cleanly")
-            except Exception as e:
+            except sql.Error as e:
                 print(f"Error joining RFID thread: {e}")
 
         self.rfid_thread = None
@@ -387,7 +387,7 @@ class DataCollectionUI(MouserPage):
                         ))
 
 
-                except Exception as save_error:
+                except sql.Error as save_error:
                     print(f"Autosave failed: {save_error}")
                     print(f"Error type: {type(save_error)}")
                     print(f"Full traceback: {traceback.format_exc()}")

@@ -1,6 +1,5 @@
 '''Screen for testing functionality of RFID Readers and Serial Devices.'''
 import os
-import sys
 import time
 import threading
 from customtkinter import *
@@ -59,7 +58,7 @@ class TestScreen(CTkToplevel):
         device_label.grid(row=10, column=0, columnspan=2, pady=10)
 
         preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference")
-        serial_devices = [d for d in os.listdir(preference_dir) 
+        serial_devices = [d for d in os.listdir(preference_dir)
                           if os.path.exists(os.path.join(preference_dir, d, "preferred_config.txt"))]
 
         for index, com_port in enumerate(serial_devices, start=11):

@@ -190,4 +190,3 @@ class Experiment():
         '''Function to add investigator name'''
         if investigator_name and investigator_name not in self.investigators:
             self.investigators.append(investigator_name)
-

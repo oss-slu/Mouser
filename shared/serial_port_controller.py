@@ -11,6 +11,7 @@ nothing even if you write to writer port already
 import os
 import serial
 import serial.tools.list_ports
+import sqlite3 as sql
 from shared.file_utils import get_resource_path
 
 class SerialPortController():
@@ -141,7 +142,7 @@ class SerialPortController():
                 print(second_measurement)
                 print(decoded_second_measurement)
                 return decoded_second_measurement
-            except Exception as e:
+            except sql.Error as e:
                 print(f"Error reading from serial port: {e}")
                 return None
             finally:
@@ -179,7 +180,7 @@ class SerialPortController():
         self.close_reader_port()
         try:
             self.set_reader_port(port)
-        except Exception as e:
+        except sql.Error as e:
             print(e)
 
     def retrieve_setting(self, setting_type):

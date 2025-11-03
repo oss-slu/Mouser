@@ -6,7 +6,6 @@ from customtkinter import *
 from shared.tk_models import *
 from shared.scrollable_frame import ScrolledFrame
 from shared.experiment import Experiment
-#from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from shared.password_utils import PasswordManager
 
 class CreateExperimentButton(CTkButton):

@@ -9,8 +9,8 @@ from databases.experiment_database import ExperimentDatabase
 
 def create_temp_file():
     '''Function to create temporary file and return it'''
-    temp = tempfile.NamedTemporaryFile(delete=False)  
-    temp.close()        
+    temp = tempfile.NamedTemporaryFile(delete=False)
+    temp.close()    
     return temp.name
 
 def get_platform():
@@ -23,21 +23,21 @@ def delete_file(path):
         os.remove(path)
 
 class TestPlatform(unittest.TestCase):
-      def setUp(self):
+    def setUp(self):
         self.temp_db_path = tempfile.NamedTemporaryFile(delete=False).name
         self.db = ExperimentDatabase(self.temp_db_path)
 
         def tearDown(self):
             self.db.close_connection()
-            os.remove(self.temp_db_path) 
+            os.remove(self.temp_db_path)
 
-      def test_database_across_platform(self):
+    def test_database_across_platform(self):
         '''Test to validate SQLite operations across Windows, macOS, and Linux'''
         temp_db_path = create_temp_file()
         temp_db = tempfile.NamedTemporaryFile(delete=False)
 
         db = ExperimentDatabase(temp_db_path)
-        db.setup_experiment("Test", "Test Mouse", False, 16, 4, 4, 
+        db.setup_experiment("Test", "Test Mouse", False, 16, 4, 4,
                         "Weight", 1, ["Investigator"], "Weight")
         db.setup_groups(["Control", "Group 1", "Group 2", "Group 3"], 4)
         for i in range(0,4):
@@ -46,7 +46,7 @@ class TestPlatform(unittest.TestCase):
 
         value = db.get_animal_rfid(animal_id=1)
         os_name = get_platform()
-        
+
         self.assertEqual(value, '10')
         self.assertIn(os_name, ["win32", "darwin", "linux"])
 
@@ -218,5 +218,5 @@ class TestGroupFunctions(unittest.TestCase):
 
     def test_get_cages_by_group(self):
         '''Tests if cages by group dict matches expected.'''
-        self.assertEqual({'Control': ['1'], 'Group 1': ['2']}, 
+        self.assertEqual({'Control': ['1'], 'Group 1': ['2']},
                         self.db.get_cages_by_group())
