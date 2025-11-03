@@ -6,7 +6,7 @@ from customtkinter import *
 from shared.tk_models import *
 from shared.scrollable_frame import ScrolledFrame
 from shared.experiment import Experiment
-from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+#from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from shared.password_utils import PasswordManager
 
 class CreateExperimentButton(CTkButton):
@@ -49,12 +49,14 @@ class CreateExperimentButton(CTkButton):
                 with open(temp_file_path, "wb") as temp_file:
                     temp_file.write(decrypted_data)
                     temp_file.seek(0)
+                    from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
                     root = self.winfo_toplevel() #pylint: disable= redefined-outer-name
                     page = ExperimentMenuUI(root, temp_file.name)
 
             else:
                 # Use os.path.join for file path
                 file = os.path.join(directory, f"{self.experiment.get_name()}.mouser")
+                from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
                 root = self.winfo_toplevel()
                 page = ExperimentMenuUI(root, file, None, file)
                 raise_frame(page) #pylint: disable=undefined-variable

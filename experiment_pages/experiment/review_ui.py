@@ -34,7 +34,11 @@ class ReviewUI(MouserPage):
         CTkLabel(self.main_frame, text="\n".join(investigators), font=font).grid(row=1, column=1, sticky=W, padx=pad_x, pady=pad_y)
 
         # Species
-        species = self.database._c.execute("SELECT species FROM experiment").fetchone()[0]
+        result = self.database._c.execute("SELECT species FROM experiment").fetchone()
+        if result is not None:
+            species = result[0]
+        else:
+            species = "Unknown"        
         CTkLabel(self.main_frame, text="Species:", font=font).grid(row=2, column=0, sticky=W, padx=pad_x, pady=pad_y)
         CTkLabel(self.main_frame, text=species, font=font).grid(row=2, column=1, sticky=W, padx=pad_x, pady=pad_y)
 

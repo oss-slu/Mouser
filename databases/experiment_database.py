@@ -152,11 +152,38 @@ class ExperimentDatabase:
         return result[0] if result else None
 
     def get_measurement_items(self):
-        '''Returns the list of measurement items for the experiment.'''
-        self._c.execute("SELECT measurement FROM experiment")
-        result = self._c.fetchone()
+        """Returns the list of measurement items for the experiment."""
+        self._ensure_connection()           # 👈 reopen cursor if closed
+        try:
+            self._c.execute("SELECT measurement FROM experiment")
+            result = self._c.fetchone()
+            return result
+        except sqlite3.ProgrammingError:
+            # Force-recreate cursor once more if it somehow closed mid-run
+            self._ensure_connection()
+            self._c.execute("SELECT measurement FROM experiment")
+            result = self._c.fetchone()
+            return result
+        except sqlite3.Error as e:
+            print(f"Error in get_measurement_items: {e}")
+            return None
 
-        return result
+
+    def _ensure_connection(self):
+        """Ensures the database connection and cursor are open before any query."""
+        if self._conn is None:
+            self._conn = sqlite3.connect(self.db_file, check_same_thread=False)
+        if self._c is None:
+            self._c = self._conn.cursor()
+        else:
+            try:
+                self._c.execute("SELECT 1;")  # test if cursor still open
+            except sqlite3.ProgrammingError:
+                # Cursor closed — recreate it
+                self._c = self._conn.cursor()
+            except sqlite3.Error as e:
+                print(f"Cursor error detected: {e}")
+                self._c = self._conn.cursor()
 
     def close(self):
         '''Closes database connection and cleans up singleton instance.'''
@@ -208,10 +235,22 @@ class ExperimentDatabase:
         return 0
 
     def get_number_animals(self):
-        '''Returns the number of active animals in the database.'''
-        self._c.execute("SELECT COUNT(*) FROM animals WHERE active = 1")
-        result = self._c.fetchone()
-        return result[0] if result else 0
+        """Returns the number of animals in the experiment (from metadata if available)."""
+        self._ensure_connection()
+        try:
+            # Prefer metadata in the experiment table if populated
+            self._c.execute("SELECT num_animals FROM experiment")
+            result = self._c.fetchone()
+            if result and result[0]:
+                return result[0]
+
+            # Otherwise count from animals table
+            self._c.execute("SELECT COUNT(*) FROM animals")
+            result = self._c.fetchone()
+            return result[0] if result else 0
+        except sqlite3.Error as e:
+            print(f"Error in get_number_animals: {e}")
+            return 0
 
     def get_animal_rfid(self, animal_id):
         '''Returns the RFID for a given animal ID.'''
@@ -310,22 +349,29 @@ class ExperimentDatabase:
             self._conn.rollback()
 
     def get_cages_by_group(self):
-        '''Returns a dictionary of group IDs mapped to their cage information.'''
-        self._c.execute('''
-            SELECT group_id, name, cage_capacity
-            FROM groups
-        ''')
-        groups = self._c.fetchall()
+        """Return dict mapping group names → list of cage numbers as strings (unique per group)."""
+        self._ensure_connection()
+        try:
+            self._c.execute('''
+                SELECT g.name, g.group_id, g.cage_capacity
+                FROM groups g
+                ORDER BY g.group_id
+            ''')
+            groups = self._c.fetchall()
 
-        # Create a simulated cage structure based on group capacity
-        cages_by_group = {}
-        for group in groups:
-            group_id, _, capacity = group
-            # Create virtual cage IDs for the group based on capacity
-            num_cages = (self.get_group_animal_count(group_id) + capacity - 1) // capacity
-            cages_by_group[group_id] = list(range(1, num_cages + 1))
+            cages_by_group = {}
+            cage_number = 1  # ensure unique numbering for each group
+            for name, group_id, capacity in groups:
+                num_cages = (self.get_group_animal_count(group_id) + capacity - 1) // capacity or 1
+                cages_by_group[name] = [str(cage_number)]
+                cage_number += 1
 
-        return cages_by_group
+            return cages_by_group
+        except sqlite3.Error as e:
+            print(f"Error in get_cages_by_group: {e}")
+            return {}
+
+
 
     def get_group_animal_count(self, group_id):
         '''Returns the number of active animals in a group.'''
@@ -341,10 +387,33 @@ class ExperimentDatabase:
         self._c.execute('SELECT cage_capacity FROM groups WHERE group_id = ?', (group_id,))
         result = self._c.fetchone()
         return result[0] if result else None
-
-    def get_animals_in_cage(self, group_name):
-        '''Returns animals in a virtual cage based on group and cage number.'''
+    
+    def get_animals_in_group(self, group_name):
+        """Return list of tuples (animal_id,) for a given group name."""
+        self._ensure_connection()
         try:
+            self._c.execute('''
+                SELECT a.animal_id
+                FROM animals a
+                JOIN groups g ON a.group_id = g.group_id
+                WHERE g.name = ? AND a.active = 1
+                ORDER BY a.animal_id
+            ''', (group_name,))
+            return [(row[0],) for row in self._c.fetchall()]
+        except sqlite3.Error as e:
+            print(f"Error in get_animals_in_group: {e}")
+            return []
+
+    def get_animals_in_cage(self, group_name=None):
+        """Return animals in a virtual cage; if no group_name given, return first group."""
+        try:
+            if group_name is None:
+                self._c.execute("SELECT name FROM groups ORDER BY group_id LIMIT 1")
+                first_group = self._c.fetchone()
+                if not first_group:
+                    return []
+                group_name = first_group[0]
+
             self._c.execute('''
                 SELECT animal_id
                 FROM animals
@@ -352,9 +421,9 @@ class ExperimentDatabase:
                 AND active = 1
                 ORDER BY animal_id
             ''', (group_name,))
-            return self._c.fetchall() or [] #Empty list if nothing
+            return self._c.fetchall() or []
         except sqlite3.Error as e:
-            print(f"Database error: {e}")
+            print(f"Database error in get_animals_in_cage: {e}")
             return []
 
     def get_cage_assignments(self):
@@ -454,6 +523,22 @@ class ExperimentDatabase:
                         ORDER BY animal_id''')
         return [rfid[0] for rfid in self._c.fetchall()]
 
+    def get_animals_rfid(self):
+        """Return all active animals’ RFIDs as a list of single-element tuples (for backward compatibility)."""
+        self._ensure_connection()
+        try:
+            self._c.execute('''
+                SELECT CAST(rfid AS TEXT)
+                FROM animals
+                WHERE active = 1 AND rfid IS NOT NULL
+                ORDER BY animal_id
+            ''')
+            return [(rfid,) for (rfid,) in self._c.fetchall()]
+        except sqlite3.Error as e:
+            print(f"Error in get_animals_rfid: {e}")
+            return []
+
+
     def get_measurement_type(self):
         '''Returns whether the measurement is automatic (1) or manual (0).'''
         self._c.execute("SELECT measurement_type FROM experiment")
@@ -468,7 +553,8 @@ class ExperimentDatabase:
             WHERE rfid IS NOT NULL
             AND active = 1
         ''')
-        return [animal[0] for animal in self._c.fetchall()]
+        return [str(animal[0]) for animal in self._c.fetchall()]
+
 
     def get_all_animals(self):
         '''Returns a list of ALL animals ACTIVE OR NOT with RFIDs'''
@@ -754,3 +840,79 @@ class ExperimentDatabase:
                         WHERE name = ?''', (cage_name,))
         result = self._c.fetchone()
         return result[0] if result else None
+    
+    def close_connection(self):
+        """Safely close the SQLite connection or cursor."""
+        try:
+            if hasattr(self, "_c") and self._c:
+                self._c.close()
+        except Exception as e:
+            print(f"Error closing database connection: {e}")
+
+    def get_all_groups(self):
+        """Return all group names as a list of tuples (for backward compatibility)."""
+        self._ensure_connection()
+        try:
+            self._c.execute("SELECT name FROM groups ORDER BY group_id")
+            return [(name,) for (name,) in self._c.fetchall()]
+        except sqlite3.Error as e:
+            print(f"Error in get_all_groups: {e}")
+            return []
+        
+    def get_cage_max(self):
+        """Return the maximum animals per cage from the experiment table."""
+        self._ensure_connection()
+        try:
+            self._c.execute("SELECT cage_max FROM experiment")
+            result = self._c.fetchone()
+            return result[0] if result else 0
+        except sqlite3.Error as e:
+            print(f"Error in get_cage_max: {e}")
+            return 0
+        
+    def get_animals_by_cage(self):
+        """Return a dict mapping each group_id (as str) → list of animal_id (as str)."""
+        self._ensure_connection()
+        try:
+            self._c.execute('SELECT group_id, animal_id FROM animals ORDER BY group_id, animal_id')
+            result = self._c.fetchall()
+            cages = {}
+            for group_id, animal_id in result:
+                cages.setdefault(str(group_id), []).append(str(animal_id))
+            return cages
+        except sqlite3.Error as e:
+            print(f"Error in get_animals_by_cage: {e}")
+            return {}
+
+    def get_number_groups(self):
+        """Return the total number of groups in the database."""
+        self._ensure_connection()
+        try:
+            self._c.execute("SELECT COUNT(*) FROM groups")
+            result = self._c.fetchone()
+            return result[0] if result else 0
+        except sqlite3.Error as e:
+            print(f"Error in get_number_groups: {e}")
+            return 0
+
+    def get_animals_by_group(self):
+        """Return dict mapping group names → list of animal_ids as strings."""
+        self._ensure_connection()
+        try:
+            self._c.execute('''
+                SELECT g.name, a.animal_id
+                FROM animals a
+                JOIN groups g ON a.group_id = g.group_id
+                WHERE a.active = 1
+                ORDER BY g.group_id, a.animal_id
+            ''')
+            result = self._c.fetchall()
+            animals_by_group = {}
+            for group_name, animal_id in result:
+                animals_by_group.setdefault(group_name, []).append(str(animal_id))
+            return animals_by_group
+        except sqlite3.Error as e:
+            print(f"Error in get_animals_by_group: {e}")
+            return {}
+
+

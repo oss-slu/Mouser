@@ -10,7 +10,8 @@ from experiment_pages.experiment.cage_config_ui import CageConfigurationUI
 from experiment_pages.experiment.experiment_invest_ui import InvestigatorsUI
 from databases.experiment_database import ExperimentDatabase
 from experiment_pages.experiment.review_ui import ReviewUI
-
+from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
+#from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 
 class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
     '''Experiment Menu Page Frame'''
@@ -22,6 +23,9 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
 
 
         #Get name of file from file path
+        self.new_experiment_page = NewExperimentUI(parent, self)
+        self.new_experiment = self.new_experiment_page
+
         experiment_name = os.path.basename(name)
         experiment_name = os.path.splitext(experiment_name)[0]
         self.experiment = ExperimentDatabase(name)
@@ -93,7 +97,13 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
 # Assume buttons are enabled initially- This allows for them to be disabled before RFID Mapping is done
         self.disable_buttons_if_needed()
 
-
+    def safe_option_get(self, name, className="CTk"):
+        """Safe wrapper for option_get to avoid TclError on macOS."""
+        try:
+            return self.root.option_get(name, className)
+        except Exception:
+            return None
+        
     def raise_frame(self):
         '''Raises the frame to the user interaction level.'''
         self.on_show_frame()

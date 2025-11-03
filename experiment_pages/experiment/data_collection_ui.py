@@ -7,6 +7,8 @@ import traceback
 
 from customtkinter import *
 from CTkMessagebox import CTkMessagebox
+from tkinter.ttk import Treeview, Style
+
 
 from shared.tk_models import *
 from databases.experiment_database import ExperimentDatabase

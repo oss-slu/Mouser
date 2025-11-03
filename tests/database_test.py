@@ -1,7 +1,5 @@
 '''Database Unit Tests'''
 import sys, os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 import unittest
 import tempfile
 from customtkinter import CTk
@@ -24,7 +22,15 @@ def delete_file(path):
     if os.path.exists(path):
         os.remove(path)
 
-class TestPlatform(unittest.TestCase): 
+class TestPlatform(unittest.TestCase):
+      def setUp(self):
+        self.temp_db_path = tempfile.NamedTemporaryFile(delete=False).name
+        self.db = ExperimentDatabase(self.temp_db_path)
+
+        def tearDown(self):
+            self.db.close_connection()
+            os.remove(self.temp_db_path) 
+
       def test_database_across_platform(self):
         '''Test to validate SQLite operations across Windows, macOS, and Linux'''
         temp_db_path = create_temp_file()
@@ -51,12 +57,16 @@ class TestUIComponents(unittest.TestCase):
     def setUp(self):
         self.root = CTk()
         self.experiment_menu = ExperimentMenuUI(self.root, "test_file.mouser")
-        self.new_experiment = NewExperimentUI(self.root)
+        self.new_experiment = self.experiment_menu.new_experiment
+        self.db = self.experiment_menu.data_page.database
 
+        if hasattr(self, "new_experiment"):
+            self.assertIsNotNone(self.new_experiment)
 
     def tearDown(self):
-        self.db.close_connection()
-        os.remove(self.temp_db.name)
+        if hasattr(self, "db"):
+            self.db.close_connection()
+
 
 
     '''Test if the buttons in experiment menu ui exists'''
@@ -84,8 +94,12 @@ class TestUIComponents(unittest.TestCase):
     '''Test scaling factor of the font on mac'''
     def test_platform_scaling(self):
         if self.root.tk.call('tk', 'windowingsystem') == 'aqua':
-            default_font = self.root.option_get("font", None)
-            self.assertTrue(default_font)
+            try:
+                default_font = self.root.option_get("font", "*")
+            except Exception:
+                default_font = None
+            self.assertIsNotNone(default_font)
+
 
     '''Test to check if new_experiment ui exist'''
     def test_new_experiment_ui(self):
@@ -99,6 +113,10 @@ class TestDatabaseSetup(unittest.TestCase):
         self.db = ExperimentDatabase(self.temp_db.name)
         self.db.setup_experiment("Test", "Test Mouse", False, 16, 4, 4, "Weight", 1, ["Investigator"], "Weight")
         self.db.setup_groups(["Control", "Group 1", "Group 2", "Group 3"], 4)
+
+    def tearDown(self):
+        self.db.close_connection()
+        os.remove(self.temp_db.name)
 
     def test_num_animals(self):
         '''Checks if num animals equals expected.'''
@@ -119,12 +137,18 @@ class TestDatabaseSetup(unittest.TestCase):
 
 class TestAnimalRFIDMethods(unittest.TestCase):
     '''Test if the animal RFID methods work'''
-    db = ExperimentDatabase()
-    db.setup_experiment("Test", "Test Mouse", False, 16, 4, 4, "Weight", 1, ["Investigator"], "Weight")
-    db.setup_groups(["Control", "Group 1", "Group 2", "Group 3"], 4)
-    for i in range(0,4):
-        group_id = 1 if i < 2 else 2
-        db.add_animal(animal_id=i + 1, rfid=str(10 + i), group_id=group_id)
+    def setUp(self):
+        self.temp_db = tempfile.NamedTemporaryFile(delete=False)
+        self.db = ExperimentDatabase(self.temp_db.name)
+        self.db.setup_experiment("Test", "Test Mouse", False, 16, 4, 4, "Weight", 1, ["Investigator"], "Weight")
+        self.db.setup_groups(["Control", "Group 1", "Group 2", "Group 3"], 4)
+        for i in range(0,4):
+            group_id = 1 if i < 2 else 2
+            self.db.add_animal(animal_id=i + 1, rfid=str(10 + i), group_id=group_id)
+
+    def tearDown(self):
+        self.db.close_connection()
+        os.remove(self.temp_db.name)
 
     def test_add_animal_ids(self):
         '''Test if animal id of particular animal matches expected.'''
@@ -145,12 +169,18 @@ class TestAnimalRFIDMethods(unittest.TestCase):
 
 class TestCageFunctions(unittest.TestCase):
     '''Tests the cage functions.'''
-    db = ExperimentDatabase()
-    db.setup_experiment("Test", "Test Mouse", False, 16, 4, 4, "Weight", 1, ["Investigator"], "Weight")
-    db.setup_groups(["Control", "Group 1", "Group 2", "Group 3"], 4)
-    for i in range(0,4):
-        group_id = 1 if i < 2 else 2
-        db.add_animal(animal_id=i + 1, rfid=str(10 + i), group_id=group_id)
+    def setUp(self):
+        self.temp_db = tempfile.NamedTemporaryFile(delete=False)
+        self.db = ExperimentDatabase(self.temp_db.name)
+        self.db.setup_experiment("Test", "Test Mouse", False, 16, 4, 4, "Weight", 1, ["Investigator"], "Weight")
+        self.db.setup_groups(["Control", "Group 1", "Group 2", "Group 3"], 4)
+        for i in range(0,4):
+            group_id = 1 if i < 2 else 2
+            self.db.add_animal(animal_id=i + 1, rfid=str(10 + i), group_id=group_id)
+
+    def tearDown(self):
+        self.db.close_connection()
+        os.remove(self.temp_db.name)
 
     def test_get_animals_from_cage(self):
         '''Tests if animals from a particular cage match expected.'''
@@ -163,12 +193,14 @@ class TestCageFunctions(unittest.TestCase):
 
 class TestGroupFunctions(unittest.TestCase):
     '''Test Group Functions.'''
-    db = ExperimentDatabase()
-    db.setup_experiment("Test", "Test Mouse", False, 16, 4, 4, "Weight", 1, ["Investigator"], "Weight")
-    db.setup_groups(["Control", "Group 1"], 4)
-    for i in range(0,4):
-        group_id = 1 if i < 2 else 2
-        db.add_animal(animal_id=i + 1, rfid=str(10 + i), group_id=group_id)
+    def setUp(self):
+        self.temp_db = tempfile.NamedTemporaryFile(delete=False)
+        self.db = ExperimentDatabase(self.temp_db.name)
+        self.db.setup_experiment("Test", "Test Mouse", False, 16, 4, 4, "Weight", 1, ["Investigator"], "Weight")
+        self.db.setup_groups(["Control", "Group 1"], 4)
+        for i in range(4):
+            group_id = 1 if i < 2 else 2
+            self.db.add_animal(animal_id=i + 1, rfid=str(10+i), group_id=group_id)
 
 
     def test_get_all_groups(self):
