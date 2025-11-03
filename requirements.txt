@@ -8,4 +8,4 @@ cryptography
 customtkinter
 CTkMessagebox
 CTkMenuBar
-playsound2
+playsound3
