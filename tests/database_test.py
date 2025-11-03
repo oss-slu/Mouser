@@ -7,7 +7,7 @@ import tempfile
 import importlib.util
 import types
 
-# Ensure repository root is on sys.path so tests can import the local `databases` package
+# Ensure repository root is on sys.path so tests can import the local `databases` package.
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 try:
