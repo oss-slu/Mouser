@@ -217,7 +217,7 @@ class SerialPortController():
             print("Invalid setting type. Must be 'reader' or 'device'.")
             return
 
-        # Build the full path to the preference file using the already-resolved
+        # Build the full path to the preference file using the already-resolved.
         # base_preference_dir to avoid double-wrapping the path with
         # get_resource_path (which would produce incorrect paths).
         preference_path = os.path.join(base_preference_dir, setting_folder, setting_file)
