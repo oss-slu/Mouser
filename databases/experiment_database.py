@@ -387,7 +387,7 @@ class ExperimentDatabase:
         self._c.execute('SELECT cage_capacity FROM groups WHERE group_id = ?', (group_id,))
         result = self._c.fetchone()
         return result[0] if result else None
-    
+
     def get_animals_in_group(self, group_name):
         """Return list of tuples (animal_id,) for a given group name."""
         self._ensure_connection()
