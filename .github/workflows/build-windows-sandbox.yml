@@ -1,10 +1,10 @@
-name: Sandbox – Build Windows Installer (No Prod Impact)
+name: Sandbox-Build Windows Installer (No Prod Impact)
 
 on:
-  workflow_dispatch:           # manual runs only
+  workflow_dispatch:
   pull_request:
     branches:
-      - ci-sandbox            
+      - ci-sandbox
 
 permissions:
   contents: read
@@ -27,11 +27,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install --upgrade setuptools wheel
 
-      - name: Install dependencies (bypass playsound failures)
+      - name: Install dependencies (skip playsound in CI)
         run: |
-          pip install -r requirements.txt || true
-          pip install pyinstaller importlib-metadata sacremoses tokenizers || true
-          pip install playsound || true
+          pip install tkcalendar pandas getmac pyaudio pyserial pysound pytest cryptography customtkinter CTkMessagebox CTkMenuBar
+          pip install pyinstaller importlib-metadata sacremoses tokenizers
 
       - name: Build with PyInstaller
         shell: bash
@@ -52,6 +51,10 @@ jobs:
             --add-data "settings:settings" \
             main.py
 
+      - name: Debug – List build output
+        shell: bash
+        run: ls -R dist || echo "dist folder not found"
+
       - name: Rename EXE
         shell: cmd
         run: ren dist\main\main.exe Mouser.exe
@@ -66,3 +69,4 @@ jobs:
           name: Mouser_windows-latest
           path: dist/Mouser_windows-latest.zip
           if-no-files-found: error
+
