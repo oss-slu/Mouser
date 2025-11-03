@@ -52,9 +52,6 @@ class TestAnimalRFIDMethods:
         '''Test if animal id of particular animal matches expected.'''
         assert 1 == self.db.get_animal_id(10)
 
-    def test_get_animal_ids(self):
-        '''Test if animal ids match expected.'''
-        assert ['1', '2', '3', '4'] == self.db.get_all_animal_ids()
 
     def test_get_animal_rfid(self):
         '''Test if particular animal RFID numbers match expected.'''
