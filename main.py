@@ -12,8 +12,14 @@ All UI setup is now modularized under /ui for maintainability.
 """
 
 import os
+import sys
 import shutil
 import tempfile
+
+# Ensure project root is on sys.path so local packages (e.g. `databases`) can be
+# imported when running this script directly from the repo folder or from other
+# working directories.
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 from shared.tk_models import MouserPage, raise_frame
 from shared.serial_port_controller import SerialPortController
