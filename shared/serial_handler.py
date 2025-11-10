@@ -1,7 +1,7 @@
 # pylint: skip-file
 import time
 import threading
-from shared.serial_listener import SerialReader  # Adjust this to your actual import path
+from shared.serial_listener import SerialReader  
 
 class SerialDataHandler:
     '''Class to handle storing received data.'''
