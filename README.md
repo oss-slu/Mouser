@@ -2,38 +2,67 @@
 
 ## Description
 
-This software is used for collecting and analyzing data from animal experiments. While in the lab, scientists are often required to keep their environments very clean, which means that they must limit how much they touch the computers and lab equipment. To facilitate this, Mouser allows laboratory equipment (balances, calipers, RFID chip readers) to be connected to a PC, and researchers can quickly take repeated measurements with as little interaction as possible. Running as a desktop app, users of the software can create and manage experiments in one easy place. Animals implanted with RFID biochips can be scanned into the system for easy identification and data access. Once a session is started, the user is able to take measurements of the animals using devices connected to the computer without having to use the keyboard or the mouse. The program gives confirmation to the user through sounds and changes in display, allowing them to focus on the experiment.
+**Mouser** is an open-source desktop application for collecting and analyzing data from animal experiments with minimal user interaction. It helps researchers record precise measurements in controlled lab environments where direct device handling is limited.
 
-## Developer Guide
+By integrating with lab equipment such as balances, calipers, and RFID chip readers, Mouser enables fast, touch-free data collection while providing immediate on-screen and sound-based confirmations — allowing scientists to focus entirely on their experiments.
 
-### Machine Requirements
 
-- This project requires a Python 3 installation, ideally 3.9 or newer.
+## Key Features
 
-- Additional Python libraries also required are found in the `requirements.txt` file. They can be installed using `pip install -r requirements.txt`.
+- Connects with RFID readers, balances, and calipers for hands-free data collection  
+- Supports creation and management of experiments in a unified desktop interface  
+- Automatically identifies animals via RFID biochips  
+- Provides sound and visual feedback for seamless lab workflows  
+- Stores and manages experimental data using SQLite databases  
 
-- This project works best on Windows machines, but can still be run on MacOS and Linux. The main issues with the latter concern graphics and how the app looks, but there are also some minor problems that can occur when using different operating systems.
+## Developer Setup
 
-### Local Development Environment
+#### Machine Requirements
 
-- Clone the repository to your local machine.
-- Install the required libraries and modules.
-- In the root directory, run `python main.py` to run the program locally.
+- **Python:** Version 3.9 or newer  
+- **Operating Systems:** Best supported on Windows; compatible with macOS and Linux (minor UI differences)
 
-### File Structure
+#### Installation Steps
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/oss-slu/Mouser.git
+
+# 2. Navigate to project directory
+cd Mouser
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Run the application
+python main.py
+```
+
+## File Structure
 
 - The main structure of the app is used in the file `main.py`, which is in the root directory.
 - The app is currently split up into multiple directories:
-  - Experiment Pages (`experiment_pages`)
-    - This directory include files that allow for the creation and modification of lab experiments
-    - Each page of the app exist in separate files. So, the code associated with the experiments menu, the experiment creation form, the data collection page, etc. are split up into different files.
-    - Most of the code revolves around the user interface, but there are also sections that grab data from or send data to the databases
-  - Databases (`databases`)
-    - This directory is where all of the databases are stored, including the experiments and users databases.
-    - The databases are managed using SQLite.
-- There are two files in the `shared` directory, `tk_models.py` and `scrollable_frame.py`, that are shared across many of the files in this app. They both include classes that are used for the majority of the app, so the design can be easily changed if necessary. This directory also contains external assets in `images` and `sounds` folders.
+
+```bash
+  Mouser/
+│
+├── main.py                  # Main application entry point
+├── experiment_pages/        # Pages for creating and managing lab experiments
+├── databases/               # SQLite databases for users and experiments
+├── shared/                  # Shared UI and utility components (e.g., tk_models.py)
+├── images/ and sounds/      # External assets for UI feedback
+└── requirements.txt         # Python dependencies
+```
+
 - Multiple `.gitignore` files are spread throughout the application, mostly to prevent the `__pycache__` directory and certain databases from being pushed to git.
 
-### Contribution Guide
+## Contributing to Mouser
 
-To contribute to this project, create a pull request and link the related issue. If you are creating a new issue follow the templates located in the `.github` folder.
+We welcome contributions from students, researchers, and developers who are passionate about open-source lab software!
+
+#### To get started:
+
+1. Read our [Contributing Guidelines](./ContributingGuidelines.md).
+2. Check the [Issues](https://github.com/oss-slu/Mouser/issues) tab for open tasks
+3. Look for labels like “good first issue” or “help wanted”
+4. Fork the repo, make changes, and submit a Pull Request
