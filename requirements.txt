@@ -10,3 +10,4 @@ customtkinter
 CTkMessagebox
 CTkMenuBar
 playsound3
+requests
