@@ -10,4 +10,7 @@ customtkinter
 CTkMessagebox
 CTkMenuBar
 playsound3
+packaging
+requests
+pyyaml
 requests
