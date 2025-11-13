@@ -13,3 +13,4 @@ playsound3
 packaging
 requests
 pyyaml
+requests
