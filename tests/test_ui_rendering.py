@@ -1,7 +1,11 @@
 """
 UI Performance Tests - Measures actual widget creation and renderings.
 pytest tests/test_ui_rendering.py -v -s
+
+Note: This file intentionally uses imports inside functions to avoid
+import-time overhead and only load UI components when testing them.
 """
+# pylint: disable=import-outside-toplevel,broad-exception-caught,protected-access,no-member,invalid-name
 
 import os
 import sys

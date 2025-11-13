@@ -25,7 +25,7 @@ class TestConfigDefaults:
             config_file = Path(tmpdir) / "test_config.json"
             config = Config(config_file)
 
-            assert config.get_auto_update_enabled() == False
+            assert not config.get_auto_update_enabled()
 
     def test_default_auto_download_enabled(self):
         """Auto-download should be disabled by default."""
@@ -33,7 +33,7 @@ class TestConfigDefaults:
             config_file = Path(tmpdir) / "test_config.json"
             config = Config(config_file)
 
-            assert config.get_auto_download_enabled() == False
+            assert not config.get_auto_download_enabled()
 
     def test_default_auto_install_enabled(self):
         """Auto-install should be disabled by default."""
@@ -41,7 +41,7 @@ class TestConfigDefaults:
             config_file = Path(tmpdir) / "test_config.json"
             config = Config(config_file)
 
-            assert config.get_auto_install_enabled() == False
+            assert not config.get_auto_install_enabled()
 
 
 class TestConfigReadWrite:
@@ -55,7 +55,7 @@ class TestConfigReadWrite:
 
             config.set_auto_update_enabled(True)
 
-            assert config.get_auto_update_enabled() == True
+            assert config.get_auto_update_enabled()
 
     def test_config_persists(self):
         """Configuration should persist across instances."""
@@ -69,7 +69,7 @@ class TestConfigReadWrite:
             # Create second config from same file
             config2 = Config(config_file)
 
-            assert config2.get_auto_update_enabled() == True
+            assert config2.get_auto_update_enabled()
 
     def test_get_with_dot_notation(self):
         """Should be able to get nested values with dot notation."""
@@ -79,7 +79,7 @@ class TestConfigReadWrite:
 
             value = config.get('auto_update.enabled')
 
-            assert value == False
+            assert not value
 
     def test_set_with_dot_notation(self):
         """Should be able to set nested values with dot notation."""
@@ -89,7 +89,7 @@ class TestConfigReadWrite:
 
             config.set('auto_update.enabled', True)
 
-            assert config.get('auto_update.enabled') == True
+            assert config.get('auto_update.enabled')
 
     def test_get_with_default(self):
         """Should return default value for missing keys."""
@@ -112,7 +112,7 @@ class TestConfigFileHandling:
 
             assert not config_file.exists()
 
-            config = Config(config_file)
+            _ = Config(config_file)
 
             assert config_file.exists()
 
@@ -121,7 +121,7 @@ class TestConfigFileHandling:
         with tempfile.TemporaryDirectory() as tmpdir:
             config_file = Path(tmpdir) / "a" / "b" / "c" / "test_config.json"
 
-            config = Config(config_file)
+            _ = Config(config_file)
 
             assert config_file.parent.exists()
 
@@ -131,22 +131,22 @@ class TestConfigFileHandling:
             config_file = Path(tmpdir) / "test_config.json"
 
             # Create corrupted JSON file
-            with open(config_file, 'w') as f:
+            with open(config_file, 'w', encoding='utf-8') as f:
                 f.write("{ invalid json }")
 
             # Should not crash, should use defaults
             config = Config(config_file)
 
-            assert config.get_auto_update_enabled() == False
+            assert not config.get_auto_update_enabled()
 
     def test_config_file_format(self):
         """Config file should be valid JSON with correct structure."""
         with tempfile.TemporaryDirectory() as tmpdir:
             config_file = Path(tmpdir) / "test_config.json"
-            config = Config(config_file)
+            _ = Config(config_file)
 
             # Read file directly
-            with open(config_file, 'r') as f:
+            with open(config_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
 
             assert 'auto_update' in data
