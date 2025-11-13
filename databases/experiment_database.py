@@ -9,12 +9,28 @@ class ExperimentDatabase:
     '''SQLite Database Object for Experiments.'''
     _instances = {}  # Dictionary to store instances by file path
 
+
+    def get_number_groups(self):
+        '''Returns the number of groups in the experiment.'''
+        self._c.execute("SELECT COUNT(*) FROM groups")
+        result = self._c.fetchone()
+        return result[0] if result else 0
+
+
     def __new__(cls, file=":memory:"):
         '''Builds Database connections if singleton does not exist for this file'''
         if file not in cls._instances:
             instance = super(ExperimentDatabase, cls).__new__(cls)
-            instance.db_file = file
-            instance._conn = sqlite3.connect(file, check_same_thread=False)
+            # Absolute path prevents file locking issues caused by relative path resolution differences
+            # check_same_thread=False allows access from multiple Tkinter callbacks
+            # timeout=5.0 allows retry if DB is briefly locked by another thread
+            if file == ":memory:":
+                abs_path = file
+            else:
+                abs_path = os.path.abspath(file)
+            abs_path = os.path.abspath(file)
+            instance.db_file = abs_path
+            instance._conn = sqlite3.connect(abs_path, timeout=5.0, check_same_thread=False)
             instance._c = instance._conn.cursor()
             instance._initialize_tables()
             cls._instances[file] = instance
@@ -60,7 +76,8 @@ class ExperimentDatabase:
         except sqlite3.OperationalError:
             pass
 
-    def setup_experiment(self, name, species, uses_rfid, num_animals, num_groups, cage_max,
+    def setup_experiment(self, name, species, uses_rfid, num_animals, num_groups,
+                         cage_max,
                          measurement_type, experiment_id, investigators, measurement):
         '''Initializes Experiment'''
         investigators_str = ', '.join(investigators)  # Convert list to comma-separated string
@@ -569,7 +586,6 @@ class ExperimentDatabase:
         """
         Exports the experiment data into a structured CSV:
         1. Experiment metadata
-        2. Pivoted measurement matrix (group, animal, date columns)
         3. Groups table with header
         """
 

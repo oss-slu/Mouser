@@ -1,0 +1,16 @@
+name: Builds and Packages Mouser
+
+on:
+  push:
+    branches:
+      - main
+      - test-exe
+
+permissions:
+  attestations: write
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-reusable.yml

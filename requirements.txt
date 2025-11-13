@@ -4,8 +4,10 @@ getmac
 pyaudio
 pyserial
 pysound
+pytest
 cryptography
 customtkinter
 CTkMessagebox
 CTkMenuBar
 playsound3
+requests

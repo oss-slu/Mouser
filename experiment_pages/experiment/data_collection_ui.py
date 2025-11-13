@@ -21,206 +21,48 @@ from shared.flash_overlay import FlashOverlay
 
 #pylint: disable= undefined-variable
 class DataCollectionUI(MouserPage):
-    '''Page Frame for Data Collection.'''
+    """Handles live or manual data collection for experiments."""
 
-    def __init__(self, parent: CTk, prev_page: CTkFrame = None, database_name = "", file_path = ""):
+    def __init__(self, root, file_path, menu_page):
+        super().__init__(root, "Data Collection", menu_page)
+        self.root = root
+        self.file_path = file_path
 
-        super().__init__(parent, "Data Collection", prev_page)
+        # --- Layout Setup ---
+        self.configure(fg_color=("white", "#18181b"))
+        self.grid_rowconfigure((0, 1, 2), weight=1)
+        self.grid_columnconfigure(0, weight=1)
 
-        self.parent = parent
+        # --- Title ---
+        CTkLabel(
+            self,
+            text="Data Collection",
+            font=CTkFont("Segoe UI", 32, weight="bold"),
+            text_color=("black", "white")
+        ).grid(row=0, column=0, pady=(40, 10))
 
-        self.rfid_reader = None
-        self.rfid_stop_event = threading.Event()  # Event to stop RFID listener
-        self.rfid_thread = None # Store running thread
-
-        self.current_file_path = file_path
-        self.menu_page = prev_page
-
-        self.database = ExperimentDatabase(database_name)
-
-        self.measurement_items = self.database.get_measurement_items()
-        self.menu_button.configure(command = self.press_back_to_menu_button)
-
-
-        ## ENSURE ANIMALS ARE IN DATABASE BEFORE EXPERIMENT FOR ALL EXPERIMENTS ##
-        if self.database.experiment_uses_rfid() != 1 and self.database.get_animals() == []:
-            print("No RFIDs Detected. Filling out Database\n")
-
-            i = 1
-            current_group = 1
-            max_num_animals = self.database.get_total_number_animals()
-            print(f"Total animals to add: {max_num_animals}")
-
-            while i <= max_num_animals:
-                # Get cage capacity for current group
-                cage_capacity = self.database.get_cage_capacity(current_group)
-                print(f"Group {current_group} capacity: {cage_capacity}")
-
-                # Get current number of animals in group
-                group_count = self.database.get_group_animal_count(current_group)
-                print(f"Current animals in group {current_group}: {group_count}")
-
-                # If current group is full, move to next group
-                if group_count >= cage_capacity:
-                    print(f"Group {current_group} is full, moving to next group")
-                    current_group += 1
-                    continue
-
-                # Add animal to current group
-                print(f"Adding animal {i} to group {current_group}")
-                self.database.add_animal(
-                    animal_id=i,
-                    rfid=i,     # Keep as integer for RFID
-                    group_id=current_group,
-                    remarks='',
-                )
-                i = i + 1
-
-
-        # # Call the new method to insert blank data for today
-        # if len(self.database.get_measurements_by_date(date.today())) == 0:
-        #     today_date = str(date.today())
-        #     animal_ids = [animal[0] for animal in self.database.get_animals()]  # Get all animal IDs
-        #     self.database.insert_blank_data_for_day(animal_ids, today_date)  # Insert blank dataS
-
-        self.measurement_strings = []
-        self.measurement_strings.append(self.measurement_items)
-        self.measurement_ids = self.database.get_measurement_name()
-        print(self.measurement_items)
-
-        if self.database.experiment_uses_rfid() == 0:
-            start_function = self.auto_increment
-        else:
-            start_function = self.rfid_listen
-
-
-
-
-        self.auto_increment_button = CTkButton(self,
-                                               text="Start",
-                                               compound=TOP,
-                                               width=250, height=75,
-                                               font=("Georgia", 65),
-                                               command= start_function)
-        self.auto_increment_button.place(relx=0.35, rely=0.30, anchor=CENTER)
-        self.auto_inc_id = -1
-
-        self.stop_button = CTkButton(self,
-                                     text="Stop Listening",
-                                     compound=TOP,
-                                     width=250, height=75,
-                                     font=("Georgia", 65),
-                                     command= self.stop_listening)
-        self.stop_button.place(relx=0.55, rely=0.30, anchor=CENTER)
-
-        self.animals = self.database.get_animals()
-        self.table_frame = ScrolledFrame(self)
-        self.table_frame.place(relx=0.50, rely=0.65, anchor=CENTER)
-
-
-
-        columns = ['animal_id']
-        print(self.database.get_measurement_name())
-        columns.append(str(self.database.get_measurement_name())) # Add measurement name as column
-
-        # Initialize the Treeview with the defined columns
-        self.table = Treeview(self.table_frame,
-                              columns=columns, show='headings',
-                              selectmode="browse",
-                              height=len(self.animals))
-
-        # Set up the column headings
-        style = Style()
-        style.configure("Treeview", font=("Arial", 25), rowheight=40)
-        style.configure("Treeview.Heading", font=("Arial", 25))
-
-        for i, column in enumerate(columns):
-
-            if i != 0: # i!= 0 means the column will hold measurement data
-                text = self.measurement_strings[i-1]
-            else: # i == 0, column is for animal id
-                text = "Animal ID"
-
-            print(f"Setting heading for column: {column} with text: {text}")  # Debugging line
-            if text:  # Only set heading if text is not empty
-                self.table.heading(column, text=text)
-
-        # Add the table to the grid
-        self.table.grid(row=0, column=0, sticky='nsew')
-
-        self.date_label = CTkLabel(self)
-
-        self.animals = self.database.get_animals()  # Fetches Animal ID and RFID
-        for animal in self.animals:
-            animal_id = animal[0]
-            value = (animal_id, None)  # Initial values with just ID
-            self.table.insert('', END, values=value)
-
-
-        self.get_values_for_date()
-
-        self.table.bind('<<TreeviewSelect>>', self.item_selected)
-
-        self.changer = ChangeMeasurementsDialog(parent, self, self.measurement_strings)
-
-    def raise_warning(self, warning_message='An error occurred'):
-        '''Raises a popup warning message.'''
-        CTkMessagebox(
-            title="Warning",
-            message=warning_message,
-            icon="warning"
+        # --- Main Card Container ---
+        main_card = CTkFrame(
+            self,
+            fg_color=("white", "#27272a"),
+            corner_radius=20,
+            border_width=1,
+            border_color="#d1d5db"
         )
-        AudioManager.play(ERROR_SOUND)
+        main_card.grid(row=1, column=0, padx=80, pady=20, sticky="nsew")
+        main_card.grid_columnconfigure(0, weight=1)
 
-    def item_selected(self, _):
-        '''On item selection.
+        # --- Scrollable Data Display ---
+        scrollable_data = CTkScrollableFrame(main_card, fg_color=("white", "#18181b"))
+        scrollable_data.grid(row=0, column=0, padx=30, pady=(25, 10), sticky="nsew")
+        scrollable_data.grid_columnconfigure(0, weight=1)
 
-        Records the value selected and opens the changer frame.'''
-        self.auto_inc_id = -1
-        self.changing_value = self.table.selection()[0]
-        self.open_changer()
-
-    def open_changer(self):
-        '''Opens the changer frame for the selected animal id.'''
-        animal_id = self.table.item(self.changing_value)["values"][0]
-        self.changer.open(animal_id)
-
-    def auto_increment(self):
-        '''Automatically increments changer to hit each animal.'''
-        self.auto_inc_id = 0
-        self.open_auto_increment_changer()
-
-    def rfid_listen(self):
-        '''Continuously listens for RFID scans until manually stopped.'''
-
-        if self.database.experiment_uses_rfid() != 1:
-            print("This experiment does not use RFID, cancelling threads")
-            return # Prevents looking for nonexistent Serial Devices
-
-        if self.rfid_thread and self.rfid_thread.is_alive():
-            print("⚠️ RFID listener is already running!")
-            return  # Prevent multiple listeners
-
-        # Check if more data for the day needs to be collected
-        if not self.database.is_data_collected_for_date(self.current_date):
-            if self.database.get_measurement_type() == 1:
-                # Create Flash overlay using new Flash Overlay Class
-                FlashOverlay(
-                    parent=self,
-                    message="Data Collection Started",
-                    duration=1000,
-                    bg_color="#00FF00", #Bright Green
-                    text_color="black"
-                )
-                AudioManager.play(SUCCESS_SOUND)
-
-        print("📡 Starting RFID listener...")
-        print("All RFIDs:", self.database.get_all_animals_rfid())
-        animals = self.database.get_animals()
-        print("Animals:", animals)
-
-        # Check RFIDs directly
-        print("RFIDs in database:", self.database.get_all_animals_rfid())
+        CTkLabel(
+            scrollable_data,
+            text="Collected Measurements:",
+            font=CTkFont("Segoe UI Semibold", 20),
+            text_color=("#374151", "#d1d5db")
+        ).grid(row=0, column=0, sticky="w", pady=(10, 10))
 
         # Try fetching one by one
         for rfid in self.database.get_all_animals_rfid():

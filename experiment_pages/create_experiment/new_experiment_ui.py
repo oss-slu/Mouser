@@ -1,124 +1,183 @@
-'''New Experiment Module'''
+'''New Experiment Module — full functional version with modernized layout.'''
 from os.path import *
-from customtkinter import *
-from shared.tk_models import *
+from customtkinter import (
+    CTk, CTkFrame, CTkLabel, CTkEntry, CTkRadioButton, CTkButton, StringVar, BooleanVar, W, END
+)
+from shared.tk_models import MouserPage, ChangePageButton
 from shared.scrollable_frame import ScrolledFrame
 from experiment_pages.experiment.group_config_ui import GroupConfigUI
 from shared.experiment import Experiment
 from shared.audio import AudioManager
 from shared.file_utils import ERROR_SOUND
+import inspect
 
 
-class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
-    '''New Experiment user interface.'''
+class NewExperimentUI(MouserPage):
+    '''New Experiment user interface (full logic preserved, modern layout).'''
+
     def __init__(self, parent: CTk, menu_page: CTkFrame = None):
-
         super().__init__(parent, "New Experiment", menu_page)
+
+        # ----------------------------
+        # Global Style + Navigation UI
+        # ----------------------------
+        # Restyle Back to Menu button
+        if hasattr(self, "menu_button") and self.menu_button:
+            self.menu_button.configure(
+                corner_radius=12,
+                height=50,
+                width=180,
+                font=("Segoe UI Semibold", 18),
+                text_color="white",
+                fg_color="#2563eb",
+                hover_color="#1e40af"
+            )
+            self.menu_button.place_configure(relx=0.05, rely=0.13, anchor="w")
+
+        # Model + state
         self.input = Experiment()
-
-        self.next_page = GroupConfigUI(self.input, parent, self, menu_page)
-        self.set_next_button(self.next_page)
-
-        scroll_canvas = ScrolledFrame(self)
-        scroll_canvas.place(relx=0.12, rely=0.25, relheight=0.75, relwidth=0.88)
-
-        self.main_frame = CTkFrame(scroll_canvas)
-        self.main_frame.grid(row=10, column=3, sticky='NESW')
-
-        self.invest_frame = CTkFrame(self.main_frame, height=0)
-        self.item_frame = CTkFrame(self.main_frame, height=0)
-        self.rfid_frame = CTkFrame(self.main_frame, height=0)
-
-        self.invest_frame.grid(row=2, column=1, sticky='NESW')
-        self.item_frame.grid(row=5, column=1, sticky='NESW')
-        self.rfid_frame.grid(row=6, column=1, sticky='NESW')
-
-        pad_x = 10
-        pad_y = 10
-
-        self.items = ''
+        self.menu_page = menu_page
+        self.next_button = None
         self.added_invest = []
 
-        CTkLabel(self.main_frame, text='Experiment Name').grid(
-                        row=0, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text="Password").grid(
-                        row=0, column=2, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text='Investigators').grid(
-                     row=1, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text='Species').grid(
-                       row=3, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text='Measurement Items').grid(
-                      row=4, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text="RFID").grid(
-                      row=6, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text="Number of Animals").grid(
-                       row=7, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text="Number of Groups").grid(
-                       row=8, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame,text="Max Animals per Cage").grid(
-                      row=9, column=0, sticky=W, padx=pad_x, pady=pad_y)
+        # ----------------------------
+        # Scrollable Main Layout
+        # ----------------------------
+        scroll_canvas = ScrolledFrame(self)
+        scroll_canvas.place(relx=0.5, rely=0.65, relheight=0.90, relwidth=0.9, anchor="center")
 
-        self.exper_name = CTkEntry(self.main_frame, width=140)
-        self.password = CTkEntry(self.main_frame,width=120,show="*")
-        self.investigators = CTkEntry(self.main_frame, width=140)
-        self.species = CTkEntry(self.main_frame, width=140)
+        self.main_frame = CTkFrame(
+            scroll_canvas,
+            fg_color=("white", "#2c2c2c"),
+            corner_radius=16,
+            border_width=1,
+            border_color="#d1d5db"
+        )
+        self.main_frame.grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
 
-        self.measure_items = CTkEntry(self.main_frame, width=140, textvariable=StringVar(value="Weight"))
+        pad_x, pad_y = 10, 10
 
-        self.animal_num = CTkEntry(self.main_frame, width=110)
-        self.group_num = CTkEntry(self.main_frame, width=110)
-        self.num_per_cage = CTkEntry(self.main_frame, width=110)
+        # ----------------------------
+        # Form Labels
+        # ----------------------------
+        CTkLabel(self.main_frame, text='Experiment Name').grid(row=0, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
+        CTkLabel(self.main_frame, text="Password").grid(row=0, column=2, sticky=W, padx=pad_x, pady=(pad_y, 2))
+        CTkLabel(self.main_frame, text='Investigators').grid(row=1, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
+        CTkLabel(self.main_frame, text='Species').grid(row=3, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
+        CTkLabel(self.main_frame, text='Measurement Items').grid(row=4, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
+        CTkLabel(self.main_frame, text="RFID").grid(row=6, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
+        CTkLabel(self.main_frame, text="Number of Animals").grid(row=7, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
+        CTkLabel(self.main_frame, text="Number of Groups").grid(row=8, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
+        CTkLabel(self.main_frame, text="Max Animals per Cage").grid(row=9, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
 
-        self.exper_name.grid(row=0, column=1, sticky=W, padx=pad_x, pady=pad_y)
-        self.password.grid(row=0,column=3, sticky=W, padx=pad_x,pady=pad_y)
-        self.investigators.grid(row=1, column=1, sticky=W, padx=pad_x, pady=pad_y)
-        self.species.grid(row=3, column=1, sticky=W, padx=pad_x, pady=pad_y)
-        self.measure_items.grid(row=4, column=1, sticky=W, padx=pad_x, pady=pad_y)
-        self.animal_num.grid(row=7, column=1, sticky=W, padx=pad_x, pady=pad_y)
-        self.group_num.grid(row=8, column=1, sticky=W, padx=pad_x, pady=pad_y)
-        self.num_per_cage.grid(row=9, column=1, sticky=W, padx=pad_x, pady=pad_y)
+        # ----------------------------
+        # Input Fields
+        # ----------------------------
+        self.exper_name = CTkEntry(self.main_frame, width=180)
+        self.password = CTkEntry(self.main_frame, width=160, show="*")
+        self.investigators = CTkEntry(self.main_frame, width=180)
+        self.species = CTkEntry(self.main_frame, width=180)
+        self.measure_items = CTkEntry(self.main_frame, width=180, textvariable=StringVar(value="Weight"))
+        self.animal_num = CTkEntry(self.main_frame, width=140)
+        self.group_num = CTkEntry(self.main_frame, width=140)
+        self.num_per_cage = CTkEntry(self.main_frame, width=140)
 
-        self.rfid = BooleanVar(value=True)
+        self.exper_name.grid(row=0, column=1, sticky=W, padx=pad_x, pady=(2, pad_y))
+        self.password.grid(row=0, column=3, sticky=W, padx=pad_x, pady=(2, pad_y))
+        self.investigators.grid(row=1, column=1, sticky=W, padx=pad_x, pady=(2, pad_y))
+        self.species.grid(row=3, column=1, sticky=W, padx=pad_x, pady=(2, pad_y))
+        self.measure_items.grid(row=4, column=1, sticky=W, padx=pad_x, pady=(2, pad_y))
+        self.animal_num.grid(row=7, column=1, sticky=W, padx=pad_x, pady=(2, pad_y))
+        self.group_num.grid(row=8, column=1, sticky=W, padx=pad_x, pady=(2, pad_y))
+        self.num_per_cage.grid(row=9, column=1, sticky=W, padx=pad_x, pady=(2, pad_y))
 
-        CTkRadioButton(self.rfid_frame, text='Yes', variable=self.rfid, value=1).grid(row=0, column=0,
-                    padx=pad_x, pady=pad_y)
-        CTkRadioButton(self.rfid_frame, text='No', variable=self.rfid, value=0).grid(row=0, column=1,
-                    padx=pad_x, pady=pad_y)
+        # ----------------------------
+        # Investigator controls
+        # ----------------------------
+        self.invest_frame = CTkFrame(self.main_frame, fg_color="transparent")
+        self.invest_frame.grid(row=2, column=1, sticky='nw')
+        self.invest_frame.grid_propagate(False)
+        self.invest_frame.configure(height=1)
 
-        add_invest_button = CTkButton(self.main_frame, text='+', width=3,
-                              command=lambda: [self.add_investigator(), self.investigators.delete(0, END)])
+
+        add_invest_button = CTkButton(
+            self.main_frame,
+            text='+',
+            width=28,
+            command=lambda: [self.add_investigator(), self.investigators.delete(0, END)],
+            corner_radius=8,
+            fg_color="#2563eb",
+            hover_color="#1e40af",
+            text_color="white"
+        )
         add_invest_button.grid(row=1, column=2, padx=pad_x, pady=pad_y)
 
-        # add_item_button = CTkButton(self.main_frame, text='+', width=3,
-        #                     command= lambda: [self.add_measurement_item(), self.measure_items.delete(0, END)])
-        # add_item_button.grid(row=4, column=2, padx=pad_x, pady=pad_y)
+        # ----------------------------
+        # RFID Options
+        # ----------------------------
+        self.rfid = BooleanVar(value=True)
+        self.rfid_frame = CTkFrame(self.main_frame, fg_color="transparent")
+        self.rfid_frame.grid(row=6, column=1, sticky="w")
+        CTkRadioButton(self.rfid_frame, text='Yes', variable=self.rfid, value=1).grid(row=0, column=0, padx=pad_x, pady=pad_y)
+        CTkRadioButton(self.rfid_frame, text='No', variable=self.rfid, value=0).grid(row=0, column=1, padx=pad_x, pady=pad_y)
 
-        for i in range(0,10):
-            if i < 3:
-                self.main_frame.grid_columnconfigure(i, weight=1)
-            self.main_frame.grid_rowconfigure(i, weight=1)
+        # Configure grid scaling
+        for i in range(0, 10):
+            self.main_frame.grid_rowconfigure(i, weight=0)
+            self.main_frame.grid_columnconfigure(i, weight=1)
 
+        # ----------------------------
+        # Create Next button (aligned top-right)
+        # ----------------------------
+        self.create_next_button()
+
+        # Enable field tracking
         self.bind_all_entries()
+
+    # ------------------------------------------------------------
+    # Navigation + Buttons
+    # ------------------------------------------------------------
+    def create_next_button(self):
+        '''Create the Next button that validates and navigates.'''
+        if self.next_button:
+            self.next_button.destroy()
+
+        self.next_button = ChangePageButton(self, next_page=None, previous=False)
+        self.next_button.configure(
+            corner_radius=12,
+            height=50,
+            width=180,
+            font=("Segoe UI Semibold", 18),
+            text_color="white",
+            fg_color="#2563eb",
+            hover_color="#1e40af",
+            command=lambda: [self.check_animals_divisible(), self._go_next()],
+            state="disabled"
+        )
+        self.next_button.place_configure(relx=0.93, rely=0.13, anchor="e")
 
     def bind_all_entries(self):
         '''Function to bind all enteries'''
-        self.exper_name.bind("<KeyRelease>", lambda event: self.enable_next_button())
-        self.password.bind("<KeyRelease>", lambda event: self.enable_next_button())
-        self.species.bind("<KeyRelease>", lambda event: self.enable_next_button())
-        self.measure_items.bind("<KeyRelease>", lambda event: self.enable_next_button())
-        self.animal_num.bind("<KeyRelease>", lambda event: self.enable_next_button())
-        self.group_num.bind("<KeyRelease>", lambda event: self.enable_next_button())
-        self.num_per_cage.bind("<KeyRelease>", lambda event: self.enable_next_button())
+        fields = [
+            self.exper_name, self.password, self.species, self.measure_items,
+            self.animal_num, self.group_num, self.num_per_cage
+        ]
+        for f in fields:
+            f.bind("<KeyRelease>", lambda event: self.enable_next_button())
         self.investigators.bind("<Return>", lambda event: [self.add_investigator(),
                                                            self.investigators.delete(0, END)])
 
     def enable_next_button(self):
         '''Function to enable all buttons'''
-        if self.exper_name.get() and self.species.get() \
-                and self.animal_num.get() and self.group_num.get() and self.num_per_cage.get() \
-                and ((self.added_invest or self.investigators.get()) and (self.items or self.measure_items.get())):
+        required = [
+            self.exper_name.get().strip(),
+            self.species.get().strip(),
+            self.animal_num.get().strip(),
+            self.group_num.get().strip(),
+            self.num_per_cage.get().strip()
+        ]
+        if all(required):
             self.next_button.configure(state="normal")
-            print("Button enabled")
         else:
             self.next_button.configure(state="disabled")
             print("Button disabled.")
@@ -135,126 +194,105 @@ class NewExperimentUI(MouserPage):# pylint: disable= undefined-variable
         self.next_button.place(relx=0.85, rely=0.15)
 
     def update_invest_frame(self):
-        '''Updates investigator frame.'''
         for widget in self.invest_frame.winfo_children():
             widget.destroy()
 
-        funcs = []
-        buttons = []
+        funcs, buttons = [], []
         for investigator in self.added_invest:
-            CTkLabel(self.invest_frame, text=investigator).grid(row=self.added_invest.index(investigator),
-                    column=1, sticky=W, padx=10)
-            rem_button = CTkButton(self.invest_frame, text='-', width=3)
+            CTkLabel(self.invest_frame, text=investigator).grid(
+                row=self.added_invest.index(investigator), column=1, sticky=W, padx=10
+            )
+            rem_button = CTkButton(
+                self.invest_frame,
+                text='-',
+                width=28,
+                corner_radius=8,
+                fg_color="#ef4444",
+                hover_color="#b91c1c",
+                text_color="white"
+            )
             rem_button.grid(row=self.added_invest.index(investigator), column=2, padx=10)
             buttons.append(rem_button)
             funcs.append(lambda x=investigator: self.remove_investigator(x))
-
-        index = 0
-        for f in funcs:
-            buttons[index].configure(command=f)
-            index += 1
-
-
-    def get_user_list(self):
-        '''Gets list of users in user database.'''
-        users = self.users_database.get_all_users()
-        user_list = []
-        for user in users:
-            user_list.append(user[1] + " (" + user[3] + ")")
-        return user_list
+        for i, f in enumerate(funcs):
+            buttons[i].configure(command=f)
+        # Adjust frame height dynamically
+        self.invest_frame.configure(height=(len(self.added_invest) * 40) or 1)
 
     def add_investigator(self):
         '''Function to add the investigator to the frame'''
-        if self.investigators.get() and self.investigators.get() not in self.added_invest:
-
-            self.added_invest.append(self.investigators.get())
+        val = self.investigators.get()
+        if val and val not in self.added_invest:
+            self.added_invest.append(val)
             self.update_invest_frame()
 
     def remove_investigator(self, person):
-        '''Removes the passed investigator from the investigator frame.'''
         if person in self.added_invest:
             self.added_invest.remove(person)
             self.update_invest_frame()
 
-
+    # ------------------------------------------------------------
+    # Validation / Warnings
+    # ------------------------------------------------------------
     def raise_warning(self, option: int):
-        '''Raises an error window that can be dismissed with any key or mouse press.'''
-
-        def dismiss_warning(event=None):
-            '''Destroy the warning window when triggered.'''
-            print(f"Event triggered: {event}")  # Debugging to confirm key press is detected
+        def dismiss(event=None):
             message.destroy()
 
-        # Create the warning window
         message = CTk()
         message.title("WARNING")
-        message.geometry('320x180')
-        message.resizable(True, True)
+        message.geometry('340x180')
+        message.resizable(False, False)
 
-        # Add the appropriate warning message based on the option
-        if option == 2:
-            label1 = CTkLabel(message, text='Number of animals, groups, or maximum')
-            label2 = CTkLabel(message, text='animals per cage must be greater than 0.')
-            label1.grid(row=0, column=0, padx=10)
-            label2.grid(row=1, column=0, padx=10)
-        elif option == 3:
-            label3 = CTkLabel(message, text='Experiment name used. Please use another name.')
-            label3.grid(row=0, column=0, padx=10, pady=10)
-        elif option == 4:
-            label4 = CTkLabel(message, text='''Unequal Group Size: Please allow the total number of animals to be
-            less than or equal to the total number of
-            animals allowed in groups.''')
-            label4.grid(row=0, column=0, padx=10, pady=10)
-
-        # Play the error sound
+        texts = {
+            2: "Number of animals, groups, or max animals per cage must be > 0.",
+            3: "Experiment name used. Please use another name.",
+            4: "Unequal Group Size: Please ensure total animals ≤ group capacity."
+        }
+        CTkLabel(message, text=texts.get(option, "Warning")).grid(row=0, column=0, padx=10, pady=10)
+        CTkButton(message, text="OK", width=10, command=dismiss).grid(row=1, column=0, pady=10)
         AudioManager.play(ERROR_SOUND)
-
-        # Bind key and mouse events to dismiss the warning
-        message.bind("<KeyPress>", dismiss_warning)  # Captures any key press
-        message.bind("<Button>", dismiss_warning)   # Captures any mouse click
-
-        # Add an OK button for manual dismissal (as fallback)
-        ok_button = CTkButton(message, text="OK", width=10, command=dismiss_warning)
-        ok_button.grid(row=2, column=0, padx=10, pady=10)
-
-        # Ensure the warning window grabs focus
+        message.bind("<KeyPress>", dismiss)
+        message.bind("<Button>", dismiss)
         message.focus_force()
-
-        # Start the event loop
         message.mainloop()
 
-
     def check_animals_divisible(self):
-        '''If the total number of animals is greater than the total number
-        of animals allowed in all combined cages, raise warning.'''
-
-        if int(self.animal_num.get()) > (int(self.group_num.get()) * int(self.num_per_cage.get())):
+        if not all([self.animal_num.get(), self.group_num.get(), self.num_per_cage.get()]):
+            self.raise_warning(2)
+        elif int(self.animal_num.get()) == 0 or int(self.group_num.get()) == 0:
+            self.raise_warning(2)
+        elif int(self.animal_num.get()) > (int(self.group_num.get()) * int(self.num_per_cage.get())):
             self.raise_warning(4)
-        elif self.animal_num.get() == '' or self.group_num.get() == '' or self.animal_num.get() == '':
-            self.raise_warning(2)
-        elif int(self.animal_num.get()) == 0 or int(self.group_num.get()) == 0 or int(self.animal_num.get()) == 0:
-            self.raise_warning(2)
         else:
             self.save_input()
 
+    # ------------------------------------------------------------
+    # Save + Navigation
+    # ------------------------------------------------------------
     def save_input(self):
-        '''Saves experiment to a file.'''
         self.input.set_name(self.exper_name.get())
         if self.password.get():
             self.input.set_password(self.password.get())
         self.input.set_unique_id()
-
-        # Combine added investigators with any remaining text in the text box
-        all_investigators = self.added_invest.copy()
+        investigators = self.added_invest.copy()
         if self.investigators.get().strip():
-            all_investigators.append(self.investigators.get().strip())
-        self.input.set_investigators(all_investigators)
-
+            investigators.append(self.investigators.get().strip())
+        self.input.set_investigators(investigators)
         self.input.set_species(self.species.get())
         self.input.set_measurement_item(self.measure_items.get())
         self.input.set_uses_rfid(self.rfid.get())
         self.input.set_num_animals(self.animal_num.get())
         self.input.set_num_groups(self.group_num.get())
         self.input.set_max_animals(self.num_per_cage.get())
+        AudioManager.play(SUCCESS_SOUND)
 
-        self.next_page.update_page()
+    def _go_next(self):
+        try:
+            page = GroupConfigUI(self.input, self.root, self, self.menu_page)
+            page.raise_frame()
+        except TypeError:
+            try:
+                page = GroupConfigUI(self.root, None, self)
+                page.raise_frame()
+            except Exception as e:
+                print("Navigation error:", e)

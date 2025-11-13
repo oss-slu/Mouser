@@ -162,30 +162,19 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
 
         page.tkraise()
 
-    def all_rfid_mapped(self):
-        '''Returns true if there is a mapped rfid for each animal in the experiment.'''
-        num_animals = self.experiment.get_total_number_animals()  # Total active animals from experiment setup
-        num_mapped = len(self.experiment.get_all_animal_ids())   # Active animals with RFIDs
+    def open_data_collection(self):
+        """Open Data Collection Page."""
+        from experiment_pages.experiment.data_collection_ui import DataCollectionUI
+        page = DataCollectionUI(self.root, self.file_path, self)
+        page.raise_frame()
 
-        print(f"Number of animals mapped = {num_mapped}\nNumber of total animals = {num_animals}")
+    def open_data_analysis(self):
+        """Open Data Analysis Page."""
+        from experiment_pages.experiment.data_analysis_ui import DataAnalysisUI
+        page = DataAnalysisUI(self.root, self.file_path, self)
+        page.raise_frame()
 
-        return num_animals == num_mapped
-
-    def disable_buttons_if_needed(self):
-        '''Disables Data Collection and Data Export buttons if RFIDs are not yet mapped.'''
-    # This method disables all buttons except for the Map RFID button until all specimens have an associated RFID
-        self.group_button.configure(state="normal")
-        if self.experiment.experiment_uses_rfid() == 1:
-            if not self.all_rfid_mapped():
-                self.collection_button.configure(state="disabled")
-                self.analysis_button.configure(state="disabled")
-            else:
-                self.collection_button.configure(state="normal")
-                self.analysis_button.configure(state="normal")
-        else:
-            self.rfid_button.configure(state="disabled")
-
-
-    def on_show_frame(self):
-        '''Calls disable buttons.'''
-        self.disable_buttons_if_needed()
+    def back_to_welcome(self):
+        """Return to the main welcome screen."""
+        from ui.welcome_screen import setup_welcome_screen
+        setup_welcome_screen(self.root, self)

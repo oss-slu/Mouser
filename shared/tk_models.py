@@ -5,6 +5,20 @@ from customtkinter import *
 
 current_frame: CTkFrame = None
 
+def get_resource_path(relative_path):
+    """
+    Returns an absolute path to a resource (image, file, etc.).
+    Works for both development and when using PyInstaller.
+    """
+    try:
+        # When bundled with PyInstaller
+        base_path = sys._MEIPASS
+    except AttributeError:
+        # When running normally
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
 def raise_frame(frame: CTkFrame): #pylint: disable= redefined-outer-name
     '''Raises passed frame.'''
     global current_frame #pylint: disable = global-statement
