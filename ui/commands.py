@@ -65,7 +65,7 @@ def open_file(root, experiments_frame):
                 if temp_path and os.path.exists(temp_path):
                     global_state["password"] = pw
                     global_state["temp_file_path"] = temp_path
-                    page = ExperimentMenuUI(root, temp_path, experiments_frame)
+                    page = ExperimentMenuUI(root, experiments_frame, file_path)
                     page.raise_frame()
                     password_prompt.destroy()
                 else:
@@ -78,7 +78,7 @@ def open_file(root, experiments_frame):
     else:
         temp_file = file_utils.create_temp_copy(file_path)
         global_state["temp_file_path"] = temp_file
-        page = ExperimentMenuUI(root, temp_file, experiments_frame, file_path)
+        page = ExperimentMenuUI(root, experiments_frame, file_path)
         page.raise_frame()
 
 
