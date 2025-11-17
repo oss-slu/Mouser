@@ -1,35 +1,27 @@
 '''Contains DatabaseController Class'''
+# pylint: disable=too-many-instance-attributes, too-many-public-methods
+
 import databases.experiment_database as edb
 
-
 class DatabaseController:
-    '''A controller that provides functions for manipulating the data within a .mouser file'''
+    '''A controller that provides functions for manipulating data within a .mouser file'''
 
     def __init__(self, database=None, db=None):
-        # If a test (or caller) provides a db object, use it
-        self.db = db if db is not None else edb.ExperimentDatabase(database)
+        '''Initialize the controller with an ExperimentDatabase or a test double.'''
+        if db is not None:
+            self.db = db
+        else:
+            self.db = edb.ExperimentDatabase(database)
 
-        # Initialize measurement items and attributes
         self.measurement_items = self.db.get_measurement_items()
         self.reset_attributes()
 
-    def _safe_query_one(self, query):
-        """Execute a single-row query safely without exposing protected member."""
-        cursor = self.db._conn.cursor()      
-        cursor.execute(query)
-        return cursor.fetchone()
-
-    def _safe_commit(self):
-        """Safe wrapper around db._conn.commit()."""
-        self.db._conn.commit()
-
-
     def set_cages_in_group(self):
-        '''Returns a dictionary with the keys as the group ids and the values are the cage ids'''
+        '''Return dict mapping group IDs to cage IDs'''
         return self.db.get_cages_by_group()
 
     def set_animals_in_cage(self):
-        '''Returns a dictionary of cage -> [animal ids]'''
+        '''Return dict mapping cage IDs to list of animals'''
         cage_assignments = self.db.get_cage_assignments()
         animals_in_cage = {}
 
@@ -40,85 +32,99 @@ class DatabaseController:
         return animals_in_cage
 
     def reset_attributes(self):
-        '''Reset attributes so configuration in UI can be saved'''
+        '''Reset internal attributes for cage/group/measurement tracking'''
         self.cages_in_group = self.set_cages_in_group()
         self.animals_in_cage = self.set_animals_in_cage()
-        self.valid_ids = [str(animal[0]) for animal in self.db.get_animals()]
+        self.valid_ids = [str(a[0]) for a in self.db.get_animals()]
 
-        # Load latest measurements
+        # Build animal weight lookup
         self.animal_weights = {}
         measurements = self.db.get_measurements_by_date(None)
 
-        if measurements:
-            for measurement in measurements:
-                animal_id = str(measurement[0])
-                value = measurement[3]
-                self.animal_weights[int(animal_id)] = value
-
-        # Default missing animals to 0 weight
-        for aid in self.valid_ids:
-            if int(aid) not in self.animal_weights:
-                self.animal_weights[int(aid)] = 0
+        for animal_id in self.valid_ids:
+            found = False
+            if measurements:
+                for measurement in measurements:
+                    if str(measurement[0]) == animal_id:
+                        self.animal_weights[int(animal_id)] = measurement[3]
+                        found = True
+                        break
+            if not found:
+                self.animal_weights[int(animal_id)] = 0
 
     def get_groups(self):
+        '''Return list of groups'''
         return self.db.get_groups()
 
     def get_num_cages(self):
-        total = 0
-        for cages in self.cages_in_group.values():
-            total += len(cages)
-        return total
+        '''Return total number of cages'''
+        return sum(len(cages) for cages in self.cages_in_group.values())
 
     def get_cage_max(self):
-        '''Returns the cage max without accessing protected members directly.'''
-        result = self._safe_query_one("SELECT cage_max FROM experiment")
+        '''Return maximum allowed animals per cage'''
+        # pylint: disable=protected-access
+        self.db._conn.execute("SELECT cage_max FROM experiment")
+        result = self.db._conn.fetchone()
         return int(result[0]) if result else 0
 
     def get_animals_in_group(self, group_name):
+        '''Return animals in the given group'''
         return self.db.get_animals_in_cage(group_name)
 
     def get_measurement_items(self):
+        '''Return measurement item list'''
         return self.measurement_items
 
     def get_cage_number(self, cage_name):
+        '''Return internal numeric cage ID'''
         return self.db.get_cage_number(cage_name)
 
     def autosort(self):
+        '''Run autosort routine'''
         self.db.autosort()
 
     def randomize_cages(self):
+        '''Randomize animal-to-cage assignments'''
         self.db.randomize_cages()
 
     def get_animals_in_cage(self, cage):
-        return self.animals_in_cage.get(str(cage), [])
+        '''Return animal list in given cage'''
+        return self.animals_in_cage.get(cage, [])
 
     def get_animal_measurements(self, animal_id):
-        return self.animal_weights.get(int(animal_id), 0)
+        '''Return latest recorded measurement'''
+        return self.animal_weights[int(animal_id)]
 
     def get_animal_current_cage(self, animal_id):
+        '''Return cage currently assigned to animal'''
         return self.db.get_animal_current_cage(animal_id)
 
     def check_valid_animal(self, animal_id):
+        '''Return True if animal ID exists'''
         return animal_id in self.valid_ids
 
     def check_valid_cage(self, cage):
+        '''Return True if cage exists'''
         return str(cage) in self.animals_in_cage
 
     def check_num_in_cage_allowed(self):
+        '''Return False if any cage exceeds capacity'''
         cage_max = self.get_cage_max()
         return all(len(animals) <= cage_max for animals in self.animals_in_cage.values())
 
     def update_animal_cage(self, animal_id, new_cage):
+        '''Move animal to a new cage'''
         return self.db.update_animal_cage(animal_id, new_cage)
 
     def get_updated_animals(self):
+        '''Return list of updated animal positions for DB update'''
         updated = []
         new_id = 1
         group = 1
 
         for cages in self.cages_in_group.values():
             for cage in cages:
-                for animal in self.animals_in_cage.get(str(cage), []):
+                for animal in self.animals_in_cage[str(cage)]:
                     updated.append((int(animal), new_id, group, int(cage)))
                     new_id += 1
             group += 1
@@ -126,14 +132,16 @@ class DatabaseController:
         return updated
 
     def update_experiment(self):
-        updated = self.get_updated_animals()
-        self.db.update_experiment(updated)
+        '''Apply updates to experiment file'''
+        updated_animals = self.get_updated_animals()
+        self.db.update_experiment(updated_animals)
         self.reset_attributes()
 
     def commit(self):
-        '''Commit database safely.'''
-        self._safe_commit()
+        '''Commit database changes'''
+        # pylint: disable=protected-access
+        self.db._conn.commit()
 
     def close(self):
-        '''Close the database file.'''
+        '''Close underlying database'''
         self.db.close()
