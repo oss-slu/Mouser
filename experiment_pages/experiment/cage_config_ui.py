@@ -188,7 +188,7 @@ class CageConfigurationUI(MouserPage):
             self.raise_warning("Please select exactly two animals to swap.")
             return
 
-        animal_id1, animal_id2 = list(self.selected_animals)
+        animal_id1, animal_id2 = list(self.selected_animals)[:2]
 
         # Get the current cages through the database controller
         cage1 = self.db.get_animal_current_cage(animal_id1)
@@ -279,7 +279,7 @@ class CageConfigurationUI(MouserPage):
         '''Saves updated values to database.'''
         if self.check_num_in_cage_allowed():
             self.db.update_experiment()
-            self.raise_frame(self.prev_page)
+            self.prev_page.raise_frame()
         else:
             self.raise_warning(f'Number of animals in a group must not exceed {self.db.get_cage_max()}')
 

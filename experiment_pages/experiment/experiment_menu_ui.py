@@ -234,5 +234,7 @@ class ExperimentMenuUI(MouserPage):  # pylint: disable=undefined-variable
 
     def back_to_welcome(self):
         '''Return to the initial welcome screen.'''
+        # pylint: disable=import-outside-toplevel
+
         from ui.welcome_screen import setup_welcome_screen  # FIXED import
         setup_welcome_screen(self.root, self)

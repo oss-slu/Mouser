@@ -7,18 +7,13 @@ import re
 import traceback
 import sqlite3 as sql
 
-from tkinter.ttk import Treeview, Style
-from customtkinter import (
-    CTk, CTkLabel, CTkFont, CTkFrame, CTkScrollableFrame, CTkEntry,
-    CTkButton, CTkToplevel
-)
+from customtkinter import *
 from CTkMessagebox import CTkMessagebox
-
 from shared.tk_models import MouserPage
 from databases.experiment_database import ExperimentDatabase
-from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND, save_temp_to_file
+from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+from shared.file_utils import SUCCESS_SOUND, save_temp_to_file
 from shared.audio import AudioManager
-from shared.scrollable_frame import ScrolledFrame
 from shared.serial_handler import SerialDataHandler
 from shared.flash_overlay import FlashOverlay
 
@@ -300,7 +295,6 @@ class DataCollectionUI(MouserPage):
         """Return to the experiment menu UI."""
         self.stop_listening()
 
-        from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
         new_page = ExperimentMenuUI(
             self.parent, self.current_file_path, self.menu_page, self.current_file_path
         )
@@ -387,39 +381,39 @@ class ChangeMeasurementsDialog:
                 data_thread = threading.Thread(target=lambda d=data_handler: d.start())
                 data_thread.start()
 
-                def check_for_data():
+                def check_for_data(dh=data_handler, ent=entry, aid=animal_id):
                     """Check incoming serial data and update the dialog."""
                     print("Beginning check for data")
 
                     if self.data_collection.database.get_measurement_type() == 1:
-                        current_index = self.animal_ids.index(animal_id)
+                        current_index = self.animal_ids.index(aid)
 
                         while current_index < len(self.animal_ids) and self.thread_running:
                             if (
-                                len(data_handler.received_data) >= 2
-                                and data_handler.received_data.strip()
-                                and data_handler.received_data is not None
+                                len(dh.received_data) >= 2
+                                and isinstance(dh.received_data[-1], str)
+                                and dh.received_data[-1].strip()
                             ):
-                                received_data = data_handler.get_stored_data()
-                                entry.insert(1, received_data)
-                                data_handler.stop()
+                                received_data = dh.get_stored_data()
+                                ent.insert(1, received_data)
+                                dh.stop()
 
                                 if not self.uses_rfid:
-                                    self.finish(animal_id)
+                                    self.finish(aid)
                                     if current_index + 1 < len(self.animal_ids):
                                         next_animal = self.animal_ids[current_index + 1]
                                         self.data_collection.select_animal_by_id(next_animal)
-                                        break
                                     break
 
                                 if not self.data_collection.rfid_stop_event.is_set():
                                     self.data_collection.rfid_listen()
-                                    self.finish(animal_id)
+                                    self.finish(aid)
                                     break
 
-                                time.sleep(0.25)
+                            time.sleep(0.25)
 
                         self.thread_running = False
+
 
                     else:
                         submit_button = CTkButton(

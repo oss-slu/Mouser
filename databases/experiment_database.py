@@ -898,7 +898,7 @@ class ExperimentDatabase:
         try:
             if hasattr(self, "_c") and self._c:
                 self._c.close()
-        except sqlite3.Error as e:  
+        except sqlite3.Error as e:
             print(f"Error closing database connection: {e}")
 
     def get_all_groups(self):

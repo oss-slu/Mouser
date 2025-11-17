@@ -9,6 +9,8 @@ Modernized Data Analysis UI.
 
 from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkFont
 from shared.tk_models import MouserPage
+from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+
 
 
 class DataAnalysisUI(MouserPage):
@@ -96,6 +98,5 @@ class DataAnalysisUI(MouserPage):
 
     def back_to_menu(self):
         """Return to experiment menu."""
-        from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
         page = ExperimentMenuUI(self.root, self.file_path, self)
         page.raise_frame()
