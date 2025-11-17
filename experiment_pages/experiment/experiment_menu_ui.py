@@ -29,12 +29,10 @@ class ExperimentMenuUI(MouserPage):  # pylint: disable=undefined-variable
     ):
         '''Initialize the Experiment Menu UI.'''
 
-        # Predefined for pylint consistency
         self.root = parent
         self.menu_button = None
         self.file_path = full_path
 
-        # Setup experiment page
         self.new_experiment_page = NewExperimentUI(parent, self)
         self.new_experiment = self.new_experiment_page
 
@@ -45,24 +43,20 @@ class ExperimentMenuUI(MouserPage):  # pylint: disable=undefined-variable
 
         super().__init__(parent, experiment_name, prev_page)
 
-        # Main layout frame
         main_frame = CTkFrame(self)
         main_frame.grid(row=6, column=1, sticky="NESW")
         main_frame.place(relx=0, rely=0, relwidth=1, relheight=0.9)
 
-        # Grid configuration
         for row in range(3):
             main_frame.grid_rowconfigure(row, weight=1, minsize=50)
         main_frame.grid_columnconfigure(0, weight=1)
         main_frame.grid_columnconfigure(1, weight=1)
 
-        # Subpages
         self.data_page = DataCollectionUI(parent, self, name, self.file_path)
         self.analysis_page = DataAnalysisUI(parent, self, os.path.abspath(name))
         self.cage_page = CageConfigurationUI(name, parent, self, self.file_path)
         self.summary_page = ReviewUI(parent, self, name)
 
-        # FIX: Align MapRFIDPage constructor with expected parameters
         if controller is None:
             self.rfid_page = MapRFIDPage(
                 name=name,
@@ -81,12 +75,10 @@ class ExperimentMenuUI(MouserPage):  # pylint: disable=undefined-variable
 
         self.invest_page = InvestigatorsUI(parent, self)
 
-        # Button layout
         button_height = main_frame.winfo_screenheight() * 0.3
         button_width = main_frame.winfo_screenwidth() * 0.48
         button_font = ("Arial Black", 35)
 
-        # --- FIXED BUTTON COMMANDS (W0108 removed) ---
         self.collection_button = CTkButton(
             main_frame, text="Data Collection",
             width=button_width, height=button_height, border_width=2.5,
@@ -122,28 +114,23 @@ class ExperimentMenuUI(MouserPage):  # pylint: disable=undefined-variable
             font=button_font
         )
 
-        # Button placement
         self.collection_button.grid(row=0, column=0)
         self.analysis_button.grid(row=0, column=1)
         self.group_button.grid(row=1, column=0)
         self.rfid_button.grid(row=1, column=1)
         self.summary_button.grid(row=2, column=0)
 
-        # Remove inherited menu button if present
         if self.menu_button:
             self.menu_button.destroy()
 
-        # Bind page switch event
         self.bind("<<FrameRaised>>", self.on_show_frame)
 
         self.disable_buttons_if_needed()
 
-    # --- FIXED unused argument W0613 ---
-    def on_show_frame(self, _event=None):  # FIXED
+    def on_show_frame(self, _event=None):  
         '''Callback when this frame becomes active.'''
         return
 
-    # --- NEW helper to replace lambda list (fix W0108) ---
     def _open_cage_page(self):
         """Opens the cage configuration page properly."""
         self.cage_page.update_config_frame()

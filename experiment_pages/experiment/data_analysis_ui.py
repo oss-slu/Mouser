@@ -16,15 +16,14 @@ class DataAnalysisUI(MouserPage):
 
     def __init__(self, root, file_path, menu_page):
         super().__init__(root, "Data Analysis", menu_page)
+
         self.root = root
         self.file_path = file_path
 
-        # --- Layout Setup ---
         self.configure(fg_color=("white", "#18181b"))
         self.grid_rowconfigure((0, 1), weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        # --- Title ---
         CTkLabel(
             self,
             text="Data Analysis",
@@ -32,7 +31,6 @@ class DataAnalysisUI(MouserPage):
             text_color=("black", "white")
         ).grid(row=0, column=0, pady=(40, 10))
 
-        # --- Main Card Container ---
         card = CTkFrame(
             self,
             fg_color=("white", "#27272a"),
@@ -42,9 +40,8 @@ class DataAnalysisUI(MouserPage):
         )
         card.grid(row=1, column=0, padx=80, pady=20, sticky="nsew")
         card.grid_columnconfigure(0, weight=1)
-        card.grid_rowconfigure((0, 1, 2), weight=1)
+        card.grid_rowconfigure((0, 1, 2, 3), weight=1)
 
-        # --- Description ---
         desc_font = CTkFont("Segoe UI", 18)
         CTkLabel(
             card,
@@ -55,7 +52,6 @@ class DataAnalysisUI(MouserPage):
             justify="center"
         ).grid(row=0, column=0, pady=(20, 10))
 
-        # --- Placeholder for Charts/Plots ---
         CTkLabel(
             card,
             text="[Charts and Data Visualizations Placeholder]",
@@ -63,7 +59,6 @@ class DataAnalysisUI(MouserPage):
             text_color=("#6b7280", "#a1a1aa")
         ).grid(row=1, column=0, pady=(20, 10))
 
-        # --- Buttons Section ---
         button_font = CTkFont("Segoe UI Semibold", 20)
         button_style = {
             "corner_radius": 12,
@@ -89,12 +84,14 @@ class DataAnalysisUI(MouserPage):
             **button_style
         ).grid(row=3, column=0, pady=(10, 25))
 
-    # --- Functional Logic (unchanged) ---
     def export_data(self):
         """Handles exporting analyzed data to file."""
         print("Exporting analyzed results...")
 
     def back_to_menu(self):
         """Return to experiment menu."""
+        # IMPORT HERE → prevents circular dependency & fixes Pylint E0602
+        from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+
         page = ExperimentMenuUI(self.root, self.file_path, self)
         page.raise_frame()

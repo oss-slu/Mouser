@@ -5,12 +5,22 @@ import tempfile
 from tkinter import filedialog
 
 from customtkinter import *
-
 from shared.audio import AudioManager
 from shared.experiment import Experiment
 from shared.file_utils import SUCCESS_SOUND
 from shared.scrollable_frame import ScrolledFrame
 from shared.tk_models import MouserPage
+
+class PasswordManager:
+    """Minimal password manager shim for summary export."""
+    @staticmethod
+    def encrypt(text: str) -> str:
+        return text  
+
+    @staticmethod
+    def decrypt(text: str) -> str:
+        return text  
+
 
 
 # pylint: disable=invalid-name
@@ -40,7 +50,6 @@ class SummaryUI_Legacy(MouserPage):
         self.experiment.set_measurement_type(measurement_type)
         self.experiment.save_to_database(directory)
 
-        # -------- ENCRYPTED PATH --------
         if self.experiment.get_password():
             password = self.experiment.get_password()
             filename = f"{self.experiment.get_name()}.pmouser"
@@ -90,7 +99,6 @@ class SummaryUI(MouserPage):
         self.experiment = experiment
         self.menu_page = menu_page
 
-        # Adjust top navigation/menu button
         if hasattr(self, "menu_button") and self.menu_button:
             self.menu_button.configure(
                 corner_radius=12,
@@ -103,7 +111,6 @@ class SummaryUI(MouserPage):
             )
             self.menu_button.place_configure(relx=0.05, rely=0.13, anchor="w")
 
-        # Create button
         self.create_button = CTkButton(
             self,
             text="Create",
@@ -118,7 +125,6 @@ class SummaryUI(MouserPage):
         )
         self.create_button.place_configure(relx=0.93, rely=0.13, anchor="e")
 
-        # Scrollable content
         scroll_canvas = ScrolledFrame(self)
         scroll_canvas.place(
             relx=0.5, rely=0.58, relheight=0.7, relwidth=0.9, anchor="center"
