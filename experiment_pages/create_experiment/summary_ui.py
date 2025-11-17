@@ -12,7 +12,7 @@ from shared.audio import AudioManager
 from shared.file_utils import SUCCESS_SOUND
 from shared.password_manager import PasswordManager  # ← only import needed
 
-
+# pylint: disable=invalid-name
 class SummaryUI_Legacy(MouserPage):
     '''Legacy UI for displaying experiment details and saving the experiment.'''
 
@@ -35,7 +35,6 @@ class SummaryUI_Legacy(MouserPage):
         if not directory:
             return
 
-        # Ensure measurement type consistency
         measurement_type = 1 if self.experiment.get_measurement_type() else 0
         self.experiment.set_measurement_type(measurement_type)
         self.experiment.save_to_database(directory)
@@ -49,7 +48,6 @@ class SummaryUI_Legacy(MouserPage):
             manager = PasswordManager(password)
             decrypted_data = manager.decrypt_file(full_path)
 
-            # Create temporary working directory
             temp_dir = os.path.join(tempfile.gettempdir(), "Mouser")
             os.makedirs(temp_dir, exist_ok=True)
 
@@ -61,16 +59,19 @@ class SummaryUI_Legacy(MouserPage):
                 temp_file.write(decrypted_data)
                 temp_file.seek(0)
 
+            # pylint: disable=import-outside-toplevel
             from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+
             root = self.winfo_toplevel()
             page = ExperimentMenuUI(root, temp_path)
             page.raise_frame()
 
         else:
-            # -------- NON-ENCRYPTED PATH --------
             file = os.path.join(directory, f"{self.experiment.get_name()}.mouser")
 
+            # pylint: disable=import-outside-toplevel
             from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+
             root = self.winfo_toplevel()
             page = ExperimentMenuUI(root, file, None, file)
             page.raise_frame()
@@ -86,7 +87,7 @@ class SummaryUI(MouserPage):
         self.experiment = experiment
         self.menu_page = menu_page
 
-        # Adjust menu/navigation buttons
+        # Adjust top navigation/menu button
         if hasattr(self, "menu_button") and self.menu_button:
             self.menu_button.configure(
                 corner_radius=12,
@@ -114,7 +115,7 @@ class SummaryUI(MouserPage):
         )
         self.create_button.place_configure(relx=0.93, rely=0.13, anchor="e")
 
-        # Scrollable content container
+        # Scrollable content
         scroll_canvas = ScrolledFrame(self)
         scroll_canvas.place(
             relx=0.5, rely=0.58, relheight=0.7, relwidth=0.9, anchor="center"
@@ -205,7 +206,6 @@ class SummaryUI(MouserPage):
         self.experiment.save_to_database(".")
         AudioManager.play(SUCCESS_SOUND)
 
-        # Choose final save directory
         save_dir = filedialog.askdirectory(title="Select Directory to Save Experiment")
         if save_dir:
             self.experiment.save_to_database(save_dir)

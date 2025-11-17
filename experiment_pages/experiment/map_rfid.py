@@ -11,7 +11,7 @@ import threading
 import webbrowser
 from customtkinter import *
 from CTkMessagebox import CTkMessagebox
-from serial import serialutil
+from serial import SerialException
 from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
 from shared.tk_models import MouserPage
 from shared.serial_port_controller import SerialPortController
@@ -22,6 +22,11 @@ from shared.audio import AudioManager
 
 import shared.file_utils as file_utils
 from shared.flash_overlay import FlashOverlay
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+
 
 class RFIDHandler:
     def __init__(self):
@@ -239,7 +244,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
                     else:
                         # If it's a new RFID, process it
-                        self.after(0, lambda: self.add_value(clean_rfid))
+                        self.after(0, lambda rfid=clean_rfid: self.add_value(rfid))
                         self.animal_rfid_list.append(clean_rfid)
                         AudioManager.play(SUCCESS_SOUND)
 
@@ -271,7 +276,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             try:
                 print("🔌 Closing serial connection...")
                 self.rfid_reader.stop()
-                self.rfid_reader = None
+                if hasattr(self.rfid_reader, "close"):
+                    self.rfid_reader.close()
             except sql.Error as e:
                 self.raise_warning("Failed to close the serial port properly.")
                 print(f"⚠️ Error closing serial port: {e}")
@@ -340,7 +346,10 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         # Add to database
         self.db.add_animal(animal_id, rfid, group_id, '')
-        self.db._conn.commit()
+        try:
+            self.db._conn.commit()
+        except Exception:
+            pass
 
         # Add to UI table
         self.table.insert('', END, values=(animal_id, rfid), tags='text_font')
@@ -369,7 +378,11 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         # Add to database
         self.db.add_animal(animal_id, rfid, group_id, '')
-        self.db._conn.commit()
+        try:
+            self.db._conn.commit()
+        except Exception:
+            pass
+
 
         # Add to UI table
         self.table.insert('', END, values=(animal_id, rfid), tags='text_font')
@@ -419,8 +432,10 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         print("Selection ", selected, " changed.")
 
         # Check if any selected item starts with 'I00'
-        enable_button = any(self.table.item(item_id, 'values')[0].startswith('I00') for item_id in selected)
-
+        enable_button = any(
+            str(self.table.item(item_id, 'values')[0]).startswith('I00')
+            for item_id in selected
+)
         if enable_button:
             self.delete_button["state"] = "normal"
         else:
@@ -781,7 +796,7 @@ class SerialSimulator():
             )
 
         else:
-            message = self.serial_controller.read_info()
+            message = self.serial_controller.read_data()
             self.read_message.insert(END,message)
 
     def check_written_port(self):
@@ -797,7 +812,7 @@ class SerialSimulator():
         self.written_port = self.drop_down_ports.get()
         try:
             self.setup_ports()
-        except serialutil.SerialException:
+        except SerialException:
             self.raise_warning()
 
     def download_link(self):
@@ -806,7 +821,7 @@ class SerialSimulator():
 
     def on_closing(self):
         '''Closes all ports and closes the window.'''
-        self.serial_controller.close_all_port()
+        self.serial_controller.close_all_ports()
         self.written_port = None
         self.root.destroy()
 

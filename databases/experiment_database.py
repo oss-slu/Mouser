@@ -414,9 +414,10 @@ class ExperimentDatabase:
 
             cages_by_group = {}
             cage_number = 1  # ensure unique numbering for each group
-            for name, group_id, capacity in groups:
-                cages_by_group[name] = [str(cage_number)]
+            for group_name, _, _ in groups:
+                cages_by_group[group_name] = [str(cage_number)]
                 cage_number += 1
+
 
             return cages_by_group
         except sqlite3.Error as e:
