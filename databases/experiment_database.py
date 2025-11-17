@@ -241,6 +241,7 @@ class ExperimentDatabase:
                 self._c = self._conn.cursor()
 
     def commit(self):
+        '''Commit changes'''
         self._conn.commit()
 
 
