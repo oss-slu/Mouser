@@ -1,14 +1,12 @@
 '''Group configuration module (modernized UI, full logic retained).'''
 # pylint: disable=too-many-instance-attributes, import-error
 
-from customtkinter import (
-    CTk, CTkFrame, CTkLabel, CTkEntry,
-    CTkButton, CTkRadioButton, BooleanVar, W, LEFT
-)
-from shared.tk_models import MouserPage, ChangePageButton
-from shared.scrollable_frame import ScrolledFrame
-from shared.experiment import Experiment
+from customtkinter import *
+
 from experiment_pages.create_experiment.summary_ui import SummaryUI
+from shared.experiment import Experiment
+from shared.scrollable_frame import ScrolledFrame
+from shared.tk_models import ChangePageButton, MouserPage
 
 
 class GroupConfigUI(MouserPage):
@@ -16,13 +14,17 @@ class GroupConfigUI(MouserPage):
 
     def __init__(self, experiment: Experiment, parent: CTk, prev_page: CTkFrame, menu_page: CTkFrame):
         super().__init__(parent, "New Experiment - Group Configuration", prev_page)
+
         self.experiment = experiment
         self.menu_page = menu_page
         self.next_button = None
 
-        # ----------------------------
-        # Top Navigation Buttons
-        # ----------------------------
+        # Initialize dynamic attributes early for pylint cleanliness
+        self.group_input = []
+        self.button_vars = []
+        self.item_auto_buttons = []
+        self.item_man_buttons = []
+
         if hasattr(self, "menu_button") and self.menu_button:
             self.menu_button.configure(
                 corner_radius=12,
@@ -39,9 +41,6 @@ class GroupConfigUI(MouserPage):
         self.next_page = SummaryUI(self.experiment, parent, self, menu_page)
         self.create_next_button()
 
-        # ----------------------------
-        # Scrollable Content Area
-        # ----------------------------
         scroll_canvas = ScrolledFrame(self)
         scroll_canvas.place(relx=0.5, rely=0.58, relheight=0.7, relwidth=0.9, anchor="center")
 
@@ -80,9 +79,11 @@ class GroupConfigUI(MouserPage):
         self.item_frame.pack(pady=(5, 20))
         self.create_item_frame(self.experiment.get_measurement_items())
 
-    # ------------------------------------------------------------
-    # Navigation / Buttons
-    # ------------------------------------------------------------
+    def _go_next(self):
+        """Save and navigate to the next page (fixes pylint lambda warning)."""
+        self.save_experiment()
+        self.next_button.navigate()
+
     def create_next_button(self):
         '''Creates a Next button aligned top-right.'''
         if self.next_button:
@@ -97,22 +98,19 @@ class GroupConfigUI(MouserPage):
             text_color="white",
             fg_color="#2563eb",
             hover_color="#1e40af",
-            command=lambda: [self.save_experiment(), self.next_button.navigate()],
+            command=self._go_next,  # FIXED pylint (no lambda)
         )
         self.next_button.place_configure(relx=0.93, rely=0.13, anchor="e")
 
-    # ------------------------------------------------------------
-    # Core Functionality
-    # ------------------------------------------------------------
     def create_group_entries(self, num):
         '''Creates widgets for group entries.'''
         CTkLabel(
             self.group_frame,
             text="Group Name",
             font=("Segoe UI", 18, "bold"),
-        ).grid(row=0, column=0, padx=10, pady=10, sticky=W)
+        ).grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
-        self.group_input = []
+        self.group_input.clear()
         for i in range(num):
             entry = CTkEntry(self.group_frame, width=220, font=("Segoe UI", 16))
             entry.grid(row=i + 1, column=0, padx=10, pady=8)
@@ -120,9 +118,9 @@ class GroupConfigUI(MouserPage):
 
     def create_item_frame(self, item):
         '''Creates a radio-button group for input method selection.'''
-        self.button_vars = []
-        self.item_auto_buttons = []
-        self.item_man_buttons = []
+        self.button_vars.clear()
+        self.item_auto_buttons.clear()
+        self.item_man_buttons.clear()
 
         CTkLabel(
             self.item_frame,
@@ -130,26 +128,27 @@ class GroupConfigUI(MouserPage):
             font=("Segoe UI", 18, "bold"),
         ).grid(row=0, column=0, columnspan=3, pady=10)
 
-        self.type = BooleanVar(value=True)
-        self.button_vars.append(self.type)
+        # FIX: rename variable to avoid shadowing built-in 'type'
+        self.input_type = BooleanVar(value=True)
+        self.button_vars.append(self.input_type)
 
         CTkLabel(
             self.item_frame,
             text=item,
             font=("Segoe UI", 16),
-        ).grid(row=1, column=0, padx=10, pady=10, sticky=W)
+        ).grid(row=1, column=0, padx=10, pady=10, sticky="w")
 
         auto = CTkRadioButton(
             self.item_frame,
             text='Automatic',
-            variable=self.type,
+            variable=self.input_type,
             value=True,
             font=("Segoe UI", 16),
         )
         man = CTkRadioButton(
             self.item_frame,
             text='Manual',
-            variable=self.type,
+            variable=self.input_type,
             value=False,
             font=("Segoe UI", 16),
         )
@@ -178,5 +177,8 @@ class GroupConfigUI(MouserPage):
         '''Saves all entered group names and input method.'''
         group_names = [entry.get().strip() for entry in self.group_input if entry.get().strip()]
         self.experiment.group_names = group_names
-        self.experiment.data_collect_type = 1 if self.button_vars[0].get() else 0
+
+        # FIX: uses self.input_type instead of shadowing-built-in variable
+        self.experiment.data_collect_type = 1 if self.input_type.get() else 0
+
         self.next_page.update_page()

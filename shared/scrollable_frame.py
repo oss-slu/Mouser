@@ -1,5 +1,6 @@
 '''Scrollable frames for Mouser'''
 from tkinter.ttk import Widget
+
 from customtkinter import *
 
 

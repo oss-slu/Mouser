@@ -1,6 +1,7 @@
 '''Contains shared tkinter models used througout the program.'''
-from tkinter import PhotoImage
 from abc import ABC, abstractmethod
+from tkinter import PhotoImage
+
 from customtkinter import *
 
 current_frame: CTkFrame = None
@@ -26,7 +27,7 @@ def raise_frame(frame: CTkFrame): #pylint: disable= redefined-outer-name
         current_frame.pack_forget()
     current_frame = frame
     current_frame.pack()
-   
+
 def create_nav_button(parent: CTkFrame, name: str, button_image: PhotoImage, frame: CTkFrame, relx: float, rely: float): #pylint: disable= line-too-long,redefined-outer-name
     '''Makes a navigation button to the various sub-menus of the program.'''
 

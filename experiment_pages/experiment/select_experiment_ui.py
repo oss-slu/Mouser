@@ -1,7 +1,10 @@
 '''Now unused select experiment ui'''
 from customtkinter import *
+
+from experiment_pages.create_experiment.new_experiment_ui import \
+    NewExperimentUI
 from shared.tk_models import MouserPage
-from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
+
 
 class NewExperimentButton(CTkButton):
     '''New Experiment Button widgit'''

@@ -1,6 +1,7 @@
 #pylint: skip-file
 '''Experiement Investigator Module.'''
 from customtkinter import *
+
 from shared.tk_models import *
 
 

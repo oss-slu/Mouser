@@ -4,13 +4,15 @@ Applies consistent spacing, readable fonts, and clear visual grouping.
 """
 
 from CTkMenuBar import CTkMenuBar, CustomDropdownMenu
-from ui.commands import open_file, create_file, save_file, open_serial_port_setting, open_test
+
+from ui.commands import (create_file, open_file, open_serial_port_setting,
+                         open_test, save_file)
 
 
 def build_menu(root, experiments_frame, rfid_serial_port_controller):
     """Constructs the main menu bar with modern CTk styling."""
     menu_bar = CTkMenuBar(root)
-    menu_bar.configure(bg_color="#1e1e1e")  
+    menu_bar.configure(bg_color="#1e1e1e")
 
     # --- File Menu ---
     file_menu = menu_bar.add_cascade("File")
