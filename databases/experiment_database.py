@@ -9,8 +9,6 @@ class ExperimentDatabase:
     '''SQLite Database Object for Experiments.'''
     _instances = {}  # Dictionary to store instances by file path
 
-    
-
     def __init__(self, file=":memory:"):
         if hasattr(self, "_initialized"):
             return
@@ -69,7 +67,7 @@ class ExperimentDatabase:
 
 
     def _initialize_tables(self):  # Call to work with singleton changes
-        
+
         self._c.execute('''CREATE TABLE IF NOT EXISTS experiments_db (
                             id INTEGER PRIMARY KEY AUTOINCREMENT,
                             name TEXT,
@@ -109,7 +107,7 @@ class ExperimentDatabase:
                                 cage_capacity INTEGER);''')
 
         self._conn.commit()
-        
+ 
 
     def setup_experiment(self, name, species, uses_rfid, num_animals, num_groups,
                          cage_max,
@@ -897,7 +895,7 @@ class ExperimentDatabase:
         try:
             if hasattr(self, "_c") and self._c:
                 self._c.close()
-        except sqlite3.Error as e:            
+        except sqlite3.Error as e:           
             print(f"Error closing database connection: {e}")
 
     def get_all_groups(self):
@@ -909,7 +907,7 @@ class ExperimentDatabase:
         except sqlite3.Error as e:
             print(f"Error in get_all_groups: {e}")
             return []
-  
+
     def get_cage_max(self):
         """Return the maximum animals per cage from the experiment table."""
         self._ensure_connection()
@@ -920,7 +918,7 @@ class ExperimentDatabase:
         except sqlite3.Error as e:
             print(f"Error in get_cage_max: {e}")
             return 0
- 
+
     def get_animals_by_cage(self):
         """Return a dict mapping each group_id (as str) → list of animal_id (as str)."""
         self._ensure_connection()

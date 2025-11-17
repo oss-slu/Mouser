@@ -60,15 +60,24 @@ class NewExperimentUI(MouserPage):
         # ----------------------------
         # Form Labels
         # ----------------------------
-        CTkLabel(self.main_frame, text='Experiment Name').grid(row=0, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
-        CTkLabel(self.main_frame, text="Password").grid(row=0, column=2, sticky=W, padx=pad_x, pady=(pad_y, 2))
-        CTkLabel(self.main_frame, text='Investigators').grid(row=1, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
-        CTkLabel(self.main_frame, text='Species').grid(row=3, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
-        CTkLabel(self.main_frame, text='Measurement Items').grid(row=4, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
-        CTkLabel(self.main_frame, text="RFID").grid(row=6, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
-        CTkLabel(self.main_frame, text="Number of Animals").grid(row=7, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
-        CTkLabel(self.main_frame, text="Number of Groups").grid(row=8, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
-        CTkLabel(self.main_frame, text="Max Animals per Cage").grid(row=9, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
+        CTkLabel(self.main_frame, text='Experiment Name').grid(row=0, 
+                    column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
+        CTkLabel(self.main_frame, text="Password").grid(row=0, 
+                    column=2, sticky=W, padx=pad_x, pady=(pad_y, 2))
+        CTkLabel(self.main_frame, text='Investigators').grid(row=1, 
+                    column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
+        CTkLabel(self.main_frame, text='Species').grid(row=3, 
+                    column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
+        CTkLabel(self.main_frame, text='Measurement Items').grid(row=4, 
+                    column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
+        CTkLabel(self.main_frame, text="RFID").grid(row=6, 
+                    column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
+        CTkLabel(self.main_frame, text="Number of Animals").grid(row=7, 
+                    column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
+        CTkLabel(self.main_frame, text="Number of Groups").grid(row=8, 
+                    column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
+        CTkLabel(self.main_frame, text="Max Animals per Cage").grid(row=9, 
+                    column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
 
         # ----------------------------
         # Input Fields
@@ -118,8 +127,10 @@ class NewExperimentUI(MouserPage):
         self.rfid = BooleanVar(value=True)
         self.rfid_frame = CTkFrame(self.main_frame, fg_color="transparent")
         self.rfid_frame.grid(row=6, column=1, sticky="w")
-        CTkRadioButton(self.rfid_frame, text='Yes', variable=self.rfid, value=1).grid(row=0, column=0, padx=pad_x, pady=pad_y)
-        CTkRadioButton(self.rfid_frame, text='No', variable=self.rfid, value=0).grid(row=0, column=1, padx=pad_x, pady=pad_y)
+        CTkRadioButton(self.rfid_frame, text='Yes', variable=self.rfid, value=1).grid(row=0, 
+                        column=0, padx=pad_x, pady=pad_y)
+        CTkRadioButton(self.rfid_frame, text='No', variable=self.rfid, value=0).grid(row=0, 
+                        column=1, padx=pad_x, pady=pad_y)
 
         # Configure grid scaling
         for i in range(0, 10):
@@ -194,6 +205,7 @@ class NewExperimentUI(MouserPage):
         self.next_button.place(relx=0.85, rely=0.15)
 
     def update_invest_frame(self):
+        '''Clear widget in the invest frame'''
         for widget in self.invest_frame.winfo_children():
             widget.destroy()
 
@@ -227,6 +239,7 @@ class NewExperimentUI(MouserPage):
             self.update_invest_frame()
 
     def remove_investigator(self, person):
+        '''Update invest frame'''
         if person in self.added_invest:
             self.added_invest.remove(person)
             self.update_invest_frame()

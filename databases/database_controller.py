@@ -151,4 +151,3 @@ class DatabaseController():
     def close(self):
         '''Closes the database file.'''
         self.db.close()
-
