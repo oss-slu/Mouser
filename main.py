@@ -21,11 +21,11 @@ import tempfile
 # working directories.
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from shared.tk_models import MouserPage, raise_frame
-from shared.serial_port_controller import SerialPortController
-from ui.root_window import create_root_window
-from ui.menu_bar import build_menu
-from ui.welcome_screen import setup_welcome_screen
+from shared.tk_models import MouserPage, raise_frame  # pylint: disable=wrong-import-position
+from shared.serial_port_controller import SerialPortController  # pylint: disable=wrong-import-position
+from ui.root_window import create_root_window  # pylint: disable=wrong-import-position
+from ui.menu_bar import build_menu  # pylint: disable=wrong-import-position
+from ui.welcome_screen import setup_welcome_screen  # pylint: disable=wrong-import-position
 
 
 # Global app variables
@@ -42,18 +42,20 @@ if os.path.exists(temp_folder_path):
 # Create root window
 root = create_root_window()
 
+# Window size constants
+MAINWINDOW_WIDTH = 900
+MAINWINDOW_HEIGHT = 600
+
 # Get screen width and height
-mainwindow_width = 900
-mainwindow_height = 600
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 
 # Set root window geometry
-x = int((screen_width - mainwindow_width) / 2)
-y = int((screen_height - mainwindow_height) / 2)
-root.geometry(f"{mainwindow_width}x{mainwindow_height}+{x}+{y}")
+x_pos = int((screen_width - MAINWINDOW_WIDTH) / 2)
+y_pos = int((screen_height - MAINWINDOW_HEIGHT) / 2)
+root.geometry(f"{MAINWINDOW_WIDTH}x{MAINWINDOW_HEIGHT}+{x_pos}+{y_pos}")
 root.title("Mouser")
-root.minsize(mainwindow_width, mainwindow_height)
+root.minsize(MAINWINDOW_WIDTH, MAINWINDOW_HEIGHT)
 
 # Main layout setup
 main_frame = MouserPage(root, "Mouser")
@@ -64,7 +66,7 @@ experiments_frame = setup_welcome_screen(root, main_frame)
 build_menu(
     root=root,
     experiments_frame=experiments_frame,
-    rfid_serial_port_controller=rfid_serial_port_controller
+    rfid_serial_port_controller=rfid_serial_port_controller,
 )
 
 # Final grid configuration
@@ -76,6 +78,3 @@ main_frame.grid_columnconfigure(0, weight=1)
 
 # Start the main event loop
 root.mainloop()
-
-
-
