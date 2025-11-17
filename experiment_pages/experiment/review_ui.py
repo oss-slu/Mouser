@@ -57,30 +57,46 @@ class ReviewUI(MouserPage):
         content_card.grid(row=1, column=0, sticky="nsew", padx=40, pady=(10, 30))
         content_card.grid_columnconfigure(1, weight=1)
 
-<<<<<<< HEAD
         # Species
-        result = self.database._c.execute("SELECT species FROM experiment").fetchone()
-        if result is not None:
-            species = result[0]
-        else:
-            species = "Unknown"        
-        CTkLabel(self.main_frame, text="Species:", font=font).grid(row=2, column=0, sticky=W, padx=pad_x, pady=pad_y)
-        CTkLabel(self.main_frame, text=species, font=font).grid(row=2, column=1, sticky=W, padx=pad_x, pady=pad_y)
-=======
-        # --- Label Fonts ---
-        label_font = CTkFont(family="Segoe UI Semibold", size=18)
-        value_font = CTkFont(family="Segoe UI", size=18)
->>>>>>> 39b8b7cc08d1c1faaaf16a0d9768f0bf52363670
+        # === Species (placed inside content_card) ===
+        species_result = self.database._c.execute("SELECT species FROM experiment").fetchone()
+        species = species_result[0] if species_result else "Unknown"
+
+        CTkLabel(
+            content_card,
+            text="Species:",
+            font=CTkFont(size=18, weight="bold"),
+            text_color=("#374151", "#d4d4d8"),
+            anchor="w",
+        ).grid(row=0, column=0, sticky="w", padx=(25, 20), pady=(8, 6))
+
+        CTkLabel(
+            content_card,
+            text=species,
+            font=CTkFont(size=18),
+            text_color=("#111827", "#e5e7eb"),
+            justify="left",
+            anchor="w",
+            wraplength=700
+        ).grid(row=0, column=1, sticky="w", padx=(10, 25), pady=(8, 6))
+
 
         # === Populate Experiment Data ===
+        # Safely fetch species
+        species_row = self.database._c.execute("SELECT species FROM experiment").fetchone()
+        species_value = species_row[0] if species_row else "Unknown"
+
+        # Safely fetch investigators
+        investigators_row = self.database._c.execute("SELECT investigators FROM experiment").fetchone()
+        investigators_value = (
+            "\n".join(investigators_row[0].split(",")) if investigators_row else "N/A"
+        )
+
         data = [
-            ("Experiment Name", self.database.get_experiment_name()),
-            ("Investigators", "\n".join(
-                (self.database._c.execute("SELECT investigators FROM experiment").fetchone()[0].split(","))
-                if self.database._c.execute("SELECT investigators FROM experiment").fetchone() else ["N/A"]
-            )),
-            ("Species", self.database._c.execute("SELECT species FROM experiment").fetchone()[0]),
-            ("Measurement Item", self.database.get_measurement_name()),
+            ("Experiment Name", self.database.get_experiment_name() or "Unknown"),
+            ("Investigators", investigators_value),
+            ("Species", species_value),
+            ("Measurement Item", self.database.get_measurement_name() or "None"),
             ("Number of Animals", str(self.database.get_total_number_animals())),
             ("Animals per Group", str(self.database.get_cage_capacity(1))),
             ("Group Names", "\n".join(self.database.get_groups())),
@@ -88,7 +104,10 @@ class ReviewUI(MouserPage):
             ("Measurement Type", "Automatic" if self.database.get_measurement_type() == 1 else "Manual"),
         ]
 
+
         # --- Generate Labels Dynamically ---
+        label_font = CTkFont(size=18, weight="bold")
+        value_font = CTkFont(size=18)
         for i, (key, value) in enumerate(data, start=0):
             CTkLabel(
                 content_card,

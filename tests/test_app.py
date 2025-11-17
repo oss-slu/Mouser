@@ -83,9 +83,8 @@ def test_database_controller_quick(monkeypatch):
 
     dummydb = dummydb()
 
-    controller = DatabaseController(":memory:")
-    monkeypatch.setattr(controller, "db", dummydb)    
-    controller.reset_attributes()
+    controller = DatabaseController(db=dummydb)
+
 
     group = controller.get_groups() 
     cage_max = controller.get_cage_max() 

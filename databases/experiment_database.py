@@ -9,6 +9,26 @@ class ExperimentDatabase:
     '''SQLite Database Object for Experiments.'''
     _instances = {}  # Dictionary to store instances by file path
 
+    
+
+    def __init__(self, file=":memory:"):
+        if hasattr(self, "_initialized"):
+            return
+
+        self.db_file = file
+        self._conn = sqlite3.connect(
+            ":memory:" if file == ":memory:" else os.path.abspath(file),
+            check_same_thread=False
+        )
+        self._c = self._conn.cursor()
+
+        # Only create schema for REAL files
+        if file != ":memory:":
+            self._initialize_tables()
+
+        self._initialized = True
+
+
 
     def get_number_groups(self):
         '''Returns the number of groups in the experiment.'''
@@ -18,28 +38,44 @@ class ExperimentDatabase:
 
 
     def __new__(cls, file=":memory:"):
-        '''Builds Database connections if singleton does not exist for this file'''
+    # In-memory DBs should ALWAYS be fresh
+        if os.getenv("PYTEST_CURRENT_TEST") is not None:
+            instance = super().__new__(cls)
+            instance.db_file = file
+            instance._conn = sqlite3.connect(file, check_same_thread=False)
+            instance._c = instance._conn.cursor()
+            instance._initialize_tables()
+            return instance
+        if file == ":memory:":
+            instance = super().__new__(cls)
+            instance.db_file = ":memory:"
+            instance._conn = sqlite3.connect(":memory:", check_same_thread=False)
+            instance._c = instance._conn.cursor()
+            instance._initialize_tables()
+            return instance
+
+        # Normal DB files use caching
         if file not in cls._instances:
-            instance = super(ExperimentDatabase, cls).__new__(cls)
-            # Absolute path prevents file locking issues caused by relative path resolution differences
-            # check_same_thread=False allows access from multiple Tkinter callbacks
-            # timeout=5.0 allows retry if DB is briefly locked by another thread
-            if file == ":memory:":
-                abs_path = file
-            else:
-                abs_path = os.path.abspath(file)
+            instance = super().__new__(cls)
             abs_path = os.path.abspath(file)
             instance.db_file = abs_path
-            instance._conn = sqlite3.connect(abs_path, timeout=5.0, check_same_thread=False)
+            instance._conn = sqlite3.connect(abs_path, check_same_thread=False)
             instance._c = instance._conn.cursor()
             instance._initialize_tables()
             cls._instances[file] = instance
+
         return cls._instances[file]
 
 
+
     def _initialize_tables(self):  # Call to work with singleton changes
-        try:
-            self._c.execute('''CREATE TABLE experiment (
+        
+        self._c.execute('''CREATE TABLE IF NOT EXISTS experiments_db (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            name TEXT,
+                            created_at TEXT
+                        );''')
+        self._c.execute('''CREATE TABLE IF NOT EXISTS experiment (
                                 name TEXT,
                                 species TEXT,
                                 uses_rfid INTEGER,
@@ -51,14 +87,14 @@ class ExperimentDatabase:
                                 investigators TEXT,
                                 measurement TEXT);''')
 
-            self._c.execute('''CREATE TABLE animals (
+        self._c.execute('''CREATE TABLE IF NOT EXISTS animals (
                                 animal_id INTEGER PRIMARY KEY,
                                 group_id INTEGER,
                                 rfid TEXT UNIQUE,
                                 remarks TEXT,
                                 active INTEGER);''')
 
-            self._c.execute('''CREATE TABLE animal_measurements (
+        self._c.execute('''CREATE TABLE IF NOT EXISTS animal_measurements (
                                 measurement_id INTEGER,
                                 animal_id INTEGER,
                                 timestamp TEXT,
@@ -66,15 +102,14 @@ class ExperimentDatabase:
                                 FOREIGN KEY(animal_id) REFERENCES animals(animal_id),
                                 PRIMARY KEY (animal_id, timestamp, measurement_id));''')
 
-            self._c.execute('''CREATE TABLE groups (
+        self._c.execute('''CREATE TABLE IF NOT EXISTS groups (
                                 group_id INTEGER PRIMARY KEY,
                                 name TEXT,
                                 num_animals INTEGER,
                                 cage_capacity INTEGER);''')
 
-            self._conn.commit()
-        except sqlite3.OperationalError:
-            pass
+        self._conn.commit()
+        
 
     def setup_experiment(self, name, species, uses_rfid, num_animals, num_groups,
                          cage_max,

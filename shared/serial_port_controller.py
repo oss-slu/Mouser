@@ -250,10 +250,6 @@ class SerialPortController():
                     self.reader_port = settings[6]
                     return settings
 
-<<<<<<< HEAD
-        except FileNotFoundError as e:
-            print(f"An error occurred while retrieving settings: {e}")
-=======
         except Exception as e:
             print(f"An error occurred while retrieving settings: {e}")
 
@@ -270,4 +266,3 @@ class SerialPortController():
             else:
                 categories["unknown"].append((device, desc))
         return categories
->>>>>>> 39b8b7cc08d1c1faaaf16a0d9768f0bf52363670

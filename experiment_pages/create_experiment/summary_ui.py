@@ -3,20 +3,16 @@ from customtkinter import *
 from shared.tk_models import *
 from shared.scrollable_frame import ScrolledFrame
 from shared.experiment import Experiment
-<<<<<<< HEAD
-from shared.password_utils import PasswordManager
-=======
 from shared.audio import AudioManager
 from shared.file_utils import SUCCESS_SOUND
 from tkinter import filedialog
->>>>>>> 39b8b7cc08d1c1faaaf16a0d9768f0bf52363670
 
 class SummaryUI(MouserPage):  # pylint: disable= undefined-variable
     '''Displays experiment details before final creation.'''
+    def __init__(self, page, experiment, menu_page):
 
-<<<<<<< HEAD
         super().__init__(page, text="Create", compound=TOP,
-                         width=15, command=lambda: [self.create_experiment()])
+                        width=15, command=lambda: [self.create_experiment()])
         self.place(relx=0.85, rely=0.15, anchor=CENTER)
         self.experiment = experiment
         self.next_page = menu_page
@@ -65,8 +61,6 @@ class SummaryUI(MouserPage):  # pylint: disable= undefined-variable
 
 class SummaryUI(MouserPage):# pylint: disable=undefined-variable
     '''Summary User Interface.'''
-=======
->>>>>>> 39b8b7cc08d1c1faaaf16a0d9768f0bf52363670
     def __init__(self, experiment: Experiment, parent: CTk, prev_page: CTkFrame, menu_page: CTkFrame):
         super().__init__(parent, "New Experiment - Summary", prev_page)
         self.experiment = experiment

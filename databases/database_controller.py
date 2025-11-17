@@ -1,12 +1,19 @@
 '''Contains DatabaseController Class'''
-from .experiment_database import ExperimentDatabase
+import databases.experiment_database as edb
 
 class DatabaseController():
     '''A controller that provides functions for manipulating the data within a .mouser file'''
-    def __init__(self, database):
-        self.db = ExperimentDatabase(database)
+    def __init__(self, database=None, db=None):
+        # If a test (or caller) provides a db object, use it
+        if db is not None:
+            self.db = db
+        else:
+            self.db = edb.ExperimentDatabase(database)
+
+        # Initialize measurement items and attributes
         self.measurement_items = self.db.get_measurement_items()
         self.reset_attributes()
+
 
     def set_cages_in_group(self):
         '''Returns a dictionary with the keys as the group ids and
@@ -138,7 +145,7 @@ class DatabaseController():
         self.reset_attributes()
 
     def commit(self):
-                '''Commit database file'''
+        '''Commit database file'''
         self.db._conn.commit()
 
     def close(self):

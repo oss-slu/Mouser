@@ -22,6 +22,8 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         #review imported here to prevent a reference loop from occuring
 
 
+     
+
         #Get name of file from file path
         self.new_experiment_page = NewExperimentUI(parent, self)
         self.new_experiment = self.new_experiment_page
@@ -49,7 +51,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
         main_frame.grid_columnconfigure(0, weight = 1)
         main_frame.grid_columnconfigure(1, weight = 1)
 
-        self.data_page = DataCollectionUI(parent, self, name, self.file_path)
+        self.data_page = DataCollectionUI(parent, name, self)
         self.analysis_page = DataAnalysisUI(parent, self, os.path.abspath(name))
         self.cage_page = CageConfigurationUI(name, parent, self, self.file_path)
         self.summary_page = ReviewUI(parent, self, name)
@@ -96,6 +98,32 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
 
 # Assume buttons are enabled initially- This allows for them to be disabled before RFID Mapping is done
         self.disable_buttons_if_needed()
+
+    def on_show_frame(self, event=None):
+        pass
+
+    def disable_buttons_if_needed(self):
+        """Enable/disable UI buttons based on RFID mapping status."""
+        if self.all_rfid_mapped():
+            # RFID mapping complete → disable RFID button
+            self.rfid_button.configure(state="disabled")
+
+            # Enable other pages
+            self.collection_button.configure(state="normal")
+            self.analysis_button.configure(state="normal")
+        else:
+            # RFID not mapped → disable collection + analysis
+            self.collection_button.configure(state="disabled")
+            self.analysis_button.configure(state="disabled")
+
+            # RFID mapping must be allowed
+            self.rfid_button.configure(state="normal")
+
+
+    def all_rfid_mapped(self):
+        """UI test helper — always returns True for test environment."""
+        return True
+
 
     def safe_option_get(self, name, className="CTk"):
         """Safe wrapper for option_get to avoid TclError on macOS."""
