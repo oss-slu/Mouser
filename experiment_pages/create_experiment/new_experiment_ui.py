@@ -1,8 +1,7 @@
 '''New Experiment Module — full functional version with modernized layout.'''
 from os.path import *
-from customtkinter import (
-    CTk, CTkFrame, CTkLabel, CTkEntry, CTkRadioButton, CTkButton, StringVar, BooleanVar, W, END
-)
+import sqlite3
+from customtkinter import *
 from shared.tk_models import MouserPage, ChangePageButton
 from shared.scrollable_frame import ScrolledFrame
 from experiment_pages.experiment.group_config_ui import GroupConfigUI
@@ -222,8 +221,9 @@ class NewExperimentUI(MouserPage):
 
     def raise_warning(self, option: int):
         '''Show warning for invalid input'''
-        def dismiss(event=None):
+        def dismiss(event=None):  # pylint: disable=unused-argument
             message.destroy()
+
 
         message = CTk()
         message.title("WARNING")
@@ -281,5 +281,5 @@ class NewExperimentUI(MouserPage):
             try:
                 page = GroupConfigUI(self.root, None, self)
                 page.raise_frame()
-            except Exception as e:
+            except sqlite3.Error as e:
                 print("Navigation error:", e)

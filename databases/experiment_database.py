@@ -415,7 +415,6 @@ class ExperimentDatabase:
             cages_by_group = {}
             cage_number = 1  # ensure unique numbering for each group
             for name, group_id, capacity in groups:
-                num_cages = (self.get_group_animal_count(group_id) + capacity - 1) // capacity or 1
                 cages_by_group[name] = [str(cage_number)]
                 cage_number += 1
 
@@ -898,7 +897,7 @@ class ExperimentDatabase:
         try:
             if hasattr(self, "_c") and self._c:
                 self._c.close()
-        except sqlite3.Error as e:     
+        except sqlite3.Error as e:  
             print(f"Error closing database connection: {e}")
 
     def get_all_groups(self):
