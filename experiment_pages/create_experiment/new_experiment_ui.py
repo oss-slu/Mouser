@@ -8,8 +8,7 @@ from shared.scrollable_frame import ScrolledFrame
 from experiment_pages.experiment.group_config_ui import GroupConfigUI
 from shared.experiment import Experiment
 from shared.audio import AudioManager
-from shared.file_utils import ERROR_SOUND
-import inspect
+from shared.file_utils import ERROR_SOUND, SUCCESS_SOUND
 
 
 class NewExperimentUI(MouserPage):
@@ -62,21 +61,21 @@ class NewExperimentUI(MouserPage):
         # ----------------------------
         CTkLabel(self.main_frame, text='Experiment Name').grid(row=0, 
                     column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
-        CTkLabel(self.main_frame, text="Password").grid(row=0, 
+        CTkLabel(self.main_frame, text="Password").grid(row=0,
                     column=2, sticky=W, padx=pad_x, pady=(pad_y, 2))
-        CTkLabel(self.main_frame, text='Investigators').grid(row=1, 
+        CTkLabel(self.main_frame, text='Investigators').grid(row=1,
                     column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
-        CTkLabel(self.main_frame, text='Species').grid(row=3, 
+        CTkLabel(self.main_frame, text='Species').grid(row=3,
                     column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
-        CTkLabel(self.main_frame, text='Measurement Items').grid(row=4, 
+        CTkLabel(self.main_frame, text='Measurement Items').grid(row=4,
                     column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
-        CTkLabel(self.main_frame, text="RFID").grid(row=6, 
+        CTkLabel(self.main_frame, text="RFID").grid(row=6,
                     column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
-        CTkLabel(self.main_frame, text="Number of Animals").grid(row=7, 
+        CTkLabel(self.main_frame, text="Number of Animals").grid(row=7,
                     column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
-        CTkLabel(self.main_frame, text="Number of Groups").grid(row=8, 
+        CTkLabel(self.main_frame, text="Number of Groups").grid(row=8,
                     column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
-        CTkLabel(self.main_frame, text="Max Animals per Cage").grid(row=9, 
+        CTkLabel(self.main_frame, text="Max Animals per Cage").grid(row=9,
                     column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
 
         # ----------------------------
@@ -127,9 +126,9 @@ class NewExperimentUI(MouserPage):
         self.rfid = BooleanVar(value=True)
         self.rfid_frame = CTkFrame(self.main_frame, fg_color="transparent")
         self.rfid_frame.grid(row=6, column=1, sticky="w")
-        CTkRadioButton(self.rfid_frame, text='Yes', variable=self.rfid, value=1).grid(row=0, 
+        CTkRadioButton(self.rfid_frame, text='Yes', variable=self.rfid, value=1).grid(row=0,
                         column=0, padx=pad_x, pady=pad_y)
-        CTkRadioButton(self.rfid_frame, text='No', variable=self.rfid, value=0).grid(row=0, 
+        CTkRadioButton(self.rfid_frame, text='No', variable=self.rfid, value=0).grid(row=0,
                         column=1, padx=pad_x, pady=pad_y)
 
         # Configure grid scaling
@@ -248,6 +247,7 @@ class NewExperimentUI(MouserPage):
     # Validation / Warnings
     # ------------------------------------------------------------
     def raise_warning(self, option: int):
+        '''Show warning for invalid input'''
         def dismiss(event=None):
             message.destroy()
 
@@ -270,6 +270,7 @@ class NewExperimentUI(MouserPage):
         message.mainloop()
 
     def check_animals_divisible(self):
+        '''Validate numeric inputs before saving.'''
         if not all([self.animal_num.get(), self.group_num.get(), self.num_per_cage.get()]):
             self.raise_warning(2)
         elif int(self.animal_num.get()) == 0 or int(self.group_num.get()) == 0:
@@ -283,6 +284,7 @@ class NewExperimentUI(MouserPage):
     # Save + Navigation
     # ------------------------------------------------------------
     def save_input(self):
+        '''Save all user input into the Experiment model.'''
         self.input.set_name(self.exper_name.get())
         if self.password.get():
             self.input.set_password(self.password.get())
@@ -300,6 +302,7 @@ class NewExperimentUI(MouserPage):
         AudioManager.play(SUCCESS_SOUND)
 
     def _go_next(self):
+        '''Navigate to the next configuration screen.'''
         try:
             page = GroupConfigUI(self.input, self.root, self, self.menu_page)
             page.raise_frame()

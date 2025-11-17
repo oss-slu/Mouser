@@ -21,9 +21,6 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
 
         #review imported here to prevent a reference loop from occuring
 
-
-     
-
         #Get name of file from file path
         self.new_experiment_page = NewExperimentUI(parent, self)
         self.new_experiment = self.new_experiment_page
@@ -131,7 +128,7 @@ class ExperimentMenuUI(MouserPage): #pylint: disable= undefined-variable
             return self.root.option_get(name, className)
         except Exception:
             return None
-        
+
     def raise_frame(self):
         '''Raises the frame to the user interaction level.'''
         self.on_show_frame()

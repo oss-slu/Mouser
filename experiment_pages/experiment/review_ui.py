@@ -137,5 +137,3 @@ class ReviewUI(MouserPage):
             font=CTkFont(family="Segoe UI Italic", size=16),
             text_color=("#4b5563", "#9ca3af")
         ).grid(row=3, column=0, pady=(10, 30))
-
-

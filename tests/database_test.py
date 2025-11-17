@@ -1,8 +1,3 @@
-from datetime import datetime
-import os
-import time
-import tempfile
-
 '''Database Unit Tests'''
 import sys, os
 import unittest
@@ -15,7 +10,7 @@ from databases.experiment_database import ExperimentDatabase
 def create_temp_file():
     '''Function to create temporary file and return it'''
     temp = tempfile.NamedTemporaryFile(delete=False)
-    temp.close()    
+    temp.close() 
     return temp.name
 
 def get_platform():

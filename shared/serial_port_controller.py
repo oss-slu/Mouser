@@ -33,9 +33,10 @@ class SerialPortController():
 
     def get_available_ports(self):
         '''Returns a list of available system ports.
-        Linux-specific note: Some USB serial devices (e.g. RFID readers / balances) intermittently fail to appear in
-        pyserial.tools.list_ports results on certain distributions (udev timing or driver latency). As a fallback on
-        Linux we manually glob common device patterns if the primary enumeration returns nothing. This has no impact
+        Linux-specific note: Some USB serial devices (e.g. RFID readers / balances) 
+        intermittently fail to appear in pyserial.tools.list_ports results on certain 
+        distributions (udev timing or driver latency). As a fallback on Linux we manually 
+        glob common device patterns if the primary enumeration returns nothing. This has no impact
         on Windows/macOS because the fallback only runs when platform.system() == 'Linux'.'''
         ports = list(self.comports_fn())
         available_ports = []

@@ -202,4 +202,3 @@ class TestScreen(CTkToplevel):
             self.reading_labels[com_port].configure(
                 text=message, text_color=("#2563eb", "#60a5fa")
             )
-

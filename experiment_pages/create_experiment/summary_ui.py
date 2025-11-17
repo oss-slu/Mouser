@@ -1,11 +1,13 @@
 '''Experiment Summary UI (modernized, fully functional).'''
+import os
+import tempfile
+from tkinter import filedialog
 from customtkinter import *
 from shared.tk_models import *
 from shared.scrollable_frame import ScrolledFrame
 from shared.experiment import Experiment
 from shared.audio import AudioManager
 from shared.file_utils import SUCCESS_SOUND
-from tkinter import filedialog
 
 class SummaryUI(MouserPage):  # pylint: disable= undefined-variable
     '''Displays experiment details before final creation.'''
@@ -193,7 +195,7 @@ class SummaryUI(MouserPage):# pylint: disable=undefined-variable
         self.experiment.notes = self.notes_entry.get("1.0", "end-1c").strip()
 
         # Save the experiment
-        self.experiment.save_to_database(".") 
+        self.experiment.save_to_database(".")
         AudioManager.play(SUCCESS_SOUND)
 
         # Save the experiment to file

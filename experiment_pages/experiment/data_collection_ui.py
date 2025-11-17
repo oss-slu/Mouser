@@ -114,7 +114,7 @@ class DataCollectionUI(MouserPage):
 
 
                     time.sleep(0.1)  # Shorter sleep time for more responsive stopping
-            except sql.Error as e:            
+            except sql.Error as e:      
                 print(f"Error in RFID listener: {e}")
             finally:
                 if hasattr(self, 'rfid_reader') and self.rfid_reader:
@@ -447,6 +447,3 @@ class ChangeMeasurementsDialog():
         '''Stops the data input thread if running.'''
         self.thread_running = False
         print("❌Measurement thread stopped")
-
-    
-
