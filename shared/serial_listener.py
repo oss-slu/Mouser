@@ -1,9 +1,12 @@
 # pylint: skip-file
 import os
-import serial
 import threading
 from queue import Queue
+
+import serial
+
 from shared.serial_port_controller import SerialPortController
+
 
 class SerialReader:
     def __init__(self, timeout=1, port=None):

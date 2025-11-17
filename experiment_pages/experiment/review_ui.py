@@ -8,9 +8,10 @@ Modernized Review Experiment Summary UI.
 - Inline comments document every UI enhancement (no logic changes)
 """
 
+from customtkinter import CTkFont, CTkFrame, CTkLabel, CTkScrollableFrame
+
 from databases.experiment_database import ExperimentDatabase
 from shared.tk_models import MouserPage
-from customtkinter import CTkScrollableFrame, CTkLabel, CTkFont, CTkFrame
 
 
 class ReviewUI(MouserPage):

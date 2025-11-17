@@ -1,12 +1,16 @@
 '''New Experiment Module — full functional version with modernized layout.'''
 # Standard library
 from tkinter import *
+
 from customtkinter import *
-from shared.tk_models import MouserPage
-from shared.scrollable_frame import ScrolledFrame
-from shared.experiment import Experiment
+
+from experiment_pages.experiment.group_config_ui import GroupConfigUI
 from shared.audio import AudioManager
-from shared.file_utils import SUCCESS_SOUND
+from shared.experiment import Experiment
+from shared.file_utils import ERROR_SOUND, SUCCESS_SOUND
+from shared.scrollable_frame import ScrolledFrame
+from shared.tk_models import ChangePageButton, MouserPage
+
 #from shared.password_manager import PasswordManager
 
 

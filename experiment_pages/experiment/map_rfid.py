@@ -1,34 +1,32 @@
 '''Map RFID module.'''
 import os
+import random
+import sqlite3 as sql
+import threading
 import time
 import traceback
-import sqlite3 as sql
-from tkinter import Menu
-from tkinter.ttk import Style, Treeview
-import tkinter.font as tkfont
-import random
-import threading
 import webbrowser
-from customtkinter import *
-from CTkMessagebox import CTkMessagebox
-from serial import SerialException
-from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
-from shared.tk_models import MouserPage
-from shared.serial_port_controller import SerialPortController
-from shared.serial_handler import SerialDataHandler
-
-from databases.experiment_database import ExperimentDatabase
-from shared.audio import AudioManager
-
-import shared.file_utils as file_utils
-from shared.flash_overlay import FlashOverlay
+import tkinter.font as tkfont
+from tkinter import Menu
+from tkinter.ttk import Treeview, Style
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+from serial import SerialException
+from customtkinter import *
+from CTkMessagebox import CTkMessagebox
+
+import shared.file_utils as file_utils
+from shared.file_utils import ERROR_SOUND, SUCCESS_SOUND
+from shared.audio import AudioManager
+from shared.flash_overlay import FlashOverlay
+from shared.serial_handler import SerialDataHandler
+from shared.serial_port_controller import SerialPortController
+from shared.tk_models import MouserPage
+from databases.experiment_database import ExperimentDatabase
 
 
 class RFIDHandler:
+    """Handles background RFID serial listening."""
     def __init__(self):
         '''initialize serial port and flags'''
         try:
@@ -54,7 +52,8 @@ class RFIDHandler:
         if self.flag_listening is True:
             self.flag_listening = False
             self.thread.join()
-            self.rfid_serial_port_controller.close()
+            if hasattr(self.rfid_serial_port_controller, "close"):
+                self.rfid_serial_port_controller.close()
 
     def scan_rfid(self):
         '''loop and read RFID data'''
@@ -82,8 +81,8 @@ def get_random_rfid():
     '''Returns a simulated rfid number'''
     return random.randint(1000000000, 9999999999)
 
-class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
-    '''Map RFID user interface and window.'''
+class MapRFIDPage(MouserPage):
+    """UI page for mapping RFID tags to animals."""
     def __init__(self, name, parent: CTk, prev_page: CTkFrame = None, controller=None, file_path=""):
         file = name
         self.db = ExperimentDatabase(file)
@@ -347,7 +346,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         # Add to database
         self.db.add_animal(animal_id, rfid, group_id, '')
         try:
-            self.db._conn.commit()
+            self.db.commit()
         except Exception:
             pass
 
@@ -425,21 +424,10 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                 text_color="black"
             )
             self.stop_listening()
-
-    def item_selected(self, _):
-        '''Check if any item selected has changed'''
+    def item_selected(self, _event=None):
+        """Enable delete button if any row is selected."""
         selected = self.table.selection()
-        print("Selection ", selected, " changed.")
-
-        # Check if any selected item starts with 'I00'
-        enable_button = any(
-            str(self.table.item(item_id, 'values')[0]).startswith('I00')
-            for item_id in selected
-)
-        if enable_button:
-            self.delete_button["state"] = "normal"
-        else:
-            self.delete_button["state"] = "disabled"
+        self.delete_button.configure(state="normal" if selected else "disabled")
 
     def remove_selected_items(self):
         '''Removes the selected item from a table, warning if none selected.'''
@@ -487,9 +475,10 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         return total_animals + 1
 
     def open_serial_port_selection(self):
-        '''Opens serial port selection.'''
-        #self.serial_port_button["state"] = "disabled"
-        self.serial_port_panel.open()
+        """Opens serial port selection dialog."""
+        from shared.serial_selection import SerialPortSelection
+        panel = SerialPortSelection(self.parent, SerialPortController(), self)
+        panel.open()
 
     def raise_warning(self, warning_message = 'Maximum number of animals reached'):
         '''Raises an error window.'''
@@ -564,7 +553,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                 self.stop_listening()
 
                 # Local import to avoid circular dependency
-                from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+                from experiment_pages.experiment.experiment_menu_ui import \
+                    ExperimentMenuUI
 
                 # Create new ExperimentMenuUI instance with the same file
                 new_page = ExperimentMenuUI(self.parent, self.file_path, self.menu_page, self.file_path)
@@ -588,7 +578,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             current_file = self.db.db_file
 
             # Ensure all changes are committed
-            self.db._conn.commit()
+            self.db.commit()
+
             print("Changes committed")
 
             # Save back to original file location

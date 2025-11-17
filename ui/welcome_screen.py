@@ -6,10 +6,11 @@ Modernized, responsive welcome screen.
 - Compatible with all screen sizes on launch
 """
 
-from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkImage
+from customtkinter import CTkButton, CTkFrame, CTkImage, CTkLabel
 from PIL import Image
-from shared.tk_models import get_resource_path
+
 from experiment_pages.experiment.select_experiment_ui import ExperimentsUI
+from shared.tk_models import get_resource_path
 from ui.commands import create_file, open_file, open_test
 
 

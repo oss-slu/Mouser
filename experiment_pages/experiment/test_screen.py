@@ -1,64 +1,65 @@
 """
 Modernized Test Screen UI.
 
-- Redesigned layout using clean section cards and uniform typography
-- Preserves full functionality for RFID and Serial device testing
-- Uses threading-safe updates for live reading display
-- Consistent blue accent theme and adaptive light/dark background
+- Clean layout using consistent card sections
+- Fully functional RFID + Serial Device test console
+- Safe multithreading for live serial reads
+- Pylint-clean structure and import ordering
 """
 
 import os
-import time
 import threading
+import time
+
 from customtkinter import (
-    CTkToplevel, CTkFrame, CTkLabel, CTkButton, CTkFont, set_appearance_mode
+    CTkButton, CTkFont, CTkFrame, CTkLabel, CTkToplevel, set_appearance_mode
 )
+
 from shared.serial_handler import SerialDataHandler
 
 
-
 class TestScreen(CTkToplevel):
-    """Modernized screen for testing RFID readers and serial devices."""
+    """Modernized interface for testing RFID readers and serial devices."""
 
     def __init__(self, parent):
         super().__init__(parent)
 
         self.title("Device Test Console")
-        self.geometry("700x500")
+        self.geometry("750x600")
         self.configure(fg_color=("white", "#18181b"))
         set_appearance_mode("System")
 
         self.reading_labels = {}
 
-        # --- Fonts ---
-        self.title_font = CTkFont("Segoe UI", 32, weight="bold")
+        # ----------- Fonts -----------
+        self.title_font = CTkFont("Segoe UI", 34, weight="bold")
         self.section_font = CTkFont("Segoe UI", 20, weight="bold")
         self.body_font = CTkFont("Segoe UI", 16)
         self.button_font = CTkFont("Segoe UI Semibold", 18)
 
-        # --- Page Layout ---
-        self.grid_rowconfigure((0, 1, 2), weight=1)
+        # ----------- Layout -----------
         self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure((0, 1, 2), weight=1)
 
-        # --- Title ---
+        # Title
         CTkLabel(
             self,
             text="Hardware Test Dashboard",
             font=self.title_font,
             text_color=("black", "white")
-        ).grid(row=0, column=0, pady=(30, 10))
+        ).grid(row=0, column=0, pady=(25, 5))
 
-        # --- RFID Section ---
+        # RFID Card
         self.rfid_card = self._create_card("RFID Readers", row=1)
-        self.setup_rfid_section(self.rfid_card)
+        self._setup_rfid_section(self.rfid_card)
 
-        # --- Serial Section ---
+        # Device Card
         self.device_card = self._create_card("Serial Devices", row=2)
-        self.setup_device_section(self.device_card)
+        self._setup_device_section(self.device_card)
 
-    # --- Card Builder ---
+    # ---------------------------- UI Helpers ----------------------------
     def _create_card(self, title, row):
-        """Helper: Create consistent card container for each section."""
+        """Creates a styled card frame."""
         card = CTkFrame(
             self,
             fg_color=("white", "#27272a"),
@@ -66,120 +67,92 @@ class TestScreen(CTkToplevel):
             border_width=1,
             border_color="#d1d5db"
         )
-        card.grid(row=row, column=0, padx=80, pady=20, sticky="nsew")
+        card.grid(row=row, column=0, padx=60, pady=15, sticky="nsew")
         card.grid_columnconfigure(0, weight=1)
+
         CTkLabel(
             card,
             text=title,
             font=self.section_font,
             text_color=("#111827", "#e5e7eb")
         ).grid(row=0, column=0, pady=(20, 10))
+
         return card
 
-    # --- RFID Section ---
-    def setup_rfid_section(self, parent):
-        """Create RFID test controls."""
+    # ------------------------ RFID Section ------------------------
+    def _setup_rfid_section(self, parent):
+        """Lists and tests RFID readers."""
         preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference")
-        rfid_readers = [d for d in os.listdir(preference_dir)
-                        if os.path.exists(os.path.join(preference_dir, d, "rfid_config.txt"))]
+        rfid_readers = [
+            d for d in os.listdir(preference_dir)
+            if os.path.exists(os.path.join(preference_dir, d, "rfid_config.txt"))
+        ]
 
-        for index, com_port in enumerate(rfid_readers, start=2):
-            test_button = CTkButton(self, text="Test RFID", command=lambda p=com_port: self.test_reader(p))
-            test_button.grid(row=index, column=0, padx=10, pady=5, sticky="ew")
+        for index, com_port in enumerate(rfid_readers, start=1):
+            self._create_test_row(parent, com_port, "RFID", row=index)
 
-            com_label = CTkLabel(self, text=com_port, padx=10, pady=5)
-            com_label.grid(row=index, column=1, sticky="ew")
-
-            reading_label = CTkLabel(self, text="-----", padx=10, pady=5)
-            reading_label.grid(row=index, column=2, sticky="ew")
-
-            self.reading_labels[com_port] = reading_label
-
-    def setup_device_section(self):
-        '''Set up Serial Device testing section.'''
-        device_label = CTkLabel(self, text="Serial Device", font=("Arial", 16, "bold"))
-        device_label.grid(row=10, column=0, columnspan=2, pady=10)
-
+    # ------------------------ Serial Device Section ------------------------
+    def _setup_device_section(self, parent):
+        """Lists and tests serial devices."""
         preference_dir = os.path.join(os.getcwd(), "settings", "serial ports", "preference")
-        serial_devices = [d for d in os.listdir(preference_dir)
-                          if os.path.exists(os.path.join(preference_dir, d, "preferred_config.txt"))]
 
-        for index, com_port in enumerate(serial_devices, start=11):
-            test_button = CTkButton(self, text="Test Device", command=lambda p=com_port: self.test_device(p))
-            test_button.grid(row=index, column=0, padx=10, pady=5, sticky="ew")
+        self.serial_devices = [
+            d for d in os.listdir(preference_dir)
+            if os.path.exists(os.path.join(preference_dir, d, "preferred_config.txt"))
+        ]
 
-            com_label = CTkLabel(self, text=com_port, padx=10, pady=5)
-            com_label.grid(row=index, column=1, sticky="ew")
+        for index, com_port in enumerate(self.serial_devices, start=1):
+            self._create_test_row(parent, com_port, "Device", row=index)
 
-            reading_label = CTkLabel(self, text="-----", padx=10, pady=5)
-            reading_label.grid(row=index, column=2, sticky="ew")
-
-            self.reading_labels[com_port] = reading_label
-
-    def test_device(self, com_port):
-        '''Placeholder function to test serial devices'''
-        print(f"Testing serial device on {com_port}...")
-
-        # Start the serial data handler
-        data_handler = SerialDataHandler("device")
-        data_thread = threading.Thread(target=data_handler.start, daemon=True)
-        data_thread.start()
-
-        def check_for_data():
-            retries = 10  # Limit retries to prevent infinite loops
-            while retries > 0:
-                time.sleep(0.5)  # Wait a bit for data to arrive
-                if len(data_handler.received_data) > 0:
-                    received_data = data_handler.get_stored_data()
-
-                    # Ensure UI update runs in the main thread
-                    self.after(0, lambda: self.reading_labels[com_port].configure(text=received_data))
-
-                    data_handler.stop()
-                    print(f"Received data: {received_data}")
-                    return
-
-        for index, com_port in enumerate(serial_devices, start=1):
-            self._create_test_row(parent, com_port, "Device", row=index + 1)
-
-    # --- Test Row Builder ---
-    def _create_test_row(self, parent, com_port, type_label, row):
-        """Reusable layout for test rows."""
-        row_frame = CTkFrame(parent, fg_color=("white", "#323232"), corner_radius=12)
+    # ------------------------ Row Builder ------------------------
+    def _create_test_row(self, parent, com_port, label, row):
+        """Build UI row for RFID or Device testing."""
+        row_frame = CTkFrame(
+            parent,
+            fg_color=("white", "#323232"),
+            corner_radius=12
+        )
         row_frame.grid(row=row, column=0, padx=25, pady=8, sticky="ew")
         row_frame.grid_columnconfigure((0, 1, 2), weight=1)
 
-        # Port label
-        CTkLabel(row_frame, text=f"{type_label}: {com_port}", font=self.body_font,
-                 text_color=("#111827", "#e5e7eb")).grid(row=0, column=0, sticky="w", padx=10, pady=5)
+        CTkLabel(
+            row_frame,
+            text=f"{label}: {com_port}",
+            font=self.body_font,
+            text_color=("#111827", "#e5e7eb")
+        ).grid(row=0, column=0, sticky="w", padx=10)
 
-        # Test button
         CTkButton(
             row_frame,
-            text=f"Test {type_label}",
-            width=180,
+            text=f"Test {label}",
+            width=150,
             height=40,
             corner_radius=10,
             fg_color="#2563eb",
             hover_color="#1e40af",
             font=self.button_font,
             text_color="white",
-            command=lambda: self._run_test(type_label.lower(), com_port)
-        ).grid(row=0, column=1, padx=10, pady=5)
+            command=lambda p=com_port, t=label.lower(): self._run_test(t, p)
+        ).grid(row=0, column=1, padx=10)
 
-        # Status label
-        status = CTkLabel(row_frame, text="Waiting...", font=self.body_font,
-                          text_color=("#6b7280", "#a1a1aa"))
-        status.grid(row=0, column=2, sticky="e", padx=10, pady=5)
+        status = CTkLabel(
+            row_frame,
+            text="Waiting...",
+            font=self.body_font,
+            text_color=("#6b7280", "#a1a1aa")
+        )
+        status.grid(row=0, column=2, sticky="e", padx=10)
         self.reading_labels[com_port] = status
 
-    # --- Core Logic (unchanged functionality) ---
+    # ------------------------ Test Logic ------------------------
     def _run_test(self, device_type, com_port):
-        """Runs test for RFID or Serial device using threads."""
+        """Runs test for RFID or Device using SerialDataHandler."""
         print(f"Testing {device_type} on {com_port}...")
-        data_handler = SerialDataHandler("reader" if device_type == "rfid" else "device")
 
-        # Start handler thread
+        handler_type = "reader" if device_type == "rfid" else "device"
+        data_handler = SerialDataHandler(handler_type)
+
+        # Start serial listener thread
         threading.Thread(target=data_handler.start, daemon=True).start()
 
         def check_for_data():
@@ -187,18 +160,21 @@ class TestScreen(CTkToplevel):
             while retries > 0:
                 time.sleep(0.5)
                 if data_handler.received_data:
-                    received_data = data_handler.get_stored_data()
-                    self.after(0, lambda: self._update_status(com_port, received_data))
+                    received = data_handler.get_stored_data()
+                    self.after(0, lambda: self._update_status(com_port, received))
                     data_handler.stop()
                     return
                 retries -= 1
+
             self.after(0, lambda: self._update_status(com_port, "No data received"))
 
+        # Thread to monitor incoming data
         threading.Thread(target=check_for_data, daemon=True).start()
 
     def _update_status(self, com_port, message):
-        """Safely update label from background thread."""
+        """Update the status label safely from thread."""
         if com_port in self.reading_labels:
             self.reading_labels[com_port].configure(
-                text=message, text_color=("#2563eb", "#60a5fa")
+                text=message,
+                text_color=("#2563eb", "#60a5fa")
             )

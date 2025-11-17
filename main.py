@@ -17,8 +17,8 @@ import tempfile
 
 from customtkinter import CTkButton  # Needed for UI buttons
 
-from shared.tk_models import MouserPage, raise_frame
 from shared.serial_port_controller import SerialPortController
+from shared.tk_models import MouserPage, raise_frame
 from ui.root_window import create_root_window
 from ui.welcome_screen import setup_welcome_screen
 

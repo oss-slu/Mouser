@@ -1,21 +1,21 @@
 '''Data collection UI module.'''
-
-from datetime import date
+import re
+import sqlite3 as sql
 import threading
 import time
-import re
 import traceback
-import sqlite3 as sql
+from datetime import date
 
 from customtkinter import *
 from CTkMessagebox import CTkMessagebox
-from shared.tk_models import MouserPage
+
 from databases.experiment_database import ExperimentDatabase
 from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
-from shared.file_utils import SUCCESS_SOUND, save_temp_to_file
 from shared.audio import AudioManager
-from shared.serial_handler import SerialDataHandler
+from shared.file_utils import SUCCESS_SOUND, save_temp_to_file
 from shared.flash_overlay import FlashOverlay
+from shared.serial_handler import SerialDataHandler
+from shared.tk_models import MouserPage
 
 
 # pylint: disable=unused-variable, unused-argument,

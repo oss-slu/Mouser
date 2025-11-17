@@ -6,6 +6,7 @@ pytest tests/test_ui_rendering.py -v -s
 import os
 import sys
 import time
+
 import pytest
 
 # Add project root to path
@@ -25,7 +26,8 @@ class TestRealUIRendering:
     @pytest.fixture(scope="class")
     def tk_root(self):
         """Create a single Tk root for all tests."""
-        from customtkinter import CTk  # pylint: disable=import-outside-toplevel
+        from customtkinter import \
+            CTk  # pylint: disable=import-outside-toplevel
 
         root = CTk()
         root.withdraw()
@@ -40,7 +42,8 @@ class TestRealUIRendering:
     @pytest.fixture
     def test_db(self, tmp_path):
         """Create a test database with moderate data."""
-        from databases.experiment_database import ExperimentDatabase  # pylint: disable=import-outside-toplevel
+        from databases.experiment_database import \
+            ExperimentDatabase  # pylint: disable=import-outside-toplevel
 
         db_file = tmp_path / "ui_test.db"
         db = ExperimentDatabase(str(db_file))
@@ -62,7 +65,8 @@ class TestRealUIRendering:
 
     def test_experiment_menu_rendering(self, tk_root, test_db):
         """ExperimentMenuUI must render in < 1 second."""
-        from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI  # pylint: disable=import-outside-toplevel
+        from experiment_pages.experiment.experiment_menu_ui import \
+            ExperimentMenuUI  # pylint: disable=import-outside-toplevel
 
         start = time.perf_counter()
 
@@ -83,7 +87,8 @@ class TestRealUIRendering:
 
     def test_cage_config_rendering(self, tk_root, test_db):
         """CageConfigurationUI must render in < 1 second."""
-        from experiment_pages.experiment.cage_config_ui import CageConfigurationUI  # pylint: disable=import-outside-toplevel
+        from experiment_pages.experiment.cage_config_ui import \
+            CageConfigurationUI  # pylint: disable=import-outside-toplevel
 
         start = time.perf_counter()
 
@@ -104,7 +109,8 @@ class TestRealUIRendering:
 
     def test_cage_config_update_performance(self, tk_root, test_db):
         """Updating cage configuration must be < 0.5 seconds."""
-        from experiment_pages.experiment.cage_config_ui import CageConfigurationUI  # pylint: disable=import-outside-toplevel
+        from experiment_pages.experiment.cage_config_ui import \
+            CageConfigurationUI  # pylint: disable=import-outside-toplevel
 
         cage_page = CageConfigurationUI(
             database=test_db,
@@ -128,8 +134,10 @@ class TestRealUIRendering:
 
     def test_data_collection_rendering(self, tk_root, test_db):
         """DataCollectionUI must render in < 1 second."""
-        from experiment_pages.experiment.data_collection_ui import DataCollectionUI  # pylint: disable=import-outside-toplevel
-        from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI  # pylint: disable=import-outside-toplevel
+        from experiment_pages.experiment.data_collection_ui import \
+            DataCollectionUI  # pylint: disable=import-outside-toplevel
+        from experiment_pages.experiment.experiment_menu_ui import \
+            ExperimentMenuUI  # pylint: disable=import-outside-toplevel
 
         menu_page = ExperimentMenuUI(
             parent=tk_root,
@@ -159,8 +167,10 @@ class TestRealUIRendering:
 
     def test_review_page_rendering(self, tk_root, test_db):
         """ReviewUI must render in < 0.5 seconds."""
-        from experiment_pages.experiment.review_ui import ReviewUI  # pylint: disable=import-outside-toplevel
-        from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI  # pylint: disable=import-outside-toplevel
+        from experiment_pages.experiment.experiment_menu_ui import \
+            ExperimentMenuUI  # pylint: disable=import-outside-toplevel
+        from experiment_pages.experiment.review_ui import \
+            ReviewUI  # pylint: disable=import-outside-toplevel
 
         menu_page = ExperimentMenuUI(
             parent=tk_root,
@@ -194,7 +204,8 @@ class TestUIScaling:
     @pytest.fixture(scope="class")
     def tk_root(self):
         """Create CTk root."""
-        from customtkinter import CTk  # pylint: disable=import-outside-toplevel
+        from customtkinter import \
+            CTk  # pylint: disable=import-outside-toplevel
 
         root = CTk()
         root.withdraw()
@@ -212,8 +223,10 @@ class TestUIScaling:
     ])
     def test_cage_ui_scales(self, tk_root, tmp_path, num_animals, expected_max_ms):
         """Scale test."""
-        from databases.experiment_database import ExperimentDatabase  # pylint: disable=import-outside-toplevel
-        from experiment_pages.experiment.cage_config_ui import CageConfigurationUI  # pylint: disable=import-outside-toplevel
+        from databases.experiment_database import \
+            ExperimentDatabase  # pylint: disable=import-outside-toplevel
+        from experiment_pages.experiment.cage_config_ui import \
+            CageConfigurationUI  # pylint: disable=import-outside-toplevel
 
         db_file = tmp_path / f"scale_{num_animals}.db"
         db = ExperimentDatabase(str(db_file))

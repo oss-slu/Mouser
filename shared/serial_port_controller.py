@@ -8,10 +8,11 @@ writing. In order to do so, you must have both port established before
 you write to a port, else reading from the reader port will return
 nothing even if you write to writer port already
 '''
-import os
 import glob
+import os
 import platform
 import sqlite3 as sql
+
 import serial
 import serial.tools.list_ports
 

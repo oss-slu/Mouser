@@ -1,9 +1,11 @@
 '''SQLite Database module for Mouser.'''
-import sqlite3
 import os
 import random
+import sqlite3
 from datetime import datetime
+
 import pandas as pd
+
 
 class ExperimentDatabase:
     '''SQLite Database Object for Experiments.'''
@@ -237,6 +239,10 @@ class ExperimentDatabase:
             except sqlite3.Error as e:
                 print(f"Cursor error detected: {e}")
                 self._c = self._conn.cursor()
+
+    def commit(self):
+        self._conn.commit()
+
 
     def close(self):
         '''Closes database connection and cleans up singleton instance.'''

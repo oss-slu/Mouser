@@ -1,10 +1,10 @@
 '''Functions to create, manage, encrypt, and save temporary files for the Mouser app.'''
 
-import tempfile
 import os
 import sys
-from shared.password_utils import PasswordManager
+import tempfile
 
+from shared.password_utils import PasswordManager
 
 TEMP_FOLDER_NAME = "Mouser"
 

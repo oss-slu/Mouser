@@ -2,19 +2,18 @@
 
 import os
 
-from customtkinter import CTk, CTkFrame, CTkLabel, CTkButton
-from shared.tk_models import MouserPage, ChangeableFrame
-from shared.serial_port_controller import SerialPortController
-
-from experiment_pages.experiment.data_collection_ui import DataCollectionUI
-from experiment_pages.experiment.data_analysis_ui import DataAnalysisUI
-from experiment_pages.experiment.map_rfid import MapRFIDPage
-from experiment_pages.experiment.cage_config_ui import CageConfigurationUI
-from experiment_pages.experiment.experiment_invest_ui import InvestigatorsUI
-from experiment_pages.experiment.review_ui import ReviewUI
-from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
+from customtkinter import CTk, CTkButton, CTkFrame, CTkLabel
 
 from databases.experiment_database import ExperimentDatabase
+from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
+from experiment_pages.experiment.cage_config_ui import CageConfigurationUI
+from experiment_pages.experiment.data_analysis_ui import DataAnalysisUI
+from experiment_pages.experiment.data_collection_ui import DataCollectionUI
+from experiment_pages.experiment.experiment_invest_ui import InvestigatorsUI
+from experiment_pages.experiment.map_rfid import MapRFIDPage
+from experiment_pages.experiment.review_ui import ReviewUI
+from shared.serial_port_controller import SerialPortController
+from shared.tk_models import ChangeableFrame, MouserPage
 
 
 class ExperimentMenuUI(MouserPage):  # pylint: disable=undefined-variable
@@ -87,41 +86,39 @@ class ExperimentMenuUI(MouserPage):  # pylint: disable=undefined-variable
         button_width = main_frame.winfo_screenwidth() * 0.48
         button_font = ("Arial Black", 35)
 
+        # --- FIXED BUTTON COMMANDS (W0108 removed) ---
         self.collection_button = CTkButton(
             main_frame, text="Data Collection",
             width=button_width, height=button_height, border_width=2.5,
-            command=lambda: self.data_page.raise_frame(),
+            command=self.data_page.raise_frame,
             font=button_font
         )
 
         self.analysis_button = CTkButton(
             main_frame, text="Data Exporting",
             width=button_width, height=button_height, border_width=2.5,
-            command=lambda: self.analysis_page.raise_frame(),
+            command=self.analysis_page.raise_frame,
             font=button_font
         )
 
         self.group_button = CTkButton(
             main_frame, text="Group Configuration",
             width=button_width, height=button_height, border_width=2.5,
-            command=lambda: [
-                self.cage_page.raise_frame(),
-                self.cage_page.update_config_frame()
-            ],
+            command=self._open_cage_page,   # FIXED
             font=button_font
         )
 
         self.rfid_button = CTkButton(
             main_frame, text="Map RFID",
             width=button_width, height=button_height, border_width=2.5,
-            command=lambda: self.rfid_page.raise_frame(),
+            command=self.rfid_page.raise_frame,
             font=button_font
         )
 
         self.summary_button = CTkButton(
             main_frame, text="Summary View",
             width=button_width, height=button_height, border_width=2.5,
-            command=lambda: self.summary_page.raise_frame(),
+            command=self.summary_page.raise_frame,
             font=button_font
         )
 
@@ -141,9 +138,16 @@ class ExperimentMenuUI(MouserPage):  # pylint: disable=undefined-variable
 
         self.disable_buttons_if_needed()
 
-    def on_show_frame(self, event=None):
+    # --- FIXED unused argument W0613 ---
+    def on_show_frame(self, _event=None):  # FIXED
         '''Callback when this frame becomes active.'''
         return
+
+    # --- NEW helper to replace lambda list (fix W0108) ---
+    def _open_cage_page(self):
+        """Opens the cage configuration page properly."""
+        self.cage_page.update_config_frame()
+        self.cage_page.raise_frame()
 
     def disable_buttons_if_needed(self):
         '''Enable/disable page buttons depending on RFID status.'''
@@ -234,7 +238,5 @@ class ExperimentMenuUI(MouserPage):  # pylint: disable=undefined-variable
 
     def back_to_welcome(self):
         '''Return to the initial welcome screen.'''
-        # pylint: disable=import-outside-toplevel
-
-        from ui.welcome_screen import setup_welcome_screen  # FIXED import
+        from ui.welcome_screen import setup_welcome_screen  # pylint: disable=import-outside-toplevel
         setup_welcome_screen(self.root, self)

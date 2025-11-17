@@ -7,10 +7,10 @@ Modernized Data Analysis UI.
 - Inline comments document visual changes; no logic modified
 """
 
-from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkFont
-from shared.tk_models import MouserPage
-from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+from customtkinter import CTkButton, CTkFont, CTkFrame, CTkLabel
 
+from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+from shared.tk_models import MouserPage
 
 
 class DataAnalysisUI(MouserPage):

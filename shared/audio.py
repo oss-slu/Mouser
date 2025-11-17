@@ -1,11 +1,13 @@
 '''
 Module that contains methods and classes that are used for the audio in our program.
 '''
-import wave
-from threading import Thread, Lock
-import sqlite3 as sql
 import os
+import sqlite3 as sql
+import wave
+from threading import Lock, Thread
+
 import pyaudio
+
 
 class AudioManager:
     '''

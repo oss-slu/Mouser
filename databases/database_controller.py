@@ -3,6 +3,7 @@
 
 import databases.experiment_database as edb
 
+
 class DatabaseController:
     '''A controller that provides functions for manipulating data within a .mouser file'''
 

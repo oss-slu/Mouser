@@ -1,8 +1,10 @@
 '''Experiment Module'''
 import uuid
 from datetime import date
-from shared.password_utils import PasswordManager
+
 from databases.experiment_database import ExperimentDatabase
+from shared.password_utils import PasswordManager
+
 
 class Experiment():
     '''Experiment Data Object'''

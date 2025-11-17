@@ -5,12 +5,14 @@ import tempfile
 from tkinter import filedialog
 
 from customtkinter import *
-from shared.tk_models import MouserPage
-from shared.scrollable_frame import ScrolledFrame
-from shared.experiment import Experiment
+
 from shared.audio import AudioManager
+from shared.experiment import Experiment
 from shared.file_utils import SUCCESS_SOUND
 from shared.password_manager import PasswordManager  # ← only import needed
+from shared.scrollable_frame import ScrolledFrame
+from shared.tk_models import MouserPage
+
 
 # pylint: disable=invalid-name
 class SummaryUI_Legacy(MouserPage):
@@ -60,7 +62,8 @@ class SummaryUI_Legacy(MouserPage):
                 temp_file.seek(0)
 
             # pylint: disable=import-outside-toplevel
-            from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+            from experiment_pages.experiment.experiment_menu_ui import \
+                ExperimentMenuUI
 
             root = self.winfo_toplevel()
             page = ExperimentMenuUI(root, temp_path)
@@ -70,7 +73,8 @@ class SummaryUI_Legacy(MouserPage):
             file = os.path.join(directory, f"{self.experiment.get_name()}.mouser")
 
             # pylint: disable=import-outside-toplevel
-            from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+            from experiment_pages.experiment.experiment_menu_ui import \
+                ExperimentMenuUI
 
             root = self.winfo_toplevel()
             page = ExperimentMenuUI(root, file, None, file)

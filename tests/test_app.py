@@ -1,21 +1,21 @@
 """Full test-suite runner and functional tests for core components."""
 
-import sys
 import os
 import sqlite3
+import sys
 import tempfile
 from unittest import TestLoader, TestSuite, TextTestRunner
 
 # Third-party
 from customtkinter import CTk
 
+from databases.database_controller import DatabaseController
+from databases.experiment_database import ExperimentDatabase
+from shared.audio import AudioManager
+from shared.flash_overlay import FlashOverlay
 # First-party imports
 from shared.password_utils import PasswordManager
 from shared.tk_models import MouserPage
-from shared.audio import AudioManager
-from shared.flash_overlay import FlashOverlay
-from databases.database_controller import DatabaseController
-from databases.experiment_database import ExperimentDatabase
 
 # Allow tests to import project modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -23,13 +23,8 @@ os.environ["DISPLAY"] = ":0"
 
 # Import database test classes
 from tests.database_test import (  # pylint: disable=wrong-import-position
-    TestPlatform,
-    TestUIComponents,
-    TestDatabaseSetup,
-    TestAnimalRFIDMethods,
-    TestCageFunctions,
-    TestGroupFunctions
-)
+    TestAnimalRFIDMethods, TestCageFunctions, TestDatabaseSetup,
+    TestGroupFunctions, TestPlatform, TestUIComponents)
 
 
 def test_database_suite_execution():

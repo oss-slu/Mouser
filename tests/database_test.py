@@ -1,11 +1,16 @@
 '''Database Unit Tests'''
-import sys, os
-import unittest
+import os
+import sys
 import tempfile
+import unittest
+
 from customtkinter import CTk
-from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
-from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
+
 from databases.experiment_database import ExperimentDatabase
+from experiment_pages.create_experiment.new_experiment_ui import \
+    NewExperimentUI
+from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+
 
 def create_temp_file():
     '''Function to create temporary file and return it'''
