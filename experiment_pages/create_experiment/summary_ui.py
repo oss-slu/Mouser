@@ -9,7 +9,6 @@ from customtkinter import *
 from shared.audio import AudioManager
 from shared.experiment import Experiment
 from shared.file_utils import SUCCESS_SOUND
-from shared.password_manager import PasswordManager  # ← only import needed
 from shared.scrollable_frame import ScrolledFrame
 from shared.tk_models import MouserPage
 

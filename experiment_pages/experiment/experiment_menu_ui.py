@@ -57,7 +57,7 @@ class ExperimentMenuUI(MouserPage):  # pylint: disable=undefined-variable
         main_frame.grid_columnconfigure(1, weight=1)
 
         # Subpages
-        self.data_page = DataCollectionUI(parent, name, self)
+        self.data_page = DataCollectionUI(parent, self, name, self.file_path)
         self.analysis_page = DataAnalysisUI(parent, self, os.path.abspath(name))
         self.cage_page = CageConfigurationUI(name, parent, self, self.file_path)
         self.summary_page = ReviewUI(parent, self, name)

@@ -10,7 +10,6 @@ from customtkinter import *
 from CTkMessagebox import CTkMessagebox
 
 from databases.experiment_database import ExperimentDatabase
-from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from shared.audio import AudioManager
 from shared.file_utils import SUCCESS_SOUND, save_temp_to_file
 from shared.flash_overlay import FlashOverlay
@@ -195,16 +194,19 @@ class DataCollectionUI(MouserPage):
             self.raise_warning("Failed to save measurement value.")
 
     def press_back_to_menu_button(self):
-        """Navigate back to experiment menu."""
+        """Return to the experiment menu UI."""
         self.stop_listening()
+
+        from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 
         new_page = ExperimentMenuUI(
             self.parent,
             self.current_file_path,
             self.menu_page,
-            self.current_file_path,
+            self.current_file_path
         )
         new_page.raise_frame()
+
 
     def close_connection(self):
         """Close DB connection."""

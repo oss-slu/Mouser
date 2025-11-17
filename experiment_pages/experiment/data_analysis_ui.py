@@ -8,8 +8,6 @@ Modernized Data Analysis UI.
 """
 
 from customtkinter import CTkButton, CTkFont, CTkFrame, CTkLabel
-
-from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from shared.tk_models import MouserPage
 
 
