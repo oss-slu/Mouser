@@ -5,18 +5,19 @@ import tempfile
 from tkinter import filedialog
 
 from customtkinter import *
-from shared.tk_models import *
+from shared.tk_models import MouserPage
 from shared.scrollable_frame import ScrolledFrame
 from shared.experiment import Experiment
 from shared.audio import AudioManager
 from shared.file_utils import SUCCESS_SOUND
+from shared.password_manager import PasswordManager  # ← only import needed
 
 
-class SummaryUI(MouserPage):  # pylint: disable=undefined-variable
-    '''Displays experiment details before final creation.'''
+class SummaryUI_Legacy(MouserPage):
+    '''Legacy UI for displaying experiment details and saving the experiment.'''
 
     def __init__(self, page, experiment, menu_page):
-        '''Initialize the summary UI.'''
+        '''Initialize the legacy summary UI.'''
         super().__init__(
             page,
             text="Create",
@@ -31,58 +32,61 @@ class SummaryUI(MouserPage):  # pylint: disable=undefined-variable
     def create_experiment(self):
         '''Saves an experiment as a new .mouser or .pmouser file.'''
         directory = filedialog.askdirectory()
-        if directory:
-            measurement_type = 1 if self.experiment.get_measurement_type() else 0
-            self.experiment.set_measurement_type(measurement_type)
-            self.experiment.save_to_database(directory)
+        if not directory:
+            return
 
-            if self.experiment.get_password():
-                # Encryption branch
-                password = self.experiment.get_password()
-                file = os.path.join(directory, f"{self.experiment.get_name()}.pmouser")
+        # Ensure measurement type consistency
+        measurement_type = 1 if self.experiment.get_measurement_type() else 0
+        self.experiment.set_measurement_type(measurement_type)
+        self.experiment.save_to_database(directory)
 
-                manager = PasswordManager(password)
-                decrypted_data = manager.decrypt_file(file)
+        # -------- ENCRYPTED PATH --------
+        if self.experiment.get_password():
+            password = self.experiment.get_password()
+            filename = f"{self.experiment.get_name()}.pmouser"
+            full_path = os.path.join(directory, filename)
 
-                temp_folder_name = "Mouser"
-                temp_folder_path = os.path.join(tempfile.gettempdir(), temp_folder_name)
-                os.makedirs(temp_folder_path, exist_ok=True)
+            manager = PasswordManager(password)
+            decrypted_data = manager.decrypt_file(full_path)
 
-                temp_file_name = f"{self.experiment.get_name()}.pmouser"
-                temp_file_path = os.path.join(temp_folder_path, temp_file_name)
+            # Create temporary working directory
+            temp_dir = os.path.join(tempfile.gettempdir(), "Mouser")
+            os.makedirs(temp_dir, exist_ok=True)
 
-                if os.path.exists(temp_file_path):
-                    os.remove(temp_file_path)
+            temp_path = os.path.join(temp_dir, filename)
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
 
-                with open(temp_file_path, "wb") as temp_file:
-                    temp_file.write(decrypted_data)
-                    temp_file.seek(0)
+            with open(temp_path, "wb") as temp_file:
+                temp_file.write(decrypted_data)
+                temp_file.seek(0)
 
-                    from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI  # pylint: disable=import-outside-toplevel
-                    root = self.winfo_toplevel()  # pylint: disable=redefined-outer-name
-                    page = ExperimentMenuUI(root, temp_file.name)
-                    raise_frame(page)
+            from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+            root = self.winfo_toplevel()
+            page = ExperimentMenuUI(root, temp_path)
+            page.raise_frame()
 
-            else:
-                # Non-encrypted path
-                file = os.path.join(directory, f"{self.experiment.get_name()}.mouser")
-                from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI  # pylint: disable=import-outside-toplevel
-                root = self.winfo_toplevel()
-                page = ExperimentMenuUI(root, file, None, file)
-                raise_frame(page)
+        else:
+            # -------- NON-ENCRYPTED PATH --------
+            file = os.path.join(directory, f"{self.experiment.get_name()}.mouser")
+
+            from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+            root = self.winfo_toplevel()
+            page = ExperimentMenuUI(root, file, None, file)
+            page.raise_frame()
 
 
-class SummaryUI(MouserPage):  # pylint: disable=undefined-variable
-    '''Summary User Interface for displaying experiment metadata.'''
+class SummaryUI(MouserPage):
+    '''Modern UI for displaying experiment metadata and finalizing setup.'''
 
     def __init__(self, experiment: Experiment, parent: CTk,
                  prev_page: CTkFrame, menu_page: CTkFrame):
-        '''Initialize the new-style summary UI.'''
+        '''Initialize the styled summary UI.'''
         super().__init__(parent, "New Experiment - Summary", prev_page)
         self.experiment = experiment
         self.menu_page = menu_page
 
-        # Navigation button
+        # Adjust menu/navigation buttons
         if hasattr(self, "menu_button") and self.menu_button:
             self.menu_button.configure(
                 corner_radius=12,
@@ -110,9 +114,11 @@ class SummaryUI(MouserPage):  # pylint: disable=undefined-variable
         )
         self.create_button.place_configure(relx=0.93, rely=0.13, anchor="e")
 
-        # Scrollable summary view
+        # Scrollable content container
         scroll_canvas = ScrolledFrame(self)
-        scroll_canvas.place(relx=0.5, rely=0.58, relheight=0.7, relwidth=0.9, anchor="center")
+        scroll_canvas.place(
+            relx=0.5, rely=0.58, relheight=0.7, relwidth=0.9, anchor="center"
+        )
 
         self.main_frame = CTkFrame(
             scroll_canvas,
@@ -139,7 +145,7 @@ class SummaryUI(MouserPage):  # pylint: disable=undefined-variable
         self.display_summary()
 
     def display_summary(self):
-        '''Populate UI with experiment summary information.'''
+        '''Populate the UI with experiment attributes.'''
         details = {
             "Experiment Name": self.experiment.get_name(),
             "Investigators": ", ".join(self.experiment.get_investigators()),
@@ -164,14 +170,13 @@ class SummaryUI(MouserPage):  # pylint: disable=undefined-variable
             CTkLabel(grid, text=value or "—", font=font_value).grid(
                 row=i, column=1, sticky="w", padx=10, pady=5)
 
-        # Notes header
+        # Notes section
         CTkLabel(
             self.summary_card,
             text="Additional Notes:",
             font=("Segoe UI Semibold", 18)
         ).pack(pady=(15, 5), anchor="w", padx=20)
 
-        # Notes textbox
         self.notes_entry = CTkTextbox(
             self.summary_card,
             width=600,
@@ -182,25 +187,25 @@ class SummaryUI(MouserPage):  # pylint: disable=undefined-variable
         )
         self.notes_entry.pack(padx=20, pady=(0, 20), fill="x")
 
-        # Insert saved notes
-        existing_notes = getattr(self.experiment, "notes", "")
-        if existing_notes:
-            self.notes_entry.insert("1.0", existing_notes)
+        saved_notes = getattr(self.experiment, "notes", "")
+        if saved_notes:
+            self.notes_entry.insert("1.0", saved_notes)
 
     def update_page(self):
-        '''Refresh the summary UI after changes to experiment data.'''
+        '''Refresh the summary UI after changes in experiment setup.'''
         for widget in self.summary_card.winfo_children():
             widget.destroy()
         self.display_summary()
 
     def create_experiment(self):
-        '''Finalize experiment creation and save to file.'''
+        '''Finalize experiment creation, save, and show confirmation.'''
         self.experiment.notes = self.notes_entry.get("1.0", "end-1c").strip()
 
-        # Save locally first
+        # Save local copy
         self.experiment.save_to_database(".")
         AudioManager.play(SUCCESS_SOUND)
 
+        # Choose final save directory
         save_dir = filedialog.askdirectory(title="Select Directory to Save Experiment")
         if save_dir:
             self.experiment.save_to_database(save_dir)

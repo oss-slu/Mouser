@@ -25,7 +25,7 @@ class ExperimentDatabase:
             self._initialize_tables()
 
         self._initialized = True
-    
+
     def get_number_groups(self):
         """Return the total number of groups in the database."""
         self._ensure_connection()
@@ -898,7 +898,7 @@ class ExperimentDatabase:
         try:
             if hasattr(self, "_c") and self._c:
                 self._c.close()
-        except sqlite3.Error as e:        
+        except sqlite3.Error as e:     
             print(f"Error closing database connection: {e}")
 
     def get_all_groups(self):
@@ -935,8 +935,6 @@ class ExperimentDatabase:
         except sqlite3.Error as e:
             print(f"Error in get_animals_by_cage: {e}")
             return {}
-
-    
 
     def get_animals_by_group(self):
         """Return dict mapping group names → list of animal_ids as strings."""

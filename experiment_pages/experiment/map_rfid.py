@@ -1,4 +1,5 @@
 '''Map RFID module.'''
+import os
 import time
 import traceback
 import sqlite3 as sql
@@ -10,10 +11,9 @@ import threading
 import webbrowser
 from customtkinter import *
 from CTkMessagebox import CTkMessagebox
-from playsound import playsound
 from serial import serialutil
 from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
-from shared.tk_models import *
+from shared.tk_models import MouserPage
 from shared.serial_port_controller import SerialPortController
 from shared.serial_handler import SerialDataHandler
 
@@ -79,9 +79,12 @@ def get_random_rfid():
 
 class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
     '''Map RFID user interface and window.'''
-    def __init__(self, database, parent: CTk, previous_page: CTkFrame = None, file_path = ""):
+    def __init__(self, name, parent: CTk, prev_page: CTkFrame = None, controller=None, file_path=""):
+        file = name
+        self.db = ExperimentDatabase(file)
+        self.menu_page = prev_page
 
-        super().__init__(parent, "Map RFID", previous_page)
+        super().__init__(parent, "Map RFID", prev_page)
 
         self.rfid_reader = None
         self.rfid_stop_event = threading.Event()  # Event to stop RFID listener
@@ -89,9 +92,6 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         # Store the parent reference
         self.parent = parent
-
-        file = database
-        self.db = ExperimentDatabase(file)
 
         self.animal_rfid_list = self.db.get_all_animals_rfid()
         self.animals = []
@@ -173,8 +173,9 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         ##setting previous button behavior
         self.menu_button = None
-        self.set_menu_button(previous_page)
-        self.menu_page = previous_page
+        self.set_menu_button(prev_page)
+        self.menu_page = prev_page
+
 
         self.menu_button.configure(command = self.press_back_to_menu_button)
         self.scroll_to_latest_entry()

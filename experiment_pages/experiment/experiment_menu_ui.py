@@ -30,11 +30,12 @@ class ExperimentMenuUI(MouserPage):  # pylint: disable=undefined-variable
     ):
         '''Initialize the Experiment Menu UI.'''
 
-        # Predefine attributes for pylint consistency
+        # Predefined for pylint consistency
         self.root = parent
         self.menu_button = None
+        self.file_path = full_path
 
-        # Create the initial setup page
+        # Setup experiment page
         self.new_experiment_page = NewExperimentUI(parent, self)
         self.new_experiment = self.new_experiment_page
 
@@ -42,16 +43,15 @@ class ExperimentMenuUI(MouserPage):  # pylint: disable=undefined-variable
         experiment_name = os.path.splitext(experiment_name)[0]
 
         self.experiment = ExperimentDatabase(name)
-        self.file_path = full_path
 
         super().__init__(parent, experiment_name, prev_page)
 
-        # Main layout container
+        # Main layout frame
         main_frame = CTkFrame(self)
         main_frame.grid(row=6, column=1, sticky="NESW")
         main_frame.place(relx=0, rely=0, relwidth=1, relheight=0.9)
 
-        # Configure grid
+        # Grid configuration
         for row in range(3):
             main_frame.grid_rowconfigure(row, weight=1, minsize=50)
         main_frame.grid_columnconfigure(0, weight=1)
@@ -63,7 +63,7 @@ class ExperimentMenuUI(MouserPage):  # pylint: disable=undefined-variable
         self.cage_page = CageConfigurationUI(name, parent, self, self.file_path)
         self.summary_page = ReviewUI(parent, self, name)
 
-        # --- FIX: MapRFIDPage constructor mismatch ---
+        # FIX: Align MapRFIDPage constructor with expected parameters
         if controller is None:
             self.rfid_page = MapRFIDPage(
                 name=name,
@@ -90,13 +90,15 @@ class ExperimentMenuUI(MouserPage):  # pylint: disable=undefined-variable
         self.collection_button = CTkButton(
             main_frame, text="Data Collection",
             width=button_width, height=button_height, border_width=2.5,
-            command=self.data_page.raise_frame, font=button_font
+            command=lambda: self.data_page.raise_frame(),
+            font=button_font
         )
 
         self.analysis_button = CTkButton(
             main_frame, text="Data Exporting",
             width=button_width, height=button_height, border_width=2.5,
-            command=self.analysis_page.raise_frame, font=button_font
+            command=lambda: self.analysis_page.raise_frame(),
+            font=button_font
         )
 
         self.group_button = CTkButton(
@@ -112,27 +114,29 @@ class ExperimentMenuUI(MouserPage):  # pylint: disable=undefined-variable
         self.rfid_button = CTkButton(
             main_frame, text="Map RFID",
             width=button_width, height=button_height, border_width=2.5,
-            command=self.rfid_page.raise_frame, font=button_font
+            command=lambda: self.rfid_page.raise_frame(),
+            font=button_font
         )
 
         self.summary_button = CTkButton(
             main_frame, text="Summary View",
             width=button_width, height=button_height, border_width=2.5,
-            command=self.summary_page.raise_frame, font=button_font
+            command=lambda: self.summary_page.raise_frame(),
+            font=button_font
         )
 
-        # Place buttons
+        # Button placement
         self.collection_button.grid(row=0, column=0)
         self.analysis_button.grid(row=0, column=1)
         self.group_button.grid(row=1, column=0)
         self.rfid_button.grid(row=1, column=1)
         self.summary_button.grid(row=2, column=0)
 
-        # Remove menu button if inherited
+        # Remove inherited menu button if present
         if self.menu_button:
             self.menu_button.destroy()
 
-        # Bind for UI switching
+        # Bind page switch event
         self.bind("<<FrameRaised>>", self.on_show_frame)
 
         self.disable_buttons_if_needed()
@@ -198,7 +202,6 @@ class ExperimentMenuUI(MouserPage):  # pylint: disable=undefined-variable
         self.data_page.close_connection()
         self.cage_page.close_connection()
 
-        # Fix: MapRFIDPage may not define close_connection
         if hasattr(self.rfid_page, "close_connection"):
             self.rfid_page.close_connection()
 
@@ -231,5 +234,5 @@ class ExperimentMenuUI(MouserPage):  # pylint: disable=undefined-variable
 
     def back_to_welcome(self):
         '''Return to the initial welcome screen.'''
-        from ui.wwelcome_screen import setup_welcome_screen  # pylint: disable=import-outside-toplevel
+        from ui.welcome_screen import setup_welcome_screen  # FIXED import
         setup_welcome_screen(self.root, self)
