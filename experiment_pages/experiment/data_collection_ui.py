@@ -1,4 +1,5 @@
 '''Data collection UI module.'''
+
 from datetime import date
 import threading
 import time
@@ -7,10 +8,13 @@ import traceback
 import sqlite3 as sql
 
 from tkinter.ttk import Treeview, Style
-from customtkinter import *
+from customtkinter import (
+    CTk, CTkLabel, CTkFont, CTkFrame, CTkScrollableFrame, CTkEntry,
+    CTkButton, CTkToplevel
+)
 from CTkMessagebox import CTkMessagebox
 
-from shared.tk_models import *
+from shared.tk_models import MouserPage
 from databases.experiment_database import ExperimentDatabase
 from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND, save_temp_to_file
 from shared.audio import AudioManager
@@ -19,14 +23,16 @@ from shared.serial_handler import SerialDataHandler
 from shared.flash_overlay import FlashOverlay
 
 
-# pylint: disable=unused-variable, unused-argument, broad-exception-caught, protected-access
+# pylint: disable=unused-variable, unused-argument,
+# pylint: disable=broad-exception-caught, protected-access
 class DataCollectionUI(MouserPage):
     """Handles live or manual data collection for experiments."""
 
     def __init__(self, root, file_path, menu_page):
+        """Initialize the Data Collection UI."""
         super().__init__(root, "Data Collection", menu_page)
 
-        # Attributes required to silence pylint E1101
+        # Attributes needed to silence Pylint E1101
         self.root = root
         self.file_path = file_path
         self.menu_page = menu_page
@@ -42,12 +48,12 @@ class DataCollectionUI(MouserPage):
         self.rfid_stop_event = threading.Event()
         self.rfid_stop_event.clear()
 
-        # --- Layout Setup ---
+        # Layout
         self.configure(fg_color=("white", "#18181b"))
         self.grid_rowconfigure((0, 1, 2), weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        # --- Title ---
+        # Title
         CTkLabel(
             self,
             text="Data Collection",
@@ -55,7 +61,7 @@ class DataCollectionUI(MouserPage):
             text_color=("black", "white")
         ).grid(row=0, column=0, pady=(40, 10))
 
-        # --- Main Card ---
+        # Main container
         main_card = CTkFrame(
             self,
             fg_color=("white", "#27272a"),
@@ -66,7 +72,7 @@ class DataCollectionUI(MouserPage):
         main_card.grid(row=1, column=0, padx=80, pady=20, sticky="nsew")
         main_card.grid_columnconfigure(0, weight=1)
 
-        # --- Scrollable Display ---
+        # Scrollable section
         scrollable_data = CTkScrollableFrame(main_card, fg_color=("white", "#18181b"))
         scrollable_data.grid(row=0, column=0, padx=30, pady=(25, 10), sticky="nsew")
         scrollable_data.grid_columnconfigure(0, weight=1)
@@ -78,14 +84,15 @@ class DataCollectionUI(MouserPage):
             text_color=("#374151", "#d1d5db")
         ).grid(row=0, column=0, sticky="w", pady=(10, 10))
 
-        # Debugging print (kept as-is)
+        # Debug animal RFID print (kept)
         for rfid in self.database.get_all_animals_rfid():
             print(f"RFID {rfid} -> ID:", self.database.get_animal_id(rfid))
 
         self.rfid_stop_event.clear()
 
-        # --- RFID Listening Thread ---
+        # RFID listening thread
         def listen():
+            """Internal RFID reading loop."""
             try:
                 self.rfid_reader = SerialDataHandler("reader")
                 self.rfid_reader.start()
@@ -94,6 +101,7 @@ class DataCollectionUI(MouserPage):
                 while not self.rfid_stop_event.is_set():
                     if self.rfid_reader:
                         received_rfid = self.rfid_reader.get_stored_data()
+
                         if received_rfid:
                             received_rfid = re.sub(r"[^\w]", "", received_rfid)
 
@@ -113,7 +121,10 @@ class DataCollectionUI(MouserPage):
                                     text_color="black"
                                 )
                                 AudioManager.play(SUCCESS_SOUND)
-                                self.after(600, lambda a=animal_id: self.select_animal_by_id(a))
+                                self.after(
+                                    600,
+                                    lambda a=animal_id: self.select_animal_by_id(a)
+                                )
                             else:
                                 self.raise_warning("No animal found for scanned RFID.")
 
@@ -123,7 +134,7 @@ class DataCollectionUI(MouserPage):
                 print(f"Error in RFID listener: {e}")
 
             finally:
-                if hasattr(self, 'rfid_reader') and self.rfid_reader:
+                if hasattr(self, "rfid_reader") and self.rfid_reader:
                     self.rfid_reader.stop()
                     self.rfid_reader.close()
                     self.rfid_reader = None
@@ -136,7 +147,7 @@ class DataCollectionUI(MouserPage):
     # Safe commit wrapper
     # ----------------------------------------------------------------------
     def _safe_commit(self):
-        """Wrapper to silence protected-access warnings."""
+        """Run database commit safely to silence protected-access warnings."""
         try:
             self.database._conn.commit()
         except Exception:
@@ -146,12 +157,12 @@ class DataCollectionUI(MouserPage):
     # RFID listening control
     # ----------------------------------------------------------------------
     def stop_listening(self):
-        """Stops the RFID listener and releases serial port."""
+        """Stops the RFID listener and closes serial port."""
         print("🛑 Stopping RFID listener...")
 
         self.rfid_stop_event.set()
 
-        if hasattr(self, 'rfid_reader') and self.rfid_reader:
+        if hasattr(self, "rfid_reader") and self.rfid_reader:
             try:
                 self.rfid_reader.stop()
                 self.rfid_reader.close()
@@ -175,7 +186,7 @@ class DataCollectionUI(MouserPage):
     # Table selection helpers
     # ----------------------------------------------------------------------
     def select_animal_by_id(self, animal_id):
-        """Selects and opens changer for the given animal."""
+        """Select the row for a scanned animal ID."""
         if not self.table:
             return
 
@@ -188,14 +199,14 @@ class DataCollectionUI(MouserPage):
         print(f"⚠️ Animal ID {animal_id} not found in table.")
 
     def _open_changer_on_main_thread(self, child):
-        """Safely open changer window."""
+        """Helper to open changer dialog from the main thread."""
         if self.table:
             self.table.selection_set(child)
         self.changing_value = child
         self.open_changer()
 
     def open_auto_increment_changer(self):
-        """Open changer at auto_inc_id."""
+        """Opens changer dialog for current auto-increment ID."""
         if self.table and self.table.get_children():
             self.changing_value = self.table.get_children()[self.auto_inc_id]
             self.open_changer()
@@ -206,12 +217,14 @@ class DataCollectionUI(MouserPage):
     # Data updating
     # ----------------------------------------------------------------------
     def change_selected_value(self, animal_id_to_change, list_of_values):
-        """Update table + database with new measurement."""
+        """Update the selected animal's measurement values."""
         try:
             new_value = float(list_of_values[0])
 
             try:
-                self.database.change_data_entry(str(date.today()), animal_id_to_change, new_value, 1)
+                self.database.change_data_entry(
+                    str(date.today()), animal_id_to_change, new_value, 1
+                )
             except Exception as e:
                 print(f"Database update failed: {e}")
 
@@ -225,7 +238,7 @@ class DataCollectionUI(MouserPage):
 
             self._safe_commit()
 
-            if hasattr(self.database, 'db_file') and self.database.db_file != ":memory:":
+            if hasattr(self.database, "db_file") and self.database.db_file != ":memory:":
                 try:
                     save_temp_to_file(self.database.db_file, self.current_file_path)
                 except Exception:
@@ -236,10 +249,10 @@ class DataCollectionUI(MouserPage):
             print(traceback.format_exc())
 
     # ----------------------------------------------------------------------
-    # Date values
+    # Date display
     # ----------------------------------------------------------------------
     def get_values_for_date(self):
-        """Get all measurements for today and update table."""
+        """Retrieve and display measurement values for today's date."""
         self.current_date = str(date.today())
 
         if hasattr(self, "date_label"):
@@ -248,8 +261,10 @@ class DataCollectionUI(MouserPage):
             except Exception:
                 pass
 
-        self.date_label = CTkLabel(self, text="Current Date: " + self.current_date, font=("Arial", 25))
-        self.date_label.place(relx=0.5, rely=0.20, anchor=CENTER)
+        self.date_label = CTkLabel(
+            self, text="Current Date: " + self.current_date, font=("Arial", 25)
+        )
+        self.date_label.place(relx=0.5, rely=0.20, anchor="center")
 
         values = self.database.get_data_for_date(self.current_date)
 
@@ -273,41 +288,44 @@ class DataCollectionUI(MouserPage):
     # Navigation
     # ----------------------------------------------------------------------
     def raise_frame(self):
-        """Bring frame to front."""
+        """Bring the frame to the front and restart RFID listening (stub)."""
         super().raise_frame()
         self.rfid_listen()
 
     def rfid_listen(self):
-        """Stub for UI tests."""
+        """Stub function used by UI tests."""
         return
 
     def press_back_to_menu_button(self):
-        """Return to menu."""
+        """Return to the experiment menu UI."""
         self.stop_listening()
 
         from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
-        new_page = ExperimentMenuUI(self.parent, self.current_file_path, self.menu_page, self.current_file_path)
+        new_page = ExperimentMenuUI(
+            self.parent, self.current_file_path, self.menu_page, self.current_file_path
+        )
         new_page.raise_frame()
 
     def close_connection(self):
-        """Close DB."""
+        """Close database connection."""
         self.database.close()
 
     # ----------------------------------------------------------------------
-    # Warning popup (fixes missing method)
+    # Warning popup
     # ----------------------------------------------------------------------
     def raise_warning(self, message):
-        """Minimal warning dialog."""
+        """Show a popup warning message."""
         CTkMessagebox(title="Warning", message=str(message))
 
 
 # --------------------------------------------------------------------------
-# ChangeMeasurementsDialog (untouched, only Pylint fixes applied)
+# ChangeMeasurementsDialog class
 # --------------------------------------------------------------------------
-class ChangeMeasurementsDialog():
-    """Change Measurement Dialog window."""
+class ChangeMeasurementsDialog:
+    """Dialog window for changing or entering measurement values."""
 
     def __init__(self, parent: CTk, data_collection: DataCollectionUI, measurement_items: str):
+        """Initialize the dialog."""
         self.parent = parent
         self.data_collection = data_collection
         self.measurement_items = str(measurement_items)
@@ -327,7 +345,7 @@ class ChangeMeasurementsDialog():
             self.animal_ids = [str(aid) for aid in self.database.get_all_animal_ids()]
 
     def open(self, animal_id):
-        """Opens change measurement dialog."""
+        """Open the dialog window."""
         self.animal_ids = []
         for child in self.data_collection.table.get_children():
             values = self.data_collection.table.item(child)["values"]
@@ -336,18 +354,17 @@ class ChangeMeasurementsDialog():
         self.current_index = 0
 
         self.root = CTkToplevel(self.parent)
-        root = self.root  # avoids W0621 redefined variable
+        root = self.root  # fixes W0621 warning
 
-        title_text = "Modify Measurements for: " + str(animal_id)
-        root.title(title_text)
-        root.geometry('450x450')
+        root.title(f"Modify Measurements for: {animal_id}")
+        root.geometry("450x450")
         root.resizable(False, False)
 
         root.grid_rowconfigure(0, weight=1)
         root.grid_columnconfigure(0, weight=1)
 
-        id_label = CTkLabel(root, text="Animal ID: " + str(animal_id), font=("Arial", 25))
-        id_label.place(relx=0.5, rely=0.1, anchor=CENTER)
+        id_label = CTkLabel(root, text=f"Animal ID: {animal_id}", font=("Arial", 25))
+        id_label.place(relx=0.5, rely=0.1, anchor="center")
 
         self.textboxes = []
         count = 2
@@ -355,11 +372,13 @@ class ChangeMeasurementsDialog():
         for i in range(1, count):
             pos_y = i / count
             entry = CTkEntry(root, width=40)
-            entry.place(relx=0.60, rely=pos_y, anchor=CENTER)
+            entry.place(relx=0.60, rely=pos_y, anchor="center")
             self.textboxes.append(entry)
 
-            header = CTkLabel(root, text=self.measurement_items[i - 1] + ": ", font=("Arial", 25))
-            header.place(relx=0.28, rely=pos_y, anchor=E)
+            header = CTkLabel(
+                root, text=self.measurement_items[i - 1] + ": ", font=("Arial", 25)
+            )
+            header.place(relx=0.28, rely=pos_y, anchor="e")
 
             if i == 1:
                 entry.focus()
@@ -369,15 +388,18 @@ class ChangeMeasurementsDialog():
                 data_thread.start()
 
                 def check_for_data():
+                    """Check incoming serial data and update the dialog."""
                     print("Beginning check for data")
 
                     if self.data_collection.database.get_measurement_type() == 1:
                         current_index = self.animal_ids.index(animal_id)
 
                         while current_index < len(self.animal_ids) and self.thread_running:
-                            if (len(data_handler.received_data) >= 2
-                               and data_handler.received_data.strip()
-                               and data_handler.received_data is not None):
+                            if (
+                                len(data_handler.received_data) >= 2
+                                and data_handler.received_data.strip()
+                                and data_handler.received_data is not None
+                            ):
                                 received_data = data_handler.get_stored_data()
                                 entry.insert(1, received_data)
                                 data_handler.stop()
@@ -390,19 +412,20 @@ class ChangeMeasurementsDialog():
                                         break
                                     break
 
-                                else:
-                                    if not self.data_collection.rfid_stop_event.is_set():
-                                        self.data_collection.rfid_listen()
-                                        self.finish(animal_id)
-                                        break
+                                if not self.data_collection.rfid_stop_event.is_set():
+                                    self.data_collection.rfid_listen()
+                                    self.finish(animal_id)
+                                    break
 
-                                time.sleep(.25)
+                                time.sleep(0.25)
 
                         self.thread_running = False
 
                     else:
-                        submit_button = CTkButton(root, text="Submit", command=lambda: self.finish(animal_id))
-                        submit_button.place(relx=0.5, rely=0.9, anchor=CENTER)
+                        submit_button = CTkButton(
+                            root, text="Submit", command=lambda: self.finish(animal_id)
+                        )
+                        submit_button.place(relx=0.5, rely=0.9, anchor="center")
 
                 self.thread_running = True
                 threading.Thread(target=check_for_data, daemon=True).start()
@@ -411,32 +434,31 @@ class ChangeMeasurementsDialog():
         self.root.mainloop()
 
     def finish(self, animal_id):
-        """Cleanup and save data."""
+        """Finish editing and save values."""
         if self.root.winfo_exists():
             values = self.get_all_values()
             self.close()
-            current_animal_id = animal_id
 
             if self.data_collection.winfo_exists():
-                self.data_collection.change_selected_value(current_animal_id, values)
+                self.data_collection.change_selected_value(animal_id, values)
                 AudioManager.play(SUCCESS_SOUND)
 
     def get_all_values(self):
-        """Return textbox values."""
+        """Return all measurement values from textboxes."""
         values = []
         for entry in self.textboxes:
-            value = str(entry.get()).strip()
+            value = entry.get().strip()
             if value == "":
                 value = "0"
             values.append(value)
         return tuple(values)
 
     def close(self):
-        """Close dialog."""
-        if hasattr(self, 'root') and self.root.winfo_exists():
+        """Close the dialog window."""
+        if hasattr(self, "root") and self.root.winfo_exists():
             self.root.destroy()
 
     def stop_thread(self):
-        """Stop measurement thread."""
+        """Stop running measurement thread."""
         self.thread_running = False
         print("❌Measurement thread stopped")

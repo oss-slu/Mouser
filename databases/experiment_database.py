@@ -25,14 +25,17 @@ class ExperimentDatabase:
             self._initialize_tables()
 
         self._initialized = True
-
-
-
+    
     def get_number_groups(self):
-        '''Returns the number of groups in the experiment.'''
-        self._c.execute("SELECT COUNT(*) FROM groups")
-        result = self._c.fetchone()
-        return result[0] if result else 0
+        """Return the total number of groups in the database."""
+        self._ensure_connection()
+        try:
+            self._c.execute("SELECT COUNT(*) FROM groups")
+            result = self._c.fetchone()
+            return result[0] if result else 0
+        except sqlite3.Error as e:
+            print(f"Error in get_number_groups: {e}")
+            return 0
 
 
     def __new__(cls, file=":memory:"):
@@ -933,16 +936,7 @@ class ExperimentDatabase:
             print(f"Error in get_animals_by_cage: {e}")
             return {}
 
-    def get_number_groups(self):
-        """Return the total number of groups in the database."""
-        self._ensure_connection()
-        try:
-            self._c.execute("SELECT COUNT(*) FROM groups")
-            result = self._c.fetchone()
-            return result[0] if result else 0
-        except sqlite3.Error as e:
-            print(f"Error in get_number_groups: {e}")
-            return 0
+    
 
     def get_animals_by_group(self):
         """Return dict mapping group names → list of animal_ids as strings."""

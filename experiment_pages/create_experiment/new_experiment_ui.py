@@ -17,10 +17,6 @@ class NewExperimentUI(MouserPage):
     def __init__(self, parent: CTk, menu_page: CTkFrame = None):
         super().__init__(parent, "New Experiment", menu_page)
 
-        # ----------------------------
-        # Global Style + Navigation UI
-        # ----------------------------
-        # Restyle Back to Menu button
         if hasattr(self, "menu_button") and self.menu_button:
             self.menu_button.configure(
                 corner_radius=12,
@@ -39,9 +35,7 @@ class NewExperimentUI(MouserPage):
         self.next_button = None
         self.added_invest = []
 
-        # ----------------------------
-        # Scrollable Main Layout
-        # ----------------------------
+
         scroll_canvas = ScrolledFrame(self)
         scroll_canvas.place(relx=0.5, rely=0.65, relheight=0.90, relwidth=0.9, anchor="center")
 
@@ -56,10 +50,8 @@ class NewExperimentUI(MouserPage):
 
         pad_x, pad_y = 10, 10
 
-        # ----------------------------
-        # Form Labels
-        # ----------------------------
-        CTkLabel(self.main_frame, text='Experiment Name').grid(row=0, 
+
+        CTkLabel(self.main_frame, text='Experiment Name').grid(row=0,
                     column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
         CTkLabel(self.main_frame, text="Password").grid(row=0,
                     column=2, sticky=W, padx=pad_x, pady=(pad_y, 2))
@@ -78,9 +70,6 @@ class NewExperimentUI(MouserPage):
         CTkLabel(self.main_frame, text="Max Animals per Cage").grid(row=9,
                     column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
 
-        # ----------------------------
-        # Input Fields
-        # ----------------------------
         self.exper_name = CTkEntry(self.main_frame, width=180)
         self.password = CTkEntry(self.main_frame, width=160, show="*")
         self.investigators = CTkEntry(self.main_frame, width=180)
@@ -99,9 +88,6 @@ class NewExperimentUI(MouserPage):
         self.group_num.grid(row=8, column=1, sticky=W, padx=pad_x, pady=(2, pad_y))
         self.num_per_cage.grid(row=9, column=1, sticky=W, padx=pad_x, pady=(2, pad_y))
 
-        # ----------------------------
-        # Investigator controls
-        # ----------------------------
         self.invest_frame = CTkFrame(self.main_frame, fg_color="transparent")
         self.invest_frame.grid(row=2, column=1, sticky='nw')
         self.invest_frame.grid_propagate(False)
@@ -120,9 +106,6 @@ class NewExperimentUI(MouserPage):
         )
         add_invest_button.grid(row=1, column=2, padx=pad_x, pady=pad_y)
 
-        # ----------------------------
-        # RFID Options
-        # ----------------------------
         self.rfid = BooleanVar(value=True)
         self.rfid_frame = CTkFrame(self.main_frame, fg_color="transparent")
         self.rfid_frame.grid(row=6, column=1, sticky="w")
@@ -136,17 +119,11 @@ class NewExperimentUI(MouserPage):
             self.main_frame.grid_rowconfigure(i, weight=0)
             self.main_frame.grid_columnconfigure(i, weight=1)
 
-        # ----------------------------
-        # Create Next button (aligned top-right)
-        # ----------------------------
         self.create_next_button()
 
         # Enable field tracking
         self.bind_all_entries()
 
-    # ------------------------------------------------------------
-    # Navigation + Buttons
-    # ------------------------------------------------------------
     def create_next_button(self):
         '''Create the Next button that validates and navigates.'''
         if self.next_button:
@@ -243,9 +220,6 @@ class NewExperimentUI(MouserPage):
             self.added_invest.remove(person)
             self.update_invest_frame()
 
-    # ------------------------------------------------------------
-    # Validation / Warnings
-    # ------------------------------------------------------------
     def raise_warning(self, option: int):
         '''Show warning for invalid input'''
         def dismiss(event=None):
@@ -280,9 +254,6 @@ class NewExperimentUI(MouserPage):
         else:
             self.save_input()
 
-    # ------------------------------------------------------------
-    # Save + Navigation
-    # ------------------------------------------------------------
     def save_input(self):
         '''Save all user input into the Experiment model.'''
         self.input.set_name(self.exper_name.get())
