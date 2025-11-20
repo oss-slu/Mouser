@@ -10,4 +10,4 @@ customtkinter
 CTkMessagebox
 CTkMenuBar
 git+https://github.com/taconi/playsound.git
-
+requests
