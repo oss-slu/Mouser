@@ -2,3 +2,43 @@
 /.vs
 /exports
 venv/
+
+#Pyinstaller build outputs
+/build/
+/dist/
+*.spec
+*.exe
+*.pkg
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# pytest / tox
+.pytest_cache/
+.tox/
+
+# Packaging
+*.egg-info/
+dist/
+build/
+
+# Virtualenvs
+.env
+.venv
+venv/
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+
+# OS files
+.DS_Store
+
+# Temporary files
+*.log
+
+# SQLite database files (optional - uncomment if you don't want DB files tracked)
+# *.db

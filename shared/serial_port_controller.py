@@ -198,12 +198,10 @@ class SerialPortController:
             print(exc)
 
     def retrieve_setting(self, setting_type):
-        '''
-        Load settings from a preference text file (RFID or device settings).
-        '''
-        preference_dir = get_resource_path(
-            os.path.join("settings", "serial ports", "preference")
-        )
+        '''Sets the setting of the serial port opened by converting the
+        setting from csv file to actual setting used.'''
+        # Base preference directory inside the project or the PyInstaller bundle
+        base_preference_dir = get_resource_path(os.path.join("settings", "serial ports", "preference"))
 
         if setting_type == "reader":
             setting_file = "rfid_config.txt"
@@ -215,9 +213,10 @@ class SerialPortController:
             print("Invalid setting type. Must be 'reader' or 'device'.")
             return
 
-        preference_path = get_resource_path(
-            os.path.join(preference_dir, setting_folder, setting_file)
-        )
+        # Build the full path to the preference file using the already-resolved.
+        # base_preference_dir to avoid double-wrapping the path with
+        # get_resource_path (which would produce incorrect paths).
+        preference_path = os.path.join(base_preference_dir, setting_folder, setting_file)
         print(f"🔍 Looking for settings in: {preference_path}")
 
         if not os.path.exists(preference_path):
@@ -227,9 +226,9 @@ class SerialPortController:
         try:
             with open(preference_path, "r", encoding="utf-8") as file:
                 settings_file_name = file.readline().strip()
-                settings_path = get_resource_path(
-                    os.path.join("settings", "serial ports", settings_file_name)
-                )
+                # settings_file_name is relative to 'settings/serial ports', so
+                # resolve it via get_resource_path to support bundled execution.
+                settings_path = get_resource_path(os.path.join("settings", "serial ports", settings_file_name))
 
                 if not os.path.exists(settings_path):
                     print(f"Settings file {settings_path} not found.")

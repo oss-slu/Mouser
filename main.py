@@ -12,15 +12,20 @@ All UI setup is now modularized under /ui for maintainability.
 """
 
 import os
+import sys
 import shutil
 import tempfile
 
-from customtkinter import CTkButton  # Needed for UI buttons
+# Ensure project root is on sys.path so local packages (e.g. `databases`) can be
+# imported when running this script directly from the repo folder or from other
+# working directories.
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from shared.serial_port_controller import SerialPortController
-from shared.tk_models import MouserPage, raise_frame
-from ui.root_window import create_root_window
-from ui.welcome_screen import setup_welcome_screen
+from shared.tk_models import MouserPage, raise_frame  # pylint: disable=wrong-import-position
+from shared.serial_port_controller import SerialPortController  # pylint: disable=wrong-import-position
+from ui.root_window import create_root_window  # pylint: disable=wrong-import-position
+from ui.menu_bar import build_menu  # pylint: disable=wrong-import-position
+from ui.welcome_screen import setup_welcome_screen  # pylint: disable=wrong-import-position
 
 
 def create_file():
@@ -49,39 +54,31 @@ if os.path.exists(temp_folder_path):
 # Create root window
 root = create_root_window()
 
-# Window geometry constants
+# Window size constants
 MAINWINDOW_WIDTH = 900
 MAINWINDOW_HEIGHT = 600
 
-# Center window
+# Get screen width and height
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 x = int((screen_width - MAINWINDOW_WIDTH) / 2)
 y = int((screen_height - MAINWINDOW_HEIGHT) / 2)
 
-root.geometry(f"{MAINWINDOW_WIDTH}x{MAINWINDOW_HEIGHT}+{x}+{y}")
+# Set root window geometry
+x_pos = int((screen_width - MAINWINDOW_WIDTH) / 2)
+y_pos = int((screen_height - MAINWINDOW_HEIGHT) / 2)
+root.geometry(f"{MAINWINDOW_WIDTH}x{MAINWINDOW_HEIGHT}+{x_pos}+{y_pos}")
 root.title("Mouser")
 root.minsize(MAINWINDOW_WIDTH, MAINWINDOW_HEIGHT)
-
 
 main_frame = MouserPage(root, "Mouser")
 rfid_serial_port_controller = SerialPortController("reader")
 
-# Setup welcome screen, returns a frame we must use
-welcome_frame = setup_welcome_screen(root, main_frame)
-
-# Button sizing
-main_menu_button_height = main_frame.winfo_screenheight() / 6
-main_menu_button_width = main_frame.winfo_screenwidth() * 0.9
-
-
-new_file_button = CTkButton(
-    welcome_frame,
-    text="New Experiment",
-    font=("Georgia", 80),
-    command=create_file,
-    width=main_menu_button_width,
-    height=main_menu_button_height
+# Menu bar setup
+build_menu(
+    root=root,
+    experiments_frame=experiments_frame,
+    rfid_serial_port_controller=rfid_serial_port_controller,
 )
 
 open_file_button = CTkButton(
