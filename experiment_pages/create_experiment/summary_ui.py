@@ -137,35 +137,73 @@ class SummaryUI(MouserPage):  # pylint: disable= undefined-variable
         self.display_summary()
 
     def create_experiment(self):
-        '''Handles final experiment creation.'''
-        # Save notes back to experiment
+        """Finalize experiment creation: save DB and return to Home."""
+        # Store notes back into the Experiment object
         self.experiment.notes = self.notes_entry.get("1.0", "end-1c").strip()
 
-        # Save the experiment
-        self.experiment.save_to_database(".") 
-        AudioManager.play(SUCCESS_SOUND)
-
-        # Save the experiment to file
+        # Ask user where to save the experiment database
         save_dir = filedialog.askdirectory(title="Select Directory to Save Experiment")
-        if save_dir:
-            self.experiment.save_to_database(save_dir)
+        if not save_dir:
+            # User cancelled; do nothing
+            return
 
+        # Try to save the experiment
+        try:
+            self.experiment.save_to_database(save_dir)
+        except Exception as exc:
+            # Show an error popup if saving fails
+            popup = CTkToplevel(self)
+            popup.title("Save Error")
+            popup.geometry("360x180")
+            popup.resizable(False, False)
+
+            CTkLabel(
+                popup,
+                text=f"Failed to save experiment:\n{exc}",
+                wraplength=320,
+                font=("Segoe UI", 14),
+            ).pack(pady=20)
+
+            CTkButton(
+                popup,
+                text="OK",
+                command=popup.destroy,
+                corner_radius=8,
+                fg_color="#2563eb",
+                hover_color="#1e40af",
+                text_color="white",
+                width=80,
+            ).pack(pady=10)
+            return
+
+        # Play success sound once
         AudioManager.play(SUCCESS_SOUND)
 
-        # Confirmation popup
+        # Show success popup, then redirect to Home (menu_page)
         popup = CTkToplevel(self)
         popup.title("Experiment Created")
         popup.geometry("320x160")
         popup.resizable(False, False)
 
-        CTkLabel(popup, text="Experiment successfully created!", font=("Segoe UI", 16, "bold")).pack(pady=20)
+        def close_and_go_home():
+            popup.destroy()
+            if self.menu_page is not None:
+                # menu_page is your Home / Welcome screen
+                self.menu_page.raise_frame()
+
+        CTkLabel(
+            popup,
+            text="Experiment successfully created!",
+            font=("Segoe UI", 16, "bold"),
+        ).pack(pady=20)
+
         CTkButton(
             popup,
             text="OK",
-            command=popup.destroy,
+            command=close_and_go_home,
             corner_radius=8,
             fg_color="#2563eb",
             hover_color="#1e40af",
             text_color="white",
-            width=80
+            width=80,
         ).pack(pady=10)

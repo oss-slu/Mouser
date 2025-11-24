@@ -13,11 +13,24 @@ from shared.tk_models import MouserPage
 from customtkinter import CTkScrollableFrame, CTkLabel, CTkFont, CTkFrame
 
 
+
 class ReviewUI(MouserPage):
     """Displays a detailed experiment summary pulled from the database."""
 
     def __init__(self, parent, prev_page, database_name: str = ""):
         super().__init__(parent, "Experiment Summary", prev_page)
+
+        if hasattr(self, "menu_button") and self.menu_button:
+            self.menu_button.configure(
+                corner_radius=12,
+                height=50,
+                width=180,
+                font=CTkFont("Segoe UI Semibold", 18),
+                text_color="white",
+                fg_color="#2563eb",
+                hover_color="#1e40af",
+            )
+            self.menu_button.place_configure(relx=0.05, rely=0.13, anchor="w")
 
         # Initialize database connection
         self.database = ExperimentDatabase(database_name)
@@ -34,7 +47,7 @@ class ReviewUI(MouserPage):
             corner_radius=15,
             border_width=0
         )
-        scrollable.grid(row=0, column=0, sticky="nsew", padx=60, pady=40)
+        scrollable.grid(row=0, column=0, sticky="nsew", padx=60, pady=(140, 40))
         scrollable.grid_columnconfigure(0, weight=1)
 
         # --- Title Section ---

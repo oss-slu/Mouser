@@ -274,12 +274,7 @@ class NewExperimentUI(MouserPage):
         AudioManager.play(SUCCESS_SOUND)
 
     def _go_next(self):
-        try:
-            page = GroupConfigUI(self.input, self.root, self, self.menu_page)
-            page.raise_frame()
-        except TypeError:
-            try:
-                page = GroupConfigUI(self.root, None, self)
-                page.raise_frame()
-            except Exception as e:
-                print("Navigation error:", e)
+        """Navigate to Group Configuration with the current Experiment."""
+        page = GroupConfigUI(self.input, self.root, self, self.menu_page)
+        page.raise_frame()
+

@@ -40,15 +40,17 @@ def open_file(root, experiments_frame):
     if not file_path:
         return
 
-    from databases.experiment_database import ExperimentDatabase  # pylint: disable=import-outside-toplevel
+    from databases.experiment_database import ExperimentDatabase  # import here to avoid cycles
 
     # Close existing database connection if open
     temp_path = global_state["temp_file_path"]
     if temp_path and temp_path in ExperimentDatabase._instances:  # pylint: disable=protected-access
-        ExperimentDatabase._instances[temp_path].close()  # pylint: disable=protected-access
+        ExperimentDatabase._instances[temp_path].close()          # pylint: disable=protected-access
 
+    # Remember which file we're working with
     global_state["current_file_path"] = file_path
 
+    # ----- Encrypted .pmouser file -----
     if file_path.endswith(".pmouser"):
         password_prompt = CTkToplevel(root)
         password_prompt.title("Enter Password")
@@ -61,11 +63,13 @@ def open_file(root, experiments_frame):
         def handle_password():
             pw = password_entry.get()
             try:
-                temp_path = file_utils.create_temp_from_encrypted(file_path, pw)
-                if temp_path and os.path.exists(temp_path):
+                temp_path_local = file_utils.create_temp_from_encrypted(file_path, pw)
+                if temp_path_local and os.path.exists(temp_path_local):
                     global_state["password"] = pw
-                    global_state["temp_file_path"] = temp_path
-                    page = ExperimentMenuUI(root, experiments_frame, file_path)
+                    global_state["temp_file_path"] = temp_path_local
+
+                    # Open Experiment Menu using the decrypted temp file
+                    page = ExperimentMenuUI(root, temp_path_local, experiments_frame)
                     page.raise_frame()
                     password_prompt.destroy()
                 else:
@@ -75,11 +79,16 @@ def open_file(root, experiments_frame):
                 CTkMessagebox(message="Incorrect password or file error.", title="Error", icon="cancel")
 
         CTkButton(password_prompt, text="OK", command=handle_password).pack()
+
+    # ----- Plain .mouser file -----
     else:
         temp_file = file_utils.create_temp_copy(file_path)
         global_state["temp_file_path"] = temp_file
-        page = ExperimentMenuUI(root, experiments_frame, file_path)
+
+        # Open Experiment Menu using the temp copy
+        page = ExperimentMenuUI(root, temp_file, experiments_frame)
         page.raise_frame()
+
 
 
 def create_file(root, experiments_frame):
