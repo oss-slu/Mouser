@@ -74,7 +74,7 @@ class DataAnalysisUI(MouserPage):
             "fg_color": "#2563eb",
             "hover_color": "#1e40af"
         }
-    
+
 
         CTkButton(
             card,

@@ -15,11 +15,11 @@ class PasswordManager:
     """Minimal password manager shim for summary export."""
     @staticmethod
     def encrypt(text: str) -> str:
-        return text  
+        return text
 
     @staticmethod
     def decrypt(text: str) -> str:
-        return text  
+        return text
 
 
 

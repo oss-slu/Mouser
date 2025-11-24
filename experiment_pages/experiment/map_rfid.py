@@ -6,6 +6,7 @@ import tkinter.font as tkfont
 import random
 import threading
 import webbrowser
+import sqlite3
 from customtkinter import *
 from CTkMessagebox import CTkMessagebox
 from playsound import playsound
@@ -29,7 +30,7 @@ class RFIDHandler:
             self.flag_listening = False
             self.thread = None
             self.content = None
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"An exception occurred {e}")
             self.flag_listening = False
 
@@ -48,7 +49,7 @@ class RFIDHandler:
             self.flag_listening = False
             self.thread.join()
             self.rfid_serial_port_controller.close()
-        
+
 
     def scan_rfid(self):
         # loop and read RFID data
@@ -62,7 +63,7 @@ class RFIDHandler:
                 except Exception as e:
                     print(f"An exception occurred: {e}")
 
-            time.sleep(0.1)  
+            time.sleep(0.1)
 
 def simulate_rfid():
     # generate fake RFID for testing
@@ -95,7 +96,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.animal_rfid_list = self.db.get_all_animals_rfid()
         self.animals = []
         self.animal_id = 1
-        
+
         self.animal_id_entry_text = StringVar(value="1")
 
         # Simulate All RFID Button
@@ -145,13 +146,15 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.table.bind("<Button-3>", self.right_click_menu)
 
         self.delete_button = CTkButton(self, text="Remove Selection(s)", compound=TOP,
-                                       width=250, height=75, font=("Georgia", 65), command=self.remove_selected_items,
+                                       width=250, height=75, font=("Georgia", 65), 
+                                       command=self.remove_selected_items,
                                        state="normal")  # Initialize button as disabled
         self.delete_button.place(relx=0.45, rely=0.80, anchor=CENTER)
 
         # Add Sacrifice button with normal state
         self.sacrifice_button = CTkButton(self, text="Sacrifice Selected", compound=TOP,
-                                      width=250, height=75, font=("Georgia", 65), command=self.sacrifice_selected_items,
+                                      width=250, height=75, font=("Georgia", 65), 
+                                      command=self.sacrifice_selected_items,
                                       state="normal")  # Initialize as enabled
         self.sacrifice_button.place(relx=0.80, rely=0.80, anchor=CENTER)
 
