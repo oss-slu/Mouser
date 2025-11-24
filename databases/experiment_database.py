@@ -118,6 +118,7 @@ class ExperimentDatabase:
                          cage_max,
                          measurement_type, experiment_id, investigators, measurement):
         '''Initializes Experiment'''
+        self._ensure_connection()
         investigators_str = ', '.join(investigators)  # Convert list to comma-separated string
         self._c.execute('''INSERT INTO experiment (name, species, uses_rfid, num_animals,
                         num_groups, cage_max, measurement_type, id, investigators, measurement)
@@ -128,6 +129,7 @@ class ExperimentDatabase:
 
     def setup_groups(self, group_names, cage_capacity):
         '''Adds the groups to the database.'''
+        self._ensure_connection()
         for group in group_names:
             self._c.execute('''INSERT INTO groups (name, num_animals, cage_capacity)
                             VALUES (?, ?, ?)''',
@@ -136,6 +138,7 @@ class ExperimentDatabase:
 
     def add_measurement(self, animal_id, value):
         '''Adds a new measurement for an animal.'''
+        self._ensure_connection()
         timestamp = datetime.now()
         self._c.execute('''INSERT INTO animal_measurements (animal_id, timestamp, value)
                         VALUES (?, ?, ?)''',
@@ -144,6 +147,7 @@ class ExperimentDatabase:
 
     def get_measurements_by_date(self, date):
         '''Gets all measurements for a specific date.'''
+        self._ensure_connection()
         self._c.execute('''SELECT a.animal_id, a.rfid, m.timestamp, m.value
                         FROM animal_measurements m
                         JOIN animals a ON m.animal_id = a.animal_id
@@ -153,6 +157,8 @@ class ExperimentDatabase:
     def add_animal(self, animal_id, rfid, group_id, remarks=''):
         '''Adds animal to experiment.'''
         try:
+            self._ensure_connection()
+
             self._c.execute('''INSERT INTO animals (animal_id, group_id, rfid, remarks, active)
                             VALUES (?, ?, ?, ?, 1)''',
                             (animal_id, group_id, rfid, remarks))
@@ -170,6 +176,7 @@ class ExperimentDatabase:
 
     def remove_animal(self, animal_id):
         '''Removes an animal from the experiment.'''
+        self._ensure_connection()
         self._c.execute("SELECT group_id FROM animals WHERE animal_id = ?", (animal_id,))
         group_info = self._c.fetchone()
 
@@ -187,6 +194,7 @@ class ExperimentDatabase:
 
     def find_next_available_group(self):
         '''Finds the next available group with space in its cage.'''
+        self._ensure_connection()
         self._c.execute('''SELECT group_id, num_animals, cage_capacity
                         FROM groups
                         WHERE num_animals < cage_capacity
@@ -196,6 +204,7 @@ class ExperimentDatabase:
 
     def get_experiment_id(self):
         '''Returns the experiment id from the experiment table.'''
+        self._ensure_connection()
         self._c.execute("SELECT id FROM experiment")
         result = self._c.fetchone()
         return result[0] if result else None
@@ -314,12 +323,14 @@ class ExperimentDatabase:
 
     def get_animal_rfid(self, animal_id):
         '''Returns the RFID for a given animal ID.'''
+        self._ensure_connection()
         self._c.execute('SELECT rfid FROM animals WHERE animal_id = ?', (animal_id,))
         result = self._c.fetchone()
         return result[0] if result else None
 
     def get_animal_id(self, rfid: str):
         '''Returns the animal ID for a given RFID.'''
+        self._ensure_connection()
         self._c.execute('SELECT animal_id FROM animals WHERE rfid = ?', (rfid,))
         result = self._c.fetchone()
         print("Animal RFID:", rfid)
@@ -329,6 +340,7 @@ class ExperimentDatabase:
     def get_data_for_date(self, date):
         '''Gets all measurements for a specific date.'''
         try:
+            self._ensure_connection()   
             self._c.execute('''
                 SELECT animal_id, value
                 FROM animal_measurements
@@ -343,6 +355,7 @@ class ExperimentDatabase:
     def is_data_collected_for_date(self, date):
         '''Checks if all active animals have measurements for provided date as a TRUE/FALSE'''
         try:
+            self._ensure_connection()   
             # First get count of active animals
             self._c.execute('''
                 SELECT COUNT(*)
@@ -374,6 +387,7 @@ class ExperimentDatabase:
     def add_data_entry(self, date, animal_id, values, measurement_id=1):
         '''Adds a measurement entry for an animal on a specific date.'''
         try:
+            self._ensure_connection()   
             # Handle both single values and lists/tuples
             value = values[0] if isinstance(values, (list, tuple)) else values
 
@@ -391,6 +405,7 @@ class ExperimentDatabase:
     def change_data_entry(self, date, animal_id, value, measurement_id=1):
         '''Updates a measurement entry for an animal on a specific date.'''
         try:
+            self._ensure_connection()   
             # Update existing measurement
             self._c.execute('''
                 UPDATE animal_measurements
@@ -435,6 +450,7 @@ class ExperimentDatabase:
 
     def get_group_animal_count(self, group_id):
         '''Returns the number of active animals in a group.'''
+        self._ensure_connection()
         self._c.execute('''
             SELECT COUNT(*)
             FROM animals
@@ -444,6 +460,7 @@ class ExperimentDatabase:
 
     def get_cage_capacity(self, group_id):
         '''Returns the cage capacity for a group.'''
+        self._ensure_connection()
         self._c.execute('SELECT cage_capacity FROM groups WHERE group_id = ?', (group_id,))
         result = self._c.fetchone()
         return result[0] if result else None
@@ -468,6 +485,7 @@ class ExperimentDatabase:
         """Return animals in a virtual cage; if no group_name given, return first group."""
         try:
             if group_name is None:
+                self._ensure_connection()   
                 self._c.execute("SELECT name FROM groups ORDER BY group_id LIMIT 1")
                 first_group = self._c.fetchone()
                 if not first_group:
@@ -488,6 +506,7 @@ class ExperimentDatabase:
 
     def get_cage_assignments(self):
         '''Returns a dictionary of animal IDs mapped to their cage assignments.'''
+        self._ensure_connection()
         cage_assignments = {}
         groups = self._c.execute('SELECT group_id, cage_capacity FROM groups').fetchall()
 
@@ -507,11 +526,13 @@ class ExperimentDatabase:
 
     def get_groups(self):
         '''Returns a list of all group names in the database.'''
+        self._ensure_connection()
         self._c.execute("SELECT name FROM groups")
         return [group[0] for group in self._c.fetchall()]
 
     def get_animal_current_cage(self, animal_id):
         '''Returns the current cage (group_id) for an animal'''
+        self._ensure_connection()
         self._c.execute('''
             SELECT group_id
             FROM animals
@@ -523,6 +544,7 @@ class ExperimentDatabase:
     def update_animal_cage(self, animal_id, new_group_id):
         '''Updates an animal's cage assignment by updating its group_id'''
         try:
+            self._ensure_connection()   
             # Get current group_id
             self._c.execute('''
                 SELECT group_id
@@ -577,6 +599,7 @@ class ExperimentDatabase:
 
     def get_all_animals_rfid(self):
         '''Returns a list of all RFIDs for active animals in the experiment.'''
+        self._ensure_connection()
         self._c.execute('''SELECT rfid
                         FROM animals
                         WHERE active = 1 AND rfid IS NOT NULL
@@ -618,6 +641,7 @@ class ExperimentDatabase:
 
     def get_all_animals(self):
         '''Returns a list of ALL animals ACTIVE OR NOT with RFIDs'''
+        self._ensure_connection()
         self._c.execute('''
             SELECT animal_id
             FROM animals
@@ -631,6 +655,7 @@ class ExperimentDatabase:
         1. Experiment metadata
         3. Groups table with header
         """
+        self._ensure_connection()
 
         # Get experiment name
         self._c.execute("SELECT name FROM experiment")
@@ -688,6 +713,7 @@ class ExperimentDatabase:
     def export_to_csv(self, directory):
         '''Exports all relevant tables in the database to a folder named
           after the experiment in the specified directory.'''
+        self._ensure_connection()
 
         # Get the experiment name
         self._c.execute("SELECT name FROM experiment")
@@ -716,17 +742,20 @@ class ExperimentDatabase:
 
     def set_animal_active_status(self, animal_id, status):
         '''Sets the active status of an animal.'''
+        self._ensure_connection()
         self._c.execute("UPDATE animals SET active = ? WHERE animal_id = ?", (status, animal_id))
         self._conn.commit()
 
     def set_number_animals(self, number):
         '''Sets the number of animals in the experiment.'''
+        self._ensure_connection()
         self._c.execute("UPDATE experiment SET num_animals = ?", (number,))
         self._conn.commit()
 
     def insert_blank_data_for_day(self, animal_ids, date):
         '''Inserts blank measurements for a list of animal IDs for a specific date.'''
         try:
+            self._ensure_connection()
             for animal_id in animal_ids:
                 self._c.execute('''INSERT INTO animal_measurements (animal_id, timestamp, value)
                                 VALUES (?, ?, ?)''',
@@ -739,6 +768,7 @@ class ExperimentDatabase:
     def get_measurement_name(self):
         '''Returns the measurement name from the experiment table.'''
         try:
+            self._ensure_connection()   
             self._c.execute("SELECT measurement FROM experiment")
             result = self._c.fetchone()
             return result[0] if result else None  # Return the measurement type or None if not found
@@ -751,6 +781,7 @@ class ExperimentDatabase:
         their groups, respecting cage capacity limits.'''
 
         try:
+            self._ensure_connection()   
             # Get all groups and their cage capacities
             self._c.execute('SELECT group_id, cage_capacity FROM groups ORDER BY group_id')
             groups = self._c.fetchall()
@@ -806,6 +837,7 @@ class ExperimentDatabase:
     def autosort(self):
         '''Automatically sorts animals, putting largest into groups, then smallest, until all are sorted'''
         try:
+            self._ensure_connection()   
             # Get latest measurement for each active animal
             self._c.execute('''
                 SELECT a.animal_id, m.value, m.timestamp
@@ -894,6 +926,7 @@ class ExperimentDatabase:
 
     def get_cage_number(self, cage_name):
         '''Function to sort group id'''
+        self._ensure_connection()
         self._c.execute('''
                         SELECT group_id FROM groups
                         WHERE name = ?''', (cage_name,))
@@ -903,6 +936,7 @@ class ExperimentDatabase:
     def close_connection(self):
         """Safely close the SQLite connection or cursor."""
         try:
+            self._ensure_connection()   
             if hasattr(self, "_c") and self._c:
                 self._c.close()
         except sqlite3.Error as e:

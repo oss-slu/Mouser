@@ -3,12 +3,12 @@ import os
 import sys
 import tempfile
 import unittest
+import sqlite3
 
 from customtkinter import CTk
 
 from databases.experiment_database import ExperimentDatabase
-from experiment_pages.create_experiment.new_experiment_ui import \
-    NewExperimentUI
+from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 
 
@@ -101,7 +101,7 @@ class TestUIComponents(unittest.TestCase):
         if self.root.tk.call('tk', 'windowingsystem') == 'aqua':
             try:
                 default_font = self.root.option_get("font", "*")
-            except Exception:
+            except sqlite3.Error:
                 default_font = None
             self.assertIsNotNone(default_font)
 
