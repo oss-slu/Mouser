@@ -8,8 +8,8 @@ Modernized Review Experiment Summary UI.
 - Inline comments document every UI enhancement (no logic changes)
 """
 
-from databases.experiment_database import ExperimentDatabase  # pylint: disable=import-error
-from shared.tk_models import MouserPage  # pylint: disable=import-error
+from databases.experiment_database import ExperimentDatabase  
+from shared.tk_models import MouserPage  
 from customtkinter import CTkScrollableFrame, CTkLabel, CTkFont, CTkFrame
 
 

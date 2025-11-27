@@ -135,11 +135,11 @@ class CageConfigUI(MouserPage):
         try:
             db = ExperimentDatabase(self.file_path)
 
-            db._c.execute(  # pylint: disable=protected-access
+            db._c.execute(  
                 "UPDATE groups SET cage_capacity = ? WHERE name = ?",
                 (capacity, name),
             )
-            db._conn.commit()  # pylint: disable=protected-access
+            db._conn.commit()  
 
             db.randomize_cages()
 
@@ -158,7 +158,7 @@ class CageConfigUI(MouserPage):
 
     def view_summary(self):
         """Open experiment summary page."""
-        from experiment_pages.experiment.review_ui import (  # pylint: disable=import-error,import-outside-toplevel
+        from experiment_pages.experiment.review_ui import (  
             ReviewUI,
         )
 
@@ -167,7 +167,7 @@ class CageConfigUI(MouserPage):
 
     def back_to_menu(self):
         """Return to experiment menu."""
-        from experiment_pages.experiment.experiment_menu_ui import (  # pylint: disable=import-error,import-outside-toplevel
+        from experiment_pages.experiment.experiment_menu_ui import (  
             ExperimentMenuUI,
         )
 
