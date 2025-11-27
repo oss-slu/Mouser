@@ -187,7 +187,7 @@ class ExperimentMenuUI(MouserPage):
 
     def back_to_welcome(self):
         """Return to the main welcome screen."""
-        from ui.welcome_screen import (  # pylint: disable=import-error,import-outside-toplevel
+        from ui.welcome_screen import ( 
             setup_welcome_screen,
         )
 
