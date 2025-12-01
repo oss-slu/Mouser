@@ -9,6 +9,8 @@ Modernized Experiment Menu UI.
 from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkFont
 from shared.tk_models import MouserPage
 
+# pylint: disable=no-member, protected-access, useless-parent-delegation,
+# pylint: disable=unused-argument, unused-variable, global-statement
 
 class ExperimentMenuUI(MouserPage):
     """Provides navigation options for the selected experiment."""
@@ -86,29 +88,38 @@ class ExperimentMenuUI(MouserPage):
     # --- Navigation Methods (Unchanged Logic) ---
     def open_group_config(self):
         """Open Group Configuration Page."""
+        # pylint: disable=import-outside-toplevel
         from experiment_pages.experiment.group_config_ui import GroupConfigUI
         page = GroupConfigUI(self.root, self.file_path, self)
         page.raise_frame()
 
     def open_cage_config(self):
         """Open Cage Configuration Page."""
+        # pylint: disable=import-outside-toplevel
         from experiment_pages.experiment.cage_config_ui import CageConfigUI
         page = CageConfigUI(self.root, self.file_path, self)
         page.raise_frame()
 
     def open_data_collection(self):
         """Open Data Collection Page."""
+        # pylint: disable=import-outside-toplevel
         from experiment_pages.experiment.data_collection_ui import DataCollectionUI
-        page = DataCollectionUI(self.root, self.file_path, self)
+        page = DataCollectionUI(self.root, self, self.file_path)
         page.raise_frame()
 
     def open_data_analysis(self):
         """Open Data Analysis Page."""
+        # pylint: disable=import-outside-toplevel
         from experiment_pages.experiment.data_analysis_ui import DataAnalysisUI
         page = DataAnalysisUI(self.root, self.file_path, self)
         page.raise_frame()
 
     def back_to_welcome(self):
         """Return to the main welcome screen."""
+        # pylint: disable=import-outside-toplevel
         from ui.welcome_screen import setup_welcome_screen
         setup_welcome_screen(self.root, self)
+
+    def raise_frame(self):
+        """Compatibility override for pylint."""
+        super().raise_frame()

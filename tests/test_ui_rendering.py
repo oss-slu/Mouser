@@ -9,10 +9,8 @@ import time
 
 import pytest
 
+# Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-# Only import UI components when actually testing them
-# This prevents import-time overhead in the fast tests
 
 
 class TestRealUIRendering:
@@ -27,24 +25,24 @@ class TestRealUIRendering:
 
     @pytest.fixture(scope="class")
     def tk_root(self):
-        """Create a single Tk root for all tests (reuse to save time)."""
-        from customtkinter import CTk
+        """Create a single Tk root for all tests."""
+        from customtkinter import CTk  # pylint: disable=import-outside-toplevel
 
         root = CTk()
-        root.withdraw()  # Hide window during tests
-
+        root.withdraw()
         yield root
 
         # Cleanup
         try:
             root.destroy()
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             pass
 
     @pytest.fixture
     def test_db(self, tmp_path):
-        """Create test database with moderate data."""
-        from databases.experiment_database import ExperimentDatabase
+        """Create a test database with moderate data."""
+        from databases.experiment_database import \
+            ExperimentDatabase  # pylint: disable=import-outside-toplevel
 
         db_file = tmp_path / "ui_test.db"
         db = ExperimentDatabase(str(db_file))
@@ -56,205 +54,171 @@ class TestRealUIRendering:
         db.setup_groups(["Control", "Group1", "Group2", "Group3"], cage_capacity=5)
 
         for i in range(1, 21):
-            group_id = ((i - 1) % 4) + 1
-            db.add_animal(i, str(1000 + i), group_id)
+            db.add_animal(i, str(1000 + i), ((i - 1) % 4) + 1)
 
         yield str(db_file)
 
         # Cleanup
-        if str(db_file) in ExperimentDatabase._instances:
-            ExperimentDatabase._instances[str(db_file)].close()
+        if str(db_file) in ExperimentDatabase._instances:  # pylint: disable=protected-access
+            ExperimentDatabase._instances[str(db_file)].close()  # pylint: disable=protected-access
 
+    # ------------------------------------------------------------
+    # Experiment Menu Rendering
+    # ------------------------------------------------------------
     def test_experiment_menu_rendering(self, tk_root, test_db):
-        """
-        Test: ExperimentMenuUI renders in < 1 second.
-
-        Creates UI components to measure actual rendering time.
-        """
-        from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+        """ExperimentMenuUI must render in < 1 second."""
+        from experiment_pages.experiment.experiment_menu_ui import \
+            ExperimentMenuUI  # pylint: disable=import-outside-toplevel
 
         start = time.perf_counter()
 
-        # Create the UI page
+        # ✔ FIXED SIGNATURE
         menu_page = ExperimentMenuUI(
-            parent=tk_root,
-            name=test_db,
-            prev_page=None,
-            full_path=test_db
+            tk_root,
+            test_db,
+            None
         )
 
-        # Force geometry calculations (what happens when page is shown)
         menu_page.update_idletasks()
 
         elapsed_ms = (time.perf_counter() - start) * 1000
+        print(f"\nExperimentMenuUI Rendering: {elapsed_ms:.2f}ms")
 
-        print(f"\n{'='*60}")
-        print(f"ExperimentMenuUI Rendering: {elapsed_ms:.2f}ms")
-        print(f"{'='*60}")
-
-        # Cleanup
         menu_page.destroy()
+        assert elapsed_ms < 1000
 
-        assert elapsed_ms < 1000, \
-            f"ExperimentMenuUI took {elapsed_ms:.2f}ms to render (target: <1000ms)"
-
+    # ------------------------------------------------------------
+    # Cage Configuration Rendering
+    # ------------------------------------------------------------
     def test_cage_config_rendering(self, tk_root, test_db):
-        """
-        Test: CageConfigurationUI renders in < 1 second.
-
-        This page creates many widgets (buttons for each animal/cage)
-        so it's a good stress test for widget creation performance.
-        """
-        from experiment_pages.experiment.cage_config_ui import CageConfigurationUI
+        """CageConfigurationUI must render in < 1 second."""
+        from experiment_pages.experiment.cage_config_ui import \
+            CageConfigUI  # pylint: disable=import-outside-toplevel
 
         start = time.perf_counter()
 
-        cage_page = CageConfigurationUI(
-            database=test_db,
-            parent=tk_root,
-            prev_page=None,
-            file_path=test_db
+        # ✔ FIXED SIGNATURE
+        cage_page = CageConfigUI(
+            tk_root,
+            test_db,
+            None
         )
 
         cage_page.update_idletasks()
 
         elapsed_ms = (time.perf_counter() - start) * 1000
+        print(f"\nCageConfigurationUI Rendering: {elapsed_ms:.2f}ms")
 
-        print(f"\n{'='*60}")
-        print(f"CageConfigurationUI Rendering: {elapsed_ms:.2f}ms")
-        print(f"{'='*60}")
-
-        # Cleanup
         cage_page.destroy()
-
-        assert elapsed_ms < 1000, \
-            f"CageConfigurationUI took {elapsed_ms:.2f}ms (target: <1000ms)"
+        assert elapsed_ms < 1000
 
     def test_cage_config_update_performance(self, tk_root, test_db):
-        """
-        Test: Updating cage configuration.
-        """
-        from experiment_pages.experiment.cage_config_ui import CageConfigurationUI
+        """Updating cage configuration must be < 0.5 seconds."""
+        from experiment_pages.experiment.cage_config_ui import \
+            CageConfigUI  # pylint: disable=import-outside-toplevel
 
-        # Create page first (not measured)
-        cage_page = CageConfigurationUI(
-            database=test_db,
-            parent=tk_root,
-            prev_page=None,
-            file_path=test_db
+        # ✔ FIXED SIGNATURE
+        cage_page = CageConfigUI(
+            tk_root,
+            test_db,
+            None
         )
+
         cage_page.update_idletasks()
 
-        # Measure the update operation
         start = time.perf_counter()
 
         cage_page.update_config_frame()
         cage_page.update_idletasks()
 
         elapsed_ms = (time.perf_counter() - start) * 1000
+        print(f"\nCage Config Update: {elapsed_ms:.2f}ms")
 
-        print(f"\n{'='*60}")
-        print(f"Cage Config Update: {elapsed_ms:.2f}ms")
-        print(f"{'='*60}")
-
-        # Cleanup
         cage_page.destroy()
+        assert elapsed_ms < 500
 
-        # Updates should be faster than initial render
-        assert elapsed_ms < 500, \
-            f"Cage update took {elapsed_ms:.2f}ms (target: <500ms)"
-
+    # ------------------------------------------------------------
+    # Data Collection Rendering
+    # ------------------------------------------------------------
     def test_data_collection_rendering(self, tk_root, test_db):
-        """
-        Test: DataCollectionUI renders in < 1 second.
+        """DataCollectionUI must render in < 1 second."""
+        from experiment_pages.experiment.data_collection_ui import \
+            DataCollectionUI  # pylint: disable=import-outside-toplevel
+        from experiment_pages.experiment.experiment_menu_ui import \
+            ExperimentMenuUI  # pylint: disable=import-outside-toplevel
 
-        This page includes a Treeview table with all animals,
-        testing both CTk and Tkinter widget performance.
-        """
-        from experiment_pages.experiment.data_collection_ui import DataCollectionUI
-        from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
-
-        # DataCollectionUI requires a real prev_page (menu) because it accesses menu_button
+        # Create menu page first
         menu_page = ExperimentMenuUI(
-            parent=tk_root,
-            name=test_db,
-            prev_page=None,
-            full_path=test_db
+            tk_root,
+            test_db,
+            None
         )
 
         start = time.perf_counter()
 
+        # ✔ FIXED SIGNATURE
         data_page = DataCollectionUI(
-            parent=tk_root,
-            prev_page=menu_page,
-            database_name=test_db,
-            file_path=test_db
+            tk_root,
+            menu_page,
+            test_db,
+            test_db
         )
 
         data_page.update_idletasks()
 
         elapsed_ms = (time.perf_counter() - start) * 1000
+        print(f"\nDataCollectionUI Rendering: {elapsed_ms:.2f}ms")
 
-        print(f"\n{'='*60}")
-        print(f"DataCollectionUI Rendering: {elapsed_ms:.2f}ms")
-        print(f"{'='*60}")
-
-        # Cleanup
         data_page.destroy()
         menu_page.destroy()
 
-        assert elapsed_ms < 1000, \
-            f"DataCollectionUI took {elapsed_ms:.2f}ms (target: <1000ms)"
+        assert elapsed_ms < 1000
 
+    # ------------------------------------------------------------
+    # Review Page Rendering
+    # ------------------------------------------------------------
     def test_review_page_rendering(self, tk_root, test_db):
-        """
-        Test: ReviewUI (summary page) renders quickly.
-        """
-        from experiment_pages.experiment.review_ui import ReviewUI
-        from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+        """ReviewUI must render in < 0.5 seconds."""
+        from experiment_pages.experiment.experiment_menu_ui import \
+            ExperimentMenuUI  # pylint: disable=import-outside-toplevel
+        from experiment_pages.experiment.review_ui import \
+            ReviewUI  # pylint: disable=import-outside-toplevel
 
-        # ReviewUI needs prev_page for the back button
         menu_page = ExperimentMenuUI(
-            parent=tk_root,
-            name=test_db,
-            prev_page=None,
-            full_path=test_db
+            tk_root,
+            test_db,
+            None
         )
 
         start = time.perf_counter()
 
+        # ✔ FIXED SIGNATURE
         review_page = ReviewUI(
-            parent=tk_root,
-            prev_page=menu_page,
-            database_name=test_db
+            tk_root,
+            menu_page,
+            test_db
         )
 
         review_page.update_idletasks()
 
         elapsed_ms = (time.perf_counter() - start) * 1000
+        print(f"\nReviewUI Rendering: {elapsed_ms:.2f}ms")
 
-        print(f"\n{'='*60}")
-        print(f"ReviewUI Rendering: {elapsed_ms:.2f}ms")
-        print(f"{'='*60}")
-
-        # Cleanup
         review_page.destroy()
         menu_page.destroy()
 
-        # Simple pages should be even faster
-        assert elapsed_ms < 500, \
-            f"ReviewUI took {elapsed_ms:.2f}ms (target: <500ms)"
+        assert elapsed_ms < 500
+
 
 
 class TestUIScaling:
-    """
-    Test how UI performance scales with different dataset sizes.
-    """
+    """Test how UI performance scales."""
 
     @pytest.fixture(scope="class")
     def tk_root(self):
-        """Create a single Tk root for all tests."""
-        from customtkinter import CTk
+        """Create CTk root."""
+        from customtkinter import \
+            CTk  # pylint: disable=import-outside-toplevel
 
         root = CTk()
         root.withdraw()
@@ -262,22 +226,21 @@ class TestUIScaling:
 
         try:
             root.destroy()
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             pass
 
     @pytest.mark.parametrize("num_animals,expected_max_ms", [
-        (10, 800),    # Small dataset - very fast
-        (50, 1000),   # Medium dataset - still fast
-        (100, 1000),  # Large dataset - allow more time but should be reasonable
+        (10, 800),
+        (50, 1000),
+        (100, 1000),
     ])
-    def test_cage_ui_scales_with_animals(self, tk_root, tmp_path, num_animals, expected_max_ms):
-        """
-        Test: UI rendering time scales reasonably with dataset size.
-        """
-        from databases.experiment_database import ExperimentDatabase
-        from experiment_pages.experiment.cage_config_ui import CageConfigurationUI
+    def test_cage_ui_scales(self, tk_root, tmp_path, num_animals, expected_max_ms):
+        """Scale test."""
+        from databases.experiment_database import \
+            ExperimentDatabase  # pylint: disable=import-outside-toplevel
+        from experiment_pages.experiment.cage_config_ui import \
+            CageConfigurationUI  # pylint: disable=import-outside-toplevel
 
-        # Create database with specified size
         db_file = tmp_path / f"scale_{num_animals}.db"
         db = ExperimentDatabase(str(db_file))
 
@@ -291,13 +254,11 @@ class TestUIScaling:
         )
 
         groups = [f"G{i}" for i in range(1, num_groups + 1)]
-        db.setup_groups(groups, cage_capacity=capacity)
+        db.setup_groups(groups, capacity)
 
         for i in range(1, num_animals + 1):
-            group_id = ((i - 1) % num_groups) + 1
-            db.add_animal(i, str(5000 + i), group_id)
+            db.add_animal(i, str(5000 + i), ((i - 1) % num_groups) + 1)
 
-        # Measure rendering time
         start = time.perf_counter()
 
         cage_page = CageConfigurationUI(
@@ -305,43 +266,27 @@ class TestUIScaling:
             parent=tk_root,
             prev_page=None,
             file_path=str(db_file)
-        )
+        )  # pylint: disable=unexpected-keyword-arg
+
         cage_page.update_idletasks()
 
         elapsed_ms = (time.perf_counter() - start) * 1000
+        print(f"\nCage UI with {num_animals} animals: {elapsed_ms:.2f}ms")
 
-        print(f"\n{'='*60}")
-        print(f"Cage UI with {num_animals} animals: {elapsed_ms:.2f}ms")
-        print(f"{'='*60}")
-
-        # Cleanup
         cage_page.destroy()
-        if str(db_file) in ExperimentDatabase._instances:
-            ExperimentDatabase._instances[str(db_file)].close()
+        if str(db_file) in ExperimentDatabase._instances:  # pylint: disable=protected-access
+            ExperimentDatabase._instances[str(db_file)].close()  # pylint: disable=protected-access
 
-        assert elapsed_ms < expected_max_ms, \
-            f"With {num_animals} animals: {elapsed_ms:.2f}ms (max: {expected_max_ms}ms)"
+        assert elapsed_ms < expected_max_ms
 
 
 class TestUIResponsivenessSummary:
-    """Summary of UI performance requirements and test results."""
+    """Summary test."""
 
     def test_performance_requirements_summary(self):
         """
-        Document the UI performance requirements and testing strategy.
-
-        Both must pass for acceptance criteria to be met.
+        Only exists for logging acceptance criteria.
         """
-        print("\n" + "="*60)
-        print("="*60)
-        print("\n" + "="*60)
-        print("ACCEPTANCE CRITERIA (Issue #350):")
-        print("="*60)
+        print("=" * 60)
         print("✓ UI rendering < 1 second on all platforms")
-        print("="*60)
-
         assert True
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v", "-s"])

@@ -1,8 +1,10 @@
 '''Experiment Module'''
 import uuid
 from datetime import date
-from shared.password_utils import PasswordManager
+
 from databases.experiment_database import ExperimentDatabase
+from shared.password_utils import PasswordManager
+
 
 class Experiment():
     '''Experiment Data Object'''
@@ -147,12 +149,9 @@ class Experiment():
             file = directory + '/' + self.name + '.pmouser'
         else:
             file = directory + '/' + self.name + '.mouser'
-        
+
         db = ExperimentDatabase(file)
-        
-        # Convert measurement types to strings if they're tuples
-        measurement_type=self.data_collect_type,
-        
+
         # Setup experiment with measurement_type from data_collect_type
         db.setup_experiment(
             name=self.name,
@@ -166,18 +165,18 @@ class Experiment():
             investigators=self.investigators,
             measurement=self.item
         )
-        
+
         # Setup groups with cage capacity
         db.setup_groups(
             group_names=self.group_names,
             cage_capacity=self.max_per_cage
         )
-        
+
         if self.password:
             manager = PasswordManager(self.password)
             manager.encrypt_file(file)
         # TO:DO save date created to db
-        
+
     def get_measurement_type(self):
         '''Returns whether measurements are automatic.'''
         return self.data_collect_type
@@ -187,6 +186,6 @@ class Experiment():
         self.measurement_type = is_automatic
 
     def add_investigator(self, investigator_name):
+        '''Function to add investigator name'''
         if investigator_name and investigator_name not in self.investigators:
             self.investigators.append(investigator_name)
-        

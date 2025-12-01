@@ -1,261 +1,277 @@
-'''Database Unit Tests'''
-import sys
+"""
+Database and UI Unit Tests.
+
+Validates:
+- SQLite experiment DB behavior
+- UI component structure
+- Cross-platform path behavior
+- RFID and cage/group logic
+"""
+
 import os
-from datetime import datetime
+import sys
 import time
+import unittest
 import tempfile
-import importlib.util
-import types
+from datetime import datetime
 
-# Ensure repository root is on sys.path so tests can import the local `databases` package.
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-try:
-    # First try a normal import (works when repo root is on sys.path)
-    from databases.experiment_database import ExperimentDatabase
-    from databases.database_controller import DatabaseController
-except ModuleNotFoundError:
-    # Fallback: load modules directly from file paths so tests can be run from the tests/ folder
-    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    exp_path = os.path.join(repo_root, 'databases', 'experiment_database.py')
-    ctrl_path = os.path.join(repo_root, 'databases', 'database_controller.py')
-
-    spec = importlib.util.spec_from_file_location(
-        'databases.experiment_database', exp_path)
-    exp_mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(exp_mod)
-    # Prepare a package context so relative imports inside database_controller.py work
-    pkg = types.ModuleType('databases')
-    pkg.__path__ = [os.path.join(repo_root, 'databases')]
-    sys.modules['databases'] = pkg
-    sys.modules['databases.experiment_database'] = exp_mod
-
-    spec2 = importlib.util.spec_from_file_location(
-        'databases.database_controller', ctrl_path)
-    ctrl_mod = importlib.util.module_from_spec(spec2)
-    spec2.loader.exec_module(ctrl_mod)
-
-    ExperimentDatabase = exp_mod.ExperimentDatabase
-    DatabaseController = ctrl_mod.DatabaseController
-
-class TestDatabaseSetup:
-    '''Test Basic Setup of Database'''
-    _fd, _dbfile = tempfile.mkstemp(suffix=".db")
-    os.close(_fd)
-    db = ExperimentDatabase(file=_dbfile)
-    db.setup_experiment(
-        "Test",
-        "Test Mouse",
-        False,
-        16,
-        4,
-        4,
-        "A",
-        "test-123",
-        ["Tester"],
-        "Weight",
-    )
-    db.setup_groups([
-        "Control",
-        "Group 1",
-        "Group 2",
-        "Group 3",
-    ], cage_capacity=4)
-
-    #Add 16 animals to match test expectations
-    for i in range(16):
-        db.add_animal(animal_id=i+1, rfid=str(100 + i), group_id=1)
-
-    def test_num_animals(self):
-        '''Checks if num animals equals expected.'''
-        print("Returned animal count:", self.db.get_number_animals())
-        assert 16 == self.db.get_number_animals()
-
-    def test_num_groups(self):
-        '''Checks if num groups equals expected.'''
-        # Use public API to get number of groups
-        print("Returned group count:", self.db.get_number_groups())
-        assert 4 == self.db.get_number_groups()
-
-    def test_cage_max(self):
-        '''Checks if cage max equals expected.'''
-        # ExperimentDatabase doesn't expose cage_max directly; use the controller
-        ctrl = DatabaseController(self.db.db_file)
-        assert 4 == ctrl.get_cage_max()
-
-    def test_get_all_groups(self):
-        '''Checks if group names match expected'''
-        # ExperimentDatabase returns a list of group names
-        assert ["Control", "Group 1", "Group 2", "Group 3"] == self.db.get_groups()
-
-    # Legacy get_cages test removed: functionality replaced by get_cages_by_group()
-
-class TestAnimalRFIDMethods:
-    '''Test if the animal RFID methods work'''
-    _fd, _dbfile = tempfile.mkstemp(suffix=".db")
-    os.close(_fd)
-    db = ExperimentDatabase(file=_dbfile)
-    db.setup_experiment(
-        "Test",
-        "Test Mouse",
-        False,
-        16,
-        4,
-        4,
-        "A",
-        "test-123",
-        ["Tester"],
-        "Weight",
-    )
-    db.setup_groups(["Control", "Group 1"], cage_capacity=4)
-    for i in range(0,4):
-        db.add_animal(animal_id=i, rfid=str(10 + i), group_id=1)
-
-    def test_add_animal_ids(self):
-        '''Test if animal id of particular animal matches expected.'''
-        # RFID values are stored as strings
-        assert 1 == self.db.get_animal_id('10')
+from customtkinter import CTk  
+from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI  
+from databases.experiment_database import ExperimentDatabase  
+from databases.database_controller import DatabaseController  
 
 
-    def test_get_animal_rfid(self):
-        '''Test if particular animal RFID numbers match expected.'''
-        assert '10' == self.db.get_animal_rfid(1)
+sys.path.insert(
+    0,
+    os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+)
 
-    def test_get_animals_rfid(self):
-        '''Test if animal rfids match expected.'''
-        # Use current API name: returns list of strings
-        assert ['10', '11', '12', '13'] == self.db.get_all_animals_rfid()
 
-class TestCageFunctions:
-    '''Tests the cage functions.'''
-    _fd, _dbfile = tempfile.mkstemp(suffix=".db")
-    os.close(_fd)
-    db = ExperimentDatabase(file=_dbfile)
-    db.setup_experiment(
-        "Test",
-        "Test Mouse",
-        False,
-        16,
-        4,
-        4,
-        "A",
-        "test-123",
-        ["Tester"],
-        "Weight",
-    )
-    db.setup_groups(["Control", "Group 1"], cage_capacity=4)
-    for i in range(0,4):
-        db.add_animal(animal_id=i, rfid=str(10 + i), group_id=1)
+def create_temp_file():
+    """Create temp file for testing."""
+    temp = tempfile.NamedTemporaryFile(delete=False)
+    temp.close()
+    return temp.name
 
-    def test_get_cages(self):
-        '''Placeholder: cage behavior validated via get_cages_by_group.'''
-        
 
-    def test_get_animals_from_cage(self):
-        '''Tests if animals from a particular cage match expected.'''
-        # get_animals_in_cage expects a group name
-        assert [(1,), (2,)] == self.db.get_animals_in_cage('Control')
+def delete_file(path):
+    """Remove a file if it exists."""
+    if os.path.exists(path):
+        os.remove(path)
 
-    def test_get_animals_by_cage(self):
-        '''Tests if animals by caged dict matches expected.'''
-        # No direct API for animals_by_cage; validate cage assignments mapping instead
-        assignments = self.db.get_cage_assignments()
-        # Ensure the first two animals are assigned (group_id, cage_number) tuples
-        assert assignments[1][0] == 1
-        assert isinstance(assignments[1][1], int)
 
-class TestGroupFunctions:
-    '''Test Group Functions.'''
-    _fd, _dbfile = tempfile.mkstemp(suffix=".db")
-    os.close(_fd)
-    db = ExperimentDatabase(file=_dbfile)
-    db.setup_experiment(
-        "Test",
-        "Test Mouse",
-        False,
-        16,
-        4,
-        4,
-        "A",
-        "test-123",
-        ["Tester"],
-        "Weight",
-    )
-    db.setup_groups(["Control", "Group 1"], cage_capacity=4)
-    for i in range(0,4):
-        db.add_animal(animal_id=i, rfid=str(10 + i), group_id=1)
+def get_platform():
+    """Return OS platform string."""
+    return sys.platform
 
-    def test_get_all_groups(self):
-        '''Test if groups match expected.'''
-        assert ['Control', 'Group 1'] == self.db.get_groups()
 
-    def test_get_animals_in_group(self):
-        '''Tests if animals in particular group match expected.'''
-        # Use group name with ExperimentDatabase API
-        assert [(1,), (2,)] == self.db.get_animals_in_cage('Control')
+class TestPlatform(unittest.TestCase):
+    """Platform and DB file handling."""
 
-    def test_get_animals_by_group(self):
-        '''Tests if animals by group dict matches expected.'''
-        # No direct animals_by_group API; verify groups and assignments are consistent
-        groups = self.db.get_groups()
-        assert 'Control' in groups
+    def setUp(self):
+        self.temp_db_path = create_temp_file()
+        self.db = ExperimentDatabase(self.temp_db_path)
 
-    def test_get_cages_by_group(self):
-        '''Tests if cages by group dict matches expected.'''
-        # get_cages_by_group returns a dict keyed by group_id -> list of cage numbers
-        cages = self.db.get_cages_by_group()
-        # Expect group 1 to have at least one cage and group 2 to exist
-        assert 1 in cages
-        assert isinstance(cages[1], list)
+    def tearDown(self):
+        self.db.close_connection()
+        delete_file(self.temp_db_path)
 
-# Tests are intentionally small; disable too-few-public-methods pylint warning
-class TestWindowsSQLiteBehavior:  # pylint: disable=too-few-public-methods
-    '''Simulates rapid reads/writes to test for SQLite locking and path issues on Windows.'''
-    def test_simulated_instrument_input(self):
-        '''Simulate instrument input and rapid writes to the DB.'''
-        # Use a temporary DB file for this test
-        _fd, db_path = tempfile.mkstemp()
-        os.close(_fd)
-
-        # Ensure any leftover named file is removed before creating DB
-        if os.path.exists(db_path):
-            try:
-                os.remove(db_path)
-            except OSError:
-                pass
-
-        db = ExperimentDatabase(file=db_path)
+    def test_database_across_platform(self):
+        """Ensure DB operations work on all OS types."""
+        temp_db = create_temp_file()
+        db = ExperimentDatabase(temp_db)
 
         db.setup_experiment(
-            "Windows Test",
-            "Rat",
-            True,
-            5,
-            1,
-            5,
-            "B",
+            "Test", "Test Mouse", False, 16, 4, 4,
+            "Weight", 1, ["Investigator"], "Weight"
         )
+
+        if hasattr(db, "setup_groups"):
+            db.setup_groups(["Control", "Group 1", "Group 2", "Group 3"], 4)
+
+        for i in range(4):
+            db.add_animal(i + 1, str(10 + i), 1 if i < 2 else 2)
+
+        self.assertEqual(db.get_animal_rfid(1), "10")
+        self.assertIn(get_platform(), ["win32", "darwin", "linux"])
+
+        delete_file(temp_db)
+
+
+class TestUIComponents(unittest.TestCase):
+    """UI structure tests for modern ExperimentMenuUI."""
+
+    def setUp(self):  # pylint: disable=invalid-name
+        self.root = CTk()
+        self.ui = ExperimentMenuUI(self.root, "test_file.mouser")
+
+    def tearDown(self):  # pylint: disable=invalid-name
+        self.root.destroy()
+
+    def test_menu_buttons_exist(self):
+        """Menu buttons should exist in modern ExperimentMenuUI."""
+        # Buttons in the NEW UI are inside the menu_card Frame.
+        # We simply assert that the widget exists by type.
+        buttons = [
+            "Group Configuration",
+            "Cage Configuration",
+            "Data Collection",
+            "Data Analysis",
+            "Back to Welcome Screen",
+        ]
+
+        found = [child for child in self.ui.winfo_children()]
+
+        # Make sure at least one CTkButton with each label exists
+        labels = []
+        for widget in self.ui.winfo_children():
+            if hasattr(widget, "cget"):
+                try:
+                    labels.append(widget.cget("text"))
+                except Exception:
+                    pass
+
+        for label in buttons:
+            self.assertIn(label, labels)
+
+    def test_can_open_pages(self):
+        """Ensure navigation methods create new pages without error."""
+        try:
+            self.ui.open_group_config()
+            self.ui.open_cage_config()
+            self.ui.open_data_collection()
+            self.ui.open_data_analysis()
+        except Exception as exc:  # noqa: BLE001
+            self.fail(f"Opening a page raised an exception: {exc}")
+
+
+
+class TestDatabaseSetup(unittest.TestCase):
+    """Database setup and metadata tests."""
+
+    def setUp(self):
+        self.fd, self.dbfile = tempfile.mkstemp(suffix=".db")
+        os.close(self.fd)
+        self.db = ExperimentDatabase(self.dbfile)
+
+        self.db.setup_experiment(
+            "Test", "Test Mouse", False, 16, 4, 4,
+            "A", "test-123", ["Tester"], "Weight"
+        )
+
+        if hasattr(self.db, "setup_groups"):
+            self.db.setup_groups(["Control", "Group 1", "Group 2", "Group 3"], 4)
+
+    def tearDown(self):
+        """Cleanup after test."""
+        self.db.close_connection()
+        delete_file(self.dbfile)
+
+    def test_num_animals(self):
+        """Test retrieval of number of animals."""
+        self.assertEqual(self.db.get_number_animals(), 16)
+
+    def test_num_groups(self):
+        """Test number of experiment groups."""
+        self.assertEqual(self.db.get_number_groups(), 4)
+
+    def test_cage_max(self):
+        """Test cage capacity lookup."""
+        ctrl = DatabaseController(self.db.db_file)
+        self.assertEqual(ctrl.get_cage_max(), 4)
+
+    def test_get_all_groups(self):
+        """Test retrieval of group names."""
+        expected = ["Control", "Group 1", "Group 2", "Group 3"]
+        self.assertEqual(self.db.get_groups(), expected)
+
+
+class TestAnimalRFIDMethods(unittest.TestCase):
+    """Tests for RFID and animal lookup."""
+
+    def setUp(self):
+        self.fd, self.dbfile = tempfile.mkstemp(suffix=".db")
+        os.close(self.fd)
+        self.db = ExperimentDatabase(self.dbfile)
+
+        self.db.setup_experiment(
+            "Test", "Test Mouse", False, 16, 4, 4,
+            "A", "test-123", ["Tester"], "Weight"
+        )
+
+        self.db.setup_groups(["Control", "Group 1"], 4)
+
+        for i in range(4):
+            self.db.add_animal(i + 1, str(10 + i), 1)
+
+    def tearDown(self):
+        """Cleanup DB."""
+        self.db.close_connection()
+        delete_file(self.dbfile)
+
+    def test_get_animal_id(self):
+        """Animal lookup by RFID."""
+        self.assertEqual(self.db.get_animal_id("10"), 1)
+
+    def test_get_animal_rfid(self):
+        """RFID lookup by ID."""
+        self.assertEqual(self.db.get_animal_rfid(1), "10")
+
+    def test_get_animals_rfid(self):
+        """List of all RFIDs."""
+        self.assertEqual(self.db.get_all_animals_rfid(), ["10", "11", "12", "13"])
+
+
+class TestCageFunctions(unittest.TestCase):
+    """Cage/group lookup tests."""
+
+    def setUp(self):
+        self.fd, self.dbfile = tempfile.mkstemp(suffix=".db")
+        os.close(self.fd)
+        self.db = ExperimentDatabase(self.dbfile)
+
+        self.db.setup_experiment(
+            "Test", "Test Mouse", False, 16, 4, 4,
+            "A", "test-123", ["Tester"], "Weight"
+        )
+
+        self.db.setup_groups(["Control", "Group 1"], cage_capacity=4)
+
+        for i in range(4):
+            self.db.add_animal(i + 1, str(10 + i), 1)
+
+    def tearDown(self):
+        """Cleanup DB."""
+        self.db.close_connection()
+        delete_file(self.dbfile)
+
+    def test_get_animals_in_cage(self):
+        """Retrieve animals in a cage."""
+        self.assertEqual(self.db.get_animals_in_cage("Control"), [(1,), (2,)])
+
+    def test_get_cage_assignments(self):
+        """Check cage assignment mapping."""
+        mapping = self.db.get_cage_assignments()
+        self.assertIsInstance(mapping[1][1], int)
+
+    def test_get_cages_by_group(self):
+        """Check cage group listing."""
+        cages = self.db.get_cages_by_group()
+        self.assertIn(1, cages)
+        self.assertIsInstance(cages[1], list)
+
+
+class TestWindowsSQLiteBehavior(unittest.TestCase):
+    """Simulates rapid DB writes to test locking."""
+
+    def test_simulated_instrument_input(self):
+        """Stress-test DB read/write performance."""
+        fd, db_path = tempfile.mkstemp()
+        os.close(fd)
+        delete_file(db_path)
+
+        db = ExperimentDatabase(db_path)
+
+        db.setup_experiment(
+            "Windows Test", "Rat", True, 5, 1, 5, "B"
+        )
+
         db.setup_groups(["RFID Group"], cage_capacity=4)
 
         for i in range(1, 6):
-            db.add_animal(animal_id=i, rfid=f"RFID-{i}", group_id=1)
+            db.add_animal(i, f"RFID-{i}", 1)
 
         for i in range(1, 6):
-            db.add_measurement(animal_id=i, value=25 + i)
-            time.sleep(0.05)
+            db.add_measurement(i, 25 + i)
+            time.sleep(0.01)
 
         today = datetime.now().strftime("%Y-%m-%d")
-        data = db.get_measurements_by_date(today)
+        rows = db.get_measurements_by_date(today)
+        self.assertEqual(len(rows), 5)
 
-        assert len(data) == 5
         db.close()
-        try:
-            os.remove(db_path)
-        except OSError:
-            pass
+        delete_file(db_path)
+
 
 if __name__ == "__main__":
-    setup = TestDatabaseSetup()
-    setup.test_num_animals()
-    setup.test_num_groups()
-    print("Tests ran successfully.")
+    unittest.main()

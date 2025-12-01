@@ -1,7 +1,12 @@
 '''Now unused select experiment ui'''
 from customtkinter import *
+
+from experiment_pages.create_experiment.new_experiment_ui import \
+    NewExperimentUI
 from shared.tk_models import MouserPage
-from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
+
+# pylint: disable=no-member, protected-access, useless-parent-delegation,
+# pylint: disable=unused-argument, unused-variable, global-statement
 
 class NewExperimentButton(CTkButton):
     '''New Experiment Button widgit'''

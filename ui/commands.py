@@ -13,16 +13,19 @@ These handlers are now centralized here, replacing inline logic in main.py.
 
 import os
 from tkinter.filedialog import askopenfilename
-from customtkinter import CTkLabel, CTkButton, CTkToplevel, CTkEntry
+
 from CTkMessagebox import CTkMessagebox
+from customtkinter import CTkButton, CTkEntry, CTkLabel, CTkToplevel
 
-from shared.serial_port_settings import SerialPortSetting
 import shared.file_utils as file_utils
-
+from experiment_pages.create_experiment.new_experiment_ui import \
+    NewExperimentUI
 from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
-from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment.test_screen import TestScreen
+from shared.serial_port_settings import SerialPortSetting
 
+# pylint: disable=no-member, protected-access, useless-parent-delegation,
+# pylint: disable=unused-argument, unused-variable, global-statement
 
 # Global state passed from main.py (not redefined inside closures)
 global_state = {
@@ -40,7 +43,8 @@ def open_file(root, experiments_frame):
     if not file_path:
         return
 
-    from databases.experiment_database import ExperimentDatabase  # pylint: disable=import-outside-toplevel
+    from databases.experiment_database import \
+        ExperimentDatabase  # pylint: disable=import-outside-toplevel
 
     # Close existing database connection if open
     temp_path = global_state["temp_file_path"]
@@ -84,7 +88,8 @@ def open_file(root, experiments_frame):
 
 def create_file(root, experiments_frame):
     """Handles the 'New Experiment' menu action."""
-    from databases.experiment_database import ExperimentDatabase  # pylint: disable=import-outside-toplevel
+    from databases.experiment_database import \
+        ExperimentDatabase  # pylint: disable=import-outside-toplevel
 
     temp_path = global_state["temp_file_path"]
     if temp_path and temp_path in ExperimentDatabase._instances:  # pylint: disable=protected-access

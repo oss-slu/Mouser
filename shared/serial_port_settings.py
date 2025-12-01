@@ -2,14 +2,17 @@
 # pylint: skip-file
 import csv
 import sys
-from pathlib import Path
-from os import listdir, getcwd
-from os.path import isfile, join
 from csv import *
-from customtkinter import *
+from os import getcwd, listdir
+from os.path import isfile, join
+from pathlib import Path
 from tkinter import messagebox
-from shared.tk_models import SettingPage
+
+from customtkinter import *
+
 from shared.serial_port_controller import *
+from shared.tk_models import SettingPage
+
 
 class SerialPortSetting(SettingPage):
     '''a class that implements methods and functions

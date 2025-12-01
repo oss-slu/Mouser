@@ -1,6 +1,7 @@
 '''Custom Flash Screen to show statuses to the user'''
 from customtkinter import *
 
+
 class FlashOverlay:
     '''A reusable flash overlay that can be used to show temporary full-screen messages'''
 

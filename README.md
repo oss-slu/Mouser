@@ -67,6 +67,34 @@ We welcome contributions from students, researchers, and developers who are pass
 3. Look for labels like “good first issue” or “help wanted”
 4. Fork the repo, make changes, and submit a Pull Request
 
+## 🖥️ MacOS Build Guide and Installation.
+
+## 📦 To execute the macOS, After Mouser is developed for **macOS**, it can be found in:
+Once Mouser has been built, it will be found in:
+
+Double-click Mouser to run.
+
+## macOS Gatekeeper
+The app is not signed, so macOS may block it with a message:
+
+> Mouser can't be opened since it is of anunknown developer.
+
+To allow it:
+1. Open System Settings and choose privacy and security.
+2. Get the message that Mouser was blocked.
+3. Click Allow Anyway
+4. Launch the application again and choose open.
+
+## Building MacOS application.
+
+There is a build script and a custom '.spec' file of PyInstaller.
+
+Set the virtual environment.
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt.
+pip install pyinstaller
 
 ## Running Executables (Windows & Linux)
 

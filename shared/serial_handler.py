@@ -1,7 +1,9 @@
 # pylint: skip-file
-import time
 import threading
-from shared.serial_listener import SerialReader  # Adjust this to your actual import path
+import time
+
+from shared.serial_listener import SerialReader
+
 
 class SerialDataHandler:
     '''Class to handle storing received data.'''
@@ -102,6 +104,16 @@ def main():
         data_handler.stop()
         data_thread.join()
         print("Serial reader stopped.")
+
+def close_port(self):
+    if self.serial and self.serial.is_open:
+        self.serial.close()
+
+def close_port(self):
+    if self.serial and self.serial.is_open:
+        self.serial.close()
+
+
 
 if __name__ == "__main__":
     main()
