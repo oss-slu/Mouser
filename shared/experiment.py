@@ -152,8 +152,6 @@ class Experiment():
 
         db = ExperimentDatabase(file)
 
-        
-
         # Setup experiment with measurement_type from data_collect_type
         db.setup_experiment(
             name=self.name,
