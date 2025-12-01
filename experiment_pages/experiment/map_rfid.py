@@ -115,8 +115,6 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.start_rfid = CTkButton(self, text="Start Scanning", compound=TOP,
                                          width=250, height=75, font=("Georgia", 65), command=self.rfid_listen)
         self.start_rfid.place(relx=0.45, rely=0.15, anchor=CENTER)
-        
-        
 
         self.table_frame = CTkFrame(self)
         self.table_frame.place(relx=0.15, rely=0.30, relheight=0.40, relwidth=0.80)

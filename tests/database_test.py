@@ -20,9 +20,6 @@ from databases.experiment_database import ExperimentDatabase  # noqa: E402
 from databases.database_controller import DatabaseController  # noqa: E402
 
 
-# ============================================================
-# Helper utilities
-# ============================================================
 def create_temp_file():
     """Create temp file for testing."""
     temp = tempfile.NamedTemporaryFile(delete=False)
@@ -40,10 +37,6 @@ def get_platform():
     """Return OS platform string."""
     return sys.platform
 
-
-# ============================================================
-# Tests
-# ============================================================
 
 class TestPlatform(unittest.TestCase):
     """Platform and DB file handling."""
@@ -141,21 +134,26 @@ class TestDatabaseSetup(unittest.TestCase):
             self.db.setup_groups(["Control", "Group 1", "Group 2", "Group 3"], 4)
 
     def tearDown(self):
+        '''Cleanup after test.'''
         self.db.close_connection()
         delete_file(self.dbfile)
 
     def test_num_animals(self):
+        '''Test retrieval of number of animals.'''
         self.assertEqual(self.db.get_number_animals(), 16)
 
     def test_num_groups(self):
+        '''Test retrieval of number of groups.'''
         if hasattr(self.db, "get_number_groups"):
             self.assertEqual(self.db.get_number_groups(), 4)
 
     def test_cage_max(self):
+        '''Test retrieval of maximum cage capacity.'''
         ctrl = DatabaseController(self.db.db_file)
         self.assertEqual(ctrl.get_cage_max(), 4)
 
     def test_get_all_groups(self):
+        '''Test retrieval of all group names.'''
         expected = ["Control", "Group 1", "Group 2", "Group 3"]
         if hasattr(self.db, "get_groups"):
             self.assertEqual(self.db.get_groups(), expected)
@@ -181,16 +179,20 @@ class TestAnimalRFIDMethods(unittest.TestCase):
             self.db.add_animal(i + 1, str(10 + i), 1)
 
     def tearDown(self):
+        '''Cleanup after test.'''
         self.db.close_connection()
         delete_file(self.dbfile)
 
     def test_get_animal_id(self):
+        '''Test retrieval of an animal's ID.'''
         self.assertEqual(self.db.get_animal_id("10"), 1)
 
     def test_get_animal_rfid(self):
+        '''Test retrieval of an animal's RFID.'''
         self.assertEqual(self.db.get_animal_rfid(1), "10")
 
     def test_get_animals_rfid(self):
+        '''Test retrieval of all animal RFIDs.'''
         self.assertEqual(self.db.get_all_animals_rfid(), ["10", "11", "12", "13"])
 
 
@@ -214,17 +216,21 @@ class TestCageFunctions(unittest.TestCase):
             self.db.add_animal(i + 1, str(10 + i), 1)
 
     def tearDown(self):
+        '''Cleanup after test.'''
         self.db.close_connection()
         delete_file(self.dbfile)
 
     def test_get_animals_in_cage(self):
+        '''Test retrieval of animals in a cage/group.'''
         self.assertEqual(self.db.get_animals_in_cage("Control"), [(1,), (2,)])
 
     def test_get_cage_assignments(self):
+        '''Test retrieval of cage assignments.'''
         mapping = self.db.get_cage_assignments()
         self.assertIsInstance(mapping[1][1], int)
 
     def test_get_cages_by_group(self):
+        '''Test retrieval of cages by group.'''
         cages = self.db.get_cages_by_group()
         self.assertTrue(1 in cages)
         self.assertIsInstance(cages[1], list)

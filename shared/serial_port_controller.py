@@ -279,7 +279,7 @@ class SerialPortController:
                 categories["unknown"].append((device, desc))
 
         return categories
-    
+
     def close_port(self):
         """Close the serial port safely."""
         if self.serial and self.serial.is_open:
@@ -289,4 +289,3 @@ class SerialPortController:
         """Write bytes to the serial port."""
         if self.serial and self.serial.is_open:
             self.serial.write(data)
-

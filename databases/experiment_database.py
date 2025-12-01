@@ -225,19 +225,6 @@ class ExperimentDatabase:
         self._c.execute("SELECT animal_id FROM animals WHERE group_id = ?", (group_id,))
         return self._c.fetchall()
 
-    def get_cage_assignments(self):
-        """Return mapping animal_id → (group_id, cage_number)."""
-        # Simplified placeholder logic: second value is cage number = group_id
-        self._c.execute("SELECT animal_id, group_id FROM animals")
-        rows = self._c.fetchall()
-        return {animal: (gid, gid) for (animal, gid) in rows}
-
-    def get_cages_by_group(self):
-        """Return mapping group_id → list of cage numbers."""
-        self._c.execute("SELECT group_id FROM groups")
-        ids = [row[0] for row in self._c.fetchall()]
-        return {gid: [gid] for gid in ids}
-
 
     def close_connection(self):
         """Close SQLite connection safely."""
@@ -711,13 +698,6 @@ class ExperimentDatabase:
         """Safely commit pending database changes."""
         self._conn.commit()
 
-    def add_animal(self, group_id, rfid, remarks="", active=1):
-        '''Adds a new animal to the database.'''
-        self._c.execute(
-            "INSERT INTO animals (group_id, rfid, remarks, active) VALUES (?, ?, ?, ?)",
-            (group_id, rfid, remarks, active)
-        )
-        self._conn.commit()
 
     def remove_animal(self, animal_id):
         '''Removes an animal from the database.'''
@@ -782,6 +762,7 @@ class ExperimentDatabase:
     def add_measurement(self, animal_id, value, date=None, measurement_id=1):
         """Test-compatible measurement insertion."""
         if date is None:
+            # pylint: disable=import-outside-toplevel
             from datetime import datetime
             date = datetime.now().strftime("%Y-%m-%d")
 

@@ -4,12 +4,10 @@ import sys
 from unittest.mock import MagicMock
 
 import pytest
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 import shared.serial_port_controller as spc
 from shared.serial_port_controller import SerialPortController
 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 @pytest.mark.skipif(not sys.platform.startswith("linux"), reason="Linux-only behavior")
 def test_linux_fallback_when_no_pyserial_results(monkeypatch):
