@@ -43,13 +43,15 @@ def create_nav_button(parent: CTkFrame, name: str, button_image: PhotoImage, fra
 class MouserPage(CTkFrame):
 
     '''Standard pageframe used throughout the program.'''
-    def __init__(self, parent: CTk, title: str, menu_page: CTkFrame = None):
-        super().__init__(parent)
-        self.root = parent
+    def __init__(self, root: CTk, title: str, menu_page: CTkFrame = None):
+        super().__init__(root)
+
+        self.root = root
         self.title = title
 
         self.canvas = CTkCanvas(self, width=600, height=600)
-        self.canvas.grid(row=0, column=0, columnspan= 4)
+        self.canvas.grid(row=0, column=0, columnspan=4)
+
         self.rectangle = self.canvas.create_rectangle(0, 0, 600, 50, fill='#0097A7')
         self.title_label = self.canvas.create_text(300, 13, anchor="n")
         self.canvas.itemconfig(self.title_label, text=title, font=("Arial", 18))
@@ -65,50 +67,6 @@ class MouserPage(CTkFrame):
             self.menu_button = MenuButton(self, menu_page)
 
         self.check_window_size()
-
-    def raise_frame(self):
-        '''Raises the page frame in the stacking order.'''
-        raise_frame(self)
-
-    def set_next_button(self, next_page):
-
-        '''Sets next_button to be a ChangePageButton that navigates to next_page.'''
-        if self.next_button:
-            self.next_button.destroy()
-        self.next_button = ChangePageButton(self, next_page, False)
-
-    def set_previous_button(self, previous_page):
-        '''Sets previous_button to be a ChangePageButton that navigates to previous_page.'''
-        if self.previous_button:
-            self.previous_button.destroy()
-        self.previous_button = ChangePageButton(self, previous_page, False)
-
-    def set_menu_button(self, menu_page):
-        '''Sets menu_button to be a ChangePageButton that navigates to menu_page.'''
-        if self.menu_button:
-            self.menu_button.destroy()
-        self.menu_button = MenuButton(self, menu_page)
-
-    def check_window_size(self):
-        '''Checks to see if the window size and page size match.If they don't, resizes the page to match'''
-        window = self.winfo_toplevel()
-        if window.winfo_height() != self.canvas.winfo_height():
-            self.resize_canvas_height(window.winfo_height())
-        if window.winfo_width() != self.canvas.winfo_width():
-            self.resize_canvas_width(window.winfo_width())
-
-        self.after(10, self.check_window_size)
-
-    def resize_canvas_height(self, root_height):
-        '''Resizes page height.'''
-        self.canvas.config(height=root_height)
-
-    def resize_canvas_width(self, root_width):
-        '''Resizes page width.'''
-        self.canvas.config(width=root_width)
-
-        self.canvas.coords(self.rectangle, 0, 0, root_width, 50)
-        self.canvas.coords(self.title_label, (root_width/2), 13)
 
 
 class ChangeableFrame(ABC, CTkFrame):

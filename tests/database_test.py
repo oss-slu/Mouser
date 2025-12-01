@@ -1,23 +1,30 @@
-"""Database and UI Unit Tests."""
+"""
+Database and UI Unit Tests.
+
+Validates:
+- SQLite experiment DB behavior
+- UI component structure
+- Cross-platform path behavior
+- RFID and cage/group logic
+"""
 
 import os
 import sys
 import time
-import sqlite3
 import unittest
 import tempfile
 from datetime import datetime
 
-# Ensure repository root first
+from customtkinter import CTk  
+from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI  
+from databases.experiment_database import ExperimentDatabase  
+from databases.database_controller import DatabaseController  
+
+
 sys.path.insert(
     0,
     os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 )
-
-from customtkinter import CTk  # noqa: E402
-from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI  # noqa: E402
-from databases.experiment_database import ExperimentDatabase  # noqa: E402
-from databases.database_controller import DatabaseController  # noqa: E402
 
 
 def create_temp_file():
@@ -54,25 +61,20 @@ class TestPlatform(unittest.TestCase):
         temp_db = create_temp_file()
         db = ExperimentDatabase(temp_db)
 
-        # Use positional args for DB signature compatibility
         db.setup_experiment(
             "Test", "Test Mouse", False, 16, 4, 4,
             "Weight", 1, ["Investigator"], "Weight"
         )
 
-        # db.setup_groups exists ONLY if DB provides it
         if hasattr(db, "setup_groups"):
             db.setup_groups(["Control", "Group 1", "Group 2", "Group 3"], 4)
 
         for i in range(4):
-            db.add_animal(
-                i + 1,
-                str(10 + i),
-                1 if i < 2 else 2
-            )
+            db.add_animal(i + 1, str(10 + i), 1 if i < 2 else 2)
 
         self.assertEqual(db.get_animal_rfid(1), "10")
         self.assertIn(get_platform(), ["win32", "darwin", "linux"])
+
         delete_file(temp_db)
 
 
@@ -84,9 +86,8 @@ class TestUIComponents(unittest.TestCase):
         self.ui = ExperimentMenuUI(self.root, "test_file.mouser")
 
     def tearDown(self):
-        db = getattr(self.ui, "data_page", None)
-        if db and hasattr(db, "database"):
-            db.database.close_connection()
+        if hasattr(self.ui, "data_page") and hasattr(self.ui.data_page, "database"):
+            self.ui.data_page.database.close_connection()
 
     def test_buttons_exist(self):
         """Check existence of core UI buttons."""
@@ -134,29 +135,27 @@ class TestDatabaseSetup(unittest.TestCase):
             self.db.setup_groups(["Control", "Group 1", "Group 2", "Group 3"], 4)
 
     def tearDown(self):
-        '''Cleanup after test.'''
+        """Cleanup after test."""
         self.db.close_connection()
         delete_file(self.dbfile)
 
     def test_num_animals(self):
-        '''Test retrieval of number of animals.'''
+        """Test retrieval of number of animals."""
         self.assertEqual(self.db.get_number_animals(), 16)
 
     def test_num_groups(self):
-        '''Test retrieval of number of groups.'''
-        if hasattr(self.db, "get_number_groups"):
-            self.assertEqual(self.db.get_number_groups(), 4)
+        """Test number of experiment groups."""
+        self.assertEqual(self.db.get_number_groups(), 4)
 
     def test_cage_max(self):
-        '''Test retrieval of maximum cage capacity.'''
+        """Test cage capacity lookup."""
         ctrl = DatabaseController(self.db.db_file)
         self.assertEqual(ctrl.get_cage_max(), 4)
 
     def test_get_all_groups(self):
-        '''Test retrieval of all group names.'''
+        """Test retrieval of group names."""
         expected = ["Control", "Group 1", "Group 2", "Group 3"]
-        if hasattr(self.db, "get_groups"):
-            self.assertEqual(self.db.get_groups(), expected)
+        self.assertEqual(self.db.get_groups(), expected)
 
 
 class TestAnimalRFIDMethods(unittest.TestCase):
@@ -172,27 +171,26 @@ class TestAnimalRFIDMethods(unittest.TestCase):
             "A", "test-123", ["Tester"], "Weight"
         )
 
-        if hasattr(self.db, "setup_groups"):
-            self.db.setup_groups(["Control", "Group 1"], 4)
+        self.db.setup_groups(["Control", "Group 1"], 4)
 
         for i in range(4):
             self.db.add_animal(i + 1, str(10 + i), 1)
 
     def tearDown(self):
-        '''Cleanup after test.'''
+        """Cleanup DB."""
         self.db.close_connection()
         delete_file(self.dbfile)
 
     def test_get_animal_id(self):
-        '''Test retrieval of an animal's ID.'''
+        """Animal lookup by RFID."""
         self.assertEqual(self.db.get_animal_id("10"), 1)
 
     def test_get_animal_rfid(self):
-        '''Test retrieval of an animal's RFID.'''
+        """RFID lookup by ID."""
         self.assertEqual(self.db.get_animal_rfid(1), "10")
 
     def test_get_animals_rfid(self):
-        '''Test retrieval of all animal RFIDs.'''
+        """List of all RFIDs."""
         self.assertEqual(self.db.get_all_animals_rfid(), ["10", "11", "12", "13"])
 
 
@@ -209,37 +207,37 @@ class TestCageFunctions(unittest.TestCase):
             "A", "test-123", ["Tester"], "Weight"
         )
 
-        if hasattr(self.db, "setup_groups"):
-            self.db.setup_groups(["Control", "Group 1"], cage_capacity=4)
+        self.db.setup_groups(["Control", "Group 1"], cage_capacity=4)
 
         for i in range(4):
             self.db.add_animal(i + 1, str(10 + i), 1)
 
     def tearDown(self):
-        '''Cleanup after test.'''
+        """Cleanup DB."""
         self.db.close_connection()
         delete_file(self.dbfile)
 
     def test_get_animals_in_cage(self):
-        '''Test retrieval of animals in a cage/group.'''
+        """Retrieve animals in a cage."""
         self.assertEqual(self.db.get_animals_in_cage("Control"), [(1,), (2,)])
 
     def test_get_cage_assignments(self):
-        '''Test retrieval of cage assignments.'''
+        """Check cage assignment mapping."""
         mapping = self.db.get_cage_assignments()
         self.assertIsInstance(mapping[1][1], int)
 
     def test_get_cages_by_group(self):
-        '''Test retrieval of cages by group.'''
+        """Check cage group listing."""
         cages = self.db.get_cages_by_group()
-        self.assertTrue(1 in cages)
+        self.assertIn(1, cages)
         self.assertIsInstance(cages[1], list)
 
 
 class TestWindowsSQLiteBehavior(unittest.TestCase):
-    """Stress test for SQLite locking behavior."""
+    """Simulates rapid DB writes to test locking."""
 
     def test_simulated_instrument_input(self):
+        """Stress-test DB read/write performance."""
         fd, db_path = tempfile.mkstemp()
         os.close(fd)
         delete_file(db_path)
@@ -250,21 +248,18 @@ class TestWindowsSQLiteBehavior(unittest.TestCase):
             "Windows Test", "Rat", True, 5, 1, 5, "B"
         )
 
-        if hasattr(db, "setup_groups"):
-            db.setup_groups(["RFID Group"], cage_capacity=4)
+        db.setup_groups(["RFID Group"], cage_capacity=4)
 
         for i in range(1, 6):
             db.add_animal(i, f"RFID-{i}", 1)
 
         for i in range(1, 6):
-            if hasattr(db, "add_measurement"):
-                db.add_measurement(i, 25 + i)
+            db.add_measurement(i, 25 + i)
             time.sleep(0.01)
 
         today = datetime.now().strftime("%Y-%m-%d")
-        if hasattr(db, "get_measurements_by_date"):
-            rows = db.get_measurements_by_date(today)
-            self.assertEqual(len(rows), 5)
+        rows = db.get_measurements_by_date(today)
+        self.assertEqual(len(rows), 5)
 
         db.close()
         delete_file(db_path)
