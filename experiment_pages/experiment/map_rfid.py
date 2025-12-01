@@ -10,32 +10,35 @@ import sqlite3
 from customtkinter import *
 from CTkMessagebox import CTkMessagebox
 from serial import serialutil
+from databases.experiment_database import ExperimentDatabase
+from shared.audio import AudioManager
 from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
 from shared.tk_models import *
 from shared.serial_port_controller import SerialPortController
 from shared.serial_handler import SerialDataHandler
-from databases.experiment_database import ExperimentDatabase
-from shared.audio import AudioManager
 
 import shared.file_utils as file_utils
 from shared.flash_overlay import FlashOverlay
 
 class RFIDHandler:
     '''Handles RFID reading and mapping.''' 
-    def __init__(self):
-        '''Initialize RFID handler.'''
-        # initialize serial port and flags
+    def __init__(self, parent):
         try:
-            self.serial_port_panel = None
-            self.serial_port_panel = SerialPortSelection(self.parent, 
-                SerialPortController(), self)
+            self.parent = parent
+            self.serial_port_panel = SerialPortSelection(
+                self.parent,
+                SerialPortController(),
+                self
+            )
             self.rfid_serial_port_controller = SerialPortController("reader")
             self.flag_listening = False
             self.thread = None
             self.content = None
+
         except sqlite3.Error as e:
             print(f"An exception occurred {e}")
             self.flag_listening = False
+
 
 
 
@@ -112,8 +115,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.start_rfid = CTkButton(self, text="Start Scanning", compound=TOP,
                                          width=250, height=75, font=("Georgia", 65), command=self.rfid_listen)
         self.start_rfid.place(relx=0.45, rely=0.15, anchor=CENTER)
-        if self.db.experiment_uses_rfid == 0:
-            self.start_rfid.configure(state="disabled")
+        
+        
 
         self.table_frame = CTkFrame(self)
         self.table_frame.place(relx=0.15, rely=0.30, relheight=0.40, relwidth=0.80)
@@ -184,6 +187,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.menu_button.configure(command = self.press_back_to_menu_button)
         self.scroll_to_latest_entry()
 
+
     def rfid_listen(self):
         """Starts RFID listener, ensuring the previous session is fully closed before restarting."""
 
@@ -251,7 +255,6 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                 print(f"Error in RFID listener: {e}")
             finally:
                 if hasattr(self, 'rfid_reader') and self.rfid_reader:
-                    self.rfid_reader.stop()
                     self.rfid_reader.close_port()
                     self.rfid_reader = None
                 print("🛑 RFID listener thread ended.")
@@ -417,7 +420,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             )
             self.stop_listening()
 
-    def item_selected(self, event=None):
+    def item_selected(self, event=None): # pylint: disable=unused-argument
         '''Handles item selection in the table.'''
         self.id = self.table.focus()
 
@@ -639,6 +642,11 @@ class SerialPortSelection():
 
         self.serial_simulator = SerialSimulator(self.parent)
 
+    def item_selected(self, event=None):  # pylint: disable=unused-argument
+        '''Handles item selection in the table.'''
+        self.id = self.table.focus()
+
+
     def open(self):
         '''Opens Serial Port Selection Dialog.'''
         self.root = CTkToplevel(self.parent)
@@ -802,10 +810,6 @@ class SerialSimulator():
         else:
             self.raise_warning()
 
-    def commit(self):
-        '''Commits changes to the database.'''
-        self.db.commit()
-
     def setup_ports(self):
         '''Sets up virtual ports.'''
         self.serial_controller.set_writer_port(self.written_port)
@@ -869,8 +873,8 @@ class SerialSimulator():
         message.title("WARNING")
         message.geometry('320x100')
         message.resizable(False, False)
-        root = CTk()
-        root.bind("<KeyPress>", dismiss_warning)
+        pop_root = CTk()
+        pop_root.bind("<KeyPress>", dismiss_warning)
 
 
         label = CTkLabel(message, text=warning_message)

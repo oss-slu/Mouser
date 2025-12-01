@@ -117,4 +117,3 @@ class ExperimentMenuUI(MouserPage):
         # pylint: disable=import-outside-toplevel
         from ui.welcome_screen import setup_welcome_screen
         setup_welcome_screen(self.root, self)
-

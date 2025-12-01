@@ -109,6 +109,11 @@ def close_port(self):
     if self.serial and self.serial.is_open:
         self.serial.close()
 
+def close_port(self):
+    if self.serial and self.serial.is_open:
+        self.serial.close()
+
+
 
 if __name__ == "__main__":
     main()
