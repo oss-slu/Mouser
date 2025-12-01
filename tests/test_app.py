@@ -1,7 +1,6 @@
 """Full test-suite runner and functional tests for core components."""
 
 import os
-import sqlite3
 import sys
 import tempfile
 from unittest import TestLoader, TestSuite, TextTestRunner
@@ -13,7 +12,6 @@ from databases.database_controller import DatabaseController
 from databases.experiment_database import ExperimentDatabase
 from shared.audio import AudioManager
 from shared.flash_overlay import FlashOverlay
-# First-party imports
 from shared.password_utils import PasswordManager
 from shared.tk_models import MouserPage
 
@@ -28,7 +26,7 @@ from tests.database_test import (  # pylint: disable=wrong-import-position
 
 
 def test_database_suite_execution():
-    """Ensure all database-related tests pass together."""
+    """Run full database test suite and assert success."""
     loader = TestLoader()
     suite = TestSuite()
     suite.addTests(loader.loadTestsFromTestCase(TestPlatform))
@@ -45,7 +43,7 @@ def test_database_suite_execution():
 
 
 def test_database_controller_quick(monkeypatch):  # pylint: disable=unused-argument
-    """Sanity test for DatabaseController using dummy db."""
+    """Validate DatabaseController with a minimal dummy mock DB."""
 
     class DummyDB:
         """Minimal mock database."""
@@ -98,10 +96,11 @@ def test_database_controller_quick(monkeypatch):  # pylint: disable=unused-argum
 
 
 def test_experiment_database_in_memory():
-    """Validate basic SQLite operations with in-memory DB."""
+    """Validate basic operations using an in-memory ExperimentDatabase."""
     experiment_db = ExperimentDatabase(":memory:")
 
-    experiment_db._conn.execute("""   -- pylint: disable=protected-access
+    # Create table
+    experiment_db._conn.execute("""  -- pylint: disable=protected-access
         CREATE TABLE experiments_db (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
@@ -109,6 +108,7 @@ def test_experiment_database_in_memory():
         );
     """)
 
+    # Insert test rows
     experiment_db._conn.executescript("""  -- pylint: disable=protected-access
         INSERT INTO experiments_db (name, weight)
         VALUES
@@ -118,7 +118,11 @@ def test_experiment_database_in_memory():
 
     experiment_db._conn.commit()  # pylint: disable=protected-access
 
-    rows = list(experiment_db._conn.execute("SELECT * FROM experiments_db;"))  # pylint: disable=protected-access
+    # Read back
+    rows = list(experiment_db._conn.execute(
+        "SELECT * FROM experiments_db;"
+    ))  # pylint: disable=protected-access
+
     assert len(rows) == 2
     assert rows[0][1] == "Mouse A"
     assert rows[1][2] == 30.5

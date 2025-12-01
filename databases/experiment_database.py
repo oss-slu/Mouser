@@ -771,8 +771,7 @@ class ExperimentDatabase:
                         WHERE name = ?''', (cage_name,))
         result = self._c.fetchone()
         return result[0] if result else None
-    
+
     def commit(self):
         """Safely commit pending database changes."""
         self._conn.commit()
-

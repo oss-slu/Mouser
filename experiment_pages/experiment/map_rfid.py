@@ -22,7 +22,9 @@ import shared.file_utils as file_utils
 from shared.flash_overlay import FlashOverlay
 
 class RFIDHandler:
+    '''Handles RFID reading and mapping.''' 
     def __init__(self):
+        '''Initialize RFID handler.'''
         # initialize serial port and flags
         try:
             self.serial_port_panel = SerialPortSelection(self.parent, 
@@ -38,14 +40,14 @@ class RFIDHandler:
 
 
     def start_listening(self):
-        # start hardware RFID scanning in a thread
+        '''Start hardware RFID scanning in a thread'''
         self.thread = threading.Thread(target=self.scan_rfid)
         if self.flag_listening is False:
             self.flag_listening = True
             self.thread.start()
 
     def stop_listening(self):
-        # stop thread and clean up resources
+        '''Stop thread and clean up resources'''
         if self.flag_listening is True:
             self.flag_listening = False
             self.thread.join()
@@ -53,7 +55,7 @@ class RFIDHandler:
 
 
     def scan_rfid(self):
-        # loop and read RFID data
+        '''Loop and read RFID data'''
         while self.flag_listening is True:
             self.content = self.rfid_serial_port_controller.read_data()
             if self.content:
@@ -67,7 +69,7 @@ class RFIDHandler:
             time.sleep(0.1)
 
 def simulate_rfid():
-    # generate fake RFID for testing
+    '''Generate fake RFID for testing'''
     process_id = os.getpid()
     random_id = get_random_rfid()
     print(random_id)
@@ -416,6 +418,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             self.stop_listening()
 
     def item_selected(self, event=None):
+        '''Handles item selection in the table.'''
         self.id = self.table.focus()
 
         selected = self.table.selection()

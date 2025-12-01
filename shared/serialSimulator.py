@@ -1,4 +1,4 @@
-'''Serial Simulation.'''
+'''Serial Simulatior.'''
 import shutil
 
 from customtkinter import CTk, CTkToplevel, CTkEntry, CTkButton  # explicit imports recommended
