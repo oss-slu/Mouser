@@ -9,6 +9,9 @@ from customtkinter import *
 
 CURRENT_FRAME: CTkFrame = None
 
+# pylint: disable=no-member, protected-access, useless-parent-delegation,
+# pylint: disable=unused-argument, unused-variable, global-statement
+
 def get_resource_path(relative_path):
     """
     Returns an absolute path to a resource (image, file, etc.).

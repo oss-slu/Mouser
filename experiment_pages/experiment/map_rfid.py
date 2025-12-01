@@ -20,6 +20,9 @@ from shared.serial_handler import SerialDataHandler
 import shared.file_utils as file_utils
 from shared.flash_overlay import FlashOverlay
 
+# pylint: disable=no-member, protected-access, useless-parent-delegation,
+# pylint: disable=unused-argument, unused-variable, global-statement
+
 class RFIDHandler:
     '''Handles RFID reading and mapping.''' 
     def __init__(self, parent):

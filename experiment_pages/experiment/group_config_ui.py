@@ -8,6 +8,8 @@ from shared.experiment import Experiment
 from shared.scrollable_frame import ScrolledFrame
 from shared.tk_models import ChangePageButton, MouserPage
 
+# pylint: disable=no-member, protected-access, useless-parent-delegation,
+# pylint: disable=unused-argument, unused-variable, global-statement
 
 class GroupConfigUI(MouserPage):
     """Group Configuration user interface (preserves all logic)."""

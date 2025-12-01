@@ -10,6 +10,8 @@ Modernized Data Analysis UI.
 from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkFont
 from shared.tk_models import MouserPage
 
+# pylint: disable=no-member, protected-access, useless-parent-delegation,
+# pylint: disable=unused-argument, unused-variable, global-statement
 
 class DataAnalysisUI(MouserPage):
     """Displays graphs, charts, and insights from collected experiment data."""

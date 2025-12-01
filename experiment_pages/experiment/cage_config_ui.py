@@ -13,6 +13,9 @@ from shared.file_utils import ERROR_SOUND, SUCCESS_SOUND, save_temp_to_file
 from shared.scrollable_frame import ScrolledFrame
 from shared.tk_models import MouserPage
 
+# pylint: disable=no-member, protected-access, useless-parent-delegation,
+# pylint: disable=unused-argument, unused-variable, global-statement
+
 class CageConfigUI(MouserPage):
     """
     The Frame that allows users to configure cages and move/sort animals.

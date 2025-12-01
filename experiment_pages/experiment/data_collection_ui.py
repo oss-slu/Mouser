@@ -16,6 +16,9 @@ from shared.flash_overlay import FlashOverlay
 from shared.serial_handler import SerialDataHandler
 from shared.tk_models import MouserPage
 
+# pylint: disable=no-member, protected-access, useless-parent-delegation,
+# pylint: disable=unused-argument, unused-variable, global-statement
+
 class DataCollectionUI(MouserPage):
     """Handles live or manual data collection for active experiments."""
 

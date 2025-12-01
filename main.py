@@ -26,6 +26,8 @@ from ui.welcome_screen import setup_welcome_screen
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 
+# pylint: disable=no-member, protected-access, useless-parent-delegation,
+# pylint: disable=unused-argument, unused-variable, global-statement
 
 def create_file():
     """Placeholder for the real create_file() implementation."""

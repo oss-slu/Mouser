@@ -5,6 +5,8 @@ from experiment_pages.create_experiment.new_experiment_ui import \
     NewExperimentUI
 from shared.tk_models import MouserPage
 
+# pylint: disable=no-member, protected-access, useless-parent-delegation,
+# pylint: disable=unused-argument, unused-variable, global-statement
 
 class NewExperimentButton(CTkButton):
     '''New Experiment Button widgit'''

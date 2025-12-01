@@ -24,6 +24,9 @@ from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from experiment_pages.experiment.test_screen import TestScreen
 from shared.serial_port_settings import SerialPortSetting
 
+# pylint: disable=no-member, protected-access, useless-parent-delegation,
+# pylint: disable=unused-argument, unused-variable, global-statement
+
 # Global state passed from main.py (not redefined inside closures)
 global_state = {
     "temp_file_path": None,

@@ -9,6 +9,8 @@ Modernized Experiment Menu UI.
 from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkFont
 from shared.tk_models import MouserPage
 
+# pylint: disable=no-member, protected-access, useless-parent-delegation,
+# pylint: disable=unused-argument, unused-variable, global-statement
 
 class ExperimentMenuUI(MouserPage):
     """Provides navigation options for the selected experiment."""
