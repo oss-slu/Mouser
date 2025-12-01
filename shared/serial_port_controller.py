@@ -32,6 +32,7 @@ class SerialPortController:
         self.flow_control = None
         self.writer_port = None
         self.reader_port = None
+        self.serial = None  
         self.comports_fn = comports_fn or serial.tools.list_ports.comports
 
         print(f"🔍 Initializing SerialPortController with setting type: {setting_type}")
@@ -281,11 +282,14 @@ class SerialPortController:
         return categories
 
     def close_port(self):
-        """Close the serial port safely."""
-        if self.serial and self.serial.is_open:
-            self.serial.close()
+        """Close any open serial ports."""
+        if hasattr(self, "writer_port") and self.writer_port and self.writer_port.is_open:
+            self.writer_port.close()
+        if hasattr(self, "reader_port") and self.reader_port and self.reader_port.is_open:
+            self.reader_port.close()
 
     def write_data(self, data: bytes):
-        """Write bytes to the serial port."""
-        if self.serial and self.serial.is_open:
-            self.serial.write(data)
+        """Write bytes to the **writer port**."""
+        if hasattr(self, "writer_port") and self.writer_port and self.writer_port.is_open:
+            self.writer_port.write(data)
+

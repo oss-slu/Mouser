@@ -312,3 +312,8 @@ class ChangeMeasurementsDialog:
         self.thread_running = False
         if self.root and self.root.winfo_exists():
             self.root.destroy()
+
+    def raise_frame(self):
+        """Compatibility override for pylint."""
+        super().raise_frame()
+

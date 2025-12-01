@@ -79,43 +79,51 @@ class TestPlatform(unittest.TestCase):
 
 
 class TestUIComponents(unittest.TestCase):
-    """UI structure tests."""
+    """UI structure tests for modern ExperimentMenuUI."""
 
-    def setUp(self):
+    def setUp(self):  # pylint: disable=invalid-name
         self.root = CTk()
         self.ui = ExperimentMenuUI(self.root, "test_file.mouser")
 
-    def tearDown(self):
-        if hasattr(self.ui, "data_page") and hasattr(self.ui.data_page, "database"):
-            self.ui.data_page.database.close_connection()
+    def tearDown(self):  # pylint: disable=invalid-name
+        self.root.destroy()
 
-    def test_buttons_exist(self):
-        """Check existence of core UI buttons."""
-        for name in [
-            "collection_button",
-            "analysis_button",
-            "group_button",
-            "rfid_button",
-            "summary_button",
-        ]:
-            self.assertTrue(hasattr(self.ui, name))
+    def test_menu_buttons_exist(self):
+        """Menu buttons should exist in modern ExperimentMenuUI."""
+        # Buttons in the NEW UI are inside the menu_card Frame.
+        # We simply assert that the widget exists by type.
+        buttons = [
+            "Group Configuration",
+            "Cage Configuration",
+            "Data Collection",
+            "Data Analysis",
+            "Back to Welcome Screen",
+        ]
 
-    def test_button_states(self):
-        """Check default state behavior."""
-        if hasattr(self.ui, "all_rfid_mapped") and not self.ui.all_rfid_mapped():
-            self.assertEqual(self.ui.collection_button.cget("state"), "disabled")
-            self.assertEqual(self.ui.analysis_button.cget("state"), "disabled")
+        found = [child for child in self.ui.winfo_children()]
 
-    def test_frame_navigation(self):
-        """Ensure major frames can raise without error."""
-        if hasattr(self.ui, "data_page"):
-            self.ui.data_page.raise_frame()
-        if hasattr(self.ui, "analysis_page"):
-            self.ui.analysis_page.raise_frame()
+        # Make sure at least one CTkButton with each label exists
+        labels = []
+        for widget in self.ui.winfo_children():
+            if hasattr(widget, "cget"):
+                try:
+                    labels.append(widget.cget("text"))
+                except Exception:
+                    pass
 
-    def test_new_experiment_ui_exists(self):
-        """New experiment UI object must exist."""
-        self.assertTrue(hasattr(self.ui, "new_experiment"))
+        for label in buttons:
+            self.assertIn(label, labels)
+
+    def test_can_open_pages(self):
+        """Ensure navigation methods create new pages without error."""
+        try:
+            self.ui.open_group_config()
+            self.ui.open_cage_config()
+            self.ui.open_data_collection()
+            self.ui.open_data_analysis()
+        except Exception as exc:  # noqa: BLE001
+            self.fail(f"Opening a page raised an exception: {exc}")
+
 
 
 class TestDatabaseSetup(unittest.TestCase):

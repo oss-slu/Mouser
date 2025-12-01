@@ -323,3 +323,8 @@ class CageConfigUI(MouserPage):
     def close_connection(self):
         """Closes DB connection."""
         self.db.close()
+
+    def raise_frame(self):
+        """Compatibility override for pylint."""
+        super().raise_frame()
+
