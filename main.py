@@ -16,16 +16,15 @@ import sys
 import shutil
 import tempfile
 
-# Ensure project root is on sys.path
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-
 from customtkinter import CTkButton
-
 from shared.tk_models import MouserPage, raise_frame
 from shared.serial_port_controller import SerialPortController
 from ui.root_window import create_root_window
 from ui.menu_bar import build_menu
 from ui.welcome_screen import setup_welcome_screen
+
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+
 
 
 def create_file():
