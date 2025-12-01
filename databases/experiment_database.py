@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 import sqlite3
 
 
@@ -11,7 +10,7 @@ class ExperimentDatabase:
     def __new__(cls, file=":memory:"):
         """Create or reuse the SQLite connection for a given database file."""
         if file not in cls._instances:
-            
+
             instance = super().__new__(cls)
 
             # Normalize path (except :memory:)
@@ -19,14 +18,14 @@ class ExperimentDatabase:
             instance.db_file = abs_path
             instance._conn = sqlite3.connect(abs_path, timeout=5.0, check_same_thread=False)
 
-           
+
             instance._c = instance._conn.cursor()
             instance._initialize_tables()
 
             cls._instances[file] = instance
         return cls._instances[file]
 
-        
+
     def _initialize_tables(self):
         """Create required tables only if they do not already exist."""
         try:
@@ -85,7 +84,7 @@ class ExperimentDatabase:
         except sqlite3.OperationalError:
             pass
 
-    
+
     def setup_experiment(self, *args, **kwargs):
         """
         Supports:
@@ -100,7 +99,7 @@ class ExperimentDatabase:
         if kwargs:
             return self._setup_experiment_new(**kwargs)
 
-    
+
         if len(args) == 10:
             return self._setup_experiment_new(*args)
 
@@ -175,21 +174,21 @@ class ExperimentDatabase:
         )
         self._conn.commit()
 
-    
+
     def get_number_groups(self):
         """Return the number of groups in the experiment."""
         self._c.execute("SELECT COUNT(*) FROM groups")
         result = self._c.fetchone()
         return result[0] if result else 0
 
-    
+
     def get_number_animals(self):
         """Return number of animals."""
         self._c.execute("SELECT COUNT(*) FROM animals")
         res = self._c.fetchone()
         return res[0] if res else 0
 
-            
+        
     def get_groups(self):
         """Return list of group names."""
         self._c.execute("SELECT name FROM groups")
@@ -207,7 +206,7 @@ class ExperimentDatabase:
         self._c.execute("SELECT rfid FROM animals")
         return [row[0] for row in self._c.fetchall()]
 
-   
+
     def get_animal_id(self, rfid):
         """Return animal ID for given RFID."""
         self._c.execute("SELECT animal_id FROM animals WHERE rfid = ?", (rfid,))
@@ -244,9 +243,7 @@ class ExperimentDatabase:
         try:
             self._conn.close()
         except Exception:
-            pass
-
-            
+            pass  
 
     def find_next_available_group(self):
         '''Finds the next available group with space in its cage.'''
@@ -312,16 +309,7 @@ class ExperimentDatabase:
             print("Total number of animals in Experiment: ",result[0])
             return result[0]
         return 0
-    def get_number_animals(self):
-        '''Returns the number of active animals in the database.'''
-        self._c.execute("SELECT COUNT(*) FROM animals WHERE active = 1")
-        result = self._c.fetchone()
-        return result[0] if result else 0
-    def get_animal_rfid(self, animal_id):
-        '''Returns the RFID for a given animal ID.'''
-        self._c.execute('SELECT rfid FROM animals WHERE animal_id = ?', (animal_id,))
-        result = self._c.fetchone()
-        return result[0] if result else None
+    
     def get_animal_id(self, rfid: str):
         '''Returns the animal ID for a given RFID.'''
         self._c.execute('SELECT animal_id FROM animals WHERE rfid = ?', (rfid,))
