@@ -81,10 +81,12 @@ def test_database_controller_quick(monkeypatch):  # pylint: disable=unused-argum
 
             @staticmethod
             def execute(_query):
+                '''Mock execute method.'''
                 return None
 
             @staticmethod
             def fetchone():
+                '''Mock fetchone method.'''
                 return (5,)
 
     mockdb = DummyDB()
@@ -107,7 +109,7 @@ def test_experiment_database_in_memory():
     experiment_db = ExperimentDatabase(":memory:")
 
     # Create table
-    experiment_db._conn.execute("""  -- pylint: disable=protected-access
+    experiment_db.execute("""  -- pylint: disable=protected-access
         CREATE TABLE experiments_db (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
@@ -116,14 +118,14 @@ def test_experiment_database_in_memory():
     """)
 
     # Insert test rows
-    experiment_db._conn.executescript("""  -- pylint: disable=protected-access
+    experiment_db.executescript("""  -- pylint: disable=protected-access
         INSERT INTO experiments_db (name, weight)
         VALUES
             ('Mouse A', 25.0),
             ('Mouse B', 30.5);
     """)
 
-    experiment_db._conn.commit()  # pylint: disable=protected-access
+    experiment_db.commit()  # pylint: disable=protected-access
 
     # Read back
     rows = list(experiment_db._conn.execute(

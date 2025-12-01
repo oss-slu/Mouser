@@ -1,3 +1,4 @@
+'''Experiment Database Module.'''
 import os
 import sqlite3
 
@@ -310,13 +311,6 @@ class ExperimentDatabase:
             return result[0]
         return 0
 
-    def get_animal_id(self, rfid: str):
-        '''Returns the animal ID for a given RFID.'''
-        self._c.execute('SELECT animal_id FROM animals WHERE rfid = ?', (rfid,))
-        result = self._c.fetchone()
-        print("Animal RFID:", rfid)
-        print("Animal ID:", result)
-        return result[0] if result else None
     def get_data_for_date(self, date):
         '''Gets all measurements for a specific date.'''
         try:
@@ -458,13 +452,13 @@ class ExperimentDatabase:
                 WHERE animal_id = ?
             ''', (new_id, group_id, old_id))
         self._conn.commit()
-    
+
     def get_measurement_type(self):
         '''Returns whether the measurement is automatic (1) or manual (0).'''
         self._c.execute("SELECT measurement_type FROM experiment")
         result = self._c.fetchone()
         return result[0] if result else 0  # Default to manual (0)
-    
+
     def get_all_animal_ids(self):
         '''Returns a list of all active animal IDs that have RFIDs mapped to them.'''
         self._c.execute('''
@@ -474,7 +468,7 @@ class ExperimentDatabase:
             AND active = 1
         ''')
         return [animal[0] for animal in self._c.fetchall()]
-    
+
     def get_all_animals(self):
         '''Returns a list of ALL animals ACTIVE OR NOT with RFIDs'''
         self._c.execute('''
@@ -483,7 +477,7 @@ class ExperimentDatabase:
             WHERE rfid IS NOT NULL
         ''')
         return [animal[0] for animal in self._c.fetchall()]
-    
+
     def export_to_single_formatted_csv(self, directory):
         """
         Exports the experiment data into a structured CSV:
@@ -535,6 +529,7 @@ class ExperimentDatabase:
     def export_to_csv(self, directory):
         '''Exports all relevant tables in the database to a folder 
         named after the experiment in the specified directory.'''
+        # pylint: disable=import-outside-toplevel
         import pandas as pd
         # Get the experiment name
         self._c.execute("SELECT name FROM experiment")
@@ -587,6 +582,8 @@ class ExperimentDatabase:
     def randomize_cages(self):
         '''Automatically and randomly sorts animals into cages
           within their groups, respecting cage capacity limits.'''
+        # pylint: disable=import-outside-toplevel
+
         import random
         try:
             # Get all groups and their cage capacities
