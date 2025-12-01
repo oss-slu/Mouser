@@ -15,13 +15,31 @@ class PasswordManager:
     """Minimal password manager shim for summary export."""
     @staticmethod
     def encrypt(text: str) -> str:
+        """Returns the input text unchanged"""
         return text
 
     @staticmethod
     def decrypt(text: str) -> str:
+        """Returns the input text unchanged"""
         return text
 
+    def __init__(self, password: str = ""):
+        """Store password for potential future real encryption."""
+        self.password = password
 
+    def decrypt_file(self, filepath: str) -> bytes:
+        """Reads and returns the decrypted content of an encrypted file.
+
+        Currently implemented as a no-op (returns file bytes unchanged).
+        """
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"Encrypted file not found: {filepath}")
+
+        with open(filepath, "rb") as f:
+            data = f.read()
+
+        # Placeholder: return unchanged
+        return data
 
 # pylint: disable=invalid-name
 class SummaryUI_Legacy(MouserPage):

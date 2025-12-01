@@ -5,6 +5,7 @@ import threading
 import time
 import traceback
 from datetime import date
+import sqlite3 as sql
 
 from customtkinter import *
 from CTkMessagebox import CTkMessagebox
@@ -148,7 +149,7 @@ class DataCollectionUI(MouserPage):
             try:
                 self.rfid_reader.stop()
                 self.rfid_reader.close()
-            except Exception:
+            except sql.Error:
                 pass
             self.rfid_reader = None
 
@@ -186,25 +187,31 @@ class DataCollectionUI(MouserPage):
                     if animal_id == self.table.item(child)["values"][0]:
                         self.table.item(child, values=(animal_id, new_value))
 
-            self.database._conn.commit()  # safe wrapper
+            self.database.commit()
             save_temp_to_file(self.database.db_file, self.current_file_path)
 
-        except Exception:
+        except sql.Error:
             print(traceback.format_exc())
             self.raise_warning("Failed to save measurement value.")
+
+    def commit(self):
+        """Commit any pending DB changes."""
+        self._conn.commit()
+
 
     def press_back_to_menu_button(self):
         """Return to the experiment menu UI."""
         self.stop_listening()
 
         from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+        # pylint: disable=import-outside-toplevel
 
         new_page = ExperimentMenuUI(
             self.parent,
             self.current_file_path,
-            self.menu_page,
-            self.current_file_path
+            self.menu_page
         )
+
         new_page.raise_frame()
 
 
