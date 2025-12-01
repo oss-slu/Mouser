@@ -5,7 +5,6 @@ import threading
 import time
 import traceback
 from datetime import date
-import sqlite3 as sql
 
 from customtkinter import *
 from CTkMessagebox import CTkMessagebox
@@ -194,17 +193,15 @@ class DataCollectionUI(MouserPage):
             print(traceback.format_exc())
             self.raise_warning("Failed to save measurement value.")
 
-    def commit(self):
-        """Commit any pending DB changes."""
-        self._conn.commit()
+    
 
 
     def press_back_to_menu_button(self):
         """Return to the experiment menu UI."""
         self.stop_listening()
 
-        from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
         # pylint: disable=import-outside-toplevel
+        from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 
         new_page = ExperimentMenuUI(
             self.parent,

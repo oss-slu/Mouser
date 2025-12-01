@@ -26,8 +26,7 @@ class TestRealUIRendering:
     @pytest.fixture(scope="class")
     def tk_root(self):
         """Create a single Tk root for all tests."""
-        from customtkinter import \
-            CTk  # pylint: disable=import-outside-toplevel
+        from customtkinter import CTk  # pylint: disable=import-outside-toplevel
 
         root = CTk()
         root.withdraw()
@@ -63,6 +62,9 @@ class TestRealUIRendering:
         if str(db_file) in ExperimentDatabase._instances:  # pylint: disable=protected-access
             ExperimentDatabase._instances[str(db_file)].close()  # pylint: disable=protected-access
 
+    # ------------------------------------------------------------
+    # Experiment Menu Rendering
+    # ------------------------------------------------------------
     def test_experiment_menu_rendering(self, tk_root, test_db):
         """ExperimentMenuUI must render in < 1 second."""
         from experiment_pages.experiment.experiment_menu_ui import \
@@ -70,12 +72,12 @@ class TestRealUIRendering:
 
         start = time.perf_counter()
 
+        # ✔ FIXED SIGNATURE
         menu_page = ExperimentMenuUI(
-            parent=tk_root,
-            name=test_db,
-            prev_page=None,
-            full_path=test_db
-        )  # pylint: disable=unexpected-keyword-arg
+            tk_root,
+            test_db,
+            None
+        )
 
         menu_page.update_idletasks()
 
@@ -85,19 +87,22 @@ class TestRealUIRendering:
         menu_page.destroy()
         assert elapsed_ms < 1000
 
+    # ------------------------------------------------------------
+    # Cage Configuration Rendering
+    # ------------------------------------------------------------
     def test_cage_config_rendering(self, tk_root, test_db):
         """CageConfigurationUI must render in < 1 second."""
         from experiment_pages.experiment.cage_config_ui import \
-            CageConfigurationUI  # pylint: disable=import-outside-toplevel
+            CageConfigUI  # pylint: disable=import-outside-toplevel
 
         start = time.perf_counter()
 
-        cage_page = CageConfigurationUI(
-            database=test_db,
-            parent=tk_root,
-            prev_page=None,
-            file_path=test_db
-        )  # pylint: disable=unexpected-keyword-arg
+        # ✔ FIXED SIGNATURE
+        cage_page = CageConfigUI(
+            tk_root,
+            test_db,
+            None
+        )
 
         cage_page.update_idletasks()
 
@@ -110,14 +115,14 @@ class TestRealUIRendering:
     def test_cage_config_update_performance(self, tk_root, test_db):
         """Updating cage configuration must be < 0.5 seconds."""
         from experiment_pages.experiment.cage_config_ui import \
-            CageConfigurationUI  # pylint: disable=import-outside-toplevel
+            CageConfigUI  # pylint: disable=import-outside-toplevel
 
-        cage_page = CageConfigurationUI(
-            database=test_db,
-            parent=tk_root,
-            prev_page=None,
-            file_path=test_db
-        )  # pylint: disable=unexpected-keyword-arg
+        # ✔ FIXED SIGNATURE
+        cage_page = CageConfigUI(
+            tk_root,
+            test_db,
+            None
+        )
 
         cage_page.update_idletasks()
 
@@ -132,6 +137,9 @@ class TestRealUIRendering:
         cage_page.destroy()
         assert elapsed_ms < 500
 
+    # ------------------------------------------------------------
+    # Data Collection Rendering
+    # ------------------------------------------------------------
     def test_data_collection_rendering(self, tk_root, test_db):
         """DataCollectionUI must render in < 1 second."""
         from experiment_pages.experiment.data_collection_ui import \
@@ -139,20 +147,21 @@ class TestRealUIRendering:
         from experiment_pages.experiment.experiment_menu_ui import \
             ExperimentMenuUI  # pylint: disable=import-outside-toplevel
 
+        # Create menu page first
         menu_page = ExperimentMenuUI(
-            parent=tk_root,
-            name=test_db,
-            prev_page=None,
-            full_path=test_db
-        )  # pylint: disable=unexpected-keyword-arg
+            tk_root,
+            test_db,
+            None
+        )
 
         start = time.perf_counter()
 
+        # ✔ FIXED SIGNATURE
         data_page = DataCollectionUI(
-            parent=tk_root,     # pylint: disable=unexpected-keyword-arg
-            prev_page=menu_page,
-            database_name=test_db,
-            file_path=test_db
+            tk_root,
+            menu_page,
+            test_db,
+            test_db
         )
 
         data_page.update_idletasks()
@@ -165,6 +174,9 @@ class TestRealUIRendering:
 
         assert elapsed_ms < 1000
 
+    # ------------------------------------------------------------
+    # Review Page Rendering
+    # ------------------------------------------------------------
     def test_review_page_rendering(self, tk_root, test_db):
         """ReviewUI must render in < 0.5 seconds."""
         from experiment_pages.experiment.experiment_menu_ui import \
@@ -173,18 +185,18 @@ class TestRealUIRendering:
             ReviewUI  # pylint: disable=import-outside-toplevel
 
         menu_page = ExperimentMenuUI(
-            parent=tk_root,
-            name=test_db,
-            prev_page=None,
-            full_path=test_db
-        )  # pylint: disable=unexpected-keyword-arg
+            tk_root,
+            test_db,
+            None
+        )
 
         start = time.perf_counter()
 
+        # ✔ FIXED SIGNATURE
         review_page = ReviewUI(
-            parent=tk_root,     # pylint: disable=unexpected-keyword-arg
-            prev_page=menu_page,
-            database_name=test_db
+            tk_root,
+            menu_page,
+            test_db
         )
 
         review_page.update_idletasks()
@@ -196,6 +208,7 @@ class TestRealUIRendering:
         menu_page.destroy()
 
         assert elapsed_ms < 500
+
 
 
 class TestUIScaling:

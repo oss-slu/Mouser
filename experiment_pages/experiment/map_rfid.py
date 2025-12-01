@@ -9,7 +9,6 @@ import webbrowser
 import sqlite3
 from customtkinter import *
 from CTkMessagebox import CTkMessagebox
-from playsound import playsound
 from serial import serialutil
 from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
 from shared.tk_models import *
@@ -26,6 +25,8 @@ class RFIDHandler:
     def __init__(self):
         # initialize serial port and flags
         try:
+            self.serial_port_panel = SerialPortSelection(self.parent, 
+                SerialPortController(), self)
             self.rfid_serial_port_controller = SerialPortController("reader")
             self.flag_listening = False
             self.thread = None
@@ -48,7 +49,7 @@ class RFIDHandler:
         if self.flag_listening is True:
             self.flag_listening = False
             self.thread.join()
-            self.rfid_serial_port_controller.close()
+            self.rfid_serial_port_controller.close_port()
 
 
     def scan_rfid(self):
@@ -146,14 +147,14 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.table.bind("<Button-3>", self.right_click_menu)
 
         self.delete_button = CTkButton(self, text="Remove Selection(s)", compound=TOP,
-                                       width=250, height=75, font=("Georgia", 65), 
+                                       width=250, height=75, font=("Georgia", 65),
                                        command=self.remove_selected_items,
                                        state="normal")  # Initialize button as disabled
         self.delete_button.place(relx=0.45, rely=0.80, anchor=CENTER)
 
         # Add Sacrifice button with normal state
         self.sacrifice_button = CTkButton(self, text="Sacrifice Selected", compound=TOP,
-                                      width=250, height=75, font=("Georgia", 65), 
+                                      width=250, height=75, font=("Georgia", 65),
                                       command=self.sacrifice_selected_items,
                                       state="normal")  # Initialize as enabled
         self.sacrifice_button.place(relx=0.80, rely=0.80, anchor=CENTER)
@@ -249,7 +250,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             finally:
                 if hasattr(self, 'rfid_reader') and self.rfid_reader:
                     self.rfid_reader.stop()
-                    self.rfid_reader.close()
+                    self.rfid_reader.close_port()
                     self.rfid_reader = None
                 print("🛑 RFID listener thread ended.")
 
@@ -341,7 +342,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         # Add to database
         self.db.add_animal(animal_id, rfid, group_id, '')
-        self.db._conn.commit()
+        self.db.commit()
 
         # Add to UI table
         self.table.insert('', END, values=(animal_id, rfid), tags='text_font')
@@ -370,7 +371,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         # Add to database
         self.db.add_animal(animal_id, rfid, group_id, '')
-        self.db._conn.commit()
+        self.db.commit()
 
         # Add to UI table
         self.table.insert('', END, values=(animal_id, rfid), tags='text_font')
@@ -414,7 +415,9 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             )
             self.stop_listening()
 
-    def item_selected(self, _):
+    def item_selected(self, event=None):
+        self.id = self.table.focus()
+
         selected = self.table.selection()
         print("Selection ", selected, " changed.")
 
@@ -544,7 +547,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                 self.save()
 
                 # Close the database connection
-                self.db.close()  # This will now handle the singleton cleanup
+                self.db.close_port()  # This will now handle the singleton cleanup
 
                 self.stop_listening()
 
@@ -552,7 +555,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                 from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 
                 # Create new ExperimentMenuUI instance with the same file
-                new_page = ExperimentMenuUI(self.parent, self.file_path, self.menu_page, self.file_path)
+                new_page = ExperimentMenuUI(self.parent, self.file_path, self.menu_page)
                 new_page.raise_frame()
 
             except Exception as e:
@@ -573,7 +576,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             current_file = self.db.db_file
 
             # Ensure all changes are committed
-            self.db._conn.commit()
+            self.db.commit()
             print("Changes committed")
 
             # Save back to original file location
@@ -755,10 +758,14 @@ class SerialSimulator():
         if self.written_port is not None:
             print(self.written_port)
             message = self.input_entry.get()
-            self.serial_controller.write_to(message)
+            self.serial_controller.write_data(message)
             self.read_and_display()
         else:
             self.raise_warning()
+
+    def commit(self):
+        '''Commits changes to the database.'''
+        self.db.commit()
 
     def setup_ports(self):
         '''Sets up virtual ports.'''
@@ -782,7 +789,7 @@ class SerialSimulator():
             )
 
         else:
-            message = self.serial_controller.read_info()
+            message = self.serial_controller.read_data()
             self.read_message.insert(END,message)
 
     def check_written_port(self):
@@ -807,7 +814,7 @@ class SerialSimulator():
 
     def on_closing(self):
         '''Closes all ports and closes the window.'''
-        self.serial_controller.close_all_port()
+        self.serial_controller.close_all_ports()
         self.written_port = None
         self.root.destroy()
 

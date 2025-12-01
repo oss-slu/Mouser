@@ -13,24 +13,20 @@ from shared.file_utils import ERROR_SOUND, SUCCESS_SOUND, save_temp_to_file
 from shared.scrollable_frame import ScrolledFrame
 from shared.tk_models import MouserPage
 
-
-class CageConfigurationUI(MouserPage):
+class CageConfigUI(MouserPage):
     """
     The Frame that allows users to configure cages and move/sort animals.
     """
 
-    def __init__(
-        self,
-        database,
-        parent: CTk,
-        prev_page: CTkFrame = None,
-        file_path: str = ""
-    ):
-        super().__init__(parent, "Group Configuration", prev_page)
+    def __init__(self, root: CTk, file_path: str, menu_page: CTkFrame):
+        super().__init__(root, "Cage Configuration", menu_page)
 
-        self.prev_page = prev_page
-        self.db = DatabaseController(database)
+        self.root = root
         self.file_path = file_path
+        self.menu_page = menu_page
+
+        # Load database from file path
+        self.db = DatabaseController(file_path)
 
         self.pad_x = 10
         self.pad_y = 10
@@ -80,6 +76,7 @@ class CageConfigurationUI(MouserPage):
         self.selected_cage = None
 
         self.update_config_frame()
+
 
     def update_config_frame(self):
         """Refreshes the configuration frame."""
