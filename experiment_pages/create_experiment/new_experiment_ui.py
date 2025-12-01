@@ -310,11 +310,11 @@ class NewExperimentUI(MouserPage):
     def _go_next(self):
         '''Navigate to the next configuration screen.'''
         try:
-            page = GroupConfigUI(self.input, self.root, self, self.menu_page)
+            page = GroupConfigUI(self.root, self.file_path, self.menu_page)
             page.raise_frame()
         except TypeError:
             try:
-                page = GroupConfigUI(self.root, None, self)
+                page = GroupConfigUI(self.root, self.temp_file_path, self)
                 page.raise_frame()
             except Exception as e:  # pylint: disable=broad-exception-caught
                 print("Navigation error:", e)

@@ -118,6 +118,3 @@ class ExperimentMenuUI(MouserPage):
         from ui.welcome_screen import setup_welcome_screen
         setup_welcome_screen(self.root, self)
 
-    def commit(self):
-        """Commit any changes to the experiment database."""
-        self._conn.commit()

@@ -26,6 +26,7 @@ class RFIDHandler:
         '''Initialize RFID handler.'''
         # initialize serial port and flags
         try:
+            self.serial_port_panel = None
             self.serial_port_panel = SerialPortSelection(self.parent, 
                 SerialPortController(), self)
             self.rfid_serial_port_controller = SerialPortController("reader")

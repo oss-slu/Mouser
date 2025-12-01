@@ -710,3 +710,22 @@ class ExperimentDatabase:
     def commit(self):
         """Safely commit pending database changes."""
         self._conn.commit()
+
+    def add_animal(self, group_id, rfid, remarks="", active=1):
+        self._c.execute(
+            "INSERT INTO animals (group_id, rfid, remarks, active) VALUES (?, ?, ?, ?)",
+            (group_id, rfid, remarks, active)
+        )
+        self._conn.commit()
+
+    def remove_animal(self, animal_id):
+        self._c.execute(
+            "DELETE FROM animals WHERE animal_id = ?",
+            (animal_id,)
+        )
+        self._conn.commit()
+
+    def close_port(self):
+        """Legacy fallback so RFID page does not break."""
+        self.close()
+
