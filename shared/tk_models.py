@@ -3,7 +3,7 @@ import os
 import sys
 from tkinter import PhotoImage
 from abc import ABC, abstractmethod
-from tkinter import PhotoImage
+import sqlite3
 
 from customtkinter import *
 
@@ -18,7 +18,7 @@ def get_resource_path(relative_path):
         # When bundled with PyInstaller this attribute points to the
         # unpacked temp folder (e.g. _MEIxxxxx). Use it when available.
         base_path = sys._MEIPASS
-    except Exception:
+    except sqlite3.Error:
         # Fallback to the working directory when running normally.
         base_path = os.path.abspath(".")
 

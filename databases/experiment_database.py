@@ -644,7 +644,7 @@ class ExperimentDatabase:
         except sqlite3.Error as e:
             print(f"Error retrieving measurement value: {e}")
             return None
-     def randomize_cages(self):
+    def randomize_cages(self):
         '''Automatically and randomly sorts animals into cages
           within their groups, respecting cage capacity limits.'''
         import random

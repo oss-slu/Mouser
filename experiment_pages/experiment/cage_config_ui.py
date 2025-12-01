@@ -24,6 +24,8 @@ class CageConfigUI(MouserPage):
         self.root = root
         self.file_path = file_path
         self.menu_page = menu_page
+        self.prev_page = menu_page
+
 
         # Load database from file path
         self.db = DatabaseController(file_path)
@@ -137,9 +139,6 @@ class CageConfigUI(MouserPage):
 
             cage_frame.pack(side=LEFT, expand=TRUE, fill=BOTH, anchor="center")
 
-    # ----------------------------------------------------------------------
-    # Selection Handling
-    # ----------------------------------------------------------------------
 
     def select_cage(self, cage_name):
         """Handles cage selection."""
@@ -183,9 +182,6 @@ class CageConfigUI(MouserPage):
         else:
             self.cage_input.delete(0, END)
 
-    # ----------------------------------------------------------------------
-    # Actions
-    # ----------------------------------------------------------------------
 
     def randomize(self):
         """Randomizes cages."""
@@ -280,9 +276,6 @@ class CageConfigUI(MouserPage):
         self.save()
         AudioManager.play(SUCCESS_SOUND)
 
-    # ----------------------------------------------------------------------
-    # UI Helpers
-    # ----------------------------------------------------------------------
 
     def raise_warning(self, message):
         """Displays a warning dialog."""
@@ -303,9 +296,6 @@ class CageConfigUI(MouserPage):
         AudioManager.play(ERROR_SOUND)
         message_window.mainloop()
 
-    # ----------------------------------------------------------------------
-    # DB Save Operations
-    # ----------------------------------------------------------------------
 
     def save_to_database(self):
         """Saves updates to database."""

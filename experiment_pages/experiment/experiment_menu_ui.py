@@ -121,4 +121,3 @@ class ExperimentMenuUI(MouserPage):
     def commit(self):
         """Commit any changes to the experiment database."""
         self._conn.commit()
-

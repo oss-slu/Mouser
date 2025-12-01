@@ -152,9 +152,8 @@ class Experiment():
 
         db = ExperimentDatabase(file)
 
-        # Convert measurement types to strings if they're tuples
-        measurement_type=self.data_collect_type,
         
+
         # Setup experiment with measurement_type from data_collect_type
         db.setup_experiment(
             name=self.name,

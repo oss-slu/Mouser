@@ -14,7 +14,6 @@ from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
 from shared.tk_models import *
 from shared.serial_port_controller import SerialPortController
 from shared.serial_handler import SerialDataHandler
-
 from databases.experiment_database import ExperimentDatabase
 from shared.audio import AudioManager
 
@@ -63,7 +62,7 @@ class RFIDHandler:
             else:
                 try:
                     print(self.content)
-                except Exception as e:
+                except sqlite3.Error as e:
                     print(f"An exception occurred: {e}")
 
             time.sleep(0.1)
@@ -247,7 +246,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                         self.animal_rfid_list.append(clean_rfid)
                         AudioManager.play(SUCCESS_SOUND)
 
-            except Exception as e:
+            except sqlite3.Error as e:
                 print(f"Error in RFID listener: {e}")
             finally:
                 if hasattr(self, 'rfid_reader') and self.rfid_reader:
@@ -276,7 +275,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                 print("🔌 Closing serial connection...")
                 self.rfid_reader.stop()
                 self.rfid_reader = None
-            except Exception as e:
+            except sqlite3.Error as e:
                 self.raise_warning("Failed to close the serial port properly.")
                 print(f"⚠️ Error closing serial port: {e}")
 
@@ -555,13 +554,14 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                 self.stop_listening()
 
                 # Local import to avoid circular dependency
+                # pylint: disable=import-outside-toplevel
                 from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 
                 # Create new ExperimentMenuUI instance with the same file
                 new_page = ExperimentMenuUI(self.parent, self.file_path, self.menu_page)
                 new_page.raise_frame()
 
-            except Exception as e:
+            except sqlite3.Error as e:
                 self.raise_warning("An error occurred while saving or cleaning up.")
                 print(f"Error during save and cleanup: {e}")
 
@@ -587,9 +587,10 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             file_utils.save_temp_to_file(current_file, self.file_path)
             print("Save successful!")
 
-        except Exception as e:
+        except sqlite3.Error as e:
             self.raise_warning("An error occurred while saving or cleaning up.")
             print(f"Error during save and cleanup: {e}")
+            # pylint: disable=import-outside-toplevel
             import traceback
             print(f"Full traceback: {traceback.format_exc()}")
 
@@ -695,21 +696,55 @@ class SerialPortSelection():
             port_info = item_details.get("values")
             virtual_ports = self.port_controller.get_virtual_port()
 
+            selected_port = port_info[0]
+            if selected_port not in virtual_ports:
+                CTkMessagebox(
+                    title="Warning",
+                    message="Please select a virtual port pair before proceeding.",
+                    icon="warning"
+                )
+                return
+
+            if len(virtual_ports) < 2:
+                CTkMessagebox(
+                    title="Warning",
+                    message="Both virtual ports are required to continue.",
+                    icon="warning"
+                )
+                return
+
+            # pick the paired virtual port
+            other_port = next((port for port in virtual_ports if port != selected_port), None)
+            if other_port is None:
+                CTkMessagebox(
+                    title="Warning",
+                    message="Unable to find the paired virtual port.",
+                    icon="warning"
+                )
+                return
+
+            selection = CTkMessagebox(
+                title="Select Role",
+                message=f"Assign {selected_port} as reader or writer?",
+                option_1="Reader",
+                option_2="Writer"
+            ).get()
+
+            if selection == "Reader":
+                reader_port, writer_port = selected_port, other_port
+            elif selection == "Writer":
+                reader_port, writer_port = other_port, selected_port
+            else:
+                return
+
             if self.port_controller.set_reader_port is not None:
                 self.port_controller.close_reader_port()
                 self.port_controller.close_writer_port()
 
-            self.port_controller.set_reader_port(port_info[0])
-            description = port_info[1].split(" ")
-
-            if "com0com" in description:
-                virtual_ports.remove(port_info[0])
-                self.port_controller.set_writer_port(virtual_ports[0])
+            self.port_controller.set_reader_port(reader_port)
+            self.port_controller.set_writer_port(writer_port)
 
             self.root.destroy()
-            # todo: allow user to choose a virtual port as reader_port and the other
-            # virtual port as writer port, when user selects any other ports that's not
-            # virtual, raise warning
 
     def open_simulator(self):
         '''Opens serial simuplator dialog.'''

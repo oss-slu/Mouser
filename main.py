@@ -19,10 +19,8 @@ import tempfile
 # Ensure project root is on sys.path
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-# Third-party
 from customtkinter import CTkButton
 
-# First-party
 from shared.tk_models import MouserPage, raise_frame
 from shared.serial_port_controller import SerialPortController
 from ui.root_window import create_root_window
@@ -125,6 +123,90 @@ root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)
 main_frame.grid_rowconfigure(1, weight=1)
 main_frame.grid_columnconfigure(0, weight=1)
+
+def setup_welcome_screen(root, create_file_callback, open_file_callback):
+    """Builds a responsive welcome screen and returns all required UI elements."""
+
+    # --- FRAME SETUP ---
+    welcome_frame = CTkFrame(root, fg_color="#f5f6fa")
+    welcome_frame.grid(row=0, column=0, sticky="nsew")
+
+    welcome_frame.grid_rowconfigure(0, weight=1, minsize=150)
+    welcome_frame.grid_rowconfigure(1, weight=2, minsize=300)
+    welcome_frame.grid_rowconfigure(2, weight=1, minsize=80)
+    welcome_frame.grid_columnconfigure(0, weight=1)
+
+    # --- LOGO ---
+    logo_path = get_resource_path("shared/images/MouseLogo.png")
+    logo_image = CTkImage(Image.open(logo_path), size=(500, 150))
+
+    logo_label = CTkLabel(
+        welcome_frame,
+        image=logo_image,
+        text="",
+        fg_color="transparent"
+    )
+    logo_label.grid(row=0, column=0, pady=(40, 10), sticky="n")
+
+    # --- CARD ---
+    card = CTkFrame(
+        welcome_frame,
+        fg_color="white",
+        corner_radius=25,
+        border_width=1,
+        border_color="#d1d5db"
+    )
+    card.grid(row=1, column=0, padx=60, pady=20, sticky="nsew")
+    card.grid_rowconfigure((0, 1, 2), weight=1)
+    card.grid_columnconfigure(0, weight=1)
+
+    # --- BUTTON STYLE ---
+    button_style = {
+        "corner_radius": 20,
+        "font": ("Segoe UI Semibold", 26),
+        "text_color": "white",
+        "fg_color": "#2563eb",
+        "hover_color": "#1e40af",
+        "height": 300
+    }
+
+    # MAIN MENU BUTTONS
+    new_file_button = CTkButton(
+        card,
+        text="New Experiment",
+        command=lambda: create_file_callback(root, welcome_frame),
+        **button_style
+    )
+    new_file_button.grid(row=0, column=0, padx=80, pady=15, sticky="nsew")
+
+    open_file_button = CTkButton(
+        card,
+        text="Open Experiment",
+        command=lambda: open_file_callback(root, welcome_frame),
+        **button_style
+    )
+    open_file_button.grid(row=1, column=0, padx=80, pady=15, sticky="nsew")
+
+    test_button = CTkButton(
+        card,
+        text="Test Serials",
+        command=lambda: open_test(root),
+        **button_style
+    )
+    test_button.grid(row=2, column=0, padx=80, pady=15, sticky="nsew")
+
+    # Provide dimensions expected by main.py
+    main_menu_button_width = 500
+    main_menu_button_height = 300
+
+    return (
+        welcome_frame,
+        welcome_frame,  # experiments_frame placeholder
+        new_file_button,
+        main_menu_button_width,
+        main_menu_button_height
+    )
+
 
 # Main loop
 root.mainloop()

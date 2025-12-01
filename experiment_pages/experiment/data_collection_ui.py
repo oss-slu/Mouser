@@ -193,9 +193,6 @@ class DataCollectionUI(MouserPage):
             print(traceback.format_exc())
             self.raise_warning("Failed to save measurement value.")
 
-    
-
-
     def press_back_to_menu_button(self):
         """Return to the experiment menu UI."""
         self.stop_listening()
