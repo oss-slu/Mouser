@@ -49,24 +49,31 @@ def test_database_controller_quick(monkeypatch):  # pylint: disable=unused-argum
         """Minimal mock database."""
 
         def get_measurement_items(self):
+            '''Return a list of measurement items.'''
             return ["weight"]
 
         def get_cages_by_group(self):
+            '''Return a dict of cages by group.'''
             return {"1": [1]}
 
         def get_cage_assignments(self):
+            '''Return a dict of cage assignments.'''
             return {"101": (1,)}
 
         def get_animals(self):
+            '''Return a list of animals.'''
             return [("101",)]
 
         def get_measurements_by_date(self, _):
+            '''Return a list of measurements by date.'''
             return [("101", "2025", "weight", 10.0)]
 
         def get_groups(self):
+            """Return a list of group names."""
             return ["A"]
 
         def update_animal_cage(self, _a, _b):
+            '''Update an animal's cage assignment.'''
             return None
 
         class _conn:  # pylint: disable=too-few-public-methods

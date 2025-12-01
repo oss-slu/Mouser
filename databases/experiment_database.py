@@ -3,146 +3,240 @@ import sqlite3
 import os
 from datetime import datetime
 
+
 class ExperimentDatabase:
-    '''SQLite Database Object for Experiments.'''
-    _instances = {}  # Dictionary to store instances by file path
+    '''SQLite Database Object for Experiments (singleton per DB file).'''
 
-
-    def get_number_groups(self):
-        '''Returns the number of groups in the experiment.'''
-        self._c.execute("SELECT COUNT(*) FROM groups")
-        result = self._c.fetchone()
-        return result[0] if result else 0
-
+    _instances = {}  # Keep one instance per DB file path
 
     def __new__(cls, file=":memory:"):
-        '''Builds Database connections if singleton does not exist for this file'''
+        """Create or reuse the SQLite connection for a given database file."""
         if file not in cls._instances:
-            instance = super(ExperimentDatabase, cls).__new__(cls)
-            # Absolute path prevents file locking issues caused by relative path resolution differences
-            # check_same_thread=False allows access from multiple Tkinter callbacks
-            # timeout=5.0 allows retry if DB is briefly locked by another thread
-            if file == ":memory:":
-                abs_path = file
-            else:
-                abs_path = os.path.abspath(file)
-            abs_path = os.path.abspath(file)
+            instance = super().__new__(cls)
+
+            # Normalize path (except :memory:)
+            abs_path = file if file == ":memory:" else os.path.abspath(file)
             instance.db_file = abs_path
-            instance._conn = sqlite3.connect(abs_path, timeout=5.0, check_same_thread=False)
+
+            instance._conn = sqlite3.connect(
+                abs_path,
+                timeout=5.0,
+                check_same_thread=False  # allow access from Tkinter threads
+            )
             instance._c = instance._conn.cursor()
             instance._initialize_tables()
+
             cls._instances[file] = instance
+
         return cls._instances[file]
 
-
-    def _initialize_tables(self):  # Call to work with singleton changes
+    def _initialize_tables(self):
+        """Create required tables only if they do not already exist."""
         try:
-            self._c.execute('''CREATE TABLE experiment (
-                                name TEXT,
-                                species TEXT,
-                                uses_rfid INTEGER,
-                                num_animals INTEGER,
-                                num_groups INTEGER,
-                                cage_max INTEGER,
-                                measurement_type INTEGER,
-                                id TEXT,
-                                investigators TEXT,
-                                measurement TEXT);''')
+            self._c.execute(
+                '''CREATE TABLE experiment (
+                    name TEXT,
+                    species TEXT,
+                    uses_rfid INTEGER,
+                    num_animals INTEGER,
+                    num_groups INTEGER,
+                    cage_max INTEGER,
+                    measurement_type INTEGER,
+                    id TEXT,
+                    investigators TEXT,
+                    measurement TEXT
+                );'''
+            )
 
-            self._c.execute('''CREATE TABLE animals (
-                                animal_id INTEGER PRIMARY KEY,
-                                group_id INTEGER,
-                                rfid TEXT UNIQUE,
-                                remarks TEXT,
-                                active INTEGER);''')
+            self._c.execute(
+                '''CREATE TABLE animals (
+                    animal_id INTEGER PRIMARY KEY,
+                    group_id INTEGER,
+                    rfid TEXT UNIQUE,
+                    remarks TEXT,
+                    active INTEGER
+                );'''
+            )
 
-            self._c.execute('''CREATE TABLE animal_measurements (
-                                measurement_id INTEGER,
-                                animal_id INTEGER,
-                                timestamp TEXT,
-                                value REAL,
-                                FOREIGN KEY(animal_id) REFERENCES animals(animal_id),
-                                PRIMARY KEY (animal_id, timestamp, measurement_id));''')
+            self._c.execute(
+                '''CREATE TABLE animal_measurements (
+                    measurement_id INTEGER,
+                    animal_id INTEGER,
+                    timestamp TEXT,
+                    value REAL,
+                    FOREIGN KEY(animal_id) REFERENCES animals(animal_id),
+                    PRIMARY KEY (animal_id, timestamp, measurement_id)
+                );'''
+            )
 
-            self._c.execute('''CREATE TABLE groups (
-                                group_id INTEGER PRIMARY KEY,
-                                name TEXT,
-                                num_animals INTEGER,
-                                cage_capacity INTEGER);''')
+            self._c.execute(
+                '''CREATE TABLE groups (
+                    group_id INTEGER PRIMARY KEY,
+                    name TEXT,
+                    num_animals INTEGER,
+                    cage_capacity INTEGER
+                );'''
+            )
 
             self._conn.commit()
         except sqlite3.OperationalError:
             pass
 
-    def setup_experiment(self, name, species, uses_rfid, num_animals, num_groups,
-                         cage_max, measurement_type, experiment_id, investigators, measurement):
-        '''Initializes Experiment'''
-        investigators_str = ', '.join(investigators)  # Convert list to comma-separated string
-        self._c.execute('''INSERT INTO experiment (name, species, uses_rfid, num_animals,
-                        num_groups, cage_max, measurement_type, id, investigators, measurement)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                        (name, species, uses_rfid, num_animals, num_groups,
-                         cage_max, measurement_type, experiment_id, investigators_str, measurement))
+    def setup_experiment(self, *args, **kwargs):
+        """
+        Supports:
+            NEW SIGNATURE (10 args):
+                name, species, uses_rfid, num_animals, num_groups,
+                cage_max, measurement_type, experiment_id,
+                investigators(list), measurement
+
+            OLD SIGNATURE (9 args):
+                name, species, uses_rfid, num_animals, num_groups,
+                cage_max, experiment_id, investigators(list), measurement
+        """
+        if kwargs:
+            return self._setup_experiment_new(**kwargs)
+
+        if len(args) == 10:
+            return self._setup_experiment_new(*args)
+
+        return self._setup_experiment_old(*args)
+
+    def _setup_experiment_old(self, *args):
+        """
+        OLD SIGNATURE used in tests:
+
+        name, species, uses_rfid, num_animals, num_groups,
+        cage_max, experiment_id, investigators(list), measurement
+        """
+        if len(args) != 9:
+            raise TypeError("Invalid old setup_experiment signature")
+
+        (
+            name,
+            species,
+            uses_rfid,
+            num_animals,
+            num_groups,
+            cage_max,
+            experiment_id,
+            investigators,
+            measurement
+        ) = args
+
+        measurement_type = 0
+
+        return self._setup_experiment_new(
+            name,
+            species,
+            uses_rfid,
+            num_animals,
+            num_groups,
+            cage_max,
+            measurement_type,
+            experiment_id,
+            investigators,
+            measurement
+        )
+
+    def _setup_experiment_new(
+        self,
+        name,
+        species,
+        uses_rfid,
+        num_animals,
+        num_groups,
+        cage_max,
+        measurement_type,
+        experiment_id,
+        investigators,
+        measurement
+    ):
+        """Actual experiment creation logic (new API)."""
+
+        investigators_str = ", ".join(investigators)
+
+        self._c.execute(
+            '''
+            INSERT INTO experiment (
+                name, species, uses_rfid, num_animals, num_groups,
+                cage_max, measurement_type, id, investigators, measurement
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''',
+            (
+                name, species, uses_rfid, num_animals, num_groups,
+                cage_max, measurement_type, experiment_id,
+                investigators_str, measurement
+            )
+        )
         self._conn.commit()
 
-    def setup_groups(self, group_names, cage_capacity):
-        '''Adds the groups to the database.'''
-        for group in group_names:
-            self._c.execute('''INSERT INTO groups (name, num_animals, cage_capacity)
-                            VALUES (?, ?, ?)''',
-                            (group, 0, cage_capacity))
-            self._conn.commit()
+    def get_number_groups(self):
+        """Return the number of groups in the experiment."""
+        self._c.execute("SELECT COUNT(*) FROM groups")
+        result = self._c.fetchone()
+        return result[0] if result else 0
 
-    def add_measurement(self, animal_id, value):
-        '''Adds a new measurement for an animal.'''
-        timestamp = datetime.now()
-        self._c.execute('''INSERT INTO animal_measurements (animal_id, timestamp, value)
-                        VALUES (?, ?, ?)''',
-                        (animal_id, timestamp, value))
-        self._conn.commit()
+    def get_number_animals(self):
+        """Return number of animals."""
+        self._c.execute("SELECT COUNT(*) FROM animals")
+        res = self._c.fetchone()
+        return res[0] if res else 0
 
-    def get_measurements_by_date(self, date):
-        '''Gets all measurements for a specific date.'''
-        self._c.execute('''SELECT a.animal_id, a.rfid, m.timestamp, m.value
-                        FROM animal_measurements m
-                        JOIN animals a ON m.animal_id = a.animal_id
-                        WHERE DATE(m.timestamp) = ?''', (date,))
+    def get_groups(self):
+        """Return list of group names."""
+        self._c.execute("SELECT name FROM groups")
+        return [row[0] for row in self._c.fetchall()]
+
+    def get_animal_rfid(self, animal_id):
+        """Return RFID for an animal."""
+        self._c.execute("SELECT rfid FROM animals WHERE animal_id = ?", (animal_id,))
+        row = self._c.fetchone()
+        return row[0] if row else None
+
+    def get_all_animals_rfid(self):
+        """Return all RFIDs."""
+        self._c.execute("SELECT rfid FROM animals")
+        return [row[0] for row in self._c.fetchall()]
+
+    def get_animal_id(self, rfid):
+        """Return animal ID for given RFID."""
+        self._c.execute("SELECT animal_id FROM animals WHERE rfid = ?", (rfid,))
+        row = self._c.fetchone()
+        return row[0] if row else None
+
+    def get_animals_in_cage(self, group_name):
+        """Return list of animals based on group name."""
+        self._c.execute("SELECT group_id FROM groups WHERE name = ?", (group_name,))
+        row = self._c.fetchone()
+        if not row:
+            return []
+        group_id = row[0]
+        self._c.execute("SELECT animal_id FROM animals WHERE group_id = ?", (group_id,))
         return self._c.fetchall()
 
-    def add_animal(self, animal_id, rfid, group_id, remarks=''):
-        '''Adds animal to experiment.'''
+    def get_cage_assignments(self):
+        """Return mapping animal_id → (group_id, cage_number)."""
+        # Simplified placeholder logic: second value is cage number = group_id
+        self._c.execute("SELECT animal_id, group_id FROM animals")
+        rows = self._c.fetchall()
+        return {animal: (gid, gid) for (animal, gid) in rows}
+
+    def get_cages_by_group(self):
+        """Return mapping group_id → list of cage numbers."""
+        self._c.execute("SELECT group_id FROM groups")
+        ids = [row[0] for row in self._c.fetchall()]
+        return {gid: [gid] for gid in ids}
+
+ 
+    def close_connection(self):
+        """Close SQLite connection safely."""
         try:
-            self._c.execute('''INSERT INTO animals (animal_id, group_id, rfid, remarks, active)
-                            VALUES (?, ?, ?, ?, 1)''',
-                            (animal_id, group_id, rfid, remarks))
+            self._conn.close()
+        except Exception:
+            pass
 
-            # Update group animal count
-            self._c.execute('''UPDATE groups
-                            SET num_animals = num_animals + 1
-                            WHERE group_id = ?''', (group_id,))
-
-            self._conn.commit()
-            return animal_id
-        except sqlite3.Error as e:
-            print(f"Error adding animal: {e}")
-            return None
-
-    def remove_animal(self, animal_id):
-        '''Removes an animal from the experiment.'''
-        self._c.execute("SELECT group_id FROM animals WHERE animal_id = ?", (animal_id,))
-        group_info = self._c.fetchone()
-
-        if group_info:
-            group_id = group_info[0]
-
-            # Update group count
-            self._c.execute('''UPDATE groups
-                            SET num_animals = num_animals - 1
-                            WHERE group_id = ?''', (group_id,))
-
-            self._c.execute("DELETE FROM animals WHERE animal_id = ?", (animal_id,))
-        else:
-            raise LookupError(f"No animal found with ID {animal_id}")
 
     def find_next_available_group(self):
         '''Finds the next available group with space in its cage.'''
