@@ -1,13 +1,17 @@
 # pylint: skip-file
 import os
+import logging
 import serial
 import threading
 from queue import Queue
 from shared.serial_port_controller import SerialPortController
 
+_log = logging.getLogger("mouser.serial.listener")
+
 class SerialReader:
     def __init__(self, timeout=1, port=None):
         '''Initializes the serial reader, opens the connection, and starts the listening thread.'''
+        _log.info("Initializing SerialReader with port: %s", port)
         print(f"Initializing SerialReader with port: {port}")
         self.timeout = timeout
         self.data_queue = Queue()
