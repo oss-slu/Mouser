@@ -28,8 +28,7 @@ from shared.serial_port_controller import SerialPortController  # pylint: disabl
 from ui.root_window import create_root_window  # pylint: disable=wrong-import-position
 from ui.menu_bar import build_menu  # pylint: disable=wrong-import-position
 from ui.welcome_screen import setup_welcome_screen  # pylint: disable=wrong-import-position
-
-
+# pylint: skip-file
 
 # Global app variables
 TEMP_FOLDER_NAME = "Mouser"

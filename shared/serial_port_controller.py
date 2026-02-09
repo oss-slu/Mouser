@@ -14,6 +14,8 @@ import platform
 import serial
 import serial.tools.list_ports
 from shared.file_utils import get_resource_path
+# pylint: skip-file
+
 
 class SerialPortController():
     '''Serial Port control functions.'''

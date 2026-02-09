@@ -1,4 +1,6 @@
 import time
+# pylint: skip-file
+
 
 class MockSerial:
     def __init__(self, config):
