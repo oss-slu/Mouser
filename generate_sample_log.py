@@ -19,10 +19,12 @@ import shutil
 # Ensure project root is importable
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from shared.startup_logger import run_all_startup_diagnostics, get_log_file_path  # noqa: E402
+from shared.startup_logger import run_all_startup_diagnostics  # noqa: E402
 
 
 def main():
+    """Run startup diagnostics and save log output."""
+    print("Running Mouser startup diagnostics (no GUI) …")
     print("Running Mouser startup diagnostics (no GUI) …")
     log_file = run_all_startup_diagnostics()
     print(f"\nDiagnostic log written to: {log_file}")

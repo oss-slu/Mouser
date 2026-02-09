@@ -31,7 +31,7 @@ LOG_FILE_NAME = "mouser_startup.log"
 MAX_LOG_BYTES = 2 * 1024 * 1024  # 2 MB per file
 BACKUP_COUNT = 5
 
-_logger: logging.Logger | None = None  # module-level singleton
+_LOGGER: logging.Logger | None = None  # module-level singleton
 
 
 # ---------------------------------------------------------------------------
@@ -52,12 +52,12 @@ def _resolve_log_dir() -> Path:
 
 def get_logger() -> logging.Logger:
     """Return (and lazily create) the application-wide startup logger."""
-    global _logger  # noqa: PLW0603
-    if _logger is not None:
-        return _logger
+    global _LOGGER  # noqa: PLW0603
+    if _LOGGER is not None:
+        return _LOGGER
 
-    _logger = logging.getLogger("mouser.startup")
-    _logger.setLevel(logging.DEBUG)
+    _LOGGER = logging.getLogger("mouser.startup")
+    _LOGGER.setLevel(logging.DEBUG)
 
     # Formatter
     fmt = logging.Formatter(
@@ -72,15 +72,15 @@ def get_logger() -> logging.Logger:
     )
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(fmt)
-    _logger.addHandler(fh)
+    _LOGGER.addHandler(fh)
 
     # Console handler (stdout so it mixes with normal output)
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(logging.INFO)
     ch.setFormatter(fmt)
-    _logger.addHandler(ch)
+    _LOGGER.addHandler(ch)
 
-    return _logger
+    return _LOGGER
 
 
 def get_log_file_path() -> str:

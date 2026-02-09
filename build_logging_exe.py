@@ -8,9 +8,9 @@ Produces:
     dist/Mouser_PoC_Logging/Mouser_PoC_Logging.exe   (one-dir bundle)
 """
 
-import PyInstaller.__main__
 import os
-import sys
+
+import PyInstaller.__main__
 
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 SEP = os.pathsep  # ';' on Windows, ':' elsewhere

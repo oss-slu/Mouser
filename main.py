@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 # ── Startup diagnostics (runs before any UI or serial port work) ──────────
 from shared.startup_logger import run_all_startup_diagnostics, get_logger  # pylint: disable=wrong-import-position
 
-_startup_log_file = run_all_startup_diagnostics()
+STARTUP_LOG_FILE = run_all_startup_diagnostics()
 _log = get_logger()
 _log.info("Proceeding to application UI initialisation…")
 # ──────────────────────────────────────────────────────────────────────────
@@ -91,6 +91,6 @@ main_frame.grid_rowconfigure(1, weight=1)
 main_frame.grid_columnconfigure(0, weight=1)
 
 # Start the main event loop
-_log.info("All startup tasks complete. Entering mainloop. Log file: %s", _startup_log_file)
+_log.info("All startup tasks complete. Entering mainloop. Log file: %s", STARTUP_LOG_FILE)
 root.mainloop()
 _log.info("Application exited normally.")
