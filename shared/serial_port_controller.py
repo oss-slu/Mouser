@@ -11,9 +11,12 @@ nothing even if you write to writer port already
 import os
 import glob
 import platform
+import logging
 import serial
 import serial.tools.list_ports
 from shared.file_utils import get_resource_path
+
+_log = logging.getLogger("mouser.serial.controller")
 
 class SerialPortController():
     '''Serial Port control functions.'''
@@ -27,6 +30,7 @@ class SerialPortController():
         self.writer_port = None
         self.reader_port = None
         self.comports_fn = comports_fn or serial.tools.list_ports.comports
+        _log.info("Initializing SerialPortController with setting type: %s", setting_type)
         print(f"🔍 Initializing SerialPortController with setting type: {setting_type}")
         self.retrieve_setting(setting_type)
 
@@ -221,6 +225,7 @@ class SerialPortController():
         # base_preference_dir to avoid double-wrapping the path with
         # get_resource_path (which would produce incorrect paths).
         preference_path = os.path.join(base_preference_dir, setting_folder, setting_file)
+        _log.info("Looking for serial settings in: %s", preference_path)
         print(f"🔍 Looking for settings in: {preference_path}")
 
         if not os.path.exists(preference_path):
@@ -241,6 +246,7 @@ class SerialPortController():
                 with open(settings_path, "r", encoding="utf-8") as settings_file:
                     settings = settings_file.readline().strip().split(',')
                     print("Successfully retrieved settings:", settings)
+                    _log.info("Loaded serial settings: %s", settings)
 
                     if len(settings) < 7:
                         print("Error: settings must have at least 7 elements.")

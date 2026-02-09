@@ -2,6 +2,7 @@
 Main entry point for the Mouser application.
 
 Responsible for:
+- Running startup diagnostics (OS, permissions, config, serial)
 - Creating the root window
 - Setting app geometry and title
 - Initializing shared state (e.g., TEMP_FILE_PATH)
@@ -20,6 +21,14 @@ import tempfile
 # imported when running this script directly from the repo folder or from other
 # working directories.
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+
+# ── Startup diagnostics (runs before any UI or serial port work) ──────────
+from shared.startup_logger import run_all_startup_diagnostics, get_logger  # pylint: disable=wrong-import-position
+
+STARTUP_LOG_FILE = run_all_startup_diagnostics()
+_log = get_logger()
+_log.info("Proceeding to application UI initialisation…")
+# ──────────────────────────────────────────────────────────────────────────
 
 from shared.tk_models import MouserPage, raise_frame  # pylint: disable=wrong-import-position
 from shared.serial_port_controller import SerialPortController  # pylint: disable=wrong-import-position
@@ -40,7 +49,9 @@ if os.path.exists(temp_folder_path):
     shutil.rmtree(temp_folder_path)
 
 # Create root window
+_log.info("Creating root window…")
 root = create_root_window()
+_log.info("Root window created successfully.")
 
 # Window size constants
 MAINWINDOW_WIDTH = 900
@@ -58,11 +69,14 @@ root.title("Mouser")
 root.minsize(MAINWINDOW_WIDTH, MAINWINDOW_HEIGHT)
 
 # Main layout setup
+_log.info("Setting up welcome screen and serial port controller…")
 main_frame = MouserPage(root, "Mouser")
 rfid_serial_port_controller = SerialPortController("reader")
 experiments_frame = setup_welcome_screen(root, main_frame)
+_log.info("Welcome screen ready.")
 
 # Menu bar setup
+_log.info("Building menu bar…")
 build_menu(
     root=root,
     experiments_frame=experiments_frame,
@@ -77,4 +91,6 @@ main_frame.grid_rowconfigure(1, weight=1)
 main_frame.grid_columnconfigure(0, weight=1)
 
 # Start the main event loop
+_log.info("All startup tasks complete. Entering mainloop. Log file: %s", STARTUP_LOG_FILE)
 root.mainloop()
+_log.info("Application exited normally.")

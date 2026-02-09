@@ -1,11 +1,15 @@
 # pylint: skip-file
 import time
+import logging
 import threading
 from shared.serial_listener import SerialReader  # Adjust this to your actual import path
+
+_log = logging.getLogger("mouser.serial.handler")
 
 class SerialDataHandler:
     '''Class to handle storing received data.'''
     def __init__(self, port=None):
+        _log.info("Initializing SerialDataHandler on port: %s", port)
         print(f"Initializing SerialDataHandler on port: {port}")
         self.reader = SerialReader(timeout=1, port=port)
         self.received_data = []
