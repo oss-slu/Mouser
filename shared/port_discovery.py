@@ -32,21 +32,21 @@ import serial.tools.list_ports
 _LOG_FMT = "%(asctime)s | %(levelname)-8s | %(message)s"
 _LOG_DATE = "%Y-%m-%d %H:%M:%S"
 
-_log: logging.Logger | None = None
-_log_file_path: str | None = None
+_LOG: logging.Logger | None = None
+_LOG_FILE_PATH: str | None = None
 
 
 def get_logger() -> logging.Logger:
     """Return (and lazily initialise) the port-discovery logger."""
-    global _log, _log_file_path          # pylint: disable=global-statement
-    if _log is not None:
-        return _log
+    global _LOG, _LOG_FILE_PATH          # pylint: disable=global-statement
+    if _LOG is not None:
+        return _LOG
 
-    _log = logging.getLogger("mouser.port_discovery")
-    _log.setLevel(logging.DEBUG)
+    _LOG = logging.getLogger("mouser.port_discovery")
+    _LOG.setLevel(logging.DEBUG)
 
-    if _log.handlers:                    # already configured (e.g. in tests)
-        return _log
+    if _LOG.handlers:                    # already configured (e.g. in tests)
+        return _LOG
 
     # ── log directory ──
     if getattr(sys, "frozen", False):
@@ -55,29 +55,29 @@ def get_logger() -> logging.Logger:
         base = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     log_dir = os.path.join(base, "logs")
     os.makedirs(log_dir, exist_ok=True)
-    _log_file_path = os.path.join(log_dir, "mouser_port_discovery.log")
+    _LOG_FILE_PATH = os.path.join(log_dir, "mouser_port_discovery.log")
 
     # ── rotating file handler (2 MB, 5 backups) ──
     fh = RotatingFileHandler(
-        _log_file_path, maxBytes=2 * 1024 * 1024, backupCount=5, encoding="utf-8",
+        _LOG_FILE_PATH, maxBytes=2 * 1024 * 1024, backupCount=5, encoding="utf-8",
     )
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(logging.Formatter(_LOG_FMT, datefmt=_LOG_DATE))
-    _log.addHandler(fh)
+    _LOG.addHandler(fh)
 
     # ── console handler ──
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(logging.INFO)
     ch.setFormatter(logging.Formatter(_LOG_FMT, datefmt=_LOG_DATE))
-    _log.addHandler(ch)
+    _LOG.addHandler(ch)
 
-    return _log
+    return _LOG
 
 
 def get_log_file_path() -> str:
     """Return the path of the active log file (initialises logger if needed)."""
     get_logger()
-    return _log_file_path
+    return _LOG_FILE_PATH
 
 
 # ---------------------------------------------------------------------------
@@ -193,8 +193,6 @@ def discover_ports(safe_probe: bool = True) -> list[dict]:
         device, description, hwid, vid, pid, serial_number,
         location, manufacturer, category, probe (if safe_probe)
     """
-    import serial.tools.list_ports  # noqa: F811  # ensure sub-module is loaded
-
     ports = list(serial.tools.list_ports.comports())
 
     # Linux glob fallback
@@ -241,6 +239,45 @@ def discover_ports(safe_probe: bool = True) -> list[dict]:
 # Logging facade
 # ---------------------------------------------------------------------------
 
+def _log_single_port(log: logging.Logger, p: dict, safe_probe: bool) -> None:
+    """Log details for a single discovered port."""
+    log.info("  ┌─ %s", p["device"])
+    log.info("  │  Description  : %s", p["description"])
+    log.info("  │  HWID         : %s", p["hwid"])
+    log.info(
+        "  │  VID:PID      : %s:%s",
+        p["vid"] or "----",
+        p["pid"] or "----",
+    )
+    if p["vid"] and p["vid"] in _KNOWN_VIDS:
+        log.info("  │  Chip vendor   : %s", _KNOWN_VIDS[p["vid"]])
+    if p["manufacturer"]:
+        log.info("  │  Manufacturer  : %s", p["manufacturer"])
+    if p["product"]:
+        log.info("  │  Product       : %s", p["product"])
+    if p["serial_number"]:
+        log.info("  │  Serial #      : %s", p["serial_number"])
+    if p["location"]:
+        log.info("  │  Location      : %s", p["location"])
+    if p["interface"]:
+        log.info("  │  Interface     : %s", p["interface"])
+    log.info("  │  Category      : %s", p["category"])
+    if safe_probe and "probe" in p:
+        probe = p["probe"]
+        if probe["opened"]:
+            log.info(
+                "  │  Probe         : ✅ OK  (%.1f ms)",
+                probe["latency_ms"],
+            )
+        else:
+            log.info(
+                "  │  Probe         : ❌ FAILED  (%.1f ms) — %s",
+                probe["latency_ms"],
+                probe["error"],
+            )
+    log.info("  └─")
+
+
 def log_port_discovery(safe_probe: bool = True) -> list[dict]:
     """Run full port discovery and write results to the mouser logger.
 
@@ -253,13 +290,7 @@ def log_port_discovery(safe_probe: bool = True) -> list[dict]:
     )
     log.info("-" * 70)
 
-    # pyserial availability check
-    try:
-        import serial  # pylint: disable=import-outside-toplevel
-        log.info("  pyserial version : %s", serial.__version__)
-    except ImportError:
-        log.error("  pyserial is NOT installed — port discovery aborted")
-        return []
+    log.info("  pyserial version : %s", serial.__version__)
 
     ports = discover_ports(safe_probe=safe_probe)
 
@@ -270,43 +301,7 @@ def log_port_discovery(safe_probe: bool = True) -> list[dict]:
         return ports
 
     for p in ports:
-        log.info("  ┌─ %s", p["device"])
-        log.info("  │  Description  : %s", p["description"])
-        log.info("  │  HWID         : %s", p["hwid"])
-        log.info(
-            "  │  VID:PID      : %s:%s",
-            p["vid"] or "----",
-            p["pid"] or "----",
-        )
-        if p["vid"] and p["vid"] in _KNOWN_VIDS:
-            log.info(
-                "  │  Chip vendor   : %s", _KNOWN_VIDS[p["vid"]]
-            )
-        if p["manufacturer"]:
-            log.info("  │  Manufacturer  : %s", p["manufacturer"])
-        if p["product"]:
-            log.info("  │  Product       : %s", p["product"])
-        if p["serial_number"]:
-            log.info("  │  Serial #      : %s", p["serial_number"])
-        if p["location"]:
-            log.info("  │  Location      : %s", p["location"])
-        if p["interface"]:
-            log.info("  │  Interface     : %s", p["interface"])
-        log.info("  │  Category      : %s", p["category"])
-        if safe_probe and "probe" in p:
-            probe = p["probe"]
-            if probe["opened"]:
-                log.info(
-                    "  │  Probe         : ✅ OK  (%.1f ms)",
-                    probe["latency_ms"],
-                )
-            else:
-                log.info(
-                    "  │  Probe         : ❌ FAILED  (%.1f ms) — %s",
-                    probe["latency_ms"],
-                    probe["error"],
-                )
-        log.info("  └─")
+        _log_single_port(log, p, safe_probe)
 
     # Summary table
     log.info("")

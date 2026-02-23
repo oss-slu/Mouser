@@ -14,7 +14,7 @@ import logging
 import types
 from unittest.mock import MagicMock, patch
 
-import pytest
+import serial as _serial
 
 from shared.port_discovery import (
     _classify_port,
@@ -94,24 +94,31 @@ class TestClassifyPort:
     """Tests for port classification heuristics."""
 
     def test_rfid_keyword_in_description(self):
+        """RFID keyword in description triggers RFID category."""
         assert _classify_port("USB RFID Reader", None) == "RFID Reader"
 
     def test_rfid_keyword_case_insensitive(self):
+        """Classification is case-insensitive."""
         assert _classify_port("uhf reader device", None) == "RFID Reader"
 
     def test_balance_keyword(self):
+        """Balance keyword triggers Balance / Scale category."""
         assert _classify_port("Mettler Toledo Balance", None) == "Balance / Scale"
 
     def test_known_vid_ch340(self):
+        """CH340 VID maps to QinHeng classification."""
         assert "CH340" in _classify_port("USB-SERIAL", "1A86")
 
     def test_known_vid_ftdi(self):
+        """FTDI VID maps to FTDI classification."""
         assert "FTDI" in _classify_port("USB Serial Port", "0403")
 
     def test_known_vid_cp210x(self):
+        """CP210x VID maps to Silicon Labs classification."""
         assert "CP210x" in _classify_port("Silicon Labs device", "10C4")
 
     def test_unknown_port(self):
+        """Unrecognised port classified as Unknown."""
         assert _classify_port("Standard COM Port", None) == "Unknown"
 
     def test_rfid_takes_priority_over_vid(self):
@@ -141,12 +148,11 @@ class TestSafeOpenClose:
     @patch(_SERIAL_CLS)
     def test_serial_exception(self, mock_serial_cls):
         """Port raises SerialException."""
-        import serial as _serial
         mock_serial_cls.side_effect = _serial.SerialException("Access denied")
 
         result = _safe_open_close("COM99")
         assert result["opened"] is False
-        assert "Access denied" in result["error"]
+        assert "Access denied" in str(result["error"])
 
     @patch(_SERIAL_CLS)
     def test_os_error(self, mock_serial_cls):
@@ -155,7 +161,7 @@ class TestSafeOpenClose:
 
         result = _safe_open_close("COM99")
         assert result["opened"] is False
-        assert "Device not found" in result["error"]
+        assert "Device not found" in str(result["error"])
 
     @patch(_SERIAL_CLS)
     def test_latency_is_non_negative(self, mock_serial_cls):
@@ -169,10 +175,12 @@ class TestSafeOpenClose:
 # discover_ports (mocked comports)
 # -----------------------------------------------------------------------
 
-def _make_fake_port(device, description="USB Device", hwid="", manufacturer=None,
-                    product=None, interface=None):
+def _make_fake_port(  # pylint: disable=too-many-arguments
+    device, *, description="USB Device", hwid="", manufacturer=None,
+    product=None, interface=None,
+):
     """Create a fake port object mimicking serial.tools.list_ports.ListPortInfo."""
-    port = types.SimpleNamespace(
+    return types.SimpleNamespace(
         device=device,
         description=description,
         hwid=hwid,
@@ -180,7 +188,6 @@ def _make_fake_port(device, description="USB Device", hwid="", manufacturer=None
         product=product,
         interface=interface,
     )
-    return port
 
 
 class TestDiscoverPorts:
@@ -191,14 +198,14 @@ class TestDiscoverPorts:
         """Returns empty list when no ports are detected."""
         mock_comports.return_value = []
         result = discover_ports(safe_probe=False)
-        assert result == []
+        assert not result
 
     @patch(_COMPORTS)
     def test_single_port_no_probe(self, mock_comports):
         """Single port enumerated without probing."""
         mock_comports.return_value = [
-            _make_fake_port("COM3", "USB-SERIAL CH340",
-                            "USB VID:PID=1A86:7523 SER=123")
+            _make_fake_port("COM3", description="USB-SERIAL CH340",
+                            hwid="USB VID:PID=1A86:7523 SER=123")
         ]
         result = discover_ports(safe_probe=False)
         assert len(result) == 1
@@ -213,8 +220,8 @@ class TestDiscoverPorts:
     def test_single_port_with_probe(self, mock_comports, mock_probe):
         """Single port with safe_probe=True includes probe result."""
         mock_comports.return_value = [
-            _make_fake_port("COM3", "USB-SERIAL CH340",
-                            "USB VID:PID=1A86:7523")
+            _make_fake_port("COM3", description="USB-SERIAL CH340",
+                            hwid="USB VID:PID=1A86:7523")
         ]
         mock_probe.return_value = {"opened": True, "latency_ms": 1.5, "error": None}
 
@@ -239,7 +246,8 @@ class TestDiscoverPorts:
     def test_port_classification_included(self, mock_comports):
         """Each port entry includes a 'category' field."""
         mock_comports.return_value = [
-            _make_fake_port("COM3", "RFID Reader", "USB VID:PID=1A86:7523")
+            _make_fake_port("COM3", description="RFID Reader",
+                            hwid="USB VID:PID=1A86:7523")
         ]
         result = discover_ports(safe_probe=False)
         assert result[0]["category"] == "RFID Reader"
@@ -248,7 +256,8 @@ class TestDiscoverPorts:
     def test_unknown_vid(self, mock_comports):
         """Port with unrecognized VID is classified as Unknown."""
         mock_comports.return_value = [
-            _make_fake_port("COM3", "Generic Device", "USB VID:PID=FFFF:FFFF")
+            _make_fake_port("COM3", description="Generic Device",
+                            hwid="USB VID:PID=FFFF:FFFF")
         ]
         result = discover_ports(safe_probe=False)
         assert result[0]["category"] == "Unknown"
@@ -289,8 +298,9 @@ class TestLogPortDiscovery:
     def test_logs_detected_count(self, mock_comports, caplog):
         """Log output shows correct port count."""
         mock_comports.return_value = [
-            _make_fake_port("COM3", "USB Device", "USB VID:PID=1A86:7523"),
-            _make_fake_port("COM4", "Another Device", ""),
+            _make_fake_port("COM3", description="USB Device",
+                            hwid="USB VID:PID=1A86:7523"),
+            _make_fake_port("COM4", description="Another Device", hwid=""),
         ]
         with caplog.at_level(logging.INFO, logger="mouser.port_discovery"):
             log_port_discovery(safe_probe=False)
@@ -300,7 +310,8 @@ class TestLogPortDiscovery:
     def test_returns_port_list(self, mock_comports):
         """log_port_discovery returns the list of port dicts."""
         mock_comports.return_value = [
-            _make_fake_port("COM3", "Test", "USB VID:PID=1A86:7523")
+            _make_fake_port("COM3", description="Test",
+                            hwid="USB VID:PID=1A86:7523")
         ]
         result = log_port_discovery(safe_probe=False)
         assert isinstance(result, list)
@@ -311,8 +322,8 @@ class TestLogPortDiscovery:
     def test_port_details_logged(self, mock_comports, caplog):
         """Log output includes device name and VID:PID."""
         mock_comports.return_value = [
-            _make_fake_port("COM7", "CH340 USB-Serial",
-                            "USB VID:PID=1A86:7523 SER=XYZ")
+            _make_fake_port("COM7", description="CH340 USB-Serial",
+                            hwid="USB VID:PID=1A86:7523 SER=XYZ")
         ]
         with caplog.at_level(logging.INFO, logger="mouser.port_discovery"):
             log_port_discovery(safe_probe=False)
