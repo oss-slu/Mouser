@@ -1,6 +1,6 @@
 '''Permission check module for PoC.'''
 import os
-from .logger import Logger
+from logger import Logger
 
 class PermissionCheck:
     '''Simple PoC for permission, driver, port, and environment checks.'''
