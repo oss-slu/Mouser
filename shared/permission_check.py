@@ -24,7 +24,7 @@ class PermissionCheck:
     @staticmethod
     def check_port_busy(port_name):
         '''Check if port is busy'''
-        try: 
+        try:
             open(port_name)
             Logger.log("Port Check", 0, "PORT_FREE")
         except OSError as e:
@@ -44,12 +44,7 @@ class PermissionCheck:
     @staticmethod
     def check_all_permissions():
         '''Run all checks and log results.'''
-        PermissionCheck.check_permissions("shared/test_file.txt")       
+        PermissionCheck.check_permissions("shared/test_file.txt") 
         PermissionCheck.check_driver("/dev/ttyUSB0")
         PermissionCheck.check_port_busy("/dev/ttyUSB0")
         PermissionCheck.check_closed_environment()
-        
-
-
-  
-
