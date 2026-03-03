@@ -17,14 +17,14 @@ from customtkinter import (
 
 from shared.tk_models import MouserPage, ChangePageButton  # pylint: disable=import-error
 from shared.scrollable_frame import ScrolledFrame  # pylint: disable=import-error
-from experiment_pages.experiment.group_config_ui import (  # pylint: disable=import-error
-    GroupConfigUI,
-)
 from shared.experiment import Experiment  # pylint: disable=import-error
 from shared.audio import AudioManager  # pylint: disable=import-error
 from shared.file_utils import (  # pylint: disable=import-error
     SUCCESS_SOUND,
     ERROR_SOUND,
+)
+from experiment_pages.experiment.group_config_ui import (  # pylint: disable=import-error
+    GroupConfigUI,
 )
 
 

@@ -140,6 +140,10 @@ class Experiment():
     def check_measurement_items_changed(self):
         '''Returns if measurement items have changed.'''
         return self.measurement_items_changed
+    
+    def measurement_type(self, is_automatic: int):
+        '''Sets whether measurements are automatic (1) or manual (0).'''
+        self.measurement_type = is_automatic
 
     def save_to_database(self, directory: str):
         '''Saves experiment object to a file.'''
@@ -147,12 +151,15 @@ class Experiment():
             file = directory + '/' + self.name + '.pmouser'
         else:
             file = directory + '/' + self.name + '.mouser'
-        
+
         db = ExperimentDatabase(file)
-        
+
         # Convert measurement types to strings if they're tuples
-        measurement_type=self.data_collect_type,
-        
+        if isinstance(self.data_collect_type, tuple):
+            measurement_type_str = ','.join(str(t) for t in self.data_collect_type)
+        else:
+            measurement_type_str = str(self.data_collect_type)
+
         # Setup experiment with measurement_type from data_collect_type
         db.setup_experiment(
             name=self.name,
@@ -166,18 +173,18 @@ class Experiment():
             investigators=self.investigators,
             measurement=self.item
         )
-        
+
         # Setup groups with cage capacity
         db.setup_groups(
             group_names=self.group_names,
             cage_capacity=self.max_per_cage
         )
-        
+
         if self.password:
             manager = PasswordManager(self.password)
             manager.encrypt_file(file)
         # TO:DO save date created to db
-        
+
     def get_measurement_type(self):
         '''Returns whether measurements are automatic.'''
         return self.data_collect_type
@@ -187,6 +194,7 @@ class Experiment():
         self.measurement_type = is_automatic
 
     def add_investigator(self, investigator_name):
+        '''Adds an investigator to the experiment.'''
         if investigator_name and investigator_name not in self.investigators:
             self.investigators.append(investigator_name)
         

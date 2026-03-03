@@ -1,5 +1,5 @@
 '''Contains DatabaseController Class'''
-from .experiment_database import ExperimentDatabase
+from databases.experiment_database import ExperimentDatabase
 
 class DatabaseController():
     '''A controller that provides functions for manipulating the data within a .mouser file'''
@@ -59,8 +59,8 @@ class DatabaseController():
 
     def get_cage_max(self):
         '''Returns the maximum size of the cages in the database.'''
-        self.db._c.execute("SELECT cage_max FROM experiment")
-        result = self.db._c.fetchone()
+        self.db.execute("SELECT cage_max FROM experiment")
+        result = self.db.fetchone()
         return int(result[0]) if result else 0
 
     def get_animals_in_group(self, group_name):
@@ -137,11 +137,6 @@ class DatabaseController():
         self.db.update_experiment(updated_animals)
         self.reset_attributes()
 
-    def commit(self):
-                self.db._conn.commit()
-
     def close(self):
         '''Closes the database file.'''
         self.db.close()
-
-

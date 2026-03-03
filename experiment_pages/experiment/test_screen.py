@@ -10,7 +10,6 @@ Modernized Test Screen UI.
 import os
 import time
 import threading
-import tkinter as tk
 from customtkinter import (
     CTkToplevel, CTkFrame, CTkLabel, CTkButton, CTkFont, set_appearance_mode
 )

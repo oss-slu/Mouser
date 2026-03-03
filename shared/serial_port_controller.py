@@ -32,10 +32,12 @@ class SerialPortController():
 
     def get_available_ports(self):
         '''Returns a list of available system ports.
-        Linux-specific note: Some USB serial devices (e.g. RFID readers / balances) intermittently fail to appear in
-        pyserial.tools.list_ports results on certain distributions (udev timing or driver latency). As a fallback on
-        Linux we manually glob common device patterns if the primary enumeration returns nothing. This has no impact
-        on Windows/macOS because the fallback only runs when platform.system() == 'Linux'.'''
+        Linux-specific note: Some USB serial devices (e.g. RFID readers / balances) 
+        intermittently fail to appear in pyserial.tools.list_ports results on certain 
+        distributions (udev timing or driver latency). As a fallback on
+        Linux we manually glob common device patterns if the primary enumeration 
+        returns nothing. This has no impact on Windows/macOS because the fallback 
+        only runs when platform.system() == 'Linux'.'''
         ports = list(self.comports_fn())
         available_ports = []
         # Linux fallback if pyserial returns nothing
@@ -250,7 +252,8 @@ class SerialPortController():
                     self.byte_size = getattr(serial, f"{settings[3].upper()}BITS", serial.EIGHTBITS)
                     self.parity = getattr(serial, f"PARITY_{settings[1].upper()}", serial.PARITY_NONE)
                     self.flow_control = 1 if settings[2] == "Xon/Xoff" else 2 if settings[2] == "Hardware" else None
-                    self.stop_bits = getattr(serial, f"STOPBITS_{settings[4].replace('.', '_').upper()}", serial.STOPBITS_ONE)
+                    self.stop_bits = getattr(serial, 
+                        f"STOPBITS_{settings[4].replace('.', '_').upper()}", serial.STOPBITS_ONE)
                     self.reader_port = settings[6]
                     return settings
 

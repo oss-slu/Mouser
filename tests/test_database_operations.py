@@ -20,25 +20,24 @@ from datetime import datetime
 from pathlib import Path
 import pytest
 
-# Add parent directory to path for imports
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 from databases.experiment_database import ExperimentDatabase
 from databases.database_controller import DatabaseController
 
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 @pytest.fixture(autouse=True)
 def cleanup_database_instances():
     """Clear singleton instances before and after each test to ensure isolation."""
-    ExperimentDatabase._instances.clear()
+    ExperimentDatabase.instances.clear()
     yield
     # Close all connections and clear instances after test
-    for db in ExperimentDatabase._instances.values():
+    for db in ExperimentDatabase.instances.values():
         try:
             db.close()
         except Exception:  # pylint: disable=broad-except
             pass
-    ExperimentDatabase._instances.clear()
+    ExperimentDatabase.instances.clear()
 
 
 class TestDatabaseInitialization:
@@ -72,12 +71,12 @@ class TestDatabaseInitialization:
             db = ExperimentDatabase(str(db_path))
 
             # Query sqlite_master to verify tables exist
-            db._c.execute("""
+            db.c.execute("""
                 SELECT name FROM sqlite_master 
                 WHERE type='table' 
                 ORDER BY name
             """)
-            tables = [row[0] for row in db._c.fetchall()]
+            tables = [row[0] for row in db.c.fetchall()]
 
             # Verify all required tables are present
             required_tables = [
@@ -377,7 +376,7 @@ class TestDataIntegrity:
 
             # Close and reopen database (simulate application restart)
             db1.close()
-            ExperimentDatabase._instances.clear()  # Clear singleton cache
+            ExperimentDatabase.instances.clear()  # Clear singleton cache
 
             db2 = ExperimentDatabase(str(db_path))
 

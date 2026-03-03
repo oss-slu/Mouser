@@ -74,7 +74,6 @@ class DataAnalysisUI(MouserPage):
             "fg_color": "#2563eb",
             "hover_color": "#1e40af"
         }
-    
 
         CTkButton(
             card,
@@ -97,6 +96,7 @@ class DataAnalysisUI(MouserPage):
 
     def back_to_menu(self):
         """Return to experiment menu."""
+        # pylint: disable=import-outside-toplevel
         from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
         page = ExperimentMenuUI(self.root, self.file_path, self)
         page.raise_frame()
