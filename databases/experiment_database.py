@@ -499,7 +499,6 @@ class ExperimentDatabase:
         1. Experiment metadata
         3. Groups table with header
         """
-        import os
         import pandas as pd
 
         # Get experiment name
@@ -556,7 +555,8 @@ class ExperimentDatabase:
 
 
     def export_to_csv(self, directory):
-        '''Exports all relevant tables in the database to a folder named after the experiment in the specified directory.'''
+        '''Exports all relevant tables in the database to a folder 
+        named after the experiment in the specified directory.'''
         import pandas as pd
 
         # Get the experiment name
@@ -602,7 +602,7 @@ class ExperimentDatabase:
                                 VALUES (?, ?, ?)''',
                                 (animal_id, date, None))  # Insert None for blank value
             self._conn.commit()
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Error inserting blank data: {e}")
             self._conn.rollback()
 
@@ -612,12 +612,13 @@ class ExperimentDatabase:
             self._c.execute("SELECT measurement FROM experiment")
             result = self._c.fetchone()
             return result[0] if result else None  # Return the measurement type or None if not found
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Error retrieving measurement value: {e}")
             return None
 
     def randomize_cages(self):
-        '''Automatically and randomly sorts animals into cages within their groups, respecting cage capacity limits.'''
+        '''Automatically and randomly sorts animals into cages within their groups, 
+        respecting cage capacity limits.'''
         import random
 
         try:
@@ -668,7 +669,7 @@ class ExperimentDatabase:
             self._conn.commit()
             return True
 
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Error during randomization: {e}")
             self._conn.rollback()
             return False
@@ -757,12 +758,13 @@ class ExperimentDatabase:
             self._conn.commit()
             return True
 
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Error during autosort: {e}")
             self._conn.rollback()
             return False
 
     def get_cage_number(self, cage_name):
+        '''Returns the group_id for a given cage name.'''
         self._c.execute('''
                         SELECT group_id FROM groups
                         WHERE name = ?''', (cage_name,))

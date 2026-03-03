@@ -5,12 +5,11 @@ Modernized Cage Configuration UI.
 - Improved spacing, font hierarchy, and responsive layout
 - Inline comments explaining UI changes; no logic altered
 """
-
+import sqlite3
 from tkinter import messagebox
 from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkFont, CTkEntry
 from shared.tk_models import MouserPage  # pylint: disable=import-error
 from databases.experiment_database import ExperimentDatabase  # pylint: disable=import-error
-import sqlite3
 
 
 class CageConfigUI(MouserPage):
@@ -135,11 +134,11 @@ class CageConfigUI(MouserPage):
         try:
             db = ExperimentDatabase(self.file_path)
 
-            db._c.execute(  
+            db.c.execute(
                 "UPDATE groups SET cage_capacity = ? WHERE name = ?",
                 (capacity, name),
             )
-            db._conn.commit()  
+            db.conn.commit()
 
             db.randomize_cages()
 
@@ -158,7 +157,8 @@ class CageConfigUI(MouserPage):
 
     def view_summary(self):
         """Open experiment summary page."""
-        from experiment_pages.experiment.review_ui import (  
+        # pylint: disable=import-outside-toplevel
+        from experiment_pages.experiment.review_ui import (
             ReviewUI,
         )
 
@@ -167,7 +167,8 @@ class CageConfigUI(MouserPage):
 
     def back_to_menu(self):
         """Return to experiment menu."""
-        from experiment_pages.experiment.experiment_menu_ui import (  
+        # pylint: disable=import-outside-toplevel
+        from experiment_pages.experiment.experiment_menu_ui import (
             ExperimentMenuUI,
         )
 

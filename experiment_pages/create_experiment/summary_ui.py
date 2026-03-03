@@ -1,5 +1,5 @@
 """Experiment Summary UI (modernized, fully functional)."""
-
+import sqlite3
 from tkinter import filedialog
 
 from customtkinter import (
@@ -161,9 +161,9 @@ class SummaryUI(MouserPage):
         if not save_dir:
             return
 
-        try:  # pylint: disable=broad-exception-caught
+        try:  
             self.experiment.save_to_database(save_dir)
-        except Exception as exc:  # noqa: BLE001
+        except sqlite3.Error as exc:  
             popup = CTkToplevel(self)
             popup.title("Save Error")
             popup.geometry("360x180")

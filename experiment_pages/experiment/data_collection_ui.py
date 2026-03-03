@@ -101,6 +101,7 @@ class DataCollectionUI(MouserPage):
 
     def back_to_menu(self):
         """Navigate back to main experiment menu."""
+        # pylint: disable=import-outside-toplevel
         from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
         page = ExperimentMenuUI(self.root, self.file_path, self)
         page.raise_frame()
