@@ -161,9 +161,9 @@ class SummaryUI(MouserPage):
         if not save_dir:
             return
 
-        try:  
+        try:
             self.experiment.save_to_database(save_dir)
-        except sqlite3.Error as exc:  
+        except sqlite3.Error as exc:
             popup = CTkToplevel(self)
             popup.title("Save Error")
             popup.geometry("360x180")

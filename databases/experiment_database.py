@@ -1,6 +1,6 @@
 '''SQLite Database module for Mouser.'''
-import sqlite3
 import os
+import sqlite3
 from datetime import datetime
 
 class ExperimentDatabase:
@@ -499,6 +499,7 @@ class ExperimentDatabase:
         1. Experiment metadata
         3. Groups table with header
         """
+        # pylint: disable=import-outside-toplevel
         import pandas as pd
 
         # Get experiment name
@@ -557,6 +558,7 @@ class ExperimentDatabase:
     def export_to_csv(self, directory):
         '''Exports all relevant tables in the database to a folder 
         named after the experiment in the specified directory.'''
+        # pylint: disable=import-outside-toplevel
         import pandas as pd
 
         # Get the experiment name
@@ -619,6 +621,7 @@ class ExperimentDatabase:
     def randomize_cages(self):
         '''Automatically and randomly sorts animals into cages within their groups, 
         respecting cage capacity limits.'''
+        # pylint: disable=import-outside-toplevel    
         import random
 
         try:
