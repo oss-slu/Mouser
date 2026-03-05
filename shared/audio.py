@@ -3,7 +3,6 @@ Module that contains methods and classes that are used for the audio in our prog
 '''
 import wave
 from threading import Thread, Lock
-import pyaudio
 import os
 
 class AudioManager:
@@ -16,7 +15,14 @@ class AudioManager:
     @staticmethod
     def __play(filepath): #pylint: disable= no-self-argument
         chunk = 1024
+        audio_file = None
+        out_p = None
+        out_stream = None
         try:
+            # Delay importing PyAudio so app startup does not hard-fail if the
+            # native extension is unavailable on a machine.
+            import pyaudio
+
             # Ensure the file exists before opening
             if not os.path.exists(filepath):
                 print(f"Error: Audio file {filepath} not found.")
@@ -48,10 +54,13 @@ class AudioManager:
         finally:
             # Ensure resources are properly closed
             try:
-                out_stream.stop_stream()
-                out_stream.close()
-                out_p.terminate()
-                audio_file.close()
+                if out_stream is not None:
+                    out_stream.stop_stream()
+                    out_stream.close()
+                if out_p is not None:
+                    out_p.terminate()
+                if audio_file is not None:
+                    audio_file.close()
                 AudioManager._is_playing = False
                 print(f"Audio {filepath} has ended.")
             except Exception as cleanup_error:

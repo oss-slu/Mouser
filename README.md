@@ -31,11 +31,60 @@ git clone https://github.com/oss-slu/Mouser.git
 # 2. Navigate to project directory
 cd Mouser
 
-# 3. Install dependencies
-pip install -r requirements.txt
+# 3. Create and activate a virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
 
-# 4. Run the application
+# 4. Upgrade packaging tools (recommended)
+python -m pip install --upgrade pip setuptools wheel
+
+# 5. Install dependencies
+python -m pip install -r requirements.txt
+
+# 6. Run the application
 python main.py
+```
+
+When you are done working:
+
+```bash
+deactivate
+```
+
+#### macOS note (PyAudio)
+
+If dependency installation fails on `pyaudio` with `portaudio.h file not found`, install PortAudio first:
+
+```bash
+brew install portaudio
+python -m pip install pyaudio
+```
+
+#### macOS note (Tkinter abort on startup)
+
+If running `python main.py` aborts with a message like:
+`macOS 26 (2603) or later required, have instead 16 (1603) !`
+this is caused by Apple Command Line Tools Python (`/usr/bin/python3`) and its Tk runtime.
+
+Use a Python.org installer build (recommended on macOS for stable Tk support), then recreate the virtual environment:
+
+```bash
+cd Mouser
+rm -rf .venv
+# Replace this path with the Python.org interpreter you installed
+/Library/Frameworks/Python.framework/Versions/3.11/bin/python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r requirements.txt
+python -c "import tkinter as tk; r=tk.Tk(); r.destroy(); print('tk ok')"
+python main.py
+```
+
+If you still prefer Homebrew Python, avoid bottles for Tk and build from source instead:
+
+```bash
+brew uninstall python-tk@3.11 tcl-tk@8
+brew install --build-from-source tcl-tk@8 python-tk@3.11
 ```
 
 ## File Structure
