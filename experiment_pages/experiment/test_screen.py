@@ -9,6 +9,7 @@ Modernized Test Screen UI.
 
 import time
 import threading
+import tkinter
 from customtkinter import (
     CTkToplevel, CTkFrame, CTkLabel, CTkButton, CTkFont, set_appearance_mode
 )
@@ -40,6 +41,7 @@ class TestScreen(CTkToplevel):
         self.reading_labels = {}
         self.hid_listener = None
         self.hid_status_key = None
+        self._is_closing = False
 
         # --- Fonts (cross-platform safe) ---
         default_family = ("Segoe UI", "Inter", "DejaVu Sans", "Sans Serif")
@@ -177,26 +179,44 @@ class TestScreen(CTkToplevel):
         threading.Thread(target=data_handler.start, daemon=True).start()
 
         def check_for_data():
-            retries = 10
+            retries = 20
             while retries > 0:
+                if self._is_closing or not self.winfo_exists():
+                    data_handler.stop()
+                    return
                 time.sleep(0.5)
                 if data_handler.received_data:
                     received_data = data_handler.get_stored_data()
-                    self.after(0, lambda: self._update_status(status_key, received_data))
+                    if not self._is_closing and self.winfo_exists():
+                        self.after(0, lambda: self._update_status(status_key, received_data))
                     data_handler.stop()
                     return
                 retries -= 1
-            self.after(0, lambda: self._update_status(status_key, "No data received"))
             data_handler.stop()
+            if device_type == "rfid":
+                # Some RFID readers present as keyboard-wedge HID even when a COM port exists.
+                if not self._is_closing and self.winfo_exists():
+                    self.after(0, lambda: self._update_status(
+                        status_key, "No serial data; switching to HID fallback..."
+                    ))
+                    self.after(0, lambda: self._start_hid_fallback(status_key))
+            elif not self._is_closing and self.winfo_exists():
+                self.after(0, lambda: self._update_status(status_key, "No data received"))
 
         threading.Thread(target=check_for_data, daemon=True).start()
 
     def _update_status(self, status_key, message):
         """Safely update label from background thread."""
-        if status_key in self.reading_labels:
-            self.reading_labels[status_key].configure(
-                text=message, text_color=("#2563eb", "#60a5fa")
-            )
+        if self._is_closing or not self.winfo_exists() or status_key not in self.reading_labels:
+            return
+        label = self.reading_labels[status_key]
+        if not label.winfo_exists():
+            return
+        try:
+            label.configure(text=message, text_color=("#2563eb", "#60a5fa"))
+        except tkinter.TclError:
+            # The widget can be destroyed between the existence check and configure call.
+            return
 
     def _start_hid_fallback(self, status_key):
         """Enable HID keyboard-wedge fallback for RFID testing."""
@@ -216,6 +236,7 @@ class TestScreen(CTkToplevel):
 
     def _on_close(self):
         """Cleanup listeners on window close."""
+        self._is_closing = True
         if self.hid_listener:
             self.hid_listener.stop()
             self.hid_listener = None
