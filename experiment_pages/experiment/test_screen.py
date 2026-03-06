@@ -14,6 +14,7 @@ from customtkinter import (
 )
 from shared.serial_handler import SerialDataHandler
 from shared.serial_port_controller import SerialPortController
+from shared.hid_wedge import HIDWedgeListener
 
 
 class TestScreen(CTkToplevel):
@@ -37,6 +38,8 @@ class TestScreen(CTkToplevel):
         self.geometry(f"700x500+{x}+{y}")
 
         self.reading_labels = {}
+        self.hid_listener = None
+        self.hid_status_key = None
 
         # --- Fonts (cross-platform safe) ---
         default_family = ("Segoe UI", "Inter", "DejaVu Sans", "Sans Serif")
@@ -66,6 +69,7 @@ class TestScreen(CTkToplevel):
         # --- Serial Section ---
         self.device_card = self._create_card("Serial Devices", row=2)
         self.setup_device_section(self.device_card)
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
 
     def _configured_port_for(self, setting_type):
         """Return configured COM/tty port name for a setting type, else None."""
@@ -163,7 +167,11 @@ class TestScreen(CTkToplevel):
         serial_reader = getattr(data_handler, "reader", None)
         serial_port = getattr(serial_reader, "ser", None)
         if serial_port is None:
-            self._update_status(status_key, "Port unavailable/config mismatch")
+            data_handler.stop()
+            if device_type == "rfid":
+                self._start_hid_fallback(status_key)
+            else:
+                self._update_status(status_key, "Port unavailable/config mismatch")
             return
 
         threading.Thread(target=data_handler.start, daemon=True).start()
@@ -189,3 +197,26 @@ class TestScreen(CTkToplevel):
             self.reading_labels[status_key].configure(
                 text=message, text_color=("#2563eb", "#60a5fa")
             )
+
+    def _start_hid_fallback(self, status_key):
+        """Enable HID keyboard-wedge fallback for RFID testing."""
+        if self.hid_listener:
+            self.hid_listener.stop()
+            self.hid_listener = None
+
+        self.hid_status_key = status_key
+        self._update_status(status_key, "HID fallback: scan tag + Enter")
+
+        def on_tag(tag):
+            self._update_status(status_key, f"HID: {tag}")
+
+        self.hid_listener = HIDWedgeListener(self, on_tag=on_tag)
+        self.hid_listener.start()
+        self.focus_force()
+
+    def _on_close(self):
+        """Cleanup listeners on window close."""
+        if self.hid_listener:
+            self.hid_listener.stop()
+            self.hid_listener = None
+        self.destroy()

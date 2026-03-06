@@ -205,6 +205,8 @@ Use this checklist when validating RFID hardware on Windows:
 10. Verify status changes from `Listening...` to received RFID data.
 
 If status shows `No data received`, re-check the selected `COM` port and serial settings.
+If serial RFID is unavailable, Mouser now falls back to HID keyboard-wedge mode:
+scan the tag and press `Enter` to submit the RFID value.
 
 ## Linux 
 1. Download the latest Mouser_Linux build from the project’s GitHub Releases page (if available).

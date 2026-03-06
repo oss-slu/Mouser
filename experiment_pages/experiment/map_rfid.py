@@ -18,6 +18,7 @@ from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
 from shared.tk_models import *
 from shared.serial_port_controller import SerialPortController
 from shared.serial_handler import SerialDataHandler
+from shared.hid_wedge import HIDWedgeListener
 
 from databases.experiment_database import ExperimentDatabase
 from shared.audio import AudioManager
@@ -89,6 +90,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.rfid_reader = None
         self.rfid_stop_event = threading.Event()  # Event to stop RFID listener
         self.rfid_thread = None # Store running thread
+        self.hid_listener = None
+        self.use_hid_fallback = False
 
         # Store the parent reference
         self.parent = parent
@@ -206,10 +209,26 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         print("RFIDs already scanned: ", self.animal_rfid_list)
         self.rfid_stop_event.clear()  # Reset the stop flag
 
+        # Try serial mode first; fallback to HID if serial can't open.
+        self.rfid_reader = SerialDataHandler("reader")
+        serial_reader = getattr(self.rfid_reader, "reader", None)
+        serial_port = getattr(serial_reader, "ser", None)
+        if serial_port is None:
+            try:
+                self.rfid_reader.stop()
+            except Exception:
+                pass
+            self.rfid_reader = None
+            print("⚠️ Serial RFID unavailable. Switching to HID fallback.")
+            self.use_hid_fallback = True
+            self._start_hid_listener()
+            return
+
+        self.use_hid_fallback = False
+        self._stop_hid_listener()
+
         def listen():
             try:
-
-                self.rfid_reader = SerialDataHandler("reader")  # Store reference to close later
                 self.rfid_reader.start()
                 print("🔄 RFID Reader Started!")
 
@@ -224,26 +243,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
                     last_rfid = received_rfid
                     print(f"📡 RFID Scanned: {received_rfid}")
-
-                    # ✅ Clean up garbage chars and whitespace
-                    clean_rfid = received_rfid.strip().replace("\x02", "").replace("\x03", "")
-                    clean_rfid = clean_rfid.strip()
-
-                    if not clean_rfid:
-                        print("⚠️ Empty or invalid RFID detected, skipping...")
-                        continue
-
-                    elif clean_rfid in self.animal_rfid_list:
-                        print(f"⚠️ RFID {clean_rfid} is already in use! Skipping...")
-                        AudioManager.play(ERROR_SOUND)
-                        self.raise_warning("This RFID tag has already been mapped to an animal")
-                        continue  # 🚫 Avoid calling add_value()
-
-                    else:
-                        # If it's a new RFID, process it
-                        self.after(0, lambda: self.add_value(clean_rfid))
-                        self.animal_rfid_list.append(clean_rfid)
-                        AudioManager.play(SUCCESS_SOUND)
+                    self.after(0, lambda value=received_rfid: self._handle_scanned_rfid(value))
 
             except Exception as e:
                 print(f"Error in RFID listener: {e}")
@@ -260,11 +260,10 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
     def stop_listening(self):
         """Stops the RFID listener thread and ensures the serial port is released."""
-        if self.rfid_stop_event.is_set():
-            return  # If already stopped, do nothing
-
         print("⛔ Stopping RFID scanning...")
         self.rfid_stop_event.set()  # Stop the listener loop
+        self._stop_hid_listener()
+        self.use_hid_fallback = False
 
         if self.rfid_thread and self.rfid_thread.is_alive():
             self.rfid_thread.join(timeout=1)  # Ensure the thread fully stops
@@ -280,6 +279,51 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
 
         time.sleep(0.5)  # Allow OS to release the port
+
+    def _start_hid_listener(self):
+        """Start HID keyboard-wedge fallback listener."""
+        self._stop_hid_listener()
+
+        def on_tag(tag):
+            self._handle_scanned_rfid(tag)
+
+        self.hid_listener = HIDWedgeListener(self, on_tag=on_tag)
+        self.hid_listener.start()
+        self.focus_force()
+        FlashOverlay(
+            parent=self,
+            message="HID Fallback Active: Scan tag then press Enter",
+            duration=2000,
+            bg_color="#FDE68A",
+            text_color="black"
+        )
+
+    def _stop_hid_listener(self):
+        """Stop HID keyboard-wedge fallback listener."""
+        if self.hid_listener:
+            self.hid_listener.stop()
+            self.hid_listener = None
+
+    def _handle_scanned_rfid(self, received_rfid):
+        """Handle scanned RFID from serial or HID in one place."""
+        if not received_rfid:
+            return
+
+        clean_rfid = received_rfid.strip().replace("\x02", "").replace("\x03", "")
+        clean_rfid = clean_rfid.strip()
+
+        if not clean_rfid:
+            print("⚠️ Empty or invalid RFID detected, skipping...")
+            return
+
+        if clean_rfid in self.animal_rfid_list:
+            print(f"⚠️ RFID {clean_rfid} is already in use! Skipping...")
+            AudioManager.play(ERROR_SOUND)
+            self.raise_warning("This RFID tag has already been mapped to an animal")
+            return
+
+        self.add_value(clean_rfid)
+        self.animal_rfid_list.append(clean_rfid)
 
     def simulate_all_rfid(self):
         '''Simulates RFID for all remaining unmapped animals.'''
@@ -389,8 +433,20 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         # Save changes
         self.save()
 
-        # If we haven't scanned all animals yet, restart listening
+        # If we haven't scanned all animals yet, restart serial listening.
+        # HID fallback stays active and keeps listening without restart.
         if total_scanned < total_expected:
+            if self.use_hid_fallback:
+                print("⌨️ HID fallback active. Continuing to wait for next tag...")
+                FlashOverlay(
+                    parent=self,
+                    message="Scan Successful!",
+                    duration=1000,
+                    bg_color="#00FF00", #Bright Green
+                    text_color="black"
+                )
+                return
+
             print("🔄 Restarting RFID listening...")
             self.change_entry_text()
             self.save()
