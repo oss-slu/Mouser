@@ -31,11 +31,113 @@ git clone https://github.com/oss-slu/Mouser.git
 # 2. Navigate to project directory
 cd Mouser
 
-# 3. Install dependencies
-pip install -r requirements.txt
+# 3. Create and activate a virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
 
-# 4. Run the application
+# 4. Upgrade packaging tools (recommended)
+python -m pip install --upgrade pip setuptools wheel
+
+# 5. Install dependencies
+python -m pip install -r requirements.txt
+
+# 6. Run the application
 python main.py
+```
+
+#### Windows note (preferred: Python 3.11 in `.venv`)
+
+If your Windows machine has multiple Python versions (for example system `3.14`), use Python `3.11` for this project when available.
+
+```powershell
+cd Mouser
+Remove-Item -Recurse -Force .venv
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r requirements.txt
+python -V
+```
+
+Expected output from the last command: `Python 3.11.x`
+
+If `py -3.11` is not available on your machine, use:
+
+```powershell
+cd Mouser
+Remove-Item -Recurse -Force .venv
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r requirements.txt
+python -V
+```
+
+This only affects the project virtual environment, not your system Python.
+
+When you are done working:
+
+```bash
+deactivate
+```
+
+#### macOS note (PyAudio)
+
+If dependency installation fails on `pyaudio` with `portaudio.h file not found`, install PortAudio first:
+
+```bash
+brew install portaudio
+python -m pip install pyaudio
+```
+
+#### macOS note (Tkinter startup/import errors)
+
+If running `python main.py` fails with either of these:
+- `ModuleNotFoundError: No module named '_tkinter'`
+- `macOS 26 (2603) or later required, have instead 16 (1603) !`
+
+your Python interpreter does not have a working Tk runtime for this app.
+
+Use a Python build with Tk support (Python.org installer or Homebrew `python@3.11` + `python-tk@3.11`), then recreate the virtual environment:
+
+```bash
+cd Mouser
+rm -rf .venv
+
+# Option A: Python.org interpreter (example path)
+/Library/Frameworks/Python.framework/Versions/3.11/bin/python3 -m venv .venv
+
+# Option B: Homebrew interpreter (if installed)
+# /opt/homebrew/bin/python3.11 -m venv .venv
+
+source .venv/bin/activate
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r requirements.txt
+python -c "import tkinter as tk; r=tk.Tk(); r.destroy(); print('tk ok')"
+python main.py
+```
+
+If Homebrew `python3.11` is not installed yet:
+
+```bash
+brew install python@3.11 python-tk@3.11
+```
+
+#### macOS/Linux note (Virtual serial simulation)
+
+The RFID simulator can use virtual serial port pairs:
+
+- **Windows:** `com0com`
+- **macOS/Linux:** `socat` PTY pairs
+
+Install `socat` if you want to use **Run Simulation** without physical hardware:
+
+```bash
+# macOS
+brew install socat
+
+# Ubuntu/Debian
+sudo apt install socat
 ```
 
 ## File Structure
@@ -86,6 +188,23 @@ These executables include all dependencies and do not require Python to be insta
      --add-data "experiment_pages;experiment_pages" \
      --add-data "ui;ui" \
      --name "Mouser"
+
+#### Windows RFID Testing Checklist
+
+Use this checklist when validating RFID hardware on Windows:
+
+1. Connect the RFID reader to your Windows laptop.
+2. Confirm the reader appears in **Device Manager** and note its `COM` port (for example, `COM5`).
+3. Start Mouser.
+4. Open **Settings → Serial Port**.
+5. Select or create a serial configuration matching your reader settings (baud/parity/data bits/stop bits).
+6. Set that configuration as **RFID Reader**.
+7. Open **Settings → Test Serials**.
+8. Click **Test RFID** in the **RFID Readers** card.
+9. Scan a tag/card.
+10. Verify status changes from `Listening...` to received RFID data.
+
+If status shows `No data received`, re-check the selected `COM` port and serial settings.
 
 ## Linux 
 1. Download the latest Mouser_Linux build from the project’s GitHub Releases page (if available).

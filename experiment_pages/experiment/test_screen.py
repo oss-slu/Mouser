@@ -7,23 +7,13 @@ Modernized Test Screen UI.
 - Consistent blue accent theme and adaptive light/dark background
 """
 
-import os
 import time
 import threading
-import tkinter as tk
 from customtkinter import (
     CTkToplevel, CTkFrame, CTkLabel, CTkButton, CTkFont, set_appearance_mode
 )
 from shared.serial_handler import SerialDataHandler
-from shared.tk_models import get_resource_path
-
-
-def _safe_listdir(path: str):
-    """Return directory contents or [] if the path does not exist."""
-    try:
-        return os.listdir(path)
-    except FileNotFoundError:
-        return []
+from shared.serial_port_controller import SerialPortController
 
 
 class TestScreen(CTkToplevel):
@@ -77,6 +67,15 @@ class TestScreen(CTkToplevel):
         self.device_card = self._create_card("Serial Devices", row=2)
         self.setup_device_section(self.device_card)
 
+    def _configured_port_for(self, setting_type):
+        """Return configured COM/tty port name for a setting type, else None."""
+        try:
+            controller = SerialPortController(setting_type)
+            # retrieve_setting stores the configured serial port in reader_port.
+            return controller.reader_port
+        except Exception:
+            return None
+
     # --- Card Builder ---
     def _create_card(self, title, row):
         """Helper: Create consistent card container for each section."""
@@ -100,52 +99,32 @@ class TestScreen(CTkToplevel):
     # --- RFID Section ---
     def setup_rfid_section(self, parent):
         """Create RFID test controls."""
-        preference_dir = get_resource_path(os.path.join("settings", "serial ports", "preference"))
-        entries = _safe_listdir(preference_dir)
-
-        rfid_readers = [
-            d for d in entries
-            if os.path.exists(os.path.join(preference_dir, d, "rfid_config.txt"))
-        ]
-
-        # If none found, still show a default test row so the button is available
-        if not rfid_readers:
+        configured_port = self._configured_port_for("reader")
+        if not configured_port:
             CTkLabel(parent, text="No configured RFID readers found.",
                      font=self.body_font, text_color=("#6b7280", "#a1a1aa")
                      ).grid(row=1, column=0, pady=(4, 6))
-            # Provide a default row to allow testing
             self._create_test_row(parent, com_port="reader", type_label="RFID", row=2)
             return
-
-        for index, com_port in enumerate(rfid_readers, start=1):
-            self._create_test_row(parent, com_port, "RFID", row=index + 1)
+        self._create_test_row(parent, configured_port, "RFID", row=2)
 
     # --- Serial Section ---
     def setup_device_section(self, parent):
         """Create Serial device test controls."""
-        preference_dir = get_resource_path(os.path.join("settings", "serial ports", "preference"))
-        entries = _safe_listdir(preference_dir)
-
-        serial_devices = [
-            d for d in entries
-            if os.path.exists(os.path.join(preference_dir, d, "preferred_config.txt"))
-        ]
-
-        # If none found, still show a default test row so the button is available
-        if not serial_devices:
+        configured_port = self._configured_port_for("device")
+        if not configured_port:
             CTkLabel(parent, text="No configured serial devices found.",
                      font=self.body_font, text_color=("#6b7280", "#a1a1aa")
                      ).grid(row=1, column=0, pady=(4, 6))
-            # Provide a default row to allow testing
             self._create_test_row(parent, com_port="device", type_label="Device", row=2)
             return
-
-        for index, com_port in enumerate(serial_devices, start=1):
-            self._create_test_row(parent, com_port, "Device", row=index + 1)
+        self._create_test_row(parent, configured_port, "Device", row=2)
 
     # --- Test Row Builder ---
     def _create_test_row(self, parent, com_port, type_label, row):
         """Reusable layout for test rows."""
+        device_type = type_label.lower()
+        status_key = f"{device_type}:{com_port}"
         row_frame = CTkFrame(parent, fg_color=("white", "#323232"), corner_radius=12)
         row_frame.grid(row=row, column=0, padx=25, pady=8, sticky="ew")
         row_frame.grid_columnconfigure((0, 1, 2), weight=1)
@@ -165,20 +144,27 @@ class TestScreen(CTkToplevel):
             hover_color="#1e40af",
             font=self.button_font,
             text_color="white",
-            command=lambda: self._run_test(type_label.lower(), com_port)
+            command=lambda: self._run_test(device_type, com_port, status_key)
         ).grid(row=0, column=1, padx=10, pady=5)
 
         # Status label
         status = CTkLabel(row_frame, text="Waiting...", font=self.body_font,
                           text_color=("#6b7280", "#a1a1aa"))
         status.grid(row=0, column=2, sticky="e", padx=10, pady=5)
-        self.reading_labels[com_port] = status
+        self.reading_labels[status_key] = status
 
     # --- Core Logic (unchanged functionality) ---
-    def _run_test(self, device_type, com_port):
+    def _run_test(self, device_type, com_port, status_key):
         """Runs test for RFID or Serial device using threads."""
         print(f"Testing {device_type} on {com_port}...")
         data_handler = SerialDataHandler("reader" if device_type == "rfid" else "device")
+        self._update_status(status_key, "Listening...")
+
+        serial_reader = getattr(data_handler, "reader", None)
+        serial_port = getattr(serial_reader, "ser", None)
+        if serial_port is None:
+            self._update_status(status_key, "Port unavailable/config mismatch")
+            return
 
         threading.Thread(target=data_handler.start, daemon=True).start()
 
@@ -188,17 +174,18 @@ class TestScreen(CTkToplevel):
                 time.sleep(0.5)
                 if data_handler.received_data:
                     received_data = data_handler.get_stored_data()
-                    self.after(0, lambda: self._update_status(com_port, received_data))
+                    self.after(0, lambda: self._update_status(status_key, received_data))
                     data_handler.stop()
                     return
                 retries -= 1
-            self.after(0, lambda: self._update_status(com_port, "No data received"))
+            self.after(0, lambda: self._update_status(status_key, "No data received"))
+            data_handler.stop()
 
         threading.Thread(target=check_for_data, daemon=True).start()
 
-    def _update_status(self, com_port, message):
+    def _update_status(self, status_key, message):
         """Safely update label from background thread."""
-        if com_port in self.reading_labels:
-            self.reading_labels[com_port].configure(
+        if status_key in self.reading_labels:
+            self.reading_labels[status_key].configure(
                 text=message, text_color=("#2563eb", "#60a5fa")
             )

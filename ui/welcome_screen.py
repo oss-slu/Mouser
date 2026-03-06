@@ -55,20 +55,20 @@ def setup_welcome_screen(root, main_frame):
         "text_color": "white",
         "fg_color": "#2563eb",     # Modern blue
         "hover_color": "#1e40af",  # Slightly darker hover
-        "height": 300
+        "height": 72
     }
 
     # --- Buttons (stay centered + expand if resized) ---
     CTkButton(welcome_card, text="New Experiment",
               command=lambda: create_file(root, experiments_frame),
-              **button_style).grid(row=0, column=0, padx=80, pady=15, sticky="nsew")
+              **button_style).grid(row=0, column=0, padx=80, pady=12, sticky="ew")
 
     CTkButton(welcome_card, text="Open Experiment",
               command=lambda: open_file(root, experiments_frame),
-              **button_style).grid(row=1, column=0, padx=80, pady=15, sticky="nsew")
+              **button_style).grid(row=1, column=0, padx=80, pady=12, sticky="ew")
 
     CTkButton(welcome_card, text="Test Serials",
               command=lambda: open_test(root),
-              **button_style).grid(row=2, column=0, padx=80, pady=15, sticky="nsew")
+              **button_style).grid(row=2, column=0, padx=80, pady=12, sticky="ew")
 
     return experiments_frame
