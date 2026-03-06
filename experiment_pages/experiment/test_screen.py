@@ -123,6 +123,8 @@ class TestScreen(CTkToplevel):
     # --- Test Row Builder ---
     def _create_test_row(self, parent, com_port, type_label, row):
         """Reusable layout for test rows."""
+        device_type = type_label.lower()
+        status_key = f"{device_type}:{com_port}"
         row_frame = CTkFrame(parent, fg_color=("white", "#323232"), corner_radius=12)
         row_frame.grid(row=row, column=0, padx=25, pady=8, sticky="ew")
         row_frame.grid_columnconfigure((0, 1, 2), weight=1)
@@ -142,26 +144,26 @@ class TestScreen(CTkToplevel):
             hover_color="#1e40af",
             font=self.button_font,
             text_color="white",
-            command=lambda: self._run_test(type_label.lower(), com_port)
+            command=lambda: self._run_test(device_type, com_port, status_key)
         ).grid(row=0, column=1, padx=10, pady=5)
 
         # Status label
         status = CTkLabel(row_frame, text="Waiting...", font=self.body_font,
                           text_color=("#6b7280", "#a1a1aa"))
         status.grid(row=0, column=2, sticky="e", padx=10, pady=5)
-        self.reading_labels[com_port] = status
+        self.reading_labels[status_key] = status
 
     # --- Core Logic (unchanged functionality) ---
-    def _run_test(self, device_type, com_port):
+    def _run_test(self, device_type, com_port, status_key):
         """Runs test for RFID or Serial device using threads."""
         print(f"Testing {device_type} on {com_port}...")
         data_handler = SerialDataHandler("reader" if device_type == "rfid" else "device")
-        self._update_status(com_port, "Listening...")
+        self._update_status(status_key, "Listening...")
 
         serial_reader = getattr(data_handler, "reader", None)
         serial_port = getattr(serial_reader, "ser", None)
         if serial_port is None:
-            self._update_status(com_port, "Port unavailable/config mismatch")
+            self._update_status(status_key, "Port unavailable/config mismatch")
             return
 
         threading.Thread(target=data_handler.start, daemon=True).start()
@@ -172,18 +174,18 @@ class TestScreen(CTkToplevel):
                 time.sleep(0.5)
                 if data_handler.received_data:
                     received_data = data_handler.get_stored_data()
-                    self.after(0, lambda: self._update_status(com_port, received_data))
+                    self.after(0, lambda: self._update_status(status_key, received_data))
                     data_handler.stop()
                     return
                 retries -= 1
-            self.after(0, lambda: self._update_status(com_port, "No data received"))
+            self.after(0, lambda: self._update_status(status_key, "No data received"))
             data_handler.stop()
 
         threading.Thread(target=check_for_data, daemon=True).start()
 
-    def _update_status(self, com_port, message):
+    def _update_status(self, status_key, message):
         """Safely update label from background thread."""
-        if com_port in self.reading_labels:
-            self.reading_labels[com_port].configure(
+        if status_key in self.reading_labels:
+            self.reading_labels[status_key].configure(
                 text=message, text_color=("#2563eb", "#60a5fa")
             )

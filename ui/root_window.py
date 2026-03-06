@@ -4,7 +4,13 @@ Applies global light/dark/system theme support and platform-specific scaling adj
 """
 import platform
 import tkinter.font as tkFont
-from customtkinter import CTk, set_appearance_mode, set_default_color_theme
+from customtkinter import (
+    CTk,
+    set_appearance_mode,
+    set_default_color_theme,
+    set_widget_scaling,
+    set_window_scaling,
+)
 
 BASE_W, BASE_H = 1000, 720  
 
@@ -19,7 +25,17 @@ def _center_on_screen(root, w, h):
 def create_root_window():
     """Creates and returns the CTk root window with global theming and scaling."""
     # Configure global CTk appearance
-    set_appearance_mode("System")
+    # macOS dark mode can produce low-contrast black-on-black controls in some third-party CTk widgets.
+    # Use Light on macOS for consistent readability; keep System elsewhere.
+    if platform.system() == "Darwin":
+        set_appearance_mode("Light")
+        # Improve readability on high-DPI macOS displays.
+        set_widget_scaling(1.25)
+        set_window_scaling(1.1)
+    else:
+        set_appearance_mode("System")
+        set_widget_scaling(1.0)
+        set_window_scaling(1.0)
     set_default_color_theme("dark-blue")
 
     root = CTk()

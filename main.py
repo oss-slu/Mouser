@@ -42,20 +42,19 @@ if os.path.exists(temp_folder_path):
 # Create root window
 root = create_root_window()
 
-# Window size constants
-MAINWINDOW_WIDTH = 900
-MAINWINDOW_HEIGHT = 600
-
 # Get screen width and height
 screen_width = root.winfo_screenwidth()
 screen_height = root.winfo_screenheight()
 
-# Set root window geometry
-x_pos = int((screen_width - MAINWINDOW_WIDTH) / 2)
-y_pos = int((screen_height - MAINWINDOW_HEIGHT) / 2)
-root.geometry(f"{MAINWINDOW_WIDTH}x{MAINWINDOW_HEIGHT}+{x_pos}+{y_pos}")
+# Set root window geometry (large, readable default)
+main_window_width = max(1200, int(screen_width * 0.92))
+main_window_height = max(760, int(screen_height * 0.90))
+
+x_pos = int((screen_width - main_window_width) / 2)
+y_pos = int((screen_height - main_window_height) / 2)
+root.geometry(f"{main_window_width}x{main_window_height}+{x_pos}+{y_pos}")
 root.title("Mouser")
-root.minsize(MAINWINDOW_WIDTH, MAINWINDOW_HEIGHT)
+root.minsize(1100, 720)
 
 # Main layout setup
 main_frame = MouserPage(root, "Mouser")

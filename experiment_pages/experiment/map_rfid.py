@@ -1,5 +1,9 @@
 '''Map RFID module.'''
 import time
+import platform
+import shutil
+import subprocess
+import re
 from tkinter import Menu
 from tkinter.ttk import Style, Treeview
 import tkinter.font as tkfont
@@ -712,40 +716,117 @@ class SerialSimulator():
         self.parent = parent
         self.serial_controller = SerialPortController()
         self.written_port = None
+        self.socat_process = None
+        self.dynamic_virtual_ports = []
+
+    def _current_virtual_ports(self):
+        """Return discovered virtual ports, including runtime-created socat ports."""
+        ports = self.dynamic_virtual_ports if self.dynamic_virtual_ports else self.serial_controller.get_virtual_port()
+        # Keep order stable and unique
+        return list(dict.fromkeys(ports))
+
+    def _start_socat_pair(self):
+        """Create a PTY pair using socat on macOS/Linux and return two device paths."""
+        if platform.system() == "Windows":
+            return []
+        if shutil.which("socat") is None:
+            return []
+
+        try:
+            self.socat_process = subprocess.Popen(
+                ["socat", "-d", "-d", "pty,raw,echo=0", "pty,raw,echo=0"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            ports = []
+            for _ in range(20):
+                if self.socat_process.stderr is None:
+                    break
+                line = self.socat_process.stderr.readline()
+                if not line:
+                    continue
+                match = re.search(r"/dev/\S+", line)
+                if match:
+                    port = match.group(0)
+                    if port not in ports:
+                        ports.append(port)
+                if len(ports) >= 2:
+                    self.dynamic_virtual_ports = ports[:2]
+                    return self.dynamic_virtual_ports
+        except Exception as e:
+            print(f"Failed to start socat PTY pair: {e}")
+
+        # Cleanup on partial failure
+        self._stop_socat_pair()
+        return []
+
+    def _stop_socat_pair(self):
+        """Terminate socat process if we started one."""
+        if self.socat_process:
+            try:
+                self.socat_process.terminate()
+            except Exception:
+                pass
+            self.socat_process = None
 
     def open(self):
 
         '''Opens the serial simulator dialog.'''
-        if len(self.serial_controller.get_virtual_port()) == 0:
-            warning = CTkMessagebox(title="Warning",
-                                    message="Virtual ports missing, would you like to download the virtual ports?",
-                                    icon="warning",
-                                    option_1="Cancel",
-                                    option_2="Download")
-            if warning.get() == "Download":
-                self.download_link()
+        virtual_ports = self._current_virtual_ports()
+        if len(virtual_ports) == 0:
+            if platform.system() in ("Darwin", "Linux"):
+                warning = CTkMessagebox(
+                    title="Warning",
+                    message="No virtual serial ports detected. Create a temporary pair now?",
+                    icon="warning",
+                    option_1="Cancel",
+                    option_2="Create"
+                )
+                if warning.get() == "Create":
+                    virtual_ports = self._start_socat_pair()
+                    if len(virtual_ports) < 2:
+                        CTkMessagebox(
+                            title="Error",
+                            message="Unable to create virtual ports. Install socat and try again.",
+                            icon="cancel"
+                        )
+                        return
+                else:
+                    return
+            else:
+                warning = CTkMessagebox(title="Warning",
+                                        message="Virtual ports missing, would you like to download the virtual ports?",
+                                        icon="warning",
+                                        option_1="Cancel",
+                                        option_2="Download")
+                if warning.get() == "Download":
+                    self.download_link()
+                return
 
-        else:
-            self.root = CTkToplevel(self.parent)
-            self.root.title("Serial Port Selection")
-            self.root.geometry('400x400')
+        if len(virtual_ports) < 2:
+            return
 
-            self.read_message = CTkTextbox(self.root, height=15, width = 40)
-            self.read_message.place(relx=0.10, rely = 0.00)
+        self.root = CTkToplevel(self.parent)
+        self.root.title("Serial Port Selection")
+        self.root.geometry('400x400')
 
-            self.drop_down_ports = CTkComboBox(self.root, values=self.serial_controller.get_virtual_port())
-            self.drop_down_ports.place(relx=0.30, rely = 0.88)
+        self.read_message = CTkTextbox(self.root, height=15, width = 40)
+        self.read_message.place(relx=0.10, rely = 0.00)
 
-            self.comfirm_port = CTkButton(self.root, text="confirm port", width=15,
-                                        command=self.set_written_port)
-            self.comfirm_port.place(relx=0.80, rely=0.900, anchor=CENTER)
+        self.drop_down_ports = CTkComboBox(self.root, values=virtual_ports)
+        self.drop_down_ports.place(relx=0.30, rely = 0.88)
 
-            self.input_entry = CTkEntry(self.root, width=140)
-            self.input_entry.place(relx=0.50, rely=0.80, anchor=CENTER)
+        self.comfirm_port = CTkButton(self.root, text="confirm port", width=15,
+                                    command=self.set_written_port)
+        self.comfirm_port.place(relx=0.80, rely=0.900, anchor=CENTER)
 
-            self.sent_button = CTkButton(self.root, text = "sent", width = 15, command=self.sent)
-            self.sent_button.place(relx=0.80, rely = 0.80, anchor=CENTER)
-            self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.input_entry = CTkEntry(self.root, width=140)
+        self.input_entry.place(relx=0.50, rely=0.80, anchor=CENTER)
+
+        self.sent_button = CTkButton(self.root, text = "sent", width = 15, command=self.sent)
+        self.sent_button.place(relx=0.80, rely = 0.80, anchor=CENTER)
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def sent(self):
         '''Writes to the appropriate port.'''
@@ -761,15 +842,20 @@ class SerialSimulator():
         '''Sets up virtual ports.'''
         self.serial_controller.set_writer_port(self.written_port)
 
-        available_port = self.serial_controller.get_virtual_port()
-        available_port.remove(self.written_port)
+        available_port = self._current_virtual_ports()
+        if self.written_port in available_port:
+            available_port.remove(self.written_port)
+
+        if not available_port:
+            raise serialutil.SerialException("No paired virtual port available.")
 
         self.serial_controller.set_reader_port(available_port[0])
 
     def read_and_display(self):
         '''Reads from available port.'''
-        available_port = self.serial_controller.get_virtual_port()
-        available_port.remove(self.written_port)
+        available_port = self._current_virtual_ports()
+        if self.written_port in available_port:
+            available_port.remove(self.written_port)
 
         if len(available_port)==0:
             CTkMessagebox(
@@ -780,7 +866,8 @@ class SerialSimulator():
 
         else:
             message = self.serial_controller.read_info()
-            self.read_message.insert(END,message)
+            if message is not None:
+                self.read_message.insert(END, str(message))
 
     def check_written_port(self):
         '''Returns if writting port is available.'''
@@ -800,11 +887,16 @@ class SerialSimulator():
 
     def download_link(self):
         '''Opens download lint in webbrowser.'''
-        webbrowser.open("https://softradar.com/com0com/")
+        if platform.system() == "Windows":
+            webbrowser.open("https://softradar.com/com0com/")
+        else:
+            webbrowser.open("https://man7.org/linux/man-pages/man1/socat.1.html")
 
     def on_closing(self):
         '''Closes all ports and closes the window.'''
         self.serial_controller.close_all_port()
+        self._stop_socat_pair()
+        self.dynamic_virtual_ports = []
         self.written_port = None
         self.root.destroy()
 
