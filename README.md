@@ -60,19 +60,26 @@ brew install portaudio
 python -m pip install pyaudio
 ```
 
-#### macOS note (Tkinter abort on startup)
+#### macOS note (Tkinter startup/import errors)
 
-If running `python main.py` aborts with a message like:
-`macOS 26 (2603) or later required, have instead 16 (1603) !`
-this is caused by Apple Command Line Tools Python (`/usr/bin/python3`) and its Tk runtime.
+If running `python main.py` fails with either of these:
+- `ModuleNotFoundError: No module named '_tkinter'`
+- `macOS 26 (2603) or later required, have instead 16 (1603) !`
 
-Use a Python.org installer build (recommended on macOS for stable Tk support), then recreate the virtual environment:
+your Python interpreter does not have a working Tk runtime for this app.
+
+Use a Python build with Tk support (Python.org installer or Homebrew `python@3.11` + `python-tk@3.11`), then recreate the virtual environment:
 
 ```bash
 cd Mouser
 rm -rf .venv
-# Replace this path with the Python.org interpreter you installed
+
+# Option A: Python.org interpreter (example path)
 /Library/Frameworks/Python.framework/Versions/3.11/bin/python3 -m venv .venv
+
+# Option B: Homebrew interpreter (if installed)
+# /opt/homebrew/bin/python3.11 -m venv .venv
+
 source .venv/bin/activate
 python -m pip install --upgrade pip setuptools wheel
 python -m pip install -r requirements.txt
@@ -80,11 +87,10 @@ python -c "import tkinter as tk; r=tk.Tk(); r.destroy(); print('tk ok')"
 python main.py
 ```
 
-If you still prefer Homebrew Python, avoid bottles for Tk and build from source instead:
+If Homebrew `python3.11` is not installed yet:
 
 ```bash
-brew uninstall python-tk@3.11 tcl-tk@8
-brew install --build-from-source tcl-tk@8 python-tk@3.11
+brew install python@3.11 python-tk@3.11
 ```
 
 ## File Structure
