@@ -45,9 +45,9 @@ python -m pip install -r requirements.txt
 python main.py
 ```
 
-#### Windows note (Use Python 3.11 in `.venv`)
+#### Windows note (preferred: Python 3.11 in `.venv`)
 
-If your Windows machine has multiple Python versions (for example system `3.14`), create the project venv with `3.11` explicitly:
+If your Windows machine has multiple Python versions (for example system `3.14`), use Python `3.11` for this project when available.
 
 ```powershell
 cd Mouser
@@ -60,6 +60,18 @@ python -V
 ```
 
 Expected output from the last command: `Python 3.11.x`
+
+If `py -3.11` is not available on your machine, use:
+
+```powershell
+cd Mouser
+Remove-Item -Recurse -Force .venv
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r requirements.txt
+python -V
+```
 
 This only affects the project virtual environment, not your system Python.
 
