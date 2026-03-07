@@ -258,7 +258,8 @@ class SerialPortController():
             setting_file = "preferred_config.txt"
             setting_folder = "device"
         else:
-            print("Invalid setting type. Must be 'reader' or 'device'.")
+            if setting_type is not None:
+                print("Invalid setting type. Must be 'reader' or 'device'.")
             return
 
         # Build the full path to the preference file using the already-resolved.

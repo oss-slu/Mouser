@@ -14,11 +14,22 @@ from experiment_pages.create_experiment.summary_ui import SummaryUI
 class GroupConfigUI(MouserPage):
     '''Group Configuration user interface (preserves all logic).'''
 
-    def __init__(self, experiment: Experiment, parent: CTk, prev_page: CTkFrame, menu_page: CTkFrame):
-        super().__init__(parent, "New Experiment - Group Configuration", prev_page)
+    def __init__(
+        self,
+        experiment: Experiment,
+        parent: CTk,
+        prev_page: CTkFrame,
+        menu_page: CTkFrame,
+        edit_mode: bool = False,
+        save_callback=None,
+    ):
+        title = "Experiment - Group Configuration" if edit_mode else "New Experiment - Group Configuration"
+        super().__init__(parent, title, prev_page)
         self.experiment = experiment
         self.menu_page = menu_page
         self.next_button = None
+        self.edit_mode = edit_mode
+        self.save_callback = save_callback
 
         # ----------------------------
         # Top Navigation Buttons
@@ -35,15 +46,18 @@ class GroupConfigUI(MouserPage):
             )
             self.menu_button.place_configure(relx=0.05, rely=0.13, anchor="w")
 
-        # Set next page (Summary)
-        self.next_page = SummaryUI(self.experiment, parent, self, menu_page)
-        self.create_next_button()
+        if self.edit_mode:
+            self.create_save_button()
+        else:
+            # Set next page (Summary) for new experiment flow
+            self.next_page = SummaryUI(self.experiment, parent, self, menu_page)
+            self.create_next_button()
 
         # ----------------------------
         # Scrollable Content Area
         # ----------------------------
         scroll_canvas = ScrolledFrame(self)
-        scroll_canvas.place(relx=0.5, rely=0.58, relheight=0.7, relwidth=0.9, anchor="center")
+        scroll_canvas.place(relx=0.5, rely=0.60, relheight=0.76, relwidth=0.92, anchor="center")
 
         # --- Main container card ---
         self.main_frame = CTkFrame(
@@ -101,6 +115,25 @@ class GroupConfigUI(MouserPage):
         )
         self.next_button.place_configure(relx=0.93, rely=0.13, anchor="e")
 
+    def create_save_button(self):
+        """Creates a Save & Return button for existing experiment edit flow."""
+        if self.next_button:
+            self.next_button.destroy()
+
+        self.next_button = CTkButton(
+            self,
+            text="Save & Return",
+            corner_radius=12,
+            height=50,
+            width=180,
+            font=("Segoe UI Semibold", 18),
+            text_color="white",
+            fg_color="#2563eb",
+            hover_color="#1e40af",
+            command=lambda: [self.save_experiment(), self.menu_page.raise_frame()],
+        )
+        self.next_button.place_configure(relx=0.93, rely=0.13, anchor="e")
+
     # ------------------------------------------------------------
     # Core Functionality
     # ------------------------------------------------------------
@@ -113,9 +146,12 @@ class GroupConfigUI(MouserPage):
         ).grid(row=0, column=0, padx=10, pady=10, sticky=W)
 
         self.group_input = []
+        existing_names = self.experiment.get_group_names() if hasattr(self.experiment, "get_group_names") else []
         for i in range(num):
             entry = CTkEntry(self.group_frame, width=220, font=("Segoe UI", 16))
             entry.grid(row=i + 1, column=0, padx=10, pady=8)
+            if i < len(existing_names):
+                entry.insert(0, str(existing_names[i]))
             self.group_input.append(entry)
 
     def create_item_frame(self, item):
@@ -179,4 +215,7 @@ class GroupConfigUI(MouserPage):
         group_names = [entry.get().strip() for entry in self.group_input if entry.get().strip()]
         self.experiment.group_names = group_names
         self.experiment.data_collect_type = 1 if self.button_vars[0].get() else 0
-        self.next_page.update_page()
+        if callable(self.save_callback):
+            self.save_callback(self.experiment)
+        if hasattr(self, "next_page") and self.next_page is not None:
+            self.next_page.update_page()

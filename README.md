@@ -19,10 +19,45 @@ By integrating with lab equipment such as balances, calipers, and RFID chip read
 
 #### Machine Requirements
 
-- **Python:** Version 3.9 or newer  
+- **Python:** Version 3.11  
 - **Operating Systems:** Best supported on Windows; compatible with macOS and Linux (minor UI differences)
 
-#### Installation Steps
+#### Setup (Windows)
+
+```powershell
+# 1. Clone the repository
+git clone https://github.com/oss-slu/Mouser.git
+
+# 2. Navigate to project directory
+cd Mouser
+
+# 3. Create and activate a virtual environment
+Remove-Item -Recurse -Force .venv
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+# 4. Upgrade packaging tools (recommended)
+python -m pip install --upgrade pip setuptools wheel
+
+# 5. Install dependencies
+python -m pip install -r requirements.txt
+
+# 6. Verify Python version in venv
+python -V
+
+# 7. Run the application
+python main.py
+```
+
+Expected output from `python -V`: `Python 3.11.x`
+
+When you are done working:
+
+```bash
+deactivate
+```
+
+#### Setup (macOS/Linux)
 
 ```bash
 # 1. Clone the repository
@@ -31,8 +66,9 @@ git clone https://github.com/oss-slu/Mouser.git
 # 2. Navigate to project directory
 cd Mouser
 
-# 3. Create and activate a virtual environment
-python3 -m venv .venv
+# 3. Create and activate a virtual environment with Python 3.11
+rm -rf .venv
+python3.11 -m venv .venv
 source .venv/bin/activate
 
 # 4. Upgrade packaging tools (recommended)
@@ -41,45 +77,14 @@ python -m pip install --upgrade pip setuptools wheel
 # 5. Install dependencies
 python -m pip install -r requirements.txt
 
-# 6. Run the application
+# 6. Verify Python version in venv
+python -V
+
+# 7. Run the application
 python main.py
 ```
 
-#### Windows note (preferred: Python 3.11 in `.venv`)
-
-If your Windows machine has multiple Python versions (for example system `3.14`), use Python `3.11` for this project when available.
-
-```powershell
-cd Mouser
-Remove-Item -Recurse -Force .venv
-py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip setuptools wheel
-python -m pip install -r requirements.txt
-python -V
-```
-
-Expected output from the last command: `Python 3.11.x`
-
-If `py -3.11` is not available on your machine, use:
-
-```powershell
-cd Mouser
-Remove-Item -Recurse -Force .venv
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip setuptools wheel
-python -m pip install -r requirements.txt
-python -V
-```
-
-This only affects the project virtual environment, not your system Python.
-
-When you are done working:
-
-```bash
-deactivate
-```
+Expected output from `python -V`: `Python 3.11.x`
 
 #### macOS note (PyAudio)
 
@@ -104,11 +109,12 @@ Use a Python build with Tk support (Python.org installer or Homebrew `python@3.1
 cd Mouser
 rm -rf .venv
 
-# Option A: Python.org interpreter (example path)
-/Library/Frameworks/Python.framework/Versions/3.11/bin/python3 -m venv .venv
+# Preferred: simple command (same style as Windows `py -3.11`)
+python3.11 -m venv .venv
 
-# Option B: Homebrew interpreter (if installed)
-# /opt/homebrew/bin/python3.11 -m venv .venv
+# If that command is not found, install Python 3.11 first (below),
+# then retry. You can verify with:
+# python3.11 --version
 
 source .venv/bin/activate
 python -m pip install --upgrade pip setuptools wheel
@@ -205,6 +211,8 @@ Use this checklist when validating RFID hardware on Windows:
 10. Verify status changes from `Listening...` to received RFID data.
 
 If status shows `No data received`, re-check the selected `COM` port and serial settings.
+If serial RFID is unavailable, Mouser now falls back to HID keyboard-wedge mode:
+scan the tag and press `Enter` to submit the RFID value.
 
 ## Linux 
 1. Download the latest Mouser_Linux build from the project’s GitHub Releases page (if available).
