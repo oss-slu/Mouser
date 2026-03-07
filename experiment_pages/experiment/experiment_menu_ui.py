@@ -8,6 +8,7 @@ Modernized Experiment Menu UI.
 
 import sqlite3
 import os
+import platform
 from tkinter import messagebox
 
 from customtkinter import CTkFrame, CTkButton, CTkFont, CTkScrollableFrame
@@ -20,6 +21,16 @@ from shared.tk_models import MouserPage  # pylint: disable=import-error
 
 class ExperimentMenuUI(MouserPage):
     """Provides navigation options for the selected experiment."""
+
+    @staticmethod
+    def _menu_button_metrics():
+        """Tune button size by OS to keep visual proportions consistent."""
+        system = platform.system()
+        if system == "Darwin":
+            return {"font_size": 22, "height": 58, "width": 520}
+        if system == "Windows":
+            return {"font_size": 18, "height": 50, "width": 470}
+        return {"font_size": 17, "height": 48, "width": 450}
 
     def __init__(self, root, file_path, menu_page=None):
         super().__init__(root, "Experiment Menu", menu_page)
@@ -69,11 +80,12 @@ class ExperimentMenuUI(MouserPage):
         menu_scroll.pack(fill="both", expand=True, padx=16, pady=16)
         menu_scroll.grid_columnconfigure(0, weight=1)
 
-        button_font = CTkFont("Segoe UI Semibold", 22)
+        metrics = self._menu_button_metrics()
+        button_font = CTkFont("Segoe UI Semibold", metrics["font_size"])
         button_style = {
             "corner_radius": 12,
-            "height": 58,
-            "width": 520,
+            "height": metrics["height"],
+            "width": metrics["width"],
             "font": button_font,
             "text_color": "white",
             "fg_color": "#2563eb",
@@ -146,14 +158,6 @@ class ExperimentMenuUI(MouserPage):
             **delete_style,
         )
         self.delete_button.grid(row=7, column=0, padx=14, pady=10, sticky="ew")
-
-        self.back_button = CTkButton(
-            menu_scroll,
-            text="Back to Welcome Screen",
-            command=self.back_to_welcome,
-            **button_style,
-        )
-        self.back_button.grid(row=8, column=0, padx=14, pady=(18, 20), sticky="ew")
 
         self.disable_buttons_if_needed()
 
