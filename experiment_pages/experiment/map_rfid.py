@@ -86,6 +86,19 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
     def __init__(self, database, parent: CTk, previous_page: CTkFrame = None, file_path = ""):
 
         super().__init__(parent, "Map RFID", previous_page)
+        ui = get_ui_metrics()
+        self._ui = ui
+        action_button_font = CTkFont("Segoe UI Semibold", ui["nav_font_size"])
+        self._active_button_style = {
+            "fg_color": "#2563eb",
+            "hover_color": "#1e40af",
+            "text_color": "white",
+        }
+        self._inactive_button_style = {
+            "fg_color": "#93c5fd",
+            "hover_color": "#93c5fd",
+            "text_color": "#e5e7eb",
+        }
 
         self.rfid_reader = None
         self.rfid_stop_event = threading.Event()  # Event to stop RFID listener
@@ -110,16 +123,30 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         # Simulate All RFID Button
         simulate_all_rfid_button = CTkButton(self, text="Simulate ALL RFID", compound=TOP,
-                                      width=250, height=75, font=("Georgia", 65), command=self.simulate_all_rfid)
+                                      width=ui["action_width"], height=ui["action_height"],
+                                      font=action_button_font, command=self.simulate_all_rfid)
         simulate_all_rfid_button.place(relx=0.80, rely=0.15, anchor=CENTER)
+        self._set_button_enabled(simulate_all_rfid_button, True)
 
 
 
         self.start_rfid = CTkButton(self, text="Start Scanning", compound=TOP,
-                                         width=250, height=75, font=("Georgia", 65), command=self.rfid_listen)
+                                         width=ui["action_width"], height=ui["action_height"],
+                                         font=action_button_font, command=self.rfid_listen)
         self.start_rfid.place(relx=0.45, rely=0.15, anchor=CENTER)
         if self.db.experiment_uses_rfid() == 0:
             self.start_rfid.configure(state="disabled")
+            self._set_button_enabled(self.start_rfid, False)
+        else:
+            self._set_button_enabled(self.start_rfid, True)
+
+        self.reader_status_label = CTkLabel(
+            self,
+            text="Reader Status: Idle",
+            font=("Arial", max(14, ui["label_font_size"])),
+            text_color=("#1f2937", "#d1d5db")
+        )
+        self.reader_status_label.place(relx=0.50, rely=0.26, anchor=CENTER)
 
         self.table_frame = CTkFrame(self)
         self.table_frame.place(relx=0.15, rely=0.30, relheight=0.40, relwidth=0.80)
@@ -129,7 +156,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.file_path = file_path
 
         heading_style = Style()
-        heading_style.configure("Treeview.Heading", font=('Arial', 10))
+        heading_style.configure("Treeview.Heading", font=('Arial', ui["table_font_size"]))
 
         columns = ('animal_id', 'rfid')
         self.table = Treeview(
@@ -137,6 +164,10 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         self.table.heading('animal_id', text='Animal ID')
         self.table.heading('rfid', text='RFID')
+        self.table.column('animal_id', anchor='center')
+        self.table.column('rfid', anchor='center')
+        self.table.heading('animal_id', anchor='center')
+        self.table.heading('rfid', anchor='center')
 
         self.table.grid(row=0, column=0, sticky='nsew')
         self.table.grid_columnconfigure(0, weight = 1)
@@ -155,19 +186,25 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.table.bind("<Button-3>", self.right_click_menu)
 
         self.delete_button = CTkButton(self, text="Remove Selection(s)", compound=TOP,
-                                       width=250, height=75, font=("Georgia", 65), command=self.remove_selected_items,
+                                       width=ui["action_width"], height=ui["action_height"],
+                                       font=action_button_font, command=self.remove_selected_items,
                                        state="normal")  # Initialize button as disabled
         self.delete_button.place(relx=0.45, rely=0.80, anchor=CENTER)
+        self._set_button_enabled(self.delete_button, True)
 
         # Add Sacrifice button with normal state
         self.sacrifice_button = CTkButton(self, text="Sacrifice Selected", compound=TOP,
-                                      width=250, height=75, font=("Georgia", 65), command=self.sacrifice_selected_items,
+                                      width=ui["action_width"], height=ui["action_height"],
+                                      font=action_button_font, command=self.sacrifice_selected_items,
                                       state="normal")  # Initialize as enabled
         self.sacrifice_button.place(relx=0.80, rely=0.80, anchor=CENTER)
+        self._set_button_enabled(self.sacrifice_button, True)
 
         self.stop_scanning_button = CTkButton(self, text="Stop Listening", compound=TOP,
-                                  width=250, height=75, font=("Georgia", 65), command=self.stop_listening)
+                                  width=ui["action_width"], height=ui["action_height"],
+                                  font=action_button_font, command=self.stop_listening)
         self.stop_scanning_button.place(relx=0.10, rely=0.80, anchor=CENTER)
+        self._set_button_enabled(self.stop_scanning_button, True)
 
         self.item_selected(None)
 
@@ -175,7 +212,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         for animal in animals_setup:
             rfid = self.db.get_animal_rfid(animal)
             value = (int(animal), rfid)
-            self.table.tag_configure('text_font', font=('Arial', 25))
+            self.table.tag_configure('text_font', font=('Arial', ui["table_font_size"]))
             self.table.insert('', END, values=value, tags='text_font')
             self.animals.append(value)
             self.animal_id_entry_text.set(animal)
@@ -187,9 +224,28 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         self.menu_button.configure(command = self.press_back_to_menu_button)
         self.scroll_to_latest_entry()
+        if self.db.experiment_uses_rfid() == 0:
+            self.set_reader_status("RFID disabled for this experiment.")
+
+    def set_reader_status(self, status_text):
+        """Update reader status text safely on the UI thread."""
+        def _update():
+            if hasattr(self, "reader_status_label") and self.reader_status_label.winfo_exists():
+                self.reader_status_label.configure(text=f"Reader Status: {status_text}")
+
+        if self.winfo_exists():
+            self.after(0, _update)
+
+    def _set_button_enabled(self, button, enabled):
+        """Apply enabled/disabled visual style while preserving behavior."""
+        if enabled:
+            button.configure(state="normal", **self._active_button_style)
+        else:
+            button.configure(state="disabled", **self._inactive_button_style)
 
     def rfid_listen(self):
         """Starts RFID listener, ensuring the previous session is fully closed before restarting."""
+        self.set_reader_status("Starting scanner...")
 
         # Ensure old listener is properly stopped before starting a new one
         if self.rfid_thread and self.rfid_thread.is_alive():
@@ -222,6 +278,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         self.use_hid_fallback = False
         self._start_hid_listener(show_flash=False)
+        self.set_reader_status("Started scanning.")
 
         def listen():
             try:
@@ -270,6 +327,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
     def stop_listening(self):
         """Stops the RFID listener thread and ensures the serial port is released."""
         print("⛔ Stopping RFID scanning...")
+        self.set_reader_status("Stopping scanner...")
         self.rfid_stop_event.set()  # Stop the listener loop
         self._stop_hid_listener()
         self.use_hid_fallback = False
@@ -288,11 +346,17 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
 
         time.sleep(0.5)  # Allow OS to release the port
+        self.set_reader_status("Stopped listening.")
 
     def _switch_to_hid_fallback(self, reason=""):
         """Stop serial reading and switch to HID fallback mode."""
         if reason:
             print(f"⚠️ {reason} Switching to HID fallback.")
+
+        if reason:
+            self.set_reader_status(f"{reason} HID fallback active.")
+        else:
+            self.set_reader_status("HID fallback active.")
 
         if self.rfid_reader:
             try:
@@ -315,6 +379,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.hid_listener = HIDWedgeListener(self, on_tag=on_tag, capture_all=True)
         self.hid_listener.start()
         self.parent.focus_force()
+        self.set_reader_status("HID fallback active. Scan tag + Enter.")
         if show_flash:
             FlashOverlay(
                 parent=self,
@@ -347,6 +412,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             return
         self._recent_tag = clean_rfid
         self._recent_tag_time = now
+        self.set_reader_status(f"Tag detected: {clean_rfid}")
 
         if clean_rfid in self.animal_rfid_list:
             print(f"⚠️ RFID {clean_rfid} is already in use! Skipping...")
@@ -365,6 +431,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             option_2="Yes"
         )
         if confirm.get() == "Yes":
+            self.set_reader_status("Simulating RFID mapping...")
             total_needed = self.db.get_total_number_animals()
             current_count = len(self.db.get_animals())
 
@@ -387,6 +454,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
             self.save()
             AudioManager.play(SUCCESS_SOUND)
+            self.set_reader_status("Simulation complete.")
 
 
     def scroll_to_latest_entry(self):
@@ -454,9 +522,10 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             print("🎉 All animals have been mapped to RFIDs! RFID scanning completed.")
             print("RFIDs scanned: ", self.db.get_all_animals_rfid())
             self.save()
+            AudioManager.play(SUCCESS_SOUND)
             FlashOverlay(
                 parent=self,
-                message="All RFIDs Scanned!",
+                message="Scan successful! All RFIDs scanned.",
                 duration=4000,
                 bg_color="#FFF700", #Yellow to indicate completion
                 text_color="black"
@@ -492,9 +561,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         print("Selection ", selected, " changed.")
 
         enable_button = len(selected) > 0
-        state = "normal" if enable_button else "disabled"
-        self.delete_button.configure(state=state)
-        self.sacrifice_button.configure(state=state)
+        self._set_button_enabled(self.delete_button, enable_button)
+        self._set_button_enabled(self.sacrifice_button, enable_button)
 
     def remove_selected_items(self):
         '''Removes the selected item from a table, warning if none selected.'''
@@ -518,6 +586,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         self.save()
         self.change_entry_text()
+        self.set_reader_status("Removed selected mapping(s).")
 
     def change_entry_text(self):
         '''Changes entry text for the table.'''
@@ -591,7 +660,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         for animal in animals_setup:
             rfid = self.db.get_animal_rfid(animal)
             value = (int(animal), rfid)
-            self.table.tag_configure('text_font', font=('Arial', 25))
+            self.table.tag_configure('text_font', font=('Arial', self._ui["table_font_size"]))
             self.table.insert('', END, values=value, tags='text_font')
             self.animals.append(value)
 
@@ -696,6 +765,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         # Lastly, commit and save changes (After all animals sacrificed)
         self.save()
         self.change_entry_text()
+        self.set_reader_status("Updated sacrificed animal selection.")
 
 class SerialPortSelection():
     '''Serial port selection user interface.'''

@@ -1,5 +1,6 @@
 '''Data collection ui module.'''
 from datetime import date
+import re
 from tkinter.ttk import Treeview, Style
 import time
 from customtkinter import *
@@ -8,7 +9,6 @@ from CTkMessagebox import CTkMessagebox
 from databases.experiment_database import ExperimentDatabase
 from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
 from shared.audio import AudioManager
-from shared.scrollable_frame import ScrolledFrame
 from shared.serial_handler import SerialDataHandler
 from shared.file_utils import save_temp_to_file
 import threading
@@ -21,12 +21,17 @@ class DataCollectionUI(MouserPage):
     def __init__(self, parent: CTk, prev_page: CTkFrame = None, database_name = "", file_path = ""):
 
         super().__init__(parent, "Data Collection", prev_page)
+        ui = get_ui_metrics()
+        self._ui = ui
+        action_button_font = CTkFont("Segoe UI Semibold", ui["action_font_size"])
+        table_font_size = ui["table_font_size"]
 
         self.parent = parent
 
         self.rfid_reader = None
         self.rfid_stop_event = threading.Event()  # Event to stop RFID listener
         self.rfid_thread = None # Store running thread
+        self._measurement_in_progress = False
 
         self.current_file_path = file_path
         self.menu_page = prev_page
@@ -85,17 +90,19 @@ class DataCollectionUI(MouserPage):
 
         if self.database.experiment_uses_rfid() == 0:
             start_function = self.auto_increment
+            start_button_text = "Start"
         else:
             start_function = self.rfid_listen
+            start_button_text = "Start Scanning"
 
 
 
 
         self.auto_increment_button = CTkButton(self,
-                                               text="Start",
+                                               text=start_button_text,
                                                compound=TOP,
-                                               width=250, height=75,
-                                               font=("Georgia", 65),
+                                               width=ui["action_width"], height=ui["action_height"],
+                                               font=action_button_font,
                                                command= start_function)
         self.auto_increment_button.place(relx=0.35, rely=0.30, anchor=CENTER)
         self.auto_inc_id = -1
@@ -103,14 +110,31 @@ class DataCollectionUI(MouserPage):
         self.stop_button = CTkButton(self,
                                      text="Stop Listening",
                                      compound=TOP,
-                                     width=250, height=75,
-                                     font=("Georgia", 65),
+                                     width=ui["action_width"], height=ui["action_height"],
+                                     font=action_button_font,
                                      command= self.stop_listening)
         self.stop_button.place(relx=0.55, rely=0.30, anchor=CENTER)
+        self.stop_button.configure(state="disabled")
+
+        self.status_label = CTkLabel(
+            self,
+            text="Status: Idle",
+            font=("Arial", max(14, ui["label_font_size"])),
+            text_color=("#1f2937", "#d1d5db"),
+        )
+        self.status_label.place(relx=0.5, rely=0.39, anchor=CENTER)
 
         self.animals = self.database.get_animals()
-        self.table_frame = ScrolledFrame(self)
-        self.table_frame.place(relx=0.50, rely=0.65, anchor=CENTER)
+        self.table_frame = CTkFrame(
+            self,
+            fg_color=("white", "#27272a"),
+            corner_radius=14,
+            border_width=1,
+            border_color="#d1d5db",
+        )
+        self.table_frame.place(relx=0.50, rely=0.66, relheight=0.44, relwidth=0.55, anchor=CENTER)
+        self.table_frame.grid_columnconfigure(0, weight=1)
+        self.table_frame.grid_rowconfigure(0, weight=1)
 
 
 
@@ -122,12 +146,14 @@ class DataCollectionUI(MouserPage):
         self.table = Treeview(self.table_frame,
                               columns=columns, show='headings',
                               selectmode="browse",
-                              height=len(self.animals))
+                              height=max(len(self.animals), 10),
+                              style="DataCollection.Treeview")
 
         # Set up the column headings
         style = Style()
-        style.configure("Treeview", font=("Arial", 25), rowheight=40)
-        style.configure("Treeview.Heading", font=("Arial", 25))
+        style.configure("DataCollection.Treeview", font=("Arial", table_font_size), rowheight=ui["table_row_height"] + 4)
+        style.configure("DataCollection.Treeview.Heading", font=("Arial", table_font_size, "bold"))
+        style.map("DataCollection.Treeview", background=[("selected", "#bfdbfe")], foreground=[("selected", "#111827")])
 
         for i, column in enumerate(columns):
 
@@ -138,10 +164,14 @@ class DataCollectionUI(MouserPage):
 
             print(f"Setting heading for column: {column} with text: {text}")  # Debugging line
             if text:  # Only set heading if text is not empty
-                self.table.heading(column, text=text)
+                self.table.heading(column, text=text, anchor="center")
+            self.table.column(column, anchor="center", width=220, stretch=True)
 
         # Add the table to the grid
         self.table.grid(row=0, column=0, sticky='nsew')
+        table_scroll = CTkScrollbar(self.table_frame, orientation=VERTICAL, command=self.table.yview)
+        self.table.configure(yscrollcommand=table_scroll.set)
+        table_scroll.grid(row=0, column=1, sticky='ns')
 
         self.date_label = CTkLabel(self)
 
@@ -155,6 +185,7 @@ class DataCollectionUI(MouserPage):
         self.get_values_for_date()
 
         self.table.bind('<<TreeviewSelect>>', self.item_selected)
+        self.table.bind("<Double-1>", self._open_selected_for_edit)
 
         self.changer = ChangeMeasurementsDialog(parent, self, self.measurement_strings)
 
@@ -170,10 +201,23 @@ class DataCollectionUI(MouserPage):
     def item_selected(self, _):
         '''On item selection.
 
-        Records the value selected and opens the changer frame.'''
+        Records the currently selected table row.'''
         self.auto_inc_id = -1
-        self.changing_value = self.table.selection()[0]
-        self.open_changer()
+        selected = self.table.selection()
+        if selected:
+            self.changing_value = selected[0]
+
+    def _open_selected_for_edit(self, _):
+        """Open the edit dialog for the currently selected row."""
+        selected = self.table.selection()
+        if selected:
+            self.changing_value = selected[0]
+            self.open_changer()
+
+    def set_status(self, text):
+        """Update collection status line."""
+        if self.winfo_exists():
+            self.after(0, lambda: self.status_label.configure(text=f"Status: {text}"))
 
     def open_changer(self):
         '''Opens the changer frame for the selected animal id.'''
@@ -190,11 +234,16 @@ class DataCollectionUI(MouserPage):
 
         if self.database.experiment_uses_rfid() != 1:
             print("This experiment does not use RFID, cancelling threads")
+            self.set_status("RFID is disabled for this experiment.")
             return # Prevents looking for nonexistent Serial Devices
 
         if self.rfid_thread and self.rfid_thread.is_alive():
             print("⚠️ RFID listener is already running!")
+            self.set_status("RFID listener already running.")
             return  # Prevent multiple listeners
+        self.set_status("Starting RFID listener...")
+        self.auto_increment_button.configure(state="disabled")
+        self.stop_button.configure(state="normal")
 
         # Check if more data for the day needs to be collected
         if not self.database.is_data_collected_for_date(self.current_date):
@@ -234,7 +283,6 @@ class DataCollectionUI(MouserPage):
                         received_rfid = self.rfid_reader.get_stored_data()
 
                         if received_rfid:
-                            import re
                             received_rfid = re.sub(r"[^\w]", "", received_rfid)  # Keep only alphanumeric characters, gets rid of spaces and encrypted greeting messages
 
                             if not received_rfid:
@@ -254,9 +302,10 @@ class DataCollectionUI(MouserPage):
                                     text_color="black"
                                 )
                                 AudioManager.play(SUCCESS_SOUND)
-                                self.after(600, lambda: self.select_animal_by_id(animal_id))
+                                self.after(250, lambda aid=animal_id: self.process_scanned_animal(aid))
                             else:
                                 self.raise_warning("No animal found for scanned RFID.")
+                                self.set_status("RFID not mapped to any animal.")
 
 
 
@@ -268,14 +317,18 @@ class DataCollectionUI(MouserPage):
                     self.rfid_reader.stop()
                     self.rfid_reader.close()
                     self.rfid_reader = None
+                self.auto_increment_button.configure(state="normal")
+                self.stop_button.configure(state="disabled")
                 print("🛑 RFID listener thread ended.")
 
         self.rfid_thread = threading.Thread(target=listen, daemon=True)
         self.rfid_thread.start()
+        self.set_status("RFID listener started.")
 
     def stop_listening(self):
         '''Stops the RFID listener and ensures the serial port is released.'''
         print("🛑 Stopping RFID listener...")
+        self.set_status("Stopping listener...")
 
         # Set the stop event first
         self.rfid_stop_event.set()
@@ -300,28 +353,104 @@ class DataCollectionUI(MouserPage):
                 print(f"Error joining RFID thread: {e}")
 
         self.rfid_thread = None
+        self._measurement_in_progress = False
         print("✅ RFID listener cleanup completed.")
+        self.auto_increment_button.configure(state="normal")
+        self.stop_button.configure(state="disabled")
+        self.set_status("Listener stopped.")
 
         # Safely stop and close the changer
         if hasattr(self, 'changer'):
             self.changer.stop_thread()  # Stop the changer thread if it's running
             self.changer.close()  # Close the changer dialog if it's open
 
+    def process_scanned_animal(self, animal_id):
+        """Select scanned animal and capture weight for that animal."""
+        self.select_animal_by_id(animal_id)
+        if self._measurement_in_progress:
+            self.set_status("Measurement in progress. Waiting...")
+            return
+        self._measurement_in_progress = True
+        self.set_status(f"RFID matched Animal {animal_id}. Capturing weight...")
+        threading.Thread(
+            target=self._collect_weight_for_animal,
+            args=(animal_id,),
+            daemon=True,
+        ).start()
+
+    def _collect_weight_for_animal(self, animal_id):
+        """Read from configured device; fallback to manual entry."""
+        weight_value = self._read_weight_from_device(timeout_seconds=3.0)
+        if weight_value is None:
+            self.after(0, lambda aid=animal_id: self._prompt_manual_weight(aid))
+            return
+        self.after(0, lambda aid=animal_id, val=weight_value: self._finalize_weight_capture(aid, val))
+
+    def _read_weight_from_device(self, timeout_seconds=3.0):
+        """Best-effort weight read from serial weighing device."""
+        data_handler = None
+        try:
+            data_handler = SerialDataHandler("device")
+            data_handler.start()
+            start_time = time.monotonic()
+            while time.monotonic() - start_time < timeout_seconds and not self.rfid_stop_event.is_set():
+                raw = data_handler.get_stored_data()
+                if raw:
+                    match = re.search(r"-?\d+(?:\.\d+)?", str(raw))
+                    if match:
+                        return float(match.group(0))
+                time.sleep(0.1)
+        except Exception:
+            return None
+        finally:
+            if data_handler:
+                try:
+                    data_handler.stop()
+                except Exception:
+                    pass
+        return None
+
+    def _prompt_manual_weight(self, animal_id):
+        """Prompt for manual weight when scale is unavailable."""
+        self.set_status(f"No scale data. Enter weight for Animal {animal_id}.")
+        dialog = CTkInputDialog(
+            title="Manual Weight Entry",
+            text=f"Enter weight for Animal {animal_id}:",
+        )
+        user_input = dialog.get_input() if dialog else None
+        if user_input is None:
+            self._measurement_in_progress = False
+            self.set_status("Weight entry cancelled.")
+            return
+        try:
+            weight_value = float(str(user_input).strip())
+        except ValueError:
+            self._measurement_in_progress = False
+            self.raise_warning("Invalid weight. Please enter a number.")
+            self.set_status("Invalid manual weight entry.")
+            return
+        self._finalize_weight_capture(animal_id, weight_value)
+
+    def _finalize_weight_capture(self, animal_id, weight_value):
+        """Persist captured weight and release capture state."""
+        self.change_selected_value(animal_id, (weight_value,))
+        self._measurement_in_progress = False
+        self.set_status(f"Saved {weight_value} for Animal {animal_id}.")
+
     def select_animal_by_id(self, animal_id):
-        '''Finds and selects the animal with the given ID in the table, then opens the entry box.'''
+        '''Finds and selects the animal with the given ID in the table.'''
         for child in self.table.get_children():
             item_values = self.table.item(child)["values"]
             if str(item_values[0]) == str(animal_id):  # Ensure IDs match as strings
-                self.after(0, lambda: self._open_changer_on_main_thread(child))
+                self.after(0, lambda: self._select_row_on_main_thread(child))
                 return
 
         print(f"⚠️ Animal ID {animal_id} not found in table.")
 
-    def _open_changer_on_main_thread(self, child):
-        '''Helper function to safely open the changer on the main thread.'''
+    def _select_row_on_main_thread(self, child):
+        '''Helper function to safely select a row on the main thread.'''
         self.table.selection_set(child)  # Select row
         self.changing_value = child
-        self.open_changer()  # Open entry box
 
     def open_auto_increment_changer(self):
         '''Opens auto changer dialog.'''
@@ -397,7 +526,7 @@ class DataCollectionUI(MouserPage):
         self.current_date = str(date.today())
         self.date_label.destroy()
         date_text = "Current Date: " + self.current_date
-        self.date_label = CTkLabel(self, text=date_text, font=("Arial", 25))
+        self.date_label = CTkLabel(self, text=date_text, font=("Arial", self._ui["label_font_size"]))
         self.date_label.place(relx=0.5, rely=0.20, anchor=CENTER)
 
         # Get all measurements for current date
@@ -421,7 +550,7 @@ class DataCollectionUI(MouserPage):
     def raise_frame(self):
         '''Raise the frame for this UI'''
         super().raise_frame()
-        self.rfid_listen()
+        self.set_status("Ready.")
 
 
     def press_back_to_menu_button(self):
