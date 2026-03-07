@@ -184,12 +184,12 @@ class ExperimentMenuUI(MouserPage):
 
         exp.group_num_changed = False
         exp.measurement_items_changed = False
-        exp.data_collect_type = 0
+        exp.data_collect_type = db.get_measurement_type()
 
         def save_group_config(updated_experiment):
             group_names = updated_experiment.get_group_names()
-            if group_names:
-                db.update_group_names(group_names)
+            db.update_group_names(group_names)
+            db.update_measurement_type(updated_experiment.get_measurement_type())
 
         from experiment_pages.experiment.group_config_ui import (  # pylint: disable=import-error,import-outside-toplevel
             GroupConfigUI,
