@@ -504,6 +504,11 @@ class ExperimentDatabase:
         result = self._c.fetchone()
         return result[0] if result else 0  # Default to manual (0)
 
+    def update_measurement_type(self, measurement_type):
+        '''Updates measurement_type in the experiment table.'''
+        self._c.execute("UPDATE experiment SET measurement_type = ?", (measurement_type,))
+        self._conn.commit()
+
     def get_all_animal_ids(self):
         '''Returns a list of all active animal IDs that have RFIDs mapped to them.'''
         self._c.execute('''
@@ -527,6 +532,7 @@ class ExperimentDatabase:
         """
         Exports the experiment data into a structured CSV:
         1. Experiment metadata
+        2. Animals table with RFID mappings
         3. Groups table with header
         """
         import os
@@ -574,6 +580,11 @@ class ExperimentDatabase:
             experiment_df.to_csv(f, index=False)
             f.write("\n")
 
+            # Write animals section to always include animal_id/rfid mapping
+            f.write("### Table: animals ###\n")
+            animals_df.to_csv(f, index=False)
+            f.write("\n")
+
             # Write measurement matrix
             pivot_df.to_csv(f, index=False)
             f.write("\n")
@@ -616,6 +627,21 @@ class ExperimentDatabase:
 
     def set_animal_active_status(self, animal_id, status):
         '''Sets the active status of an animal.'''
+        self._c.execute("SELECT group_id, active FROM animals WHERE animal_id = ?", (animal_id,))
+        row = self._c.fetchone()
+        if row:
+            group_id, current_status = row
+            if int(current_status) != int(status):
+                if int(status) == 0:
+                    self._c.execute(
+                        "UPDATE groups SET num_animals = CASE WHEN num_animals > 0 THEN num_animals - 1 ELSE 0 END WHERE group_id = ?",
+                        (group_id,),
+                    )
+                else:
+                    self._c.execute(
+                        "UPDATE groups SET num_animals = num_animals + 1 WHERE group_id = ?",
+                        (group_id,),
+                    )
         self._c.execute("UPDATE animals SET active = ? WHERE animal_id = ?", (status, animal_id))
         self._conn.commit()
 

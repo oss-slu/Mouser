@@ -166,7 +166,8 @@ class GroupConfigUI(MouserPage):
             font=("Segoe UI", 18, "bold"),
         ).grid(row=0, column=0, columnspan=3, pady=10)
 
-        self.type = BooleanVar(value=True)
+        initial_value = self.experiment.get_measurement_type()
+        self.type = BooleanVar(value=(initial_value != 0))
         self.button_vars.append(self.type)
 
         CTkLabel(
@@ -212,7 +213,7 @@ class GroupConfigUI(MouserPage):
 
     def save_experiment(self):
         '''Saves all entered group names and input method.'''
-        group_names = [entry.get().strip() for entry in self.group_input if entry.get().strip()]
+        group_names = [entry.get().strip() for entry in self.group_input]
         self.experiment.group_names = group_names
         self.experiment.data_collect_type = 1 if self.button_vars[0].get() else 0
         if callable(self.save_callback):
