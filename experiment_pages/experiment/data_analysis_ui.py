@@ -210,7 +210,7 @@ class DataAnalysisUI(MouserPage):
         canvas.delete("all")
         width = max(canvas.winfo_width(), 200)
         height = max(canvas.winfo_height(), 180)
-        left, right, top, bottom = 100, 190, 20, 64
+        left, right, top, bottom = 96, 190, 18, 64
         plot_w = max(width - left - right, 50)
         plot_h = max(height - top - bottom, 50)
 
@@ -244,8 +244,8 @@ class DataAnalysisUI(MouserPage):
             ratio = (weight - min_w) / (max_w - min_w)
             return top + plot_h - (ratio * plot_h)
 
-        for i in range(5):
-            value = min_w + (max_w - min_w) * (i / 4)
+        for i in range(6):
+            value = min_w + (max_w - min_w) * (i / 5)
             y = to_y(value)
             canvas.create_line(left, y, left + plot_w, y, fill="#e5e7eb")
             canvas.create_text(left - 8, y, text=f"{value:.1f}", anchor="e", fill="#4b5563")
@@ -284,7 +284,10 @@ class DataAnalysisUI(MouserPage):
                 coords.extend([x, y])
                 canvas.create_oval(x - 3, y - 3, x + 3, y + 3, fill=color, outline=color)
                 if point_idx == len(points) - 1:
-                    canvas.create_text(x + 5, y - 8, text=f"{w:.1f}", anchor="w", fill=color, font=("Arial", 9))
+                    label_dy = -8
+                    if len(dates) == 1:
+                        label_dy = -12 + (animal_index[animal_id] * 10)
+                    canvas.create_text(x + 6, y + label_dy, text=f"{w:.1f}", anchor="w", fill=color, font=("Arial", 9))
             if len(coords) >= 4 and len(dates) > 1:
                 canvas.create_line(*coords, fill=color, width=2, smooth=False)
             canvas.create_rectangle(legend_x, legend_y + idx * 18, legend_x + 10, legend_y + 10 + idx * 18, fill=color, outline=color)
