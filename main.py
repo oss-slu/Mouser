@@ -15,6 +15,13 @@ import os
 import sys
 import shutil
 import tempfile
+import serial
+import regex
+import threading
+import atexit
+from shared.logger import Logger
+
+
 
 # Ensure project root is on sys.path so local packages (e.g. `databases`) can be
 # imported when running this script directly from the repo folder or from other
@@ -27,6 +34,50 @@ from ui.root_window import create_root_window  # pylint: disable=wrong-import-po
 from ui.menu_bar import build_menu  # pylint: disable=wrong-import-position
 from ui.welcome_screen import setup_welcome_screen  # pylint: disable=wrong-import-position
 
+SCANNER_PORT = "/dev/ttyUSB0"
+BAUD_RATE = 9600
+
+def connect_to_scanner(port, baud_rate):
+    '''Connect to the scanner via serial port'''
+    try:
+        scanner = serial.Serial(port, baud_rate, timeout=1)
+        Logger.log("ScannerConnection", 0, "ScannerConnectionOK")
+        return scanner
+    except serial.SerialException as e:
+        Logger.log("ScannerConnection", e.errno, "ScannerConnectionFailed")
+        sys.exit(1)
+
+def validate_scan(scan):
+    '''Validate the scanned data format'''
+    if regex.match(r'^\d{12}$', scan):
+        return True
+    return False
+def scan_loop(scanner):
+    '''Loop to read scans from the scanner and validate scanner'''
+    while True:
+        try:
+            scan = scanner.readline().decode('utf-8').strip()
+            if scan:
+                Logger.log("ScanCaptured", 0, "ScanCapturedOK")
+                if validate_scan(scan):
+                    Logger.log("ScanValidated", 0, "ScanValidatedOK")
+                else:
+                    Logger.log("InvalidFormat", 0, "InvalidFormatDetected")
+        except serial.SerialException as e:
+            Logger.log("ScanLoopError", e.errno if hasattr(e, 'errno') else -1, "ScanLoopError")
+        except Exception as e:
+            Logger.log("ScanLoopError", -1, f"UnexpectedError: {e}")
+            
+def program_exit_handler(scanner):
+    '''Handle program exit and log shutdown'''
+    Logger.log("ScannerShutdown", 0, "ScannerShutdownOK")
+    if scanner and scanner.is_open:
+        scanner.close()
+
+def end_program(scanner):
+    '''End the program gracefully'''
+    program_exit_handler(scanner)
+    sys.exit(0)
 
 # Global app variables
 TEMP_FOLDER_NAME = "Mouser"
@@ -78,3 +129,13 @@ main_frame.grid_columnconfigure(0, weight=1)
 
 # Start the main event loop
 root.mainloop()
+
+if __name__ == "__main__":
+    # Connect to scanner
+    scanner = connect_to_scanner(SCANNER_PORT, BAUD_RATE)
+
+    # Start scan loop
+    try:
+        scan_loop(scanner)
+    except KeyboardInterrupt:
+        end_program(scanner)
