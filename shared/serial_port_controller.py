@@ -75,14 +75,58 @@ class SerialPortController():
         return len(list(serial.tools.list_ports.comports()))
 
     def get_virtual_port(self):
-        '''Returns a list of available virtual ports.'''
+        '''Returns a list of available virtual ports across platforms.'''
         virtual_ports = []
         ports = list(serial.tools.list_ports.comports())
         for port_ in ports:
-            words = port_.description.split(" ")
+            description = getattr(port_, "description", "")
+            device = getattr(port_, "device", "")
+            words = description.split(" ")
+            # Windows virtual pairs via com0com
             if "com0com" in words:
                 virtual_ports.append(port_.device)
+                continue
+            # macOS/Linux pseudo terminals (commonly used with socat)
+            if device.startswith("/dev/pts/") or device.startswith("/dev/ttys"):
+                virtual_ports.append(device)
         return virtual_ports
+
+    def _choose_fallback_port(self, available_ports):
+        """Choose a sensible default serial port for the current platform."""
+        if not available_ports:
+            return None
+
+        preferred_keywords = [
+            "rfid", "usb", "serial", "wch", "ftdi", "silicon labs", "cp210", "ch340"
+        ]
+        for device, description in available_ports:
+            d = f"{device} {description}".lower()
+            if any(keyword in d for keyword in preferred_keywords):
+                return device
+        return available_ports[0][0]
+
+    def resolve_port_name(self, configured_port):
+        """Resolve a configured port to an available platform-appropriate port."""
+        available_ports = self.get_available_ports()
+        available_names = [device for device, _ in available_ports]
+
+        if configured_port in available_names:
+            return configured_port
+
+        # Common cross-platform mismatch: Windows COM config on macOS/Linux.
+        if configured_port and configured_port.upper().startswith("COM") and platform.system() != "Windows":
+            fallback = self._choose_fallback_port(available_ports)
+            if fallback:
+                print(f"⚠️ Configured port {configured_port} unavailable on {platform.system()}, using {fallback}")
+                return fallback
+
+        # Generic fallback: pick first available when configured value is stale.
+        if configured_port and configured_port not in available_names:
+            fallback = self._choose_fallback_port(available_ports)
+            if fallback:
+                print(f"⚠️ Configured port {configured_port} not found, using {fallback}")
+                return fallback
+        return configured_port
 
     def set_writer_port(self, port: str):
         '''Sets the specified port as the writing port.'''
@@ -216,7 +260,8 @@ class SerialPortController():
             setting_file = "preferred_config.txt"
             setting_folder = "device"
         else:
-            print("Invalid setting type. Must be 'reader' or 'device'.")
+            if setting_type is not None:
+                print("Invalid setting type. Must be 'reader' or 'device'.")
             return
 
         # Build the full path to the preference file using the already-resolved.
@@ -252,9 +297,8 @@ class SerialPortController():
                     self.byte_size = getattr(serial, f"{settings[3].upper()}BITS", serial.EIGHTBITS)
                     self.parity = getattr(serial, f"PARITY_{settings[1].upper()}", serial.PARITY_NONE)
                     self.flow_control = 1 if settings[2] == "Xon/Xoff" else 2 if settings[2] == "Hardware" else None
-                    self.stop_bits = getattr(serial, 
-                        f"STOPBITS_{settings[4].replace('.', '_').upper()}", serial.STOPBITS_ONE)
-                    self.reader_port = settings[6]
+                    self.stop_bits = getattr(serial, f"STOPBITS_{settings[4].replace('.', '_').upper()}", serial.STOPBITS_ONE)
+                    self.reader_port = self.resolve_port_name(settings[6])
                     return settings
 
         except Exception as e:
@@ -273,3 +317,15 @@ class SerialPortController():
             else:
                 categories["unknown"].append((device, desc))
         return categories
+
+    def read_info(self):
+        """Compatibility alias used by simulator UI."""
+        return self.read_data()
+
+    def close_all_port(self):
+        """Compatibility alias used by simulator UI."""
+        self.close_all_ports()
+
+    def close(self):
+        """Compatibility helper for legacy call sites."""
+        self.close_all_ports()

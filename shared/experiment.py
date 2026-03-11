@@ -191,7 +191,7 @@ class Experiment():
 
     def set_measurement_type(self, is_automatic: int):
         '''Sets whether measurements are automatic (1) or manual (0).'''
-        self.measurement_type = is_automatic
+        self.data_collect_type = is_automatic
 
     def add_investigator(self, investigator_name):
         '''Adds an investigator to the experiment.'''

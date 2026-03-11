@@ -165,6 +165,20 @@ class ExperimentDatabase:
         result = self._c.fetchone()
         return result[0] if result else None
 
+    def get_investigators(self):
+        """Return investigators as a list of names."""
+        self._c.execute("SELECT investigators FROM experiment")
+        result = self._c.fetchone()
+        if not result or result[0] is None:
+            return []
+        return [item.strip() for item in str(result[0]).split(",") if item.strip()]
+
+    def update_investigators(self, investigators):
+        """Persist investigators list to experiment table."""
+        investigators_str = ", ".join([name.strip() for name in investigators if name and name.strip()])
+        self._c.execute("UPDATE experiment SET investigators = ?", (investigators_str,))
+        self._conn.commit()
+
     def get_measurement_items(self):
         '''Returns the list of measurement items for the experiment.'''
         self._c.execute("SELECT measurement FROM experiment")
@@ -395,6 +409,22 @@ class ExperimentDatabase:
         self._c.execute("SELECT name FROM groups")
         return [group[0] for group in self._c.fetchall()]
 
+    def update_group_names(self, group_names):
+        """Update group names in order of group_id.
+
+        This keeps existing group rows and only renames them.
+        """
+        self._c.execute("SELECT group_id FROM groups ORDER BY group_id")
+        rows = self._c.fetchall()
+        group_ids = [row[0] for row in rows]
+        for index, group_id in enumerate(group_ids):
+            if index < len(group_names):
+                self._c.execute(
+                    "UPDATE groups SET name = ? WHERE group_id = ?",
+                    (group_names[index], group_id),
+                )
+        self._conn.commit()
+
     def get_animal_current_cage(self, animal_id):
         '''Returns the current cage (group_id) for an animal'''
         self._c.execute('''
@@ -474,6 +504,11 @@ class ExperimentDatabase:
         result = self._c.fetchone()
         return result[0] if result else 0  # Default to manual (0)
 
+    def update_measurement_type(self, measurement_type):
+        '''Updates measurement_type in the experiment table.'''
+        self._c.execute("UPDATE experiment SET measurement_type = ?", (measurement_type,))
+        self._conn.commit()
+
     def get_all_animal_ids(self):
         '''Returns a list of all active animal IDs that have RFIDs mapped to them.'''
         self._c.execute('''
@@ -497,6 +532,7 @@ class ExperimentDatabase:
         """
         Exports the experiment data into a structured CSV:
         1. Experiment metadata
+        2. Animals table with RFID mappings
         3. Groups table with header
         """
         # pylint: disable=import-outside-toplevel
@@ -544,6 +580,11 @@ class ExperimentDatabase:
             experiment_df.to_csv(f, index=False)
             f.write("\n")
 
+            # Write animals section to always include animal_id/rfid mapping
+            f.write("### Table: animals ###\n")
+            animals_df.to_csv(f, index=False)
+            f.write("\n")
+
             # Write measurement matrix
             pivot_df.to_csv(f, index=False)
             f.write("\n")
@@ -588,6 +629,21 @@ class ExperimentDatabase:
 
     def set_animal_active_status(self, animal_id, status):
         '''Sets the active status of an animal.'''
+        self._c.execute("SELECT group_id, active FROM animals WHERE animal_id = ?", (animal_id,))
+        row = self._c.fetchone()
+        if row:
+            group_id, current_status = row
+            if int(current_status) != int(status):
+                if int(status) == 0:
+                    self._c.execute(
+                        "UPDATE groups SET num_animals = CASE WHEN num_animals > 0 THEN num_animals - 1 ELSE 0 END WHERE group_id = ?",
+                        (group_id,),
+                    )
+                else:
+                    self._c.execute(
+                        "UPDATE groups SET num_animals = num_animals + 1 WHERE group_id = ?",
+                        (group_id,),
+                    )
         self._c.execute("UPDATE animals SET active = ? WHERE animal_id = ?", (status, animal_id))
         self._conn.commit()
 
