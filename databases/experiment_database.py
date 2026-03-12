@@ -635,10 +635,12 @@ class ExperimentDatabase:
             group_id, current_status = row
             if int(current_status) != int(status):
                 if int(status) == 0:
-                    self._c.execute(
-                        "UPDATE groups SET num_animals = CASE WHEN num_animals > 0 THEN num_animals - 1 ELSE 0 END WHERE group_id = ?",
-                        (group_id,),
+                    update_query = (
+                    "UPDATE groups "
+                    "SET num_animals = CASE WHEN num_animals > 0 THEN num_animals - 1 ELSE 0 END "
+                    "WHERE group_id = ?"
                     )
+                    self._c.execute(update_query, (group_id,))
                 else:
                     self._c.execute(
                         "UPDATE groups SET num_animals = num_animals + 1 WHERE group_id = ?",
@@ -677,7 +679,7 @@ class ExperimentDatabase:
     def randomize_cages(self):
         '''Automatically and randomly sorts animals into cages within their groups, 
         respecting cage capacity limits.'''
-        # pylint: disable=import-outside-toplevel    
+        # pylint: disable=import-outside-toplevel
         import random
 
         try:

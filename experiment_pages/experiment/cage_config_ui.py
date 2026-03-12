@@ -7,7 +7,7 @@ from databases.database_controller import DatabaseController
 from shared.audio import AudioManager
 from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
 from shared.file_utils import save_temp_to_file
-
+"""
 - Consistent with app-wide design (blue-accent buttons, card layout)
 - Improved spacing, font hierarchy, and responsive layout
 - Inline comments explaining UI changes; no logic altered
@@ -247,7 +247,7 @@ class CageConfigurationUI(MouserPage):
         target_group = self.db.get_cage_number(target_cage)  # The internal number
 
     def view_summary(self):
-        """Open experiment summary page."""
+        '''Open experiment summary page.'''
         # pylint: disable=import-outside-toplevel
         from experiment_pages.experiment.review_ui import (
             ReviewUI,
@@ -340,7 +340,7 @@ class CageConfigurationUI(MouserPage):
         self.db.close()
 
     def back_to_menu(self):
-        """Return to experiment menu."""
+        '''Return to experiment menu.'''
         # pylint: disable=import-outside-toplevel
         from experiment_pages.experiment.experiment_menu_ui import (
             ExperimentMenuUI,
