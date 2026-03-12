@@ -1,6 +1,7 @@
 '''Contains shared tkinter models used througout the program.'''
 import os
 import sys
+import sqlite3
 from tkinter import PhotoImage
 from abc import ABC, abstractmethod
 from customtkinter import *
@@ -15,8 +16,8 @@ def get_resource_path(relative_path):
     try:
         # When bundled with PyInstaller this attribute points to the
         # unpacked temp folder (e.g. _MEIxxxxx). Use it when available.
-        base_path = sys._MEIPASS
-    except Exception:
+        base_path = sys._MEIPASS # pylint: disable=W0212
+    except sqlite3.DatabaseError:
         # Fallback to the working directory when running normally.
         base_path = os.path.abspath(".")
 
@@ -69,7 +70,6 @@ class MouserPage(CTkFrame):
         raise_frame(self)
 
     def set_next_button(self, next_page):
-
         '''Sets next_button to be a ChangePageButton that navigates to next_page.'''
         if self.next_button:
             self.next_button.destroy()

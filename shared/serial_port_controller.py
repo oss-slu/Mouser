@@ -12,6 +12,7 @@ import os
 import glob
 import platform
 import serial
+import sqlite3
 import serial.tools.list_ports
 from shared.file_utils import get_resource_path
 
@@ -162,7 +163,7 @@ class SerialPortController():
                 print(second_measurement)
                 print(decoded_second_measurement)
                 return decoded_second_measurement
-            except Exception as e:
+            except sqlite3.DatabaseError as e:
                 print(f"Error reading from serial port: {e}")
                 return None
             finally:
@@ -200,7 +201,7 @@ class SerialPortController():
         self.close_reader_port()
         try:
             self.set_reader_port(port)
-        except Exception as e:
+        except sqlite3.DatabaseError as e:
             print(e)
 
     def retrieve_setting(self, setting_type):
@@ -257,7 +258,7 @@ class SerialPortController():
                     self.reader_port = settings[6]
                     return settings
 
-        except Exception as e:
+        except sqlite3.DatabaseError as e:
             print(f"An error occurred while retrieving settings: {e}")
 
     def classify_ports(self):

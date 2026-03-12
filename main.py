@@ -49,9 +49,8 @@ def connect_to_scanner(port, baud_rate):
 
 def validate_scan(scan):
     '''Validate the scanned data format'''
-    if regex.match(r'^\d{12}$', scan):
-        return True
-    return False
+    return bool(regex.match(r'^\d{12}$', scan))
+        
 def scan_loop(scanner):
     '''Loop to read scans from the scanner and validate scanner'''
     while True:
@@ -133,9 +132,15 @@ root.mainloop()
 if __name__ == "__main__":
     # Connect to scanner
     scanner = connect_to_scanner(SCANNER_PORT, BAUD_RATE)
+    atexit.register(program_exit_handler, scanner)
 
-    # Start scan loop
-    try:
-        scan_loop(scanner)
-    except KeyboardInterrupt:
-        end_program(scanner)
+    scan_thread = threading.Thread(
+        target=scan_loop,
+        args=(scanner,),
+        daemon=True
+    )
+    scan_thread.start()
+
+
+    root.mainloop()
+

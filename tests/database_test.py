@@ -149,7 +149,7 @@ class TestCageFunctions:
 
     def test_get_cages(self):
         '''Placeholder: cage behavior validated via get_cages_by_group.'''
-        
+
 
     def test_get_animals_from_cage(self):
         '''Tests if animals from a particular cage match expected.'''

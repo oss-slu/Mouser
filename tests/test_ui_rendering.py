@@ -73,6 +73,7 @@ class TestRealUIRendering:
 
         Creates UI components to measure actual rendering time.
         """
+        # pylint: disable=C0415
         from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 
         start = time.perf_counter()
@@ -107,6 +108,7 @@ class TestRealUIRendering:
         This page creates many widgets (buttons for each animal/cage)
         so it's a good stress test for widget creation performance.
         """
+        # pylint: disable=C0415
         from experiment_pages.experiment.cage_config_ui import CageConfigurationUI
 
         start = time.perf_counter()
@@ -136,6 +138,7 @@ class TestRealUIRendering:
         """
         Test: Updating cage configuration.
         """
+        # pylint: disable=C0415
         from experiment_pages.experiment.cage_config_ui import CageConfigurationUI
 
         # Create page first (not measured)
@@ -173,7 +176,9 @@ class TestRealUIRendering:
         This page includes a Treeview table with all animals,
         testing both CTk and Tkinter widget performance.
         """
+        # pylint: disable=C0415
         from experiment_pages.experiment.data_collection_ui import DataCollectionUI
+        # pylint: disable=C0415
         from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 
         # DataCollectionUI requires a real prev_page (menu) because it accesses menu_button
@@ -212,7 +217,9 @@ class TestRealUIRendering:
         """
         Test: ReviewUI (summary page) renders quickly.
         """
+        # pylint: disable=C0415
         from experiment_pages.experiment.review_ui import ReviewUI
+        # pylint: disable=C0415
         from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 
         # ReviewUI needs prev_page for the back button
@@ -276,7 +283,9 @@ class TestUIScaling:
         """
         Test: UI rendering time scales reasonably with dataset size.
         """
+        # pylint: disable=C0415
         from databases.experiment_database import ExperimentDatabase
+        # pylint: disable=C0415
         from experiment_pages.experiment.cage_config_ui import CageConfigurationUI
 
         # Create database with specified size
