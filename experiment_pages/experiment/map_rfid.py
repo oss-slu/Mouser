@@ -2,6 +2,13 @@
 # Standard library
 import time
 import sqlite3
+import platform
+import shutil
+import subprocess
+import re
+from tkinter import Menu
+from tkinter.ttk import Style, Treeview
+import tkinter.font as tkfont
 import random
 import threading
 import webbrowser
@@ -12,6 +19,11 @@ import tkinter.font as tkfont
 from customtkinter import CTk, CTkFrame, CTkLabel, CTkButton, CTkEntry, CTkFont, StringVar, BooleanVar, W, END
 from CTkMessagebox import CTkMessagebox
 from serial import serialutil
+from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
+from shared.tk_models import *
+from shared.serial_port_controller import SerialPortController
+from shared.serial_handler import SerialDataHandler
+from shared.hid_wedge import HIDWedgeListener
 
 from databases.experiment_database import ExperimentDatabase
 from shared.audio import AudioManager
@@ -83,10 +95,28 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
     def __init__(self, database, parent: CTk, previous_page: CTkFrame = None, file_path = ""):
 
         super().__init__(parent, "Map RFID", previous_page)
+        ui = get_ui_metrics()
+        self._ui = ui
+        action_button_font = CTkFont("Segoe UI Semibold", ui["nav_font_size"])
+        self._active_button_style = {
+            "fg_color": "#2563eb",
+            "hover_color": "#1e40af",
+            "text_color": "white",
+        }
+        self._inactive_button_style = {
+            "fg_color": "#93c5fd",
+            "hover_color": "#93c5fd",
+            "text_color": "#e5e7eb",
+        }
 
         self.rfid_reader = None
         self.rfid_stop_event = threading.Event()  # Event to stop RFID listener
         self.rfid_thread = None # Store running thread
+        self.hid_listener = None
+        self.use_hid_fallback = False
+        self._serial_first_data_timeout = 8.0
+        self._recent_tag = None
+        self._recent_tag_time = 0.0
 
         # Store the parent reference
         self.parent = parent
@@ -102,16 +132,30 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         # Simulate All RFID Button
         simulate_all_rfid_button = CTkButton(self, text="Simulate ALL RFID", compound=TOP,
-                                      width=250, height=75, font=("Georgia", 65), command=self.simulate_all_rfid)
+                                      width=ui["action_width"], height=ui["action_height"],
+                                      font=action_button_font, command=self.simulate_all_rfid)
         simulate_all_rfid_button.place(relx=0.80, rely=0.15, anchor=CENTER)
+        self._set_button_enabled(simulate_all_rfid_button, True)
 
 
 
         self.start_rfid = CTkButton(self, text="Start Scanning", compound=TOP,
-                                         width=250, height=75, font=("Georgia", 65), command=self.rfid_listen)
+                                         width=ui["action_width"], height=ui["action_height"],
+                                         font=action_button_font, command=self.rfid_listen)
         self.start_rfid.place(relx=0.45, rely=0.15, anchor=CENTER)
-        if self.db.experiment_uses_rfid == 0:
+        if self.db.experiment_uses_rfid() == 0:
             self.start_rfid.configure(state="disabled")
+            self._set_button_enabled(self.start_rfid, False)
+        else:
+            self._set_button_enabled(self.start_rfid, True)
+
+        self.reader_status_label = CTkLabel(
+            self,
+            text="Reader Status: Idle",
+            font=("Arial", max(14, ui["label_font_size"])),
+            text_color=("#1f2937", "#d1d5db")
+        )
+        self.reader_status_label.place(relx=0.50, rely=0.26, anchor=CENTER)
 
         self.table_frame = CTkFrame(self)
         self.table_frame.place(relx=0.15, rely=0.30, relheight=0.40, relwidth=0.80)
@@ -121,7 +165,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.file_path = file_path
 
         heading_style = Style()
-        heading_style.configure("Treeview.Heading", font=('Arial', 10))
+        heading_style.configure("Treeview.Heading", font=('Arial', ui["table_font_size"]))
 
         columns = ('animal_id', 'rfid')
         self.table = Treeview(
@@ -129,6 +173,10 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         self.table.heading('animal_id', text='Animal ID')
         self.table.heading('rfid', text='RFID')
+        self.table.column('animal_id', anchor='center')
+        self.table.column('rfid', anchor='center')
+        self.table.heading('animal_id', anchor='center')
+        self.table.heading('rfid', anchor='center')
 
         self.table.grid(row=0, column=0, sticky='nsew')
         self.table.grid_columnconfigure(0, weight = 1)
@@ -147,19 +195,25 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.table.bind("<Button-3>", self.right_click_menu)
 
         self.delete_button = CTkButton(self, text="Remove Selection(s)", compound=TOP,
-                                       width=250, height=75, font=("Georgia", 65), command=self.remove_selected_items,
+                                       width=ui["action_width"], height=ui["action_height"],
+                                       font=action_button_font, command=self.remove_selected_items,
                                        state="normal")  # Initialize button as disabled
         self.delete_button.place(relx=0.45, rely=0.80, anchor=CENTER)
+        self._set_button_enabled(self.delete_button, True)
 
         # Add Sacrifice button with normal state
         self.sacrifice_button = CTkButton(self, text="Sacrifice Selected", compound=TOP,
-                                      width=250, height=75, font=("Georgia", 65), command=self.sacrifice_selected_items,
+                                      width=ui["action_width"], height=ui["action_height"],
+                                      font=action_button_font, command=self.sacrifice_selected_items,
                                       state="normal")  # Initialize as enabled
         self.sacrifice_button.place(relx=0.80, rely=0.80, anchor=CENTER)
+        self._set_button_enabled(self.sacrifice_button, True)
 
         self.stop_scanning_button = CTkButton(self, text="Stop Listening", compound=TOP,
-                                  width=250, height=75, font=("Georgia", 65), command=self.stop_listening)
+                                  width=ui["action_width"], height=ui["action_height"],
+                                  font=action_button_font, command=self.stop_listening)
         self.stop_scanning_button.place(relx=0.10, rely=0.80, anchor=CENTER)
+        self._set_button_enabled(self.stop_scanning_button, True)
 
         self.item_selected(None)
 
@@ -167,7 +221,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         for animal in animals_setup:
             rfid = self.db.get_animal_rfid(animal)
             value = (int(animal), rfid)
-            self.table.tag_configure('text_font', font=('Arial', 25))
+            self.table.tag_configure('text_font', font=('Arial', ui["table_font_size"]))
             self.table.insert('', END, values=value, tags='text_font')
             self.animals.append(value)
             self.animal_id_entry_text.set(animal)
@@ -179,9 +233,28 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         self.menu_button.configure(command = self.press_back_to_menu_button)
         self.scroll_to_latest_entry()
+        if self.db.experiment_uses_rfid() == 0:
+            self.set_reader_status("RFID disabled for this experiment.")
+
+    def set_reader_status(self, status_text):
+        """Update reader status text safely on the UI thread."""
+        def _update():
+            if hasattr(self, "reader_status_label") and self.reader_status_label.winfo_exists():
+                self.reader_status_label.configure(text=f"Reader Status: {status_text}")
+
+        if self.winfo_exists():
+            self.after(0, _update)
+
+    def _set_button_enabled(self, button, enabled):
+        """Apply enabled/disabled visual style while preserving behavior."""
+        if enabled:
+            button.configure(state="normal", **self._active_button_style)
+        else:
+            button.configure(state="disabled", **self._inactive_button_style)
 
     def rfid_listen(self):
         """Starts RFID listener, ensuring the previous session is fully closed before restarting."""
+        self.set_reader_status("Starting scanner...")
 
         # Ensure old listener is properly stopped before starting a new one
         if self.rfid_thread and self.rfid_thread.is_alive():
@@ -204,44 +277,48 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         print("RFIDs already scanned: ", self.animal_rfid_list)
         self.rfid_stop_event.clear()  # Reset the stop flag
 
+        # Try serial mode first; fallback to HID if serial can't open.
+        self.rfid_reader = SerialDataHandler("reader")
+        serial_reader = getattr(self.rfid_reader, "reader", None)
+        serial_port = getattr(serial_reader, "ser", None)
+        if serial_port is None:
+            self._switch_to_hid_fallback("Serial RFID unavailable.")
+            return
+
+        self.use_hid_fallback = False
+        self._start_hid_listener(show_flash=False)
+        self.set_reader_status("Started scanning.")
+
         def listen():
             try:
-
-                self.rfid_reader = SerialDataHandler("reader")  # Store reference to close later
                 self.rfid_reader.start()
                 print("🔄 RFID Reader Started!")
 
                 last_rfid = None
+                serial_start_time = time.monotonic()
+                got_first_serial_data = False
 
                 while not self.rfid_stop_event.is_set():
+                    serial_reader = getattr(self.rfid_reader, "reader", None)
+                    serial_port = getattr(serial_reader, "ser", None)
+                    if serial_port is None or not getattr(serial_port, "is_open", False):
+                        self.after(0, lambda: self._switch_to_hid_fallback("Serial connection lost."))
+                        return
+
                     received_rfid = self.rfid_reader.get_stored_data()
+                    elapsed = time.monotonic() - serial_start_time
+                    if (not got_first_serial_data) and (not received_rfid) and elapsed > self._serial_first_data_timeout:
+                        self.after(0, lambda: self._switch_to_hid_fallback("No serial RFID data received."))
+                        return
 
                     if not received_rfid or received_rfid == last_rfid:
                         time.sleep(0.5)
                         continue
 
+                    got_first_serial_data = True
                     last_rfid = received_rfid
                     print(f"📡 RFID Scanned: {received_rfid}")
-
-                    # ✅ Clean up garbage chars and whitespace
-                    clean_rfid = received_rfid.strip().replace("\x02", "").replace("\x03", "")
-                    clean_rfid = clean_rfid.strip()
-
-                    if not clean_rfid:
-                        print("⚠️ Empty or invalid RFID detected, skipping...")
-                        continue
-
-                    elif clean_rfid in self.animal_rfid_list:
-                        print(f"⚠️ RFID {clean_rfid} is already in use! Skipping...")
-                        AudioManager.play(ERROR_SOUND)
-                        self.raise_warning("This RFID tag has already been mapped to an animal")
-                        continue  # 🚫 Avoid calling add_value()
-
-                    else:
-                        # If it's a new RFID, process it
-                        self.after(0, lambda: self.add_value(clean_rfid))
-                        self.animal_rfid_list.append(clean_rfid)
-                        AudioManager.play(SUCCESS_SOUND)
+                    self.after(0, lambda value=received_rfid: self._handle_scanned_rfid(value))
 
             except sqlite3.Error as e:
                 print(f"Error in RFID listener: {e}")
@@ -258,11 +335,11 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
     def stop_listening(self):
         """Stops the RFID listener thread and ensures the serial port is released."""
-        if self.rfid_stop_event.is_set():
-            return  # If already stopped, do nothing
-
         print("⛔ Stopping RFID scanning...")
+        self.set_reader_status("Stopping scanner...")
         self.rfid_stop_event.set()  # Stop the listener loop
+        self._stop_hid_listener()
+        self.use_hid_fallback = False
 
         if self.rfid_thread and self.rfid_thread.is_alive():
             self.rfid_thread.join(timeout=1)  # Ensure the thread fully stops
@@ -278,6 +355,81 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
 
         time.sleep(0.5)  # Allow OS to release the port
+        self.set_reader_status("Stopped listening.")
+
+    def _switch_to_hid_fallback(self, reason=""):
+        """Stop serial reading and switch to HID fallback mode."""
+        if reason:
+            print(f"⚠️ {reason} Switching to HID fallback.")
+
+        if reason:
+            self.set_reader_status(f"{reason} HID fallback active.")
+        else:
+            self.set_reader_status("HID fallback active.")
+
+        if self.rfid_reader:
+            try:
+                self.rfid_reader.stop()
+            except Exception:
+                pass
+            finally:
+                self.rfid_reader = None
+
+        self.use_hid_fallback = True
+        self._start_hid_listener()
+
+    def _start_hid_listener(self, show_flash=True):
+        """Start HID keyboard-wedge fallback listener."""
+        self._stop_hid_listener()
+
+        def on_tag(tag):
+            self._handle_scanned_rfid(tag)
+
+        self.hid_listener = HIDWedgeListener(self, on_tag=on_tag, capture_all=True)
+        self.hid_listener.start()
+        self.parent.focus_force()
+        self.set_reader_status("HID fallback active. Scan tag + Enter.")
+        if show_flash:
+            FlashOverlay(
+                parent=self,
+                message="HID Fallback Active: Scan tag then press Enter",
+                duration=2000,
+                bg_color="#FDE68A",
+                text_color="black"
+            )
+
+    def _stop_hid_listener(self):
+        """Stop HID keyboard-wedge fallback listener."""
+        if self.hid_listener:
+            self.hid_listener.stop()
+            self.hid_listener = None
+
+    def _handle_scanned_rfid(self, received_rfid):
+        """Handle scanned RFID from serial or HID in one place."""
+        if not received_rfid:
+            return
+
+        clean_rfid = received_rfid.strip().replace("\x02", "").replace("\x03", "")
+        clean_rfid = clean_rfid.strip()
+
+        if not clean_rfid:
+            print("⚠️ Empty or invalid RFID detected, skipping...")
+            return
+
+        now = time.monotonic()
+        if clean_rfid == self._recent_tag and (now - self._recent_tag_time) < 0.35:
+            return
+        self._recent_tag = clean_rfid
+        self._recent_tag_time = now
+        self.set_reader_status(f"Tag detected: {clean_rfid}")
+
+        if clean_rfid in self.animal_rfid_list:
+            print(f"⚠️ RFID {clean_rfid} is already in use! Skipping...")
+            AudioManager.play(ERROR_SOUND)
+            self.raise_warning("This RFID tag has already been mapped to an animal")
+            return
+
+        self.add_value(clean_rfid)
 
     def simulate_all_rfid(self):
         '''Simulates RFID for all remaining unmapped animals.'''
@@ -288,6 +440,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             option_2="Yes"
         )
         if confirm.get() == "Yes":
+            self.set_reader_status("Simulating RFID mapping...")
             total_needed = self.db.get_total_number_animals()
             current_count = len(self.db.get_animals())
 
@@ -298,14 +451,19 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                 return
 
             while current_count < total_needed:
+                previous_count = current_count
                 self.add_random_rfid()
                 current_count = len(self.db.get_animals())
+                if current_count == previous_count:
+                    self.raise_warning("Unable to map remaining animals. Check group capacity and serial setup.")
+                    break
                 # Force UI update
                 self.update()
                 self.scroll_to_latest_entry()
 
             self.save()
             AudioManager.play(SUCCESS_SOUND)
+            self.set_reader_status("Simulation complete.")
 
 
     def scroll_to_latest_entry(self):
@@ -329,25 +487,10 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         # Generate a unique RFID
         rfid = get_random_rfid()
-        while str(rfid) in [str(animal[1]) for animal in self.animals]:  # Ensure unique RFID
+        while str(rfid) in [str(existing) for existing in self.animal_rfid_list]:
             rfid = get_random_rfid()
 
-        # Get the next animal ID
-        animal_id = self.get_next_animal()
-
-        # Find next available group
-        group_id = self.db.find_next_available_group()
-
-        # Add to database
-        self.db.add_animal(animal_id, rfid, group_id, '')
-        self.db.conn.commit()
-
-        # Add to UI table
-        self.table.insert('', END, values=(animal_id, rfid), tags='text_font')
-        self.animals.append((animal_id, rfid))
-
-        # Update entry text
-        self.change_entry_text()
+        self._add_rfid_mapping(rfid, play_audio=False)
 
 
     def add_value(self, rfid):
@@ -361,24 +504,9 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             self.raise_warning()
             return
 
-        # Get the next animal ID
-        animal_id = self.get_next_animal()
-
-        # Find next available group
-        group_id = self.db.find_next_available_group()
-
-        # Add to database
-        self.db.add_animal(animal_id, rfid, group_id, '')
-        self.db.conn.commit()
-
-        # Add to UI table
-        self.table.insert('', END, values=(animal_id, rfid), tags='text_font')
-        self.animals.append((animal_id, rfid))
-
-        AudioManager.play(SUCCESS_SOUND)
-
-        # Update entry text
-        self.change_entry_text()
+        added = self._add_rfid_mapping(rfid, play_audio=True)
+        if not added:
+            return
 
         total_scanned = len(self.db.get_animals())
         total_expected = self.db.get_total_number_animals()
@@ -387,11 +515,10 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         # Save changes
         self.save()
 
-        # If we haven't scanned all animals yet, restart listening
+        # If we haven't scanned all animals yet, restart serial listening.
+        # HID fallback stays active and keeps listening without restart.
         if total_scanned < total_expected:
-            print("🔄 Restarting RFID listening...")
-            self.change_entry_text()
-            self.save()
+            print("⌨️ Waiting for next tag...")
             FlashOverlay(
                 parent=self,
                 message="Scan Successful!",
@@ -399,32 +526,53 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                 bg_color="#00FF00", #Bright Green
                 text_color="black"
             )
-            self.rfid_listen()
+            return
         else:
             print("🎉 All animals have been mapped to RFIDs! RFID scanning completed.")
             print("RFIDs scanned: ", self.db.get_all_animals_rfid())
             self.save()
+            AudioManager.play(SUCCESS_SOUND)
             FlashOverlay(
                 parent=self,
-                message="All RFIDs Scanned!",
+                message="Scan successful! All RFIDs scanned.",
                 duration=4000,
                 bg_color="#FFF700", #Yellow to indicate completion
                 text_color="black"
             )
-            self.stop_listening()
+
+    def _add_rfid_mapping(self, rfid, play_audio=True):
+        """Insert RFID mapping into database and table. Returns True on success."""
+        animal_id = self.get_next_animal()
+        group_id = self.db.find_next_available_group()
+        if group_id is None:
+            self.raise_warning("No available group slot. Check group capacity.")
+            return False
+
+        inserted_id = self.db.add_animal(animal_id, rfid, group_id, '')
+        if inserted_id is None:
+            self.raise_warning("Failed to map RFID. Please try again.")
+            return False
+
+        self.db._conn.commit()
+        self.table.insert('', END, values=(animal_id, rfid), tags='text_font')
+        self.animals.append((animal_id, rfid))
+        if rfid not in self.animal_rfid_list:
+            self.animal_rfid_list.append(rfid)
+        self.change_entry_text()
+        self.scroll_to_latest_entry()
+
+        if play_audio:
+            AudioManager.play(SUCCESS_SOUND)
+        return True
 
     def item_selected(self, _):
         '''Enables the delete button if any selected item starts with 'I00', otherwise disables it.'''
         selected = self.table.selection()
         print("Selection ", selected, " changed.")
 
-        # Check if any selected item starts with 'I00'
-        enable_button = any(self.table.item(item_id, 'values')[0].startswith('I00') for item_id in selected)
-
-        if enable_button:
-            self.delete_button["state"] = "normal"
-        else:
-            self.delete_button["state"] = "disabled"
+        enable_button = len(selected) > 0
+        self._set_button_enabled(self.delete_button, enable_button)
+        self._set_button_enabled(self.sacrifice_button, enable_button)
 
     def remove_selected_items(self):
         '''Removes the selected item from a table, warning if none selected.'''
@@ -441,11 +589,14 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             self.table.selection_remove(item)
             self.table.delete(item)
             self.db.remove_animal(item_id)
-            self.animal_rfid_list.remove(rfid_value)
+            self.animals = [(index, tag) for (index, tag) in self.animals if index != item_id]
+            if rfid_value in self.animal_rfid_list:
+                self.animal_rfid_list.remove(rfid_value)
             print("Total number of animal rows in the table:", len(self.table.get_children()))
 
         self.save()
         self.change_entry_text()
+        self.set_reader_status("Removed selected mapping(s).")
 
     def change_entry_text(self):
         '''Changes entry text for the table.'''
@@ -519,7 +670,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         for animal in animals_setup:
             rfid = self.db.get_animal_rfid(animal)
             value = (int(animal), rfid)
-            self.table.tag_configure('text_font', font=('Arial', 25))
+            self.table.tag_configure('text_font', font=('Arial', self._ui["table_font_size"]))
             self.table.insert('', END, values=value, tags='text_font')
             self.animals.append(value)
 
@@ -546,14 +697,12 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                 # Close the database connection
                 self.db.close()  # This will now handle the singleton cleanup
 
-                self.stop_listening()
-
                 # Local import to avoid circular dependency
                 #pylint: disable=import-outside-toplevel
                 from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 
                 # Create new ExperimentMenuUI instance with the same file
-                new_page = ExperimentMenuUI(self.parent, self.file_path, self.menu_page, self.file_path)
+                new_page = ExperimentMenuUI(self.parent, self.file_path, self.menu_page)
                 new_page.raise_frame()
 
             except sqlite3.Error as e:
@@ -565,7 +714,6 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
     def raise_frame(self):
         '''Raise the frame for this UI'''
         super().raise_frame()
-        self.rfid_listen()
 
     def save(self):
         '''Saves current database state to permanent file'''
@@ -580,6 +728,11 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             # Save back to original file location
             print(f"Saving {current_file} to {self.file_path}")
             file_utils.save_temp_to_file(current_file, self.file_path)
+            try:
+                from ui.commands import save_file  # pylint: disable=import-outside-toplevel
+                save_file()
+            except Exception as save_exc:
+                print(f"Could not run global save_file() hook: {save_exc}")
             print("Save successful!")
 
         except sqlite3.Error as e:
@@ -599,10 +752,13 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         # First mark the selected animals as inactive
         for item in selected_items:
             animal_id = int(self.table.item(item, 'values')[0])
+            rfid_value = self.table.item(item, 'values')[1]
             self.table.selection_remove(item)
             self.table.delete(item)
             self.db.set_animal_active_status(animal_id, 0)  # Mark as inactive
             self.animals = [(index, rfid) for (index, rfid) in self.animals if index != animal_id]
+            if rfid_value in self.animal_rfid_list:
+                self.animal_rfid_list.remove(rfid_value)
 
             # Then update the UI table
             self.change_entry_text()
@@ -619,6 +775,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         # Lastly, commit and save changes (After all animals sacrificed)
         self.save()
+        self.change_entry_text()
+        self.set_reader_status("Updated sacrificed animal selection.")
 
 class SerialPortSelection():
     '''Serial port selection user interface.'''
@@ -722,40 +880,117 @@ class SerialSimulator():
         self.parent = parent
         self.serial_controller = SerialPortController()
         self.written_port = None
+        self.socat_process = None
+        self.dynamic_virtual_ports = []
+
+    def _current_virtual_ports(self):
+        """Return discovered virtual ports, including runtime-created socat ports."""
+        ports = self.dynamic_virtual_ports if self.dynamic_virtual_ports else self.serial_controller.get_virtual_port()
+        # Keep order stable and unique
+        return list(dict.fromkeys(ports))
+
+    def _start_socat_pair(self):
+        """Create a PTY pair using socat on macOS/Linux and return two device paths."""
+        if platform.system() == "Windows":
+            return []
+        if shutil.which("socat") is None:
+            return []
+
+        try:
+            self.socat_process = subprocess.Popen(
+                ["socat", "-d", "-d", "pty,raw,echo=0", "pty,raw,echo=0"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            ports = []
+            for _ in range(20):
+                if self.socat_process.stderr is None:
+                    break
+                line = self.socat_process.stderr.readline()
+                if not line:
+                    continue
+                match = re.search(r"/dev/\S+", line)
+                if match:
+                    port = match.group(0)
+                    if port not in ports:
+                        ports.append(port)
+                if len(ports) >= 2:
+                    self.dynamic_virtual_ports = ports[:2]
+                    return self.dynamic_virtual_ports
+        except Exception as e:
+            print(f"Failed to start socat PTY pair: {e}")
+
+        # Cleanup on partial failure
+        self._stop_socat_pair()
+        return []
+
+    def _stop_socat_pair(self):
+        """Terminate socat process if we started one."""
+        if self.socat_process:
+            try:
+                self.socat_process.terminate()
+            except Exception:
+                pass
+            self.socat_process = None
 
     def open(self):
 
         '''Opens the serial simulator dialog.'''
-        if len(self.serial_controller.get_virtual_port()) == 0:
-            warning = CTkMessagebox(title="Warning",
-                                    message="Virtual ports missing, would you like to download the virtual ports?",
-                                    icon="warning",
-                                    option_1="Cancel",
-                                    option_2="Download")
-            if warning.get() == "Download":
-                self.download_link()
+        virtual_ports = self._current_virtual_ports()
+        if len(virtual_ports) == 0:
+            if platform.system() in ("Darwin", "Linux"):
+                warning = CTkMessagebox(
+                    title="Warning",
+                    message="No virtual serial ports detected. Create a temporary pair now?",
+                    icon="warning",
+                    option_1="Cancel",
+                    option_2="Create"
+                )
+                if warning.get() == "Create":
+                    virtual_ports = self._start_socat_pair()
+                    if len(virtual_ports) < 2:
+                        CTkMessagebox(
+                            title="Error",
+                            message="Unable to create virtual ports. Install socat and try again.",
+                            icon="cancel"
+                        )
+                        return
+                else:
+                    return
+            else:
+                warning = CTkMessagebox(title="Warning",
+                                        message="Virtual ports missing, would you like to download the virtual ports?",
+                                        icon="warning",
+                                        option_1="Cancel",
+                                        option_2="Download")
+                if warning.get() == "Download":
+                    self.download_link()
+                return
 
-        else:
-            self.root = CTkToplevel(self.parent)
-            self.root.title("Serial Port Selection")
-            self.root.geometry('400x400')
+        if len(virtual_ports) < 2:
+            return
 
-            self.read_message = CTkTextbox(self.root, height=15, width = 40)
-            self.read_message.place(relx=0.10, rely = 0.00)
+        self.root = CTkToplevel(self.parent)
+        self.root.title("Serial Port Selection")
+        self.root.geometry('400x400')
 
-            self.drop_down_ports = CTkComboBox(self.root, values=self.serial_controller.get_virtual_port())
-            self.drop_down_ports.place(relx=0.30, rely = 0.88)
+        self.read_message = CTkTextbox(self.root, height=15, width = 40)
+        self.read_message.place(relx=0.10, rely = 0.00)
 
-            self.comfirm_port = CTkButton(self.root, text="confirm port", width=15,
-                                        command=self.set_written_port)
-            self.comfirm_port.place(relx=0.80, rely=0.900, anchor=CENTER)
+        self.drop_down_ports = CTkComboBox(self.root, values=virtual_ports)
+        self.drop_down_ports.place(relx=0.30, rely = 0.88)
 
-            self.input_entry = CTkEntry(self.root, width=140)
-            self.input_entry.place(relx=0.50, rely=0.80, anchor=CENTER)
+        self.comfirm_port = CTkButton(self.root, text="confirm port", width=15,
+                                    command=self.set_written_port)
+        self.comfirm_port.place(relx=0.80, rely=0.900, anchor=CENTER)
 
-            self.sent_button = CTkButton(self.root, text = "sent", width = 15, command=self.sent)
-            self.sent_button.place(relx=0.80, rely = 0.80, anchor=CENTER)
-            self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.input_entry = CTkEntry(self.root, width=140)
+        self.input_entry.place(relx=0.50, rely=0.80, anchor=CENTER)
+
+        self.sent_button = CTkButton(self.root, text = "sent", width = 15, command=self.sent)
+        self.sent_button.place(relx=0.80, rely = 0.80, anchor=CENTER)
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def sent(self):
         '''Writes to the appropriate port.'''
@@ -771,15 +1006,20 @@ class SerialSimulator():
         '''Sets up virtual ports.'''
         self.serial_controller.set_writer_port(self.written_port)
 
-        available_port = self.serial_controller.get_virtual_port()
-        available_port.remove(self.written_port)
+        available_port = self._current_virtual_ports()
+        if self.written_port in available_port:
+            available_port.remove(self.written_port)
+
+        if not available_port:
+            raise serialutil.SerialException("No paired virtual port available.")
 
         self.serial_controller.set_reader_port(available_port[0])
 
     def read_and_display(self):
         '''Reads from available port.'''
-        available_port = self.serial_controller.get_virtual_port()
-        available_port.remove(self.written_port)
+        available_port = self._current_virtual_ports()
+        if self.written_port in available_port:
+            available_port.remove(self.written_port)
 
         if len(available_port)==0:
             CTkMessagebox(
@@ -790,7 +1030,8 @@ class SerialSimulator():
 
         else:
             message = self.serial_controller.read_info()
-            self.read_message.insert(END,message)
+            if message is not None:
+                self.read_message.insert(END, str(message))
 
     def check_written_port(self):
         '''Returns if writting port is available.'''
@@ -810,11 +1051,16 @@ class SerialSimulator():
 
     def download_link(self):
         '''Opens download lint in webbrowser.'''
-        webbrowser.open("https://softradar.com/com0com/")
+        if platform.system() == "Windows":
+            webbrowser.open("https://softradar.com/com0com/")
+        else:
+            webbrowser.open("https://man7.org/linux/man-pages/man1/socat.1.html")
 
     def on_closing(self):
         '''Closes all ports and closes the window.'''
         self.serial_controller.close_all_port()
+        self._stop_socat_pair()
+        self.dynamic_virtual_ports = []
         self.written_port = None
         self.root.destroy()
 

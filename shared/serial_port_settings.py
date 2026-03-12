@@ -24,7 +24,7 @@ class SerialPortSetting(SettingPage):
         # GUI element
         print(f"🔍 SerialPortSetting initialized with preference: {preference}")
         self.title("Serial Port")
-        self.preference = None
+        self.preference = preference if preference in ("device", "reader") else None
         self.configuration_name = StringVar(value="")
         self.current_configuration_name = StringVar(value="")
         self.preference_path = None
@@ -48,21 +48,20 @@ class SerialPortSetting(SettingPage):
         self.input_bype_var = StringVar(value="")
 
         if preference:
-            if preference == "device":
+            if self.preference == "device":
                 self.preference_path = get_resource_path(os.path.join(read_path, "settings", "serial ports", "preference", "device", "preferred_config.txt"))
-            elif preference == "reader":
+            elif self.preference == "reader":
                 self.preference_path = get_resource_path(os.path.join(read_path, "settings", "serial ports", "preference", "reader", "rfid_config.txt"))
 
             else:
                 self.preference_path = None  # Fallback if no valid type
 
-            if os.path.exists(self.preference_path):
+            if self.preference_path and os.path.exists(self.preference_path):
                 try:
                     with open(self.preference_path, "r") as file:
                         file_names = file.readlines()
                         if file_names:
                             self.confirm_setting(file_names[0].strip())
-                            self.preference = file_names[0].strip()
                 except Exception as e:
                     print("Error opening preference file:", e)
             else:
@@ -232,7 +231,8 @@ class SerialPortSetting(SettingPage):
         self.back_to_summary_button = CTkButton(self.edit_region, text="Back to Summary", command=self.go_to_summary_page, height=14)
         self.back_to_summary_button.grid(row=11, column=1, padx=20, pady=5, sticky="ns")
 
-        self.serial_port_controller = SerialPortController(self.preference)
+        if not isinstance(controller, SerialPortController):
+            self.serial_port_controller = SerialPortController(self.preference)
 
     def summary_page(self, tab: str):
         ''' page that displays the setting of current configuration'''
