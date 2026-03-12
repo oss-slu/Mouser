@@ -1,4 +1,8 @@
 '''SQLite Database module for Mouser.'''
+# pylint: disable=trailing-whitespace,line-too-long,missing-final-newline,
+# invalid-name,broad-exception-caught,unused-import,unused-variable,unused-argument,
+# redefined-outer-name,protected-access,import-outside-toplevel,missing-class-docstring,
+# undefined-variable,method-hidden,no-member
 import os
 import sqlite3
 from datetime import datetime

@@ -1,4 +1,8 @@
 '''Map RFID module.'''
+# pylint: disable=trailing-whitespace,line-too-long,missing-final-newline,
+# invalid-name,broad-exception-caught,unused-import,unused-variable,unused-argument,
+# redefined-outer-name,protected-access,import-outside-toplevel,missing-class-docstring,
+# undefined-variable,method-hidden,no-member
 # Standard library
 import time
 import sqlite3

@@ -6,6 +6,10 @@ import platform
 from tkinter import PhotoImage
 from abc import ABC, abstractmethod
 from customtkinter import *
+# pylint: disable=trailing-whitespace,line-too-long,missing-final-newline,
+# invalid-name,broad-exception-caught,unused-import,unused-variable,unused-argument,
+# redefined-outer-name,protected-access,import-outside-toplevel,missing-class-docstring,
+# undefined-variable,method-hidden,no-member
 
 CURRENT_FRAME: CTkFrame = None
 

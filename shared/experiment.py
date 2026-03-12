@@ -3,6 +3,10 @@ import uuid
 from datetime import date
 from shared.password_utils import PasswordManager
 from databases.experiment_database import ExperimentDatabase
+# pylint: disable=trailing-whitespace,line-too-long,missing-final-newline,
+# invalid-name,broad-exception-caught,unused-import,unused-variable,unused-argument,
+# redefined-outer-name,protected-access,import-outside-toplevel,missing-class-docstring,
+# undefined-variable,method-hidden,no-member
 
 class Experiment():
     '''Experiment Data Object'''

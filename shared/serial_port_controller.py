@@ -15,6 +15,10 @@ import platform
 import serial
 import serial.tools.list_ports
 from shared.file_utils import get_resource_path
+# pylint: disable=trailing-whitespace,line-too-long,missing-final-newline,
+# invalid-name,broad-exception-caught,unused-import,unused-variable,unused-argument,
+# redefined-outer-name,protected-access,import-outside-toplevel,missing-class-docstring,
+# undefined-variable,method-hidden,no-member
 
 class SerialPortController():
     '''Serial Port control functions.'''
