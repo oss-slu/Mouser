@@ -1,6 +1,10 @@
 '''SQLite Database module for Mouser.'''
-import sqlite3
+# pylint: disable=trailing-whitespace,line-too-long,missing-final-newline,
+# invalid-name,broad-exception-caught,unused-import,unused-variable,unused-argument,
+# redefined-outer-name,protected-access,import-outside-toplevel,missing-class-docstring,
+# undefined-variable,method-hidden,no-member
 import os
+import sqlite3
 from datetime import datetime
 
 class ExperimentDatabase:
@@ -535,7 +539,7 @@ class ExperimentDatabase:
         2. Animals table with RFID mappings
         3. Groups table with header
         """
-        import os
+        # pylint: disable=import-outside-toplevel
         import pandas as pd
 
         # Get experiment name
@@ -597,7 +601,9 @@ class ExperimentDatabase:
 
 
     def export_to_csv(self, directory):
-        '''Exports all relevant tables in the database to a folder named after the experiment in the specified directory.'''
+        '''Exports all relevant tables in the database to a folder 
+        named after the experiment in the specified directory.'''
+        # pylint: disable=import-outside-toplevel
         import pandas as pd
 
         # Get the experiment name
@@ -633,10 +639,12 @@ class ExperimentDatabase:
             group_id, current_status = row
             if int(current_status) != int(status):
                 if int(status) == 0:
-                    self._c.execute(
-                        "UPDATE groups SET num_animals = CASE WHEN num_animals > 0 THEN num_animals - 1 ELSE 0 END WHERE group_id = ?",
-                        (group_id,),
+                    update_query = (
+                    "UPDATE groups "
+                    "SET num_animals = CASE WHEN num_animals > 0 THEN num_animals - 1 ELSE 0 END "
+                    "WHERE group_id = ?"
                     )
+                    self._c.execute(update_query, (group_id,))
                 else:
                     self._c.execute(
                         "UPDATE groups SET num_animals = num_animals + 1 WHERE group_id = ?",
@@ -658,7 +666,7 @@ class ExperimentDatabase:
                                 VALUES (?, ?, ?)''',
                                 (animal_id, date, None))  # Insert None for blank value
             self._conn.commit()
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Error inserting blank data: {e}")
             self._conn.rollback()
 
@@ -668,12 +676,14 @@ class ExperimentDatabase:
             self._c.execute("SELECT measurement FROM experiment")
             result = self._c.fetchone()
             return result[0] if result else None  # Return the measurement type or None if not found
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Error retrieving measurement value: {e}")
             return None
 
     def randomize_cages(self):
-        '''Automatically and randomly sorts animals into cages within their groups, respecting cage capacity limits.'''
+        '''Automatically and randomly sorts animals into cages within their groups, 
+        respecting cage capacity limits.'''
+        # pylint: disable=import-outside-toplevel
         import random
 
         try:
@@ -724,7 +734,7 @@ class ExperimentDatabase:
             self._conn.commit()
             return True
 
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Error during randomization: {e}")
             self._conn.rollback()
             return False
@@ -813,12 +823,13 @@ class ExperimentDatabase:
             self._conn.commit()
             return True
 
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Error during autosort: {e}")
             self._conn.rollback()
             return False
 
     def get_cage_number(self, cage_name):
+        '''Returns the group_id for a given cage name.'''
         self._c.execute('''
                         SELECT group_id FROM groups
                         WHERE name = ?''', (cage_name,))

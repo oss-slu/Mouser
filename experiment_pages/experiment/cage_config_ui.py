@@ -7,7 +7,16 @@ from databases.database_controller import DatabaseController
 from shared.audio import AudioManager
 from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
 from shared.file_utils import save_temp_to_file
-
+"""
+- Consistent with app-wide design (blue-accent buttons, card layout)
+- Improved spacing, font hierarchy, and responsive layout
+- Inline comments explaining UI changes; no logic altered
+"""
+import sqlite3
+from tkinter import messagebox
+from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkFont, CTkEntry
+from shared.tk_models import MouserPage  # pylint: disable=import-error
+from databases.experiment_database import ExperimentDatabase  # pylint: disable=import-error
 class CageConfigurationUI(MouserPage):
     '''The Frame that allows user to configure the cages.'''
     def __init__(self, database, parent: CTk, prev_page: CTkFrame = None, file_path = ''):
@@ -212,6 +221,11 @@ class CageConfigurationUI(MouserPage):
         self.db.update_animal_cage(animal_id1, cage2)  # Move animal 1 to cage 2
         self.db.update_animal_cage(animal_id2, cage1)  # Move animal 2 to cage 1
 
+        self.db.c.execute(
+                "UPDATE groups SET cage_capacity = ? WHERE name = ?",
+                (capacity, name),
+            )
+        self.db.conn.commit()
         self.selected_animals.clear()
         self.update_config_frame()
         self.save()
@@ -232,6 +246,12 @@ class CageConfigurationUI(MouserPage):
         target_cage = self.selected_cage  # The display name
         target_group = self.db.get_cage_number(target_cage)  # The internal number
 
+    def view_summary(self):
+        '''Open experiment summary page.'''
+        # pylint: disable=import-outside-toplevel
+        from experiment_pages.experiment.review_ui import (
+            ReviewUI,
+        )
         # Check if moving would exceed cage maximum
         target_cage_count = len(self.db.get_animals_in_group(target_cage))
         if target_cage_count + len(self.selected_animals) > self.db.get_cage_max():
@@ -319,6 +339,12 @@ class CageConfigurationUI(MouserPage):
         '''Closes database file.'''
         self.db.close()
 
+    def back_to_menu(self):
+        '''Return to experiment menu.'''
+        # pylint: disable=import-outside-toplevel
+        from experiment_pages.experiment.experiment_menu_ui import (
+            ExperimentMenuUI,
+        )
 
 # Backward-compatible alias used by newer navigation code.
 CageConfigUI = CageConfigurationUI

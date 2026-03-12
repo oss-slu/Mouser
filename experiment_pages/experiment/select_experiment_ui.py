@@ -10,8 +10,8 @@ from customtkinter import (  # type: ignore[import]
     CENTER,
 )
 
-from shared.tk_models import MouserPage  
-from experiment_pages.create_experiment.new_experiment_ui import (  
+from shared.tk_models import MouserPage
+from experiment_pages.create_experiment.new_experiment_ui import (
     NewExperimentUI,
 )
 

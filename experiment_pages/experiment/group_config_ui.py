@@ -3,7 +3,7 @@
 
 from customtkinter import (
     CTk, CTkFrame, CTkLabel, CTkEntry,
-    CTkButton, CTkRadioButton, BooleanVar, W, LEFT
+    CTkRadioButton, CTkButton, BooleanVar, W
 )
 from shared.tk_models import MouserPage, ChangePageButton
 from shared.scrollable_frame import ScrolledFrame
@@ -167,7 +167,7 @@ class GroupConfigUI(MouserPage):
         ).grid(row=0, column=0, columnspan=3, pady=10)
 
         initial_value = self.experiment.get_measurement_type()
-        self.type = BooleanVar(value=(initial_value != 0))
+        self.type = BooleanVar(value=initial_value != 0)
         self.button_vars.append(self.type)
 
         CTkLabel(

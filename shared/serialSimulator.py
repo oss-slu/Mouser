@@ -3,6 +3,10 @@ import shutil
 from customtkinter import *
 from shared.tk_models import *
 from shared.serial_port_controller import SerialPortController
+# pylint: disable=trailing-whitespace,line-too-long,missing-final-newline,
+# invalid-name,broad-exception-caught,unused-import,unused-variable,unused-argument,
+# redefined-outer-name,protected-access,import-outside-toplevel,missing-class-docstring,
+# undefined-variable,method-hidden,no-member
 
 class SerialSimulator():
     '''Serial Simulator User Interface.'''

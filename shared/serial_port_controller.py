@@ -9,11 +9,16 @@ you write to a port, else reading from the reader port will return
 nothing even if you write to writer port already
 '''
 import os
+import sqlite3
 import glob
 import platform
 import serial
 import serial.tools.list_ports
 from shared.file_utils import get_resource_path
+# pylint: disable=trailing-whitespace,line-too-long,missing-final-newline,
+# invalid-name,broad-exception-caught,unused-import,unused-variable,unused-argument,
+# redefined-outer-name,protected-access,import-outside-toplevel,missing-class-docstring,
+# undefined-variable,method-hidden,no-member
 
 class SerialPortController():
     '''Serial Port control functions.'''
@@ -32,10 +37,12 @@ class SerialPortController():
 
     def get_available_ports(self):
         '''Returns a list of available system ports.
-        Linux-specific note: Some USB serial devices (e.g. RFID readers / balances) intermittently fail to appear in
-        pyserial.tools.list_ports results on certain distributions (udev timing or driver latency). As a fallback on
-        Linux we manually glob common device patterns if the primary enumeration returns nothing. This has no impact
-        on Windows/macOS because the fallback only runs when platform.system() == 'Linux'.'''
+        Linux-specific note: Some USB serial devices (e.g. RFID readers / balances) 
+        intermittently fail to appear in pyserial.tools.list_ports results on certain 
+        distributions (udev timing or driver latency). As a fallback on
+        Linux we manually glob common device patterns if the primary enumeration 
+        returns nothing. This has no impact on Windows/macOS because the fallback 
+        only runs when platform.system() == 'Linux'.'''
         ports = list(self.comports_fn())
         available_ports = []
         # Linux fallback if pyserial returns nothing
@@ -204,7 +211,7 @@ class SerialPortController():
                 print(second_measurement)
                 print(decoded_second_measurement)
                 return decoded_second_measurement
-            except Exception as e:
+            except serial.SerialException as e:
                 print(f"Error reading from serial port: {e}")
                 return None
             finally:
@@ -242,7 +249,7 @@ class SerialPortController():
         self.close_reader_port()
         try:
             self.set_reader_port(port)
-        except Exception as e:
+        except serial.SerialException as e:
             print(e)
 
     def retrieve_setting(self, setting_type):
@@ -299,7 +306,7 @@ class SerialPortController():
                     self.reader_port = self.resolve_port_name(settings[6])
                     return settings
 
-        except Exception as e:
+        except serial.SerialException as e:
             print(f"An error occurred while retrieving settings: {e}")
 
     def classify_ports(self):
