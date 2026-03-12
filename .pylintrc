@@ -1,0 +1,19 @@
+[MASTER]
+disable=
+    C0415,  # Import outside top-level
+    C0301,  # Line too long
+    W0611,  # Unused import
+    W0612,  # Unused variable
+    W0404,  # Reimported
+    C0413,  # Import should be at top
+    C0412,  # Ungrouped imports
+    E0602,  # Undefined variable
+    C0103,  # Invalid module/class/variable name
+    C0115,  # Missing class docstring
+    W0621,  # Redefining name from outer scope
+    W0718,  # Broad exception caught
+    W0640,  # Cell var from loop
+    W0212,  # Access to protected member
+    W0246,  # Useless parent delegation
+    C0303,  # Trailing whitespace
+    W0311   # Bad indentation
