@@ -1,12 +1,13 @@
 '''Contains shared tkinter models used througout the program.'''
 import os
 import sys
+import sqlite3
 import platform
 from tkinter import PhotoImage
 from abc import ABC, abstractmethod
 from customtkinter import *
 
-current_frame: CTkFrame = None
+CURRENT_FRAME: CTkFrame = None
 
 
 def get_ui_metrics():
@@ -56,8 +57,8 @@ def get_resource_path(relative_path):
     try:
         # When bundled with PyInstaller this attribute points to the
         # unpacked temp folder (e.g. _MEIxxxxx). Use it when available.
-        base_path = sys._MEIPASS
-    except Exception:
+        base_path = sys._MEIPASS # pylint: disable=no-member, disable=protected-access
+    except sqlite3.DatabaseError:
         # Fallback to the working directory when running normally.
         base_path = os.path.abspath(".")
 
@@ -70,7 +71,7 @@ def raise_frame(frame: CTkFrame): #pylint: disable= redefined-outer-name
         current_frame.pack_forget()
     current_frame = frame
     current_frame.pack()
-   
+
 def create_nav_button(parent: CTkFrame, name: str, button_image: PhotoImage, frame: CTkFrame, relx: float, rely: float): #pylint: disable= line-too-long,redefined-outer-name
     '''Makes a navigation button to the various sub-menus of the program.'''
 

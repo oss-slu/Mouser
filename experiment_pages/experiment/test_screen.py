@@ -8,6 +8,7 @@ Modernized Test Screen UI.
 """
 
 import time
+import sqlite3
 import threading
 import tkinter
 from customtkinter import (
@@ -79,7 +80,7 @@ class TestScreen(CTkToplevel):
             controller = SerialPortController(setting_type)
             # retrieve_setting stores the configured serial port in reader_port.
             return controller.reader_port
-        except Exception:
+        except sqlite3.Error:
             return None
 
     # --- Card Builder ---

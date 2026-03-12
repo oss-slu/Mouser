@@ -12,15 +12,13 @@ import tkinter.font as tkfont
 import random
 import threading
 import webbrowser
-from tkinter import Menu
-from tkinter.ttk import Style, Treeview
-import tkinter.font as tkfont
+
 
 from customtkinter import CTk, CTkFrame, CTkLabel, CTkButton, CTkEntry, CTkFont, StringVar, BooleanVar, W, END
 from CTkMessagebox import CTkMessagebox
 from serial import serialutil
 from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
-from shared.tk_models import *
+from shared.tk_models import MouserPage, get_ui_metrics
 from shared.serial_port_controller import SerialPortController
 from shared.serial_handler import SerialDataHandler
 from shared.hid_wedge import HIDWedgeListener
@@ -90,7 +88,7 @@ def get_random_rfid():
     '''Returns a simulated rfid number'''
     return random.randint(1000000000, 9999999999)
 
-class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
+class MapRFIDPage(MouserPage):
     '''Map RFID user interface and window.'''
     def __init__(self, database, parent: CTk, previous_page: CTkFrame = None, file_path = ""):
 
@@ -370,7 +368,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         if self.rfid_reader:
             try:
                 self.rfid_reader.stop()
-            except Exception:
+            except sqlite3.Error:
                 pass
             finally:
                 self.rfid_reader = None
@@ -731,7 +729,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             try:
                 from ui.commands import save_file  # pylint: disable=import-outside-toplevel
                 save_file()
-            except Exception as save_exc:
+            except sqlite3.Error as save_exc:
                 print(f"Could not run global save_file() hook: {save_exc}")
             print("Save successful!")
 
@@ -867,8 +865,6 @@ class SerialPortSelection():
                 self.port_controller.set_writer_port(virtual_ports[0])
 
             self.root.destroy()
-            
-           
 
     def open_simulator(self):
         '''Opens serial simuplator dialog.'''
@@ -918,7 +914,7 @@ class SerialSimulator():
                 if len(ports) >= 2:
                     self.dynamic_virtual_ports = ports[:2]
                     return self.dynamic_virtual_ports
-        except Exception as e:
+        except sqlite3.Error as e:
             print(f"Failed to start socat PTY pair: {e}")
 
         # Cleanup on partial failure
@@ -930,7 +926,7 @@ class SerialSimulator():
         if self.socat_process:
             try:
                 self.socat_process.terminate()
-            except Exception:
+            except sqlite3.Error:
                 pass
             self.socat_process = None
 

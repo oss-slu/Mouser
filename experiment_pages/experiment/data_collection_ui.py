@@ -1,17 +1,22 @@
 '''Data collection ui module.'''
-from datetime import date
+# Standard library imports
 import re
-from tkinter.ttk import Treeview, Style
+import sqlite3
 import time
+import threading
+from datetime import date
+from tkinter.ttk import Treeview, Style
+
+# Third-party imports
 from customtkinter import *
-from shared.tk_models import *
 from CTkMessagebox import CTkMessagebox
-from databases.experiment_database import ExperimentDatabase
-from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
+
+# First-party imports
+from shared.tk_models import *
+from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND, save_temp_to_file
 from shared.audio import AudioManager
 from shared.serial_handler import SerialDataHandler
-from shared.file_utils import save_temp_to_file
-import threading
+from databases.experiment_database import ExperimentDatabase
 from shared.flash_overlay import FlashOverlay
 
 #pylint: disable= undefined-variable
@@ -217,8 +222,7 @@ class DataCollectionUI(MouserPage):
     def set_status(self, text):
         """Update collection status line."""
         if self.winfo_exists():
-            self.after(0, lambda: self.status_label.configure(text=f"Status: {text}"))
-
+                self.after(0, lambda t=text: self.status_label.configure(text=f"Status: {t}"))
     def open_changer(self):
         '''Opens the changer frame for the selected animal id.'''
         animal_id = self.table.item(self.changing_value)["values"][0]
@@ -310,7 +314,7 @@ class DataCollectionUI(MouserPage):
 
 
                     time.sleep(0.1)  # Shorter sleep time for more responsive stopping
-            except Exception as e:
+            except sqlite3.Error as e:
                 print(f"Error in RFID listener: {e}")
             finally:
                 if hasattr(self, 'rfid_reader') and self.rfid_reader:
@@ -338,7 +342,7 @@ class DataCollectionUI(MouserPage):
             try:
                 self.rfid_reader.stop()
                 self.rfid_reader.close()
-            except Exception as e:
+            except sqlite3.Error as e:
                 print(f"Error closing RFID reader: {e}")
             finally:
                 self.rfid_reader = None
@@ -349,7 +353,7 @@ class DataCollectionUI(MouserPage):
                 self.rfid_thread.join(timeout=2)  # Wait up to 2 seconds
                 if self.rfid_thread.is_alive():
                     print("⚠️ Warning: RFID thread did not stop cleanly")
-            except Exception as e:
+            except sqlite3.Error as e:
                 print(f"Error joining RFID thread: {e}")
 
         self.rfid_thread = None
@@ -400,20 +404,21 @@ class DataCollectionUI(MouserPage):
                     if match:
                         return float(match.group(0))
                 time.sleep(0.1)
-        except Exception:
+        except sqlite3.Error as e:
+            print(f"Database error occurred: {e}")
             return None
         finally:
             if data_handler:
                 try:
                     data_handler.stop()
-                except Exception:
+                except sqlite3.Error:
                     pass
         return None
 
     def _prompt_manual_weight(self, animal_id):
         """Prompt for manual weight when scale is unavailable."""
         self.set_status(f"No scale data. Enter weight for Animal {animal_id}.")
-        dialog = CTkInputDialog(
+        self.user_input = CTkInputDialog(
             title="Manual Weight Entry",
             text=f"Enter weight for Animal {animal_id}:",
         )
@@ -479,7 +484,7 @@ class DataCollectionUI(MouserPage):
         for child in self.table.get_children():
             item_values = self.table.item(child)["values"]
             if str(item_values[0]) == str(animal_id):  # Ensure IDs match as strings
-                self.after(0, lambda: self._select_row_on_main_thread(child))
+                self.after(0, lambda c=child: self._select_row_on_main_thread(c))
                 return
 
         print(f"⚠️ Animal ID {animal_id} not found in table.")
@@ -514,7 +519,7 @@ class DataCollectionUI(MouserPage):
                     if animal_id_to_change == self.table.item(child)["values"][0]:
                         self.table.item(child, values=(animal_id_to_change, new_value))
                 print("Table display updated")
-            except Exception as table_error:
+            except sqlite3.Error as table_error:
                 print(f"Error updating table display: {table_error}")
 
             # Autosave: Commit and save the database file
@@ -547,12 +552,12 @@ class DataCollectionUI(MouserPage):
                         ))
 
 
-                except Exception as save_error:
+                except sqlite3.Error as save_error:
                     print(f"Autosave failed: {save_error}")
                     print(f"Error type: {type(save_error)}")
                     import traceback
                     print(f"Full traceback: {traceback.format_exc()}")
-        except Exception as e:
+        except sqlite3.Error as e:
             self.raise_warning("Failed to save data for animal.")
             print(f"Top level error: {e}")
             import traceback
@@ -593,7 +598,7 @@ class DataCollectionUI(MouserPage):
     def press_back_to_menu_button(self):
         '''Navigates back to Experiment Menu.'''
         self.stop_listening()
-
+        # pylint: disable=import-outside-toplevel
         from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
         new_page = ExperimentMenuUI(self.parent, self.current_file_path, self.menu_page)
         new_page.raise_frame()
@@ -711,7 +716,7 @@ class ChangeMeasurementsDialog():
                         print("Thread finished")
 
                     else:
-                        submit_button = CTkButton(root, text="Submit", command=lambda: self.finish(animal_id))
+                        submit_button = CTkButton(root, text="Submit", command=lambda a_id=animal_id: self.finish(a_id))
                         submit_button.place(relx=0.5, rely=0.9, anchor=CENTER)
 
                 self.thread_running = True  # Set flag to True when the thread starts

@@ -759,7 +759,7 @@ class ExperimentDatabase:
                     UPDATE animal_measurements
                     SET measurement_id = 0
                     WHERE animal_id = ? AND timestamp = ?
-                ''', (animal_id, timestamp)) 
+                ''', (animal_id, timestamp))
 
             # Get all groups and their capacities
             self._c.execute('SELECT group_id, cage_capacity FROM groups')

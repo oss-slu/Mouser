@@ -9,6 +9,7 @@ you write to a port, else reading from the reader port will return
 nothing even if you write to writer port already
 '''
 import os
+import sqlite3
 import glob
 import platform
 import serial
@@ -206,7 +207,7 @@ class SerialPortController():
                 print(second_measurement)
                 print(decoded_second_measurement)
                 return decoded_second_measurement
-            except Exception as e:
+            except serial.SerialException as e:
                 print(f"Error reading from serial port: {e}")
                 return None
             finally:
@@ -244,7 +245,7 @@ class SerialPortController():
         self.close_reader_port()
         try:
             self.set_reader_port(port)
-        except Exception as e:
+        except serial.SerialException as e:
             print(e)
 
     def retrieve_setting(self, setting_type):
@@ -301,7 +302,7 @@ class SerialPortController():
                     self.reader_port = self.resolve_port_name(settings[6])
                     return settings
 
-        except Exception as e:
+        except serial.SerialException as e:
             print(f"An error occurred while retrieving settings: {e}")
 
     def classify_ports(self):

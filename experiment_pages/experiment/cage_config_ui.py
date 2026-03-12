@@ -221,11 +221,11 @@ class CageConfigurationUI(MouserPage):
         self.db.update_animal_cage(animal_id1, cage2)  # Move animal 1 to cage 2
         self.db.update_animal_cage(animal_id2, cage1)  # Move animal 2 to cage 1
 
-            db.c.execute(
+        self.db.c.execute(
                 "UPDATE groups SET cage_capacity = ? WHERE name = ?",
                 (capacity, name),
             )
-            db.conn.commit()
+        self.db.conn.commit()
         self.selected_animals.clear()
         self.update_config_frame()
         self.save()

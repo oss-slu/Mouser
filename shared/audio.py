@@ -4,8 +4,6 @@ Module that contains methods and classes that are used for the audio in our prog
 import os
 import wave
 from threading import Thread, Lock
-import pyaudio
-import os
 
 class AudioManager:
     '''
@@ -15,7 +13,8 @@ class AudioManager:
     _is_playing = False
 
     @staticmethod
-    def __play(filepath): #pylint: disable= no-self-argument
+    def __play(filepath): #pylint: disable= no-self-argument,  import-outside-toplevel
+        import pyaudio 
         chunk = 1024
         audio_file = None
         out_p = None
@@ -23,7 +22,7 @@ class AudioManager:
         try:
             # Delay importing PyAudio so app startup does not hard-fail if the
             # native extension is unavailable on a machine.
-            import pyaudio
+           
 
             # Ensure the file exists before opening
             if not os.path.exists(filepath):

@@ -1,5 +1,6 @@
 """Experiment Investigators editor UI."""
 
+from tkinter import messagebox
 from customtkinter import (
     CTkFrame,
     CTkLabel,
@@ -8,10 +9,8 @@ from customtkinter import (
     CTkScrollableFrame,
     CTkFont,
 )
-from tkinter import messagebox
 from databases.experiment_database import ExperimentDatabase
 from shared.tk_models import MouserPage
-
 
 class InvestigatorsUI(MouserPage):
     """Page for viewing and editing experiment investigators."""
@@ -128,6 +127,7 @@ class InvestigatorsUI(MouserPage):
             ).grid(row=0, column=1, padx=(8, 0))
 
     def add_investigator(self):
+        '''Add investigator from input field.'''
         name = self.input_entry.get().strip()
         if not name:
             return
@@ -139,15 +139,18 @@ class InvestigatorsUI(MouserPage):
         self._refresh_list()
 
     def remove_investigator(self, name):
+        '''Remove investigator by name.'''
         if name in self.investigators:
             self.investigators.remove(name)
             self._refresh_list()
 
     def save_investigators(self):
+        '''Save investigators to database.'''
         self.db.update_investigators(self.investigators)
         messagebox.showinfo("Saved", "Investigators updated successfully.")
 
     def go_back(self):
+        '''Navigate back to previous page.'''
         if hasattr(self, "menu_button") and self.menu_button:
             prev = getattr(self.menu_button, "previous_page", None)
             if prev is not None and hasattr(prev, "raise_frame"):
