@@ -23,7 +23,7 @@ _LOG_FILE_PATH: Optional[str] = None
 
 
 @dataclass
-class CaliperConfig:
+class CaliperConfig:  # pylint: disable=too-many-instance-attributes
     """Serial configuration for the caliper device."""
 
     port: Optional[str]
@@ -147,7 +147,7 @@ class CaliperStreamLogger:
             try:
                 if self.serial.is_open:
                     self.serial.close()
-            except Exception as exc:  # pragma: no cover - best effort cleanup
+            except (serial.SerialException, OSError) as exc:  # pragma: no cover - best effort cleanup
                 self.log.debug("Error closing serial: %s", exc)
             finally:
                 self.serial = None
@@ -187,7 +187,7 @@ class CaliperStreamLogger:
                 self.log.warning("Serial disconnect detected: %s", exc)
                 self.close()
                 time.sleep(self.config.reconnect_delay)
-            except Exception as exc:  # pragma: no cover - unexpected
+            except (RuntimeError, ValueError) as exc:  # pragma: no cover - unexpected
                 self.log.error("Unexpected stream error: %s", exc)
                 self.close()
                 time.sleep(self.config.reconnect_delay)
@@ -216,6 +216,7 @@ def run_caliper_stream(
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build the CLI argument parser."""
     parser = argparse.ArgumentParser(description="Caliper-only raw stream logger")
     parser.add_argument("--port", help="Override serial port (e.g., COM3)")
     parser.add_argument("--duration", type=float, help="Seconds to stream (default: until Ctrl+C)")
@@ -226,6 +227,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    """CLI entry point for caliper streaming."""
     parser = build_parser()
     args = parser.parse_args()
     run_caliper_stream(

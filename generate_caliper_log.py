@@ -3,6 +3,7 @@ from shared.caliper_streamer import run_caliper_stream
 
 
 def main() -> None:
+    """Run the caliper stream logger with default settings."""
     run_caliper_stream(
         duration=None,
         port=None,

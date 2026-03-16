@@ -4,6 +4,7 @@ import sys
 
 
 def main() -> None:
+    """Build the caliper-only executable with PyInstaller."""
     command = [
         sys.executable,
         "-m",
