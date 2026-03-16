@@ -17,7 +17,7 @@ def get_resource_path(relative_path):
         # When bundled with PyInstaller this attribute points to the
         # unpacked temp folder (e.g. _MEIxxxxx). Use it when available.
         base_path = sys._MEIPASS # pylint: disable=W0212
-    except sqlite3.DatabaseError:
+    except AttributeError:
         # Fallback to the working directory when running normally.
         base_path = os.path.abspath(".")
 
