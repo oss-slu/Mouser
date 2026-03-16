@@ -1,0 +1,10 @@
+2026-03-14 15:10:03 | INFO     | Starting caliper stream at 2026-03-14T15:10:03.124512+00:00
+2026-03-14 15:10:03 | INFO     | Caliper settings: port=COM3 baud=4800
+2026-03-14 15:10:03 | INFO     | Connected to caliper on COM3
+2026-03-14 15:10:04 | INFO     | DATA | bytes=19 | hex=2B 30 30 30 31 2E 32 33 34 20 20 20 20 0D 0A 20 20 20 20 | ascii=+0001.234
+2026-03-14 15:10:05 | INFO     | DATA | bytes=19 | hex=2B 30 30 30 31 2E 32 33 35 20 20 20 20 0D 0A 20 20 20 20 | ascii=+0001.235
+2026-03-14 15:10:07 | WARNING  | Serial disconnect detected: device disconnected
+2026-03-14 15:10:09 | INFO     | Connected to caliper on COM3
+2026-03-14 15:10:10 | INFO     | DATA | bytes=19 | hex=2B 30 30 30 31 2E 32 33 36 20 20 20 20 0D 0A 20 20 20 20 | ascii=+0001.236
+2026-03-14 15:10:12 | INFO     | Stream duration reached (9.00s)
+2026-03-14 15:10:12 | INFO     | Caliper stream stopped
