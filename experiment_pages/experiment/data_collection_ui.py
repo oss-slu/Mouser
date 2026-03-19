@@ -186,6 +186,7 @@ class DataCollectionUI(MouserPage):
 
         self.table.bind('<<TreeviewSelect>>', self.item_selected)
         self.table.bind("<Double-1>", self._open_selected_for_edit)
+        self.table.bind("<1>", self._on_table_click)
 
         self.changer = ChangeMeasurementsDialog(parent, self, self.measurement_strings)
 
@@ -207,11 +208,69 @@ class DataCollectionUI(MouserPage):
         if selected:
             self.changing_value = selected[0]
 
+    def _on_table_click(self, event):
+        """Handle click for inline edit on None values."""
+        region = self.table.identify("region", event.x, event.y)
+        if region == "cell":
+            column_id = self.table.identify_column(event.x)
+            row_id = self.table.identify_row(event.y)
+            if column_id == '#2':
+                val = self.table.item(row_id, "values")
+                if len(val) > 1 and str(val[1]) == 'None':
+                    self.table.selection_set(row_id)
+                    self.changing_value = row_id
+                    self._enter_inline_edit(row_id, column_id)
+                    return "break"
+
+    def _enter_inline_edit(self, row_id, column_id):
+        # Get bounding box of the cell
+        bbox = self.table.bbox(row_id, column_id)
+        if not bbox:
+            return
+        x, y, width, height = bbox
+
+        # Define entry widget
+        entry = CTkEntry(self.table, width=width, height=height, font=("Arial", self._ui.get("table_font_size", 14)))
+        entry.place(x=x, y=y)
+
+        # Function to save when user presses Enter
+        def save_edit(event=None):
+            new_val = entry.get()
+            if new_val.strip() == "":
+                entry.destroy()
+                return
+
+            try:
+                # Ensure it is a valid float as expected
+                _ = float(new_val)
+            except ValueError:
+                self.raise_warning("Invalid input. Please enter a valid number.")
+                entry.destroy()
+                return
+
+            # Save the value
+            animal_id = self.table.item(row_id, "values")[0]
+            self.change_selected_value(animal_id, [new_val])
+            entry.destroy()
+
+        def on_focus_out(event):
+            entry.destroy()
+
+        entry.bind("<Return>", save_edit)
+        entry.bind("<Escape>", on_focus_out)
+        entry.bind("<FocusOut>", on_focus_out)
+        
+        entry.focus_set()
+
     def _open_selected_for_edit(self, _):
         """Open the edit dialog for the currently selected row."""
         selected = self.table.selection()
         if selected:
             self.changing_value = selected[0]
+            val = self.table.item(self.changing_value, "values")
+            if len(val) > 1 and str(val[1]) == 'None':
+                # Rely on single-click to open inline editor
+                return
             self.open_changer()
 
     def set_status(self, text):
