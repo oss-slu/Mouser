@@ -51,6 +51,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
             fill="#f8fafc",
             font=("Segoe UI Semibold", 20),
         )
+          
         self.scrollbar = CTkScrollbar(
             self,
             orientation="vertical",
@@ -147,18 +148,11 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
             text_color="#0f172a",
             anchor="w",
         ).grid(row=0, column=0, columnspan=2, sticky="w", padx=24, pady=(24, 4))
-        CTkLabel(
-            form_card,
-            text="A brighter layout with clear sections, helper text, and friendlier controls.",
-            font=self.font_body,
-            text_color="#475569",
-            anchor="w",
-        ).grid(row=1, column=0, columnspan=2, sticky="w", padx=24, pady=(0, 20))
 
-        basics = self._create_section(form_card, 2, 0, "📝 Basics", "#eff6ff", "#bfdbfe")
-        team = self._create_section(form_card, 2, 1, "👩‍🔬 Team", "#f8fafc", "#cbd5e1")
-        study = self._create_section(form_card, 3, 0, "🐭 Study Setup", "#f8fffb", "#bbf7d0")
-        housing = self._create_section(form_card, 3, 1, "🏠 Housing", "#fff7ed", "#fed7aa")
+        basics = self._create_section(form_card, 1, 0, "📝 Basics", "#eff6ff", "#bfdbfe")
+        team = self._create_section(form_card, 1, 1, "👩‍🔬 Team", "#f8fafc", "#cbd5e1")
+        study = self._create_section(form_card, 2, 0, "🐭 Study Setup", "#f8fffb", "#bbf7d0")
+        housing = self._create_section(form_card, 2, 1, "🏠 Housing", "#fff7ed", "#fed7aa")
 
         basics.grid_columnconfigure(0, weight=1)
         basics.grid_columnconfigure(1, weight=1)
