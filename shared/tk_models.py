@@ -2,11 +2,52 @@
 import os
 import sys
 import sqlite3
+import platform
 from tkinter import PhotoImage
 from abc import ABC, abstractmethod
 from customtkinter import *
 
 current_frame: CTkFrame = None
+
+
+def get_ui_metrics():
+    """Return cross-platform UI sizing values to keep layouts consistent."""
+    system = platform.system()
+    if system == "Darwin":
+        return {
+            "nav_width": 180,
+            "nav_height": 50,
+            "nav_font_size": 18,
+            "action_width": 220,
+            "action_height": 54,
+            "action_font_size": 18,
+            "table_font_size": 20,
+            "table_row_height": 34,
+            "label_font_size": 22,
+        }
+    if system == "Windows":
+        return {
+            "nav_width": 180,
+            "nav_height": 48,
+            "nav_font_size": 16,
+            "action_width": 205,
+            "action_height": 50,
+            "action_font_size": 16,
+            "table_font_size": 16,
+            "table_row_height": 30,
+            "label_font_size": 16,
+        }
+    return {
+        "nav_width": 170,
+        "nav_height": 46,
+        "nav_font_size": 15,
+        "action_width": 200,
+        "action_height": 48,
+        "action_font_size": 15,
+        "table_font_size": 15,
+        "table_row_height": 28,
+        "label_font_size": 15,
+    }
 
 def get_resource_path(relative_path):
     """
@@ -131,9 +172,14 @@ class SettingPage(CTkToplevel):
 class MenuButton(CTkButton):
     '''A standard button that navigates backwards in the program.'''
     def __init__(self, page: CTkFrame, previous_page: MouserPage):
+        metrics = get_ui_metrics()
+        button_font = CTkFont("Segoe UI Semibold", metrics["nav_font_size"])
 
         super().__init__(page, text="Back to Menu", compound=TOP,
-                         width=250, height=75, font=("Georgia", 65), command = self.navigate)
+                         width=metrics["nav_width"], height=metrics["nav_height"],
+                         font=button_font, command=self.navigate,
+                         corner_radius=12, text_color="white",
+                         fg_color="#2563eb", hover_color="#1e40af")
         self.place(relx=0.15, rely=0.15, anchor=CENTER)
         self.previous_page = previous_page
 

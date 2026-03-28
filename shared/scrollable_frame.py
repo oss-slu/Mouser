@@ -21,13 +21,16 @@ class ScrolledFrame:
 
         self.canvas.bind("<Enter>", self._bind_mouse)
         self.canvas.bind("<Leave>", self._unbind_mouse)
+        self.outer_frame.bind("<Enter>", self._bind_mouse)
+        self.outer_frame.bind("<Leave>", self._unbind_mouse)
         self.vert_scrollbar['command'] = self.canvas.yview
         self.horz_scrollbar['command'] = self.canvas.xview
 
         self.inner = CTkFrame(self.canvas)
 
-        self.canvas.create_window(4, 4, window=self.inner, anchor='nw')
+        self.window_id = self.canvas.create_window(4, 4, window=self.inner, anchor='nw')
         self.inner.bind("<Configure>", self._on_frame_configure)
+        self.canvas.bind("<Configure>", self._on_canvas_configure)
 
         self.outer_attr = set(dir(Widget))
 
@@ -40,10 +43,18 @@ class ScrolledFrame:
         return getattr(self.inner, item)
 
     def _on_frame_configure(self, _=None):
-        _, _, x2, y2 = self.canvas.bbox("all")
+        bbox = self.canvas.bbox("all")
+        if bbox is None:
+            return
+        _, _, x2, y2 = bbox
         height = self.canvas.winfo_height()
         width = self.canvas.winfo_width()
         self.canvas.config(scrollregion = (0,0, max(x2, width), max(y2, height)))
+
+    def _on_canvas_configure(self, event):
+        # Keep inner frame width at least canvas width so vertical scrolling behaves consistently.
+        self.canvas.itemconfigure(self.window_id, width=max(event.width - 8, 1))
+        self._on_frame_configure()
 
     def _bind_mouse(self, _=None):
         self.canvas.bind_all("<4>", self._on_mousewheel)

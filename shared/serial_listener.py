@@ -55,8 +55,15 @@ class SerialReader:
                     print("Serial port is not open, stopping reader thread")
                     break
             except serial.SerialException as e:
-                print(f"Error reading from serial port: {e}")
+                # Expected during shutdown when the port is intentionally closed.
+                if self.running:
+                    print(f"Error reading from serial port: {e}")
                 break  # Exit the thread on serial error
+            except OSError as e:
+                # Expected on some platforms during close() race (e.g., Bad file descriptor).
+                if self.running:
+                    print(f"Error reading from serial port: {e}")
+                break
             except Exception as e:
                 print(f"Unexpected error in read_from_serial: {e}")
                 break

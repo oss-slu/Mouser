@@ -56,13 +56,6 @@ def save_temp_to_file(temp_file_path: str, permanent_file_path: str):
     temp_file_path = os.path.abspath(temp_file_path)
     permanent_file_path = os.path.abspath(permanent_file_path)
 
-    # Split the path into base and extension
-    base, ext = os.path.splitext(permanent_file_path)
-    # Take only the part before the first underscore if it exists
-    base = base.split('_')[0]
-
-    permanent_file_path = f"{base}{ext}"  # Updated line
-
     with open(temp_file_path, 'rb') as temp_file:
         data = temp_file.read()
 
@@ -74,12 +67,6 @@ def save_temp_to_encrypted(temp_file_path: str, permanent_file_path: str, passwo
     # Ensure paths are absolute and properly resolved
     temp_file_path = os.path.abspath(temp_file_path)
     permanent_file_path = os.path.abspath(permanent_file_path)
-
-    # Split the path into base and extension
-    base, ext = os.path.splitext(permanent_file_path)
-    # Take only the part before the first underscore if it exists
-    base = base.split('_')[0]
-    permanent_file_path = f"{base}{ext}"  # Updated line
 
     manager = PasswordManager(password)
 

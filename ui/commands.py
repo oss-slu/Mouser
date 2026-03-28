@@ -112,7 +112,8 @@ def open_test(root):
 def open_serial_port_setting(rfid_serial_port_controller):
     """Opens the serial port settings dialog."""
     try:
-        SerialPortSetting(rfid_serial_port_controller)  # ✅ fixed incorrect argument count
+        # Pass controller via keyword to avoid it being interpreted as `preference`.
+        SerialPortSetting(controller=rfid_serial_port_controller)
     except TypeError:
         # fallback to legacy signature if older version of class
         SerialPortSetting("device")  # pylint: disable=too-many-function-args
