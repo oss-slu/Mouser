@@ -2,7 +2,9 @@
 from datetime import date
 import re
 from tkinter.ttk import Treeview, Style
+from tkinter import dialog, filedialog
 import time
+import sqlite3
 from customtkinter import *
 from shared.tk_models import *
 from CTkMessagebox import CTkMessagebox
@@ -188,6 +190,61 @@ class DataCollectionUI(MouserPage):
         self.table.bind("<Double-1>", self._open_selected_for_edit)
 
         self.changer = ChangeMeasurementsDialog(parent, self, self.measurement_strings)
+
+    def showSaveFileDialog():
+        '''Opens a file dialog for the user to select where to save the CSV file.'''
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv")],
+            title="Save CSV"
+        )
+        return file_path
+    
+    def get_measurement_names(self):
+        '''Retrieves measurement names from the database.'''
+        return self.database.get_measurement_name()
+    
+    def get_measurements_for_animal_today(self, animal_id):
+        '''Retrieves measurements for a specific animal for the current date.'''
+        today_date = str(date.today())
+        measurements = self.database.get_data_for_date(today_date)
+        animal_measurements = []
+
+        for measurement_record in measurements:
+            if str(measurement_record[0]) == str(animal_id):  # Assuming measurement_record[0] is animal_id
+                animal_measurements.append(measurement_record[1])  # Assuming measurement_record[1] is the measurement value
+            
+        # If no measurements, append None for each expected measurement
+        num_measurements = len(self.get_measurement_names())
+        while len(animal_measurements) < num_measurements:
+            animal_measurements.append(None)
+        return animal_measurements
+    
+    def handle_export_csv(self):
+        '''Handles exporting the current data to a CSV file.'''
+        file_path = self.showSaveFileDialog()
+        if file_path is None:
+            return  # User canceled export
+        
+        headers = ["Animal ID"] + self.get_measurement_names()
+        data_rows = [headers]
+
+        for animal in self.database.get_animals():
+            animal_id = animal[0]
+            measurements = self.get_measurements_for_animal_today(animal_id)
+            row = [animal_id] + measurements
+            data_rows.append(row)
+
+        try:
+            import csv
+            with open(file_path, 'w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerows(data_rows)
+
+            CTkMessagebox(title="Success", message="CSV exported successfully!", icon="check")
+        except Exception as e:
+            print(f"Error exporting CSV: {e}")
+            CTkMessagebox(title="Error", message="CSV export failed. Please try again.", icon="error")
 
     def raise_warning(self, warning_message='An error occurred'):
         '''Raises a popup warning message.'''
