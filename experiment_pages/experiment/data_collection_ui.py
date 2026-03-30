@@ -47,7 +47,11 @@ class DataCollectionUI(MouserPage):
             self,
             text="",
             text_color="green",
-            font=("Arial", 14)
+            font=("Arial", 14),
+            fg_color="#ecfdf5",   # optional: makes it look like a real notification banner
+            corner_radius=8,
+            padx=10,
+            pady=5
         )
         self.export_notification.place(relx=0.5, rely=0.08, anchor=CENTER)
 
@@ -257,14 +261,22 @@ class DataCollectionUI(MouserPage):
 
             self.export_notification.configure(
                 text="CSV exported successfully!",
-                text_color="green"
+                text_color="green",
+                fg_color="#d1fae5",  
+                padx=12,
+                pady=6,
+                corner_radius=10
             )
 
         except Exception as e:
             print(f"Error exporting CSV: {e}")
             self.export_notification.configure(
                 text="CSV export failed. Please try again.",
-                text_color="red"
+                text_color="#b91c1c",  
+                fg_color="#fee2e2",    
+                padx=12,
+                pady=6,
+                corner_radius=10
             )
 
     def raise_warning(self, warning_message='An error occurred'):
