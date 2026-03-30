@@ -187,6 +187,9 @@ class DataCollectionUI(MouserPage):
         self.table.bind('<<TreeviewSelect>>', self.item_selected)
         self.table.bind("<Double-1>", self._open_selected_for_edit)
         self.table.bind("<1>", self._on_table_click)
+        
+        # Initialize inline editor tracking
+        self._inline_editor = None
 
         self.changer = ChangeMeasurementsDialog(parent, self, self.measurement_strings)
 
@@ -217,12 +220,17 @@ class DataCollectionUI(MouserPage):
             if column_id == '#2':
                 val = self.table.item(row_id, "values")
                 if len(val) > 1 and str(val[1]) == 'None':
-                    self.table.selection_set(row_id)
+                    # Set selection and changing_value without triggering inline edit multiple times
                     self.changing_value = row_id
-                    self._enter_inline_edit(row_id, column_id)
+                    # Use after_idle to ensure table updates complete before opening inline edit
+                    self.table.after_idle(lambda: self._enter_inline_edit(row_id, column_id))
                     return "break"
 
     def _enter_inline_edit(self, row_id, column_id):
+        # Prevent multiple inline editors from opening
+        if hasattr(self, '_inline_editor') and self._inline_editor and self._inline_editor.winfo_exists():
+            return
+            
         # Get bounding box of the cell
         bbox = self.table.bbox(row_id, column_id)
         if not bbox:
@@ -232,12 +240,13 @@ class DataCollectionUI(MouserPage):
         # Define entry widget
         entry = CTkEntry(self.table, width=width, height=height, font=("Arial", self._ui.get("table_font_size", 14)))
         entry.place(x=x, y=y)
+        self._inline_editor = entry
 
         # Function to save when user presses Enter
         def save_edit(event=None):
             new_val = entry.get()
             if new_val.strip() == "":
-                entry.destroy()
+                cleanup_editor()
                 return
 
             try:
@@ -245,20 +254,29 @@ class DataCollectionUI(MouserPage):
                 _ = float(new_val)
             except ValueError:
                 self.raise_warning("Invalid input. Please enter a valid number.")
-                entry.destroy()
+                cleanup_editor()
                 return
 
             # Save the value
             animal_id = self.table.item(row_id, "values")[0]
+            
+            # Clean up editor first to prevent visual issues
+            cleanup_editor()
+            
+            # Then update the value (which will update both DB and table display)
             self.change_selected_value(animal_id, [new_val])
-            entry.destroy()
 
-        def on_focus_out(event):
-            entry.destroy()
+        def cleanup_editor(event=None):
+            if hasattr(self, '_inline_editor') and self._inline_editor:
+                try:
+                    self._inline_editor.destroy()
+                except:
+                    pass
+                self._inline_editor = None
 
         entry.bind("<Return>", save_edit)
-        entry.bind("<Escape>", on_focus_out)
-        entry.bind("<FocusOut>", on_focus_out)
+        entry.bind("<Escape>", cleanup_editor)
+        entry.bind("<FocusOut>", cleanup_editor)
         
         entry.focus_set()
 
@@ -532,10 +550,20 @@ class DataCollectionUI(MouserPage):
 
             # Update display table
             try:
+                updated = False
                 for child in self.table.get_children():
-                    if animal_id_to_change == self.table.item(child)["values"][0]:
+                    table_animal_id = self.table.item(child)["values"][0]
+                    # Handle type conversions for comparison
+                    if str(animal_id_to_change) == str(table_animal_id):
                         self.table.item(child, values=(animal_id_to_change, new_value))
-                print("Table display updated")
+                        updated = True
+                        # Force table to refresh/redraw
+                        self.table.update_idletasks()
+                        break
+                if updated:
+                    print(f"Table display updated for animal {animal_id_to_change}")
+                else:
+                    print(f"Warning: Could not find animal {animal_id_to_change} in table")
             except Exception as table_error:
                 print(f"Error updating table display: {table_error}")
 
