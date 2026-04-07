@@ -185,7 +185,6 @@ class DataCollectionUI(MouserPage):
         self.get_values_for_date()
 
         self.table.bind('<<TreeviewSelect>>', self.item_selected)
-        self.table.bind("<Double-1>", self._open_selected_for_edit)
         self.table.bind("<1>", self._on_table_click)
         
         # Initialize inline editor tracking
@@ -213,6 +212,9 @@ class DataCollectionUI(MouserPage):
 
     def _on_table_click(self, event):
         """Handle click for inline edit on None values."""
+        if self.database.get_measurement_type() != 0:
+            return
+        
         region = self.table.identify("region", event.x, event.y)
         if region == "cell":
             column_id = self.table.identify_column(event.x)
@@ -279,17 +281,6 @@ class DataCollectionUI(MouserPage):
         entry.bind("<FocusOut>", cleanup_editor)
         
         entry.focus_set()
-
-    def _open_selected_for_edit(self, _):
-        """Open the edit dialog for the currently selected row."""
-        selected = self.table.selection()
-        if selected:
-            self.changing_value = selected[0]
-            val = self.table.item(self.changing_value, "values")
-            if len(val) > 1 and str(val[1]) == 'None':
-                # Rely on single-click to open inline editor
-                return
-            self.open_changer()
 
     def set_status(self, text):
         """Update collection status line."""
