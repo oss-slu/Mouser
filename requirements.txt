@@ -9,5 +9,5 @@ cryptography
 customtkinter
 CTkMessagebox
 CTkMenuBar
-git+https://github.com/taconi/playsound.git
+# git+https://github.com/taconi/playsound.git
 requests
