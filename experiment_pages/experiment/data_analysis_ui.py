@@ -39,6 +39,7 @@ class DataAnalysisUI(MouserPage):
             "#0891b2",
             "#be123c",
         ]
+        self._export_notice = None
 
         self.main_frame = CTkFrame(
             self,
@@ -293,16 +294,51 @@ class DataAnalysisUI(MouserPage):
             canvas.create_rectangle(legend_x, legend_y + idx * 18, legend_x + 10, legend_y + 10 + idx * 18, fill=color, outline=color)
             canvas.create_text(legend_x + 16, legend_y + 5 + idx * 18, text=f"Animal {animal_id}", anchor="w", fill="#111827")
 
-    def show_success_message(self):
-        """Shows a temporary success message on the screen."""
-        success_label = CTkLabel(
-            self.main_frame,
-            text="Export to CSV successful!",
-            text_color="green",
-            font=("Arial", 18, "bold"),
-        )
-        success_label.place(relx=0.50, rely=0.10, anchor=CENTER)
-        self.after(1800, success_label.destroy)
+    def dismiss_export_notice(self):
+        if self._export_notice is not None:
+            self._export_notice.destroy()
+            self._export_notice = None
+
+    def show_export_success_notice(self):
+        """Shows a persistent in-page success notification until dismissed or navigated away."""
+        if self._export_notice is None:
+            container = CTkFrame(
+                self,
+                corner_radius=12,
+                fg_color=("#ecfdf5", "#064e3b"),
+                border_width=1,
+                border_color=("#10b981", "#10b981"),
+            )
+            container.place(relx=0.5, rely=0.1, anchor=CENTER)
+
+            label = CTkLabel(
+                container,
+                text="Export to CSV successful!",
+                text_color=("#065f46", "white"),
+                font=("Segoe UI Semibold", 14),
+            )
+            label.grid(row=0, column=0, padx=(12, 10), pady=8, sticky="w")
+
+            dismiss_button = CTkButton(
+                container,
+                text="Dismiss",
+                command=self.dismiss_export_notice,
+                width=90,
+                height=32,
+                font=("Segoe UI Semibold", 13),
+                fg_color="#2563eb",
+                hover_color="#1e40af",
+                text_color="white",
+            )
+            dismiss_button.grid(row=0, column=1, padx=(0, 10), pady=6, sticky="e")
+
+            container.grid_columnconfigure(0, weight=1)
+            self._export_notice = container
+        else:
+            for child in self._export_notice.winfo_children():
+                if isinstance(child, CTkLabel):
+                    child.configure(text="Export to CSV successful!")
+                    break
 
     def export_to_csv(self):
         """Handles exporting the database to CSV files."""
@@ -318,13 +354,14 @@ class DataAnalysisUI(MouserPage):
             db = ExperimentDatabase(self.db_file)
             db.export_to_single_formatted_csv(save_dir)
             AudioManager.play(SUCCESS_SOUND)
-            self.show_success_message()
+            self.show_export_success_notice()
         except Exception:
             self.show_notification("Error", "Export to CSV failed")
 
     def raise_frame(self):
         """Raise frame and refresh displayed data."""
         super().raise_frame()
+        self.dismiss_export_notice()
         self.refresh_analysis_view()
 
     def show_notification(self, title, message):
