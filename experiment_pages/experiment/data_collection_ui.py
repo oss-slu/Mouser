@@ -1,6 +1,7 @@
 '''Data collection ui module.'''
 from datetime import date
 import re
+import tkinter as tk
 from tkinter.ttk import Treeview, Style
 import time
 from customtkinter import *
@@ -219,14 +220,25 @@ class DataCollectionUI(MouserPage):
         if region == "cell":
             column_id = self.table.identify_column(event.x)
             row_id = self.table.identify_row(event.y)
-            if column_id == '#2':
-                val = self.table.item(row_id, "values")
-                if len(val) > 1 and str(val[1]) == 'None':
-                    # Set selection and changing_value without triggering inline edit multiple times
-                    self.changing_value = row_id
-                    # Use after_idle to ensure table updates complete before opening inline edit
-                    self.table.after_idle(lambda: self._enter_inline_edit(row_id, column_id))
-                    return "break"
+            if not row_id or column_id == "#1":
+                return
+
+            values = self.table.item(row_id, "values") or ()
+            try:
+                column_index = int(str(column_id).lstrip("#")) - 1
+            except ValueError:
+                return
+
+            if column_index <= 0 or column_index >= len(values):
+                return
+
+            cell_value = values[column_index]
+            if cell_value is None or str(cell_value).strip() in ("", "None"):
+                # Keep selection behavior, but replace popup flow with inline edit.
+                self.table.selection_set(row_id)
+                self.changing_value = row_id
+                self._enter_inline_edit(row_id, column_id)
+                return "break"
 
     def _enter_inline_edit(self, row_id, column_id):
         # Prevent multiple inline editors from opening
@@ -239,9 +251,24 @@ class DataCollectionUI(MouserPage):
             return
         x, y, width, height = bbox
 
-        # Define entry widget
-        entry = CTkEntry(self.table, width=width, height=height, font=("Arial", self._ui.get("table_font_size", 14)))
-        entry.place(x=x, y=y)
+        # Use a lightweight native tkinter Entry for fast, truly-inline editing (no popup).
+        # CTkEntry can look like a separate "box" overlay; a flat Entry blends into the cell.
+        style = Style()
+        background = style.lookup("DataCollection.Treeview", "fieldbackground") or style.lookup("Treeview", "fieldbackground") or "white"
+        foreground = style.lookup("DataCollection.Treeview", "foreground") or style.lookup("Treeview", "foreground") or "black"
+
+        entry = tk.Entry(
+            self.table,
+            bd=0,
+            highlightthickness=0,
+            relief="flat",
+            justify="center",
+            font=("Arial", self._ui.get("table_font_size", 14)),
+            background=background,
+            foreground=foreground,
+            insertbackground=foreground,
+        )
+        entry.place(x=x, y=y, width=width, height=height)
         self._inline_editor = entry
 
         # Function to save when user presses Enter
