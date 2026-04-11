@@ -21,7 +21,7 @@ Contributions to Mouser can include:
 - Code refactoring or test coverage enhancements
 - Maintenance and cleanup tasks
 
-All contributions, big or small, help strengthen the project’s community and functionality.
+All contributions, big or small, help strengthen the project's community and functionality.
 
 ## Getting started
 
@@ -56,12 +56,19 @@ python main.py
 ## Issues & feature requests
 
 - Check the [Issues tab](https://github.com/oss-slu/Mouser/issues) before creating a new one.
+- Use the GitHub issue templates (Bug report / Feature request) to provide the details maintainers need to triage quickly.
 - When submitting a new issue, include:
   - A clear and descriptive title
   - Steps to reproduce (for bugs)
   - Expected vs. actual behavior
   - System details (OS, Python version, etc.)
-- Tag issues appropriately (e.g., bug, enhancement, documentation)
+- Tag issues appropriately (e.g., `bug`, `enhancement`, `documentation`, `good first issue`, `help wanted`) when you have permission to apply labels.
+
+### Finding something to work on
+
+- Start with issues labeled `good first issue` for small, well-scoped tasks.
+- Use `help wanted` to find tasks that maintainers think are ready for external contributors.
+- If you want to work on an issue, leave a short comment like: "I'd like to work on this — can you assign me?"
 
 ## Pull request process
 - Base PRs on the main branch of your fork.
@@ -94,4 +101,4 @@ python main.py
 - Contributions are submitted under the project's license. Do not add third-party code without proper licensing.
 
 ## Contact
-- For questions, open an issue with the "help wanted" label.
+- For questions, open a GitHub issue with your question and any relevant context (OS, Python version, screenshots). Maintainers may label it appropriately (for example `question` or `help wanted`).

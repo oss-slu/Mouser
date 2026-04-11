@@ -7,11 +7,18 @@ assignees: ''
 
 ---
 
-**Describe the feature that you would like added**
-*A clear and concise description of the feature, and why is should be added to the project.*
+**Problem / user need**
+*What user workflow is hard today, and who is impacted?*
 
-**Tasks that need to completed for this feature**
-*A list of individual tasks that likely must be done before the feature can be considered "complete".*
+**Proposed solution**
+*What would you like Mouser to do instead?*
+
+**Acceptance criteria**
+- [ ]
+- [ ]
+
+**Implementation notes (optional)**
+*Any pointers to relevant pages/modules, hardware constraints, or data model changes.*
 
 **Additional context**
 *Add any other context or screenshots about the feature request here.*

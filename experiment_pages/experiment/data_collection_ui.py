@@ -2,6 +2,7 @@
 from datetime import date
 import re
 import csv
+import tkinter as tk
 from tkinter.ttk import Treeview, Style
 from tkinter import dialog, filedialog
 import time
@@ -198,7 +199,10 @@ class DataCollectionUI(MouserPage):
         self.get_values_for_date()
 
         self.table.bind('<<TreeviewSelect>>', self.item_selected)
-        self.table.bind("<Double-1>", self._open_selected_for_edit)
+        self.table.bind("<1>", self._on_table_click)
+        
+        # Initialize inline editor tracking
+        self._inline_editor = None
 
         self.changer = ChangeMeasurementsDialog(parent, self, self.measurement_strings)
 
@@ -297,12 +301,130 @@ class DataCollectionUI(MouserPage):
         if selected:
             self.changing_value = selected[0]
 
-    def _open_selected_for_edit(self, _):
-        """Open the edit dialog for the currently selected row."""
-        selected = self.table.selection()
-        if selected:
-            self.changing_value = selected[0]
-            self.open_changer()
+    def _on_table_click(self, event):
+        """Handle click for inline edit in manual mode (no popups)."""
+        if self.database.get_measurement_type() != 0:
+            return
+
+        # If an editor is already open, don't try to open another one.
+        if getattr(self, "_inline_editor", None) is not None:
+            try:
+                if self._inline_editor.winfo_exists():
+                    return "break"
+            except Exception:
+                pass
+        
+        region = self.table.identify("region", event.x, event.y)
+        if region == "cell":
+            column_id = self.table.identify_column(event.x)
+            row_id = self.table.identify_row(event.y)
+            if not row_id or column_id == "#1":
+                return
+
+            values = self.table.item(row_id, "values") or ()
+            try:
+                column_index = int(str(column_id).lstrip("#")) - 1
+            except ValueError:
+                return
+
+            if column_index <= 0 or column_index >= len(values):
+                return
+
+            # Keep selection behavior, but replace any popup flow with inline edit.
+            # Allow editing existing values too (not only None).
+            self.table.selection_set(row_id)
+            self.changing_value = row_id
+            self._enter_inline_edit(row_id, column_id)
+            return "break"
+
+    def _enter_inline_edit(self, row_id, column_id):
+        # Prevent multiple inline editors from opening
+        if hasattr(self, '_inline_editor') and self._inline_editor and self._inline_editor.winfo_exists():
+            return
+            
+        # Get bounding box of the cell
+        bbox = self.table.bbox(row_id, column_id)
+        if not bbox:
+            return
+        x, y, width, height = bbox
+
+        # Use a lightweight native tkinter Entry for fast, truly-inline editing (no popup).
+        # CTkEntry can look like a separate "box" overlay; a flat Entry blends into the cell.
+        style = Style()
+        background = style.lookup("DataCollection.Treeview", "fieldbackground") or style.lookup("Treeview", "fieldbackground") or "white"
+        foreground = style.lookup("DataCollection.Treeview", "foreground") or style.lookup("Treeview", "foreground") or "black"
+
+        entry = tk.Entry(
+            self.table,
+            bd=0,
+            highlightthickness=0,
+            relief="flat",
+            justify="center",
+            font=("Arial", self._ui.get("table_font_size", 14)),
+            background=background,
+            foreground=foreground,
+            insertbackground=foreground,
+        )
+        # Pre-fill with the current cell value (blank if None).
+        existing_values = self.table.item(row_id, "values") or ()
+        try:
+            column_index = int(str(column_id).lstrip("#")) - 1
+        except ValueError:
+            column_index = -1
+
+        initial_text = ""
+        if 0 <= column_index < len(existing_values):
+            cell_value = existing_values[column_index]
+            if cell_value is not None and str(cell_value).strip() not in ("", "None"):
+                initial_text = str(cell_value)
+
+        entry.place(x=x, y=y, width=width, height=height)
+        if initial_text:
+            entry.insert(0, initial_text)
+        self._inline_editor = entry
+
+        # Function to save when user presses Enter
+        def save_edit(event=None):
+            new_val = entry.get()
+            if new_val.strip() == "":
+                cleanup_editor()
+                return
+
+            try:
+                # Ensure it is a valid float as expected
+                _ = float(new_val)
+            except ValueError:
+                self.raise_warning("Invalid input. Please enter a valid number.")
+                cleanup_editor()
+                return
+
+            # Save the value
+            animal_id = self.table.item(row_id, "values")[0]
+            
+            # Clean up editor first to prevent visual issues
+            cleanup_editor()
+            
+            # Then update the value (which will update both DB and table display)
+            if self.change_selected_value(animal_id, [new_val]):
+                AudioManager.play(SUCCESS_SOUND)
+
+        def cleanup_editor(event=None):
+            if hasattr(self, '_inline_editor') and self._inline_editor:
+                try:
+                    self._inline_editor.destroy()
+                except:
+                    pass
+                self._inline_editor = None
+
+        entry.bind("<Return>", save_edit)
+        entry.bind("<Escape>", cleanup_editor)
+        entry.bind("<FocusOut>", cleanup_editor)
+        
+        entry.focus_set()
+        try:
+            entry.selection_range(0, "end")
+        except Exception:
+            pass
 
     def set_status(self, text):
         """Update collection status line."""
@@ -563,10 +685,20 @@ class DataCollectionUI(MouserPage):
 
             # Update display table
             try:
+                updated = False
                 for child in self.table.get_children():
-                    if animal_id_to_change == self.table.item(child)["values"][0]:
+                    table_animal_id = self.table.item(child)["values"][0]
+                    # Handle type conversions for comparison
+                    if str(animal_id_to_change) == str(table_animal_id):
                         self.table.item(child, values=(animal_id_to_change, new_value))
-                print("Table display updated")
+                        updated = True
+                        # Force table to refresh/redraw
+                        self.table.update_idletasks()
+                        break
+                if updated:
+                    print(f"Table display updated for animal {animal_id_to_change}")
+                else:
+                    print(f"Warning: Could not find animal {animal_id_to_change} in table")
             except Exception as table_error:
                 print(f"Error updating table display: {table_error}")
 
@@ -605,11 +737,13 @@ class DataCollectionUI(MouserPage):
                     print(f"Error type: {type(save_error)}")
                     import traceback
                     print(f"Full traceback: {traceback.format_exc()}")
+            return True
         except Exception as e:
             self.raise_warning("Failed to save data for animal.")
             print(f"Top level error: {e}")
             import traceback
             print(f"Full traceback: {traceback.format_exc()}")
+            return False
 
     def get_values_for_date(self):
         '''Gets the data for the current date as a string in YYYY-MM-DD.'''
