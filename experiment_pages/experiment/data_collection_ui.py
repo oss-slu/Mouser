@@ -1,11 +1,15 @@
 '''Data collection ui module.'''
 from datetime import date
 import re
+import csv
+import tkinter as tk
 from tkinter.ttk import Treeview, Style
+from tkinter import dialog, filedialog
 import time
+import sqlite3
 from customtkinter import *
-from shared.tk_models import *
 from CTkMessagebox import CTkMessagebox
+from shared.tk_models import *
 from databases.experiment_database import ExperimentDatabase
 from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
 from shared.audio import AudioManager
@@ -40,6 +44,17 @@ class DataCollectionUI(MouserPage):
 
         self.measurement_items = self.database.get_measurement_items()
         self.menu_button.configure(command = self.press_back_to_menu_button)
+        self.export_notification = CTkLabel(
+            self,
+            text="",
+            text_color="green",
+            font=("Arial", 14),
+            fg_color="#ecfdf5",   # optional: makes it look like a real notification banner
+            corner_radius=8,
+            padx=10,
+            pady=5
+        )
+        self.export_notification.place(relx=0.5, rely=0.08, anchor=CENTER)
 
 
         ## ENSURE ANIMALS ARE IN DATABASE BEFORE EXPERIMENT FOR ALL EXPERIMENTS ##
@@ -83,9 +98,8 @@ class DataCollectionUI(MouserPage):
         #     animal_ids = [animal[0] for animal in self.database.get_animals()]  # Get all animal IDs
         #     self.database.insert_blank_data_for_day(animal_ids, today_date)  # Insert blank dataS
 
-        self.measurement_strings = []
-        self.measurement_strings.append(self.measurement_items)
-        self.measurement_ids = self.database.get_measurement_name()
+        self.measurement_strings = self.measurement_items  # already a list
+        columns.extend(self.measurement_strings)  # adds each measurement as separate column
         print(self.measurement_items)
 
         if self.database.experiment_uses_rfid() == 0:
@@ -185,9 +199,89 @@ class DataCollectionUI(MouserPage):
         self.get_values_for_date()
 
         self.table.bind('<<TreeviewSelect>>', self.item_selected)
-        self.table.bind("<Double-1>", self._open_selected_for_edit)
+        self.table.bind("<1>", self._on_table_click)
+        
+        # Initialize inline editor tracking
+        self._inline_editor = None
 
         self.changer = ChangeMeasurementsDialog(parent, self, self.measurement_strings)
+
+    def showSaveFileDialog(self):
+        '''Opens a file dialog for the user to select where to save the CSV file.'''
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv")],
+            title="Save CSV"
+        )
+        return file_path
+    
+    def get_measurement_names(self):
+        '''Retrieves measurement names from the database.'''
+        return self.database.get_measurement_name()
+    
+    def get_measurements_for_animal_today(self, animal_id):
+        '''Retrieves measurements for a specific animal for the current date.'''
+        today_date = str(date.today())
+        all_measurements_today = self.database.get_data_for_date(today_date)
+        measurement_names = self.get_measurement_names()
+        animal_measurements_dict = {}
+
+        for record in all_measurements_today:
+            record_animal_id = record[0]
+            measurement_name = record[1]  
+            measurement_value = record[2] 
+
+            if str(record_animal_id) == str(animal_id):
+                animal_measurements_dict[measurement_name] = measurement_value
+
+        ordered_measurements = []
+        for name in measurement_names:
+            if name in animal_measurements_dict:
+                ordered_measurements.append(animal_measurements_dict[name])
+            else:
+                ordered_measurements.append(None)  # placeholder if no measurement
+
+        return ordered_measurements
+    
+    def handle_export_csv(self):
+        '''Handles exporting the current data to a CSV file.'''
+        file_path = self.showSaveFileDialog()
+        if not file_path:
+            return  # User canceled export
+        
+        headers = ["Animal ID"] + self.get_measurement_names()
+        data_rows = [headers]
+
+        for animal in self.database.get_animals():
+            animal_id = animal[0]
+            measurements = self.get_measurements_for_animal_today(animal_id)
+            row = [animal_id] + measurements
+            data_rows.append(row)
+
+        try:
+            with open(file_path, 'w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerows(data_rows)
+
+            self.export_notification.configure(
+                text="CSV exported successfully!",
+                text_color="green",
+                fg_color="#d1fae5",  
+                padx=12,
+                pady=6,
+                corner_radius=10
+            )
+
+        except Exception as e:
+            print(f"Error exporting CSV: {e}")
+            self.export_notification.configure(
+                text="CSV export failed. Please try again.",
+                text_color="#b91c1c",  
+                fg_color="#fee2e2",    
+                padx=12,
+                pady=6,
+                corner_radius=10
+            )
 
     def raise_warning(self, warning_message='An error occurred'):
         '''Raises a popup warning message.'''
@@ -207,12 +301,130 @@ class DataCollectionUI(MouserPage):
         if selected:
             self.changing_value = selected[0]
 
-    def _open_selected_for_edit(self, _):
-        """Open the edit dialog for the currently selected row."""
-        selected = self.table.selection()
-        if selected:
-            self.changing_value = selected[0]
-            self.open_changer()
+    def _on_table_click(self, event):
+        """Handle click for inline edit in manual mode (no popups)."""
+        if self.database.get_measurement_type() != 0:
+            return
+
+        # If an editor is already open, don't try to open another one.
+        if getattr(self, "_inline_editor", None) is not None:
+            try:
+                if self._inline_editor.winfo_exists():
+                    return "break"
+            except Exception:
+                pass
+        
+        region = self.table.identify("region", event.x, event.y)
+        if region == "cell":
+            column_id = self.table.identify_column(event.x)
+            row_id = self.table.identify_row(event.y)
+            if not row_id or column_id == "#1":
+                return
+
+            values = self.table.item(row_id, "values") or ()
+            try:
+                column_index = int(str(column_id).lstrip("#")) - 1
+            except ValueError:
+                return
+
+            if column_index <= 0 or column_index >= len(values):
+                return
+
+            # Keep selection behavior, but replace any popup flow with inline edit.
+            # Allow editing existing values too (not only None).
+            self.table.selection_set(row_id)
+            self.changing_value = row_id
+            self._enter_inline_edit(row_id, column_id)
+            return "break"
+
+    def _enter_inline_edit(self, row_id, column_id):
+        # Prevent multiple inline editors from opening
+        if hasattr(self, '_inline_editor') and self._inline_editor and self._inline_editor.winfo_exists():
+            return
+            
+        # Get bounding box of the cell
+        bbox = self.table.bbox(row_id, column_id)
+        if not bbox:
+            return
+        x, y, width, height = bbox
+
+        # Use a lightweight native tkinter Entry for fast, truly-inline editing (no popup).
+        # CTkEntry can look like a separate "box" overlay; a flat Entry blends into the cell.
+        style = Style()
+        background = style.lookup("DataCollection.Treeview", "fieldbackground") or style.lookup("Treeview", "fieldbackground") or "white"
+        foreground = style.lookup("DataCollection.Treeview", "foreground") or style.lookup("Treeview", "foreground") or "black"
+
+        entry = tk.Entry(
+            self.table,
+            bd=0,
+            highlightthickness=0,
+            relief="flat",
+            justify="center",
+            font=("Arial", self._ui.get("table_font_size", 14)),
+            background=background,
+            foreground=foreground,
+            insertbackground=foreground,
+        )
+        # Pre-fill with the current cell value (blank if None).
+        existing_values = self.table.item(row_id, "values") or ()
+        try:
+            column_index = int(str(column_id).lstrip("#")) - 1
+        except ValueError:
+            column_index = -1
+
+        initial_text = ""
+        if 0 <= column_index < len(existing_values):
+            cell_value = existing_values[column_index]
+            if cell_value is not None and str(cell_value).strip() not in ("", "None"):
+                initial_text = str(cell_value)
+
+        entry.place(x=x, y=y, width=width, height=height)
+        if initial_text:
+            entry.insert(0, initial_text)
+        self._inline_editor = entry
+
+        # Function to save when user presses Enter
+        def save_edit(event=None):
+            new_val = entry.get()
+            if new_val.strip() == "":
+                cleanup_editor()
+                return
+
+            try:
+                # Ensure it is a valid float as expected
+                _ = float(new_val)
+            except ValueError:
+                self.raise_warning("Invalid input. Please enter a valid number.")
+                cleanup_editor()
+                return
+
+            # Save the value
+            animal_id = self.table.item(row_id, "values")[0]
+            
+            # Clean up editor first to prevent visual issues
+            cleanup_editor()
+            
+            # Then update the value (which will update both DB and table display)
+            if self.change_selected_value(animal_id, [new_val]):
+                AudioManager.play(SUCCESS_SOUND)
+
+        def cleanup_editor(event=None):
+            if hasattr(self, '_inline_editor') and self._inline_editor:
+                try:
+                    self._inline_editor.destroy()
+                except:
+                    pass
+                self._inline_editor = None
+
+        entry.bind("<Return>", save_edit)
+        entry.bind("<Escape>", cleanup_editor)
+        entry.bind("<FocusOut>", cleanup_editor)
+        
+        entry.focus_set()
+        try:
+            entry.selection_range(0, "end")
+        except Exception:
+            pass
 
     def set_status(self, text):
         """Update collection status line."""
@@ -473,10 +685,20 @@ class DataCollectionUI(MouserPage):
 
             # Update display table
             try:
+                updated = False
                 for child in self.table.get_children():
-                    if animal_id_to_change == self.table.item(child)["values"][0]:
+                    table_animal_id = self.table.item(child)["values"][0]
+                    # Handle type conversions for comparison
+                    if str(animal_id_to_change) == str(table_animal_id):
                         self.table.item(child, values=(animal_id_to_change, new_value))
-                print("Table display updated")
+                        updated = True
+                        # Force table to refresh/redraw
+                        self.table.update_idletasks()
+                        break
+                if updated:
+                    print(f"Table display updated for animal {animal_id_to_change}")
+                else:
+                    print(f"Warning: Could not find animal {animal_id_to_change} in table")
             except Exception as table_error:
                 print(f"Error updating table display: {table_error}")
 
@@ -515,11 +737,13 @@ class DataCollectionUI(MouserPage):
                     print(f"Error type: {type(save_error)}")
                     import traceback
                     print(f"Full traceback: {traceback.format_exc()}")
+            return True
         except Exception as e:
             self.raise_warning("Failed to save data for animal.")
             print(f"Top level error: {e}")
             import traceback
             print(f"Full traceback: {traceback.format_exc()}")
+            return False
 
     def get_values_for_date(self):
         '''Gets the data for the current date as a string in YYYY-MM-DD.'''
