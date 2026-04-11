@@ -1,15 +1,18 @@
-Fixes #issue_number
+Closes #<issue-number>
 
-**What was changed?**
+## Summary
 
-*Here, describe what part of the application you changed (e.g. login page, database, etc.). If possible, mention what specific components were added, removed, or modified.*
+**What changed?**
+- 
 
-**Why was it changed?**
+**Why?**
+- 
 
-*Here, describe the issue that you are fixing with this code, and why your code fixes it.*
+## How to test
+- 
 
-**How was it changed?**
-
-*Here, get into detail about what files you modified, and talk about the most important lines in regards to fixing the issue.*
-
-**Screenshots that show the changes (if applicable):**
+## Checklist
+- [ ] `python -m pytest` passes (or explain why not)
+- [ ] Updated docs (README / `ContributingGuidelines.md`) if needed
+- [ ] Added screenshots for UI changes (if applicable)
+- [ ] Verified hardware/serial behavior (if applicable)
