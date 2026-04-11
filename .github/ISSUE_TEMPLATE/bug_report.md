@@ -13,9 +13,15 @@ assignees: ''
 **Steps to reproduce**
 *A list of steps it takes to see this bug.*
 
-**Device information**
- - OS: [e.g. iOS]
- - Python version: [e.g. 22]
+**Environment**
+ - OS: [e.g. Windows 11 / macOS / Ubuntu]
+ - Python: [e.g. 3.11.x]
+ - Mouser version: [commit hash / release name, if known]
+
+**Hardware (if applicable)**
+ - Device type: [RFID reader / balance / calipers / other]
+ - Connection: [USB / serial / HID keyboard-wedge]
+ - Serial config: [COM port, baud, parity, etc.]
 
 **Additional context**
 *Add any other context or screenshots about the bug here.*
