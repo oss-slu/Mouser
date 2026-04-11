@@ -212,9 +212,17 @@ class DataCollectionUI(MouserPage):
             self.changing_value = selected[0]
 
     def _on_table_click(self, event):
-        """Handle click for inline edit on None values."""
+        """Handle click for inline edit in manual mode (no popups)."""
         if self.database.get_measurement_type() != 0:
             return
+
+        # If an editor is already open, don't try to open another one.
+        if getattr(self, "_inline_editor", None) is not None:
+            try:
+                if self._inline_editor.winfo_exists():
+                    return "break"
+            except Exception:
+                pass
         
         region = self.table.identify("region", event.x, event.y)
         if region == "cell":
@@ -232,13 +240,12 @@ class DataCollectionUI(MouserPage):
             if column_index <= 0 or column_index >= len(values):
                 return
 
-            cell_value = values[column_index]
-            if cell_value is None or str(cell_value).strip() in ("", "None"):
-                # Keep selection behavior, but replace popup flow with inline edit.
-                self.table.selection_set(row_id)
-                self.changing_value = row_id
-                self._enter_inline_edit(row_id, column_id)
-                return "break"
+            # Keep selection behavior, but replace any popup flow with inline edit.
+            # Allow editing existing values too (not only None).
+            self.table.selection_set(row_id)
+            self.changing_value = row_id
+            self._enter_inline_edit(row_id, column_id)
+            return "break"
 
     def _enter_inline_edit(self, row_id, column_id):
         # Prevent multiple inline editors from opening
@@ -268,7 +275,22 @@ class DataCollectionUI(MouserPage):
             foreground=foreground,
             insertbackground=foreground,
         )
+        # Pre-fill with the current cell value (blank if None).
+        existing_values = self.table.item(row_id, "values") or ()
+        try:
+            column_index = int(str(column_id).lstrip("#")) - 1
+        except ValueError:
+            column_index = -1
+
+        initial_text = ""
+        if 0 <= column_index < len(existing_values):
+            cell_value = existing_values[column_index]
+            if cell_value is not None and str(cell_value).strip() not in ("", "None"):
+                initial_text = str(cell_value)
+
         entry.place(x=x, y=y, width=width, height=height)
+        if initial_text:
+            entry.insert(0, initial_text)
         self._inline_editor = entry
 
         # Function to save when user presses Enter
@@ -293,7 +315,8 @@ class DataCollectionUI(MouserPage):
             cleanup_editor()
             
             # Then update the value (which will update both DB and table display)
-            self.change_selected_value(animal_id, [new_val])
+            if self.change_selected_value(animal_id, [new_val]):
+                AudioManager.play(SUCCESS_SOUND)
 
         def cleanup_editor(event=None):
             if hasattr(self, '_inline_editor') and self._inline_editor:
@@ -308,6 +331,10 @@ class DataCollectionUI(MouserPage):
         entry.bind("<FocusOut>", cleanup_editor)
         
         entry.focus_set()
+        try:
+            entry.selection_range(0, "end")
+        except Exception:
+            pass
 
     def set_status(self, text):
         """Update collection status line."""
@@ -620,11 +647,13 @@ class DataCollectionUI(MouserPage):
                     print(f"Error type: {type(save_error)}")
                     import traceback
                     print(f"Full traceback: {traceback.format_exc()}")
+            return True
         except Exception as e:
             self.raise_warning("Failed to save data for animal.")
             print(f"Top level error: {e}")
             import traceback
             print(f"Full traceback: {traceback.format_exc()}")
+            return False
 
     def get_values_for_date(self):
         '''Gets the data for the current date as a string in YYYY-MM-DD.'''
