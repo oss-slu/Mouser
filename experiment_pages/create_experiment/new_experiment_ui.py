@@ -11,6 +11,7 @@ from customtkinter import (
     CTkButton,
     CTkFont,
     CTkToplevel,
+    CTkScrollableFrame,
     StringVar,
     BooleanVar,
     END,
@@ -88,9 +89,9 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         self.added_invest: List[str] = []
 
         # ----------------------------
-        # Main Layout (no page-level scrolling)
+        # Main Layout (with scrolling)
         # ----------------------------
-        body_root = CTkFrame(self, fg_color="transparent")
+        body_root = CTkScrollableFrame(self, fg_color="transparent")
         body_root.place(relx=0.5, rely=0.0, y=66, anchor="n", relwidth=0.96, relheight=0.88)
         body_root.grid_columnconfigure(0, weight=1)
         body_root.grid_rowconfigure(1, weight=1)
