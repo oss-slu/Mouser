@@ -6,6 +6,7 @@ from customtkinter import (
     CTkButton,
     CTkEntry,
     CTkScrollableFrame,
+    CTkTextbox,
     CTkFont,
 )
 from tkinter import messagebox
@@ -20,7 +21,7 @@ class InvestigatorsUI(MouserPage):
         super().__init__(parent, "Investigators", prev_page)
         self.file_path = file_path
         self.db = ExperimentDatabase(file_path)
-        self.investigators = self.db.get_investigators()
+        self.investigators = []
 
         self.configure(fg_color=("white", "#18181b"))
         self.grid_rowconfigure((0, 1), weight=1)
@@ -53,7 +54,7 @@ class InvestigatorsUI(MouserPage):
             border_color="#d1d5db",
         )
         card.grid(row=1, column=0, padx=80, pady=20, sticky="nsew")
-        card.grid_rowconfigure(1, weight=1)
+        card.grid_rowconfigure(2, weight=1)
         card.grid_columnconfigure(0, weight=1)
 
         input_row = CTkFrame(card, fg_color="transparent")
@@ -73,12 +74,23 @@ class InvestigatorsUI(MouserPage):
             hover_color="#1e40af",
         ).grid(row=0, column=1)
 
-        self.list_frame = CTkScrollableFrame(card, fg_color=("white", "#1f2937"))
-        self.list_frame.grid(row=1, column=0, padx=25, pady=10, sticky="nsew")
+        CTkLabel(
+            card,
+            text="Current Investigators",
+            font=CTkFont("Segoe UI", 16, weight="bold"),
+            text_color=("#111827", "#e5e7eb"),
+        ).grid(row=1, column=0, padx=25, pady=(0, 4), sticky="w")
+
+        self.investigator_textbox = CTkTextbox(card, height=100, wrap="word")
+        self.investigator_textbox.grid(row=2, column=0, padx=25, pady=(0, 10), sticky="nsew")
+        self.investigator_textbox.configure(state="disabled")
+
+        self.list_frame = CTkScrollableFrame(card, fg_color=("white", "#1f2937"), height=170)
+        self.list_frame.grid(row=3, column=0, padx=25, pady=10, sticky="nsew")
         self.list_frame.grid_columnconfigure(0, weight=1)
 
         actions = CTkFrame(card, fg_color="transparent")
-        actions.grid(row=2, column=0, padx=25, pady=(10, 20), sticky="e")
+        actions.grid(row=4, column=0, padx=25, pady=(10, 20), sticky="e")
 
         CTkButton(
             actions,
@@ -98,9 +110,26 @@ class InvestigatorsUI(MouserPage):
             hover_color="#374151",
         ).grid(row=0, column=1)
 
+        self._load_investigators()
+
+    def _load_investigators(self):
+        self.investigators = self.db.get_investigators()
+        self._refresh_list()
+
+    def _persist_investigators(self):
+        self.db.update_investigators(self.investigators)
+        self.investigators = self.db.get_investigators()
         self._refresh_list()
 
     def _refresh_list(self):
+        self.investigator_textbox.configure(state="normal")
+        self.investigator_textbox.delete("1.0", "end")
+        if self.investigators:
+            self.investigator_textbox.insert("1.0", "\n".join(self.investigators))
+        else:
+            self.investigator_textbox.insert("1.0", "No investigators added yet.")
+        self.investigator_textbox.configure(state="disabled")
+
         for widget in self.list_frame.winfo_children():
             widget.destroy()
 
@@ -136,15 +165,15 @@ class InvestigatorsUI(MouserPage):
             return
         self.investigators.append(name)
         self.input_entry.delete(0, "end")
-        self._refresh_list()
+        self._persist_investigators()
 
     def remove_investigator(self, name):
         if name in self.investigators:
             self.investigators.remove(name)
-            self._refresh_list()
+            self._persist_investigators()
 
     def save_investigators(self):
-        self.db.update_investigators(self.investigators)
+        self._persist_investigators()
         messagebox.showinfo("Saved", "Investigators updated successfully.")
 
     def go_back(self):
@@ -152,3 +181,7 @@ class InvestigatorsUI(MouserPage):
             prev = getattr(self.menu_button, "previous_page", None)
             if prev is not None and hasattr(prev, "raise_frame"):
                 prev.raise_frame()
+
+    def raise_frame(self):
+        self._load_investigators()
+        super().raise_frame()

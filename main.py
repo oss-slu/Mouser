@@ -26,6 +26,7 @@ from shared.serial_port_controller import SerialPortController  # pylint: disabl
 from ui.root_window import create_root_window  # pylint: disable=wrong-import-position
 from ui.menu_bar import build_menu  # pylint: disable=wrong-import-position
 from ui.welcome_screen import setup_welcome_screen  # pylint: disable=wrong-import-position
+from ui.commands import save_and_close  # pylint: disable=wrong-import-position
 
 
 # Global app variables
@@ -67,6 +68,7 @@ build_menu(
     experiments_frame=experiments_frame,
     rfid_serial_port_controller=rfid_serial_port_controller,
 )
+root.protocol("WM_DELETE_WINDOW", lambda: save_and_close(root))
 
 # Final grid configuration
 raise_frame(experiments_frame)

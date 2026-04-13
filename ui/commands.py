@@ -137,3 +137,14 @@ def save_file():
         file_utils.save_temp_to_file(temp_file, current_file)
     else:
         print("Save skipped — missing file path.")
+
+
+def save_and_close(root):
+    """Persist current experiment data, then close the application window."""
+    from databases.experiment_database import ExperimentDatabase  # pylint: disable=import-outside-toplevel
+
+    for db in list(ExperimentDatabase._instances.values()):  # pylint: disable=protected-access
+        db.close()
+
+    save_file()
+    root.destroy()
