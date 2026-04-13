@@ -1,4 +1,4 @@
-"""New Experiment Module — full functional version with modernized layout."""
+"""New Experiment Module — full functional version with redesigned layout."""
 
 from typing import Optional, List
 
@@ -9,14 +9,14 @@ from customtkinter import (
     CTkEntry,
     CTkRadioButton,
     CTkButton,
+    CTkFont,
+    CTkToplevel,
     StringVar,
     BooleanVar,
-    W,
     END,
 )
 
 from shared.tk_models import MouserPage, ChangePageButton  # pylint: disable=import-error
-from shared.scrollable_frame import ScrolledFrame  # pylint: disable=import-error
 from experiment_pages.experiment.group_config_ui import (  # pylint: disable=import-error
     GroupConfigUI,
 )
@@ -35,19 +35,52 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
 
     def __init__(self, parent: CTk, menu_page: Optional[CTkFrame] = None):
         """Initialize the New Experiment form layout and bindings."""
-        super().__init__(parent, "New Experiment", menu_page)
+        super().__init__(parent, "", menu_page)
+        try:
+            self.canvas.itemconfigure(self.rectangle, state="hidden")
+        except Exception:
+            pass
+
+        palette = {
+            "bg": ("#f8fafc", "#0b1220"),
+            "header": "#0f172a",
+            "text_muted": ("#64748b", "#94a3b8"),
+            "card_border": ("#e2e8f0", "#223044"),
+            "entry_bg": ("#ffffff", "#0b1220"),
+            "entry_border": ("#cbd5e1", "#334155"),
+            "accent_blue": "#3b82f6",
+            "accent_violet": "#8b5cf6",
+            "accent_teal": "#14b8a6",
+            "accent_amber": "#f59e0b",
+            "accent_green": "#22c55e",
+            "danger": "#ef4444",
+        }
+
+        self.ui_palette = palette
+        self.configure(fg_color=palette["bg"])
+
+        # Page-specific header styling (keeps global MouserPage behavior intact).
+        try:
+            self.canvas.itemconfig(self.rectangle, fill=palette["header"])
+            self.canvas.itemconfig(
+                self.title_label,
+                fill="white",
+                font=("Segoe UI Semibold", 18),
+            )
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
 
         if hasattr(self, "menu_button") and self.menu_button:
             self.menu_button.configure(
                 corner_radius=12,
-                height=50,
-                width=180,
-                font=("Segoe UI Semibold", 18),
+                height=40,
+                width=160,
+                font=("Segoe UI Semibold", 16),
                 text_color="white",
-                fg_color="#2563eb",
-                hover_color="#1e40af",
+                fg_color=palette["accent_amber"],
+                hover_color="#d97706",
             )
-            self.menu_button.place_configure(relx=0.05, rely=0.13, anchor="w")
+            self.menu_button.place_configure(relx=0.0, rely=0.0, x=16, y=8, anchor="nw")
 
         self.input = Experiment()
         self.menu_page = menu_page
@@ -55,186 +88,230 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         self.added_invest: List[str] = []
 
         # ----------------------------
-        # Scrollable Main Layout
+        # Main Layout (no page-level scrolling)
         # ----------------------------
-        scroll_canvas = ScrolledFrame(self)
-        scroll_canvas.place(
-            relx=0.5,
-            rely=0.65,
-            relheight=0.90,
-            relwidth=0.9,
-            anchor="center",
+        body_root = CTkFrame(self, fg_color="transparent")
+        body_root.place(relx=0.5, rely=0.0, y=66, anchor="n", relwidth=0.96, relheight=0.88)
+        body_root.grid_columnconfigure(0, weight=1)
+        body_root.grid_rowconfigure(1, weight=1)
+
+        title_font = CTkFont(family="Segoe UI Semibold", size=26)
+        subtitle_font = CTkFont(family="Segoe UI", size=14)
+        section_title_font = CTkFont(family="Segoe UI Semibold", size=16)
+        label_font = CTkFont(family="Segoe UI Semibold", size=13)
+        entry_font = CTkFont(family="Segoe UI", size=14)
+
+        header = CTkFrame(body_root, fg_color="transparent")
+        header.grid(row=0, column=0, sticky="ew", padx=12, pady=(0, 10))
+        CTkLabel(header, text="Create Experiment", font=title_font).pack(anchor="w")
+        CTkLabel(
+            header,
+            text="Step 1 of 3 • Enter core details",
+            font=subtitle_font,
+            text_color=palette["text_muted"],
+        ).pack(anchor="w", pady=(2, 0))
+
+        content = CTkFrame(body_root, fg_color="transparent")
+        content.grid(row=1, column=0, sticky="nsew", padx=12, pady=(0, 10))
+        content.grid_columnconfigure(0, weight=1)
+        content.grid_columnconfigure(1, weight=1)
+        content.grid_rowconfigure(1, weight=1)
+
+        def section(parent, title: str, *, accent: str, bg_color):
+            box = CTkFrame(
+                parent,
+                corner_radius=14,
+                fg_color=bg_color,
+                border_width=1,
+                border_color=palette["card_border"],
+            )
+            CTkFrame(box, height=6, corner_radius=14, fg_color=accent).pack(fill="x")
+            CTkLabel(
+                box,
+                text=title,
+                font=section_title_font,
+                text_color=(accent, "#ffffff"),
+            ).pack(anchor="w", padx=14, pady=(8, 6))
+            body = CTkFrame(box, fg_color="transparent")
+            body.pack(fill="x", padx=14, pady=(0, 10))
+            body.grid_columnconfigure(0, weight=1)
+            return box, body
+
+        left_box, left = section(
+            content,
+            "Basics",
+            accent=palette["accent_blue"],
+            bg_color=("#eff6ff", "#0b1b35"),
+        )
+        left_box.grid(row=0, column=0, sticky="nsew", padx=(0, 8), pady=(0, 8))
+
+        right_box, right = section(
+            content,
+            "Subjects & Data",
+            accent=palette["accent_violet"],
+            bg_color=("#f5f3ff", "#1b1133"),
+        )
+        right_box.grid(row=0, column=1, sticky="nsew", padx=(8, 0), pady=(0, 8))
+
+        bottom_box, bottom = section(
+            content,
+            "Allocation",
+            accent=palette["accent_teal"],
+            bg_color=("#ecfeff", "#042f2e"),
+        )
+        bottom_box.grid(row=1, column=0, columnspan=2, sticky="nsew")
+        bottom.grid_columnconfigure(0, weight=1)
+        bottom.grid_columnconfigure(1, weight=1)
+        bottom.grid_columnconfigure(2, weight=1)
+
+        def labeled_entry(parent, label: str, required: bool = False, **entry_kwargs) -> CTkEntry:
+            label_text = f"{label} *" if required else label
+            CTkLabel(parent, text=label_text, font=label_font).grid(
+                row=labeled_entry.row, column=0, sticky="w", pady=(0, 4)
+            )
+            entry = CTkEntry(parent, font=entry_font, **entry_kwargs)
+            entry.configure(
+                fg_color=palette["entry_bg"],
+                border_color=palette["entry_border"],
+                text_color=("black", "white"),
+                placeholder_text_color=palette["text_muted"],
+            )
+            entry.grid(row=labeled_entry.row + 1, column=0, sticky="ew", pady=(0, 10))
+            labeled_entry.row += 2
+            return entry
+
+        labeled_entry.row = 0
+
+        self.exper_name = labeled_entry(
+            left,
+            "Experiment Name",
+            required=True,
+            placeholder_text="e.g., Dose Response A",
         )
 
-        self.main_frame = CTkFrame(
-            scroll_canvas,
-            fg_color=("white", "#2c2c2c"),
-            corner_radius=16,
-            border_width=1,
-            border_color="#d1d5db",
-        )
-        self.main_frame.grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
-
-        pad_x, pad_y = 10, 10
-
-        # ----------------------------
-        # Form Labels
-        # ----------------------------
-        CTkLabel(
-            self.main_frame,
-            text="Experiment Name",
-        ).grid(row=0, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
-        CTkLabel(
-            self.main_frame,
-            text="Password",
-        ).grid(row=0, column=2, sticky=W, padx=pad_x, pady=(pad_y, 2))
-        CTkLabel(
-            self.main_frame,
-            text="Investigators",
-        ).grid(row=1, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
-        CTkLabel(
-            self.main_frame,
-            text="Species",
-        ).grid(row=3, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
-        CTkLabel(
-            self.main_frame,
-            text="Measurement Items",
-        ).grid(row=4, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
-        CTkLabel(
-            self.main_frame,
-            text="RFID",
-        ).grid(row=6, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
-        CTkLabel(
-            self.main_frame,
-            text="Number of Animals",
-        ).grid(row=7, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
-        CTkLabel(
-            self.main_frame,
-            text="Number of Groups",
-        ).grid(row=8, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
-        CTkLabel(
-            self.main_frame,
-            text="Max Animals per Cage",
-        ).grid(row=9, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
-
-        # ----------------------------
-        # Input Fields
-        # ----------------------------
-        self.exper_name = CTkEntry(self.main_frame, width=180)
-        self.password = CTkEntry(self.main_frame, width=160, show="*")
-        self.investigators = CTkEntry(self.main_frame, width=180)
-        self.species = CTkEntry(self.main_frame, width=180)
-        self.measure_items = CTkEntry(
-            self.main_frame,
-            width=180,
-            textvariable=StringVar(value="Weight"),
-        )
-        self.animal_num = CTkEntry(self.main_frame, width=140)
-        self.group_num = CTkEntry(self.main_frame, width=140)
-        self.num_per_cage = CTkEntry(self.main_frame, width=140)
-
-        self.exper_name.grid(
-            row=0,
-            column=1,
-            sticky=W,
-            padx=pad_x,
-            pady=(2, pad_y),
-        )
-        self.password.grid(
-            row=0,
-            column=3,
-            sticky=W,
-            padx=pad_x,
-            pady=(2, pad_y),
-        )
-        self.investigators.grid(
-            row=1,
-            column=1,
-            sticky=W,
-            padx=pad_x,
-            pady=(2, pad_y),
-        )
-        self.species.grid(
-            row=3,
-            column=1,
-            sticky=W,
-            padx=pad_x,
-            pady=(2, pad_y),
-        )
-        self.measure_items.grid(
-            row=4,
-            column=1,
-            sticky=W,
-            padx=pad_x,
-            pady=(2, pad_y),
-        )
-        self.animal_num.grid(
-            row=7,
-            column=1,
-            sticky=W,
-            padx=pad_x,
-            pady=(2, pad_y),
-        )
-        self.group_num.grid(
-            row=8,
-            column=1,
-            sticky=W,
-            padx=pad_x,
-            pady=(2, pad_y),
-        )
-        self.num_per_cage.grid(
-            row=9,
-            column=1,
-            sticky=W,
-            padx=pad_x,
-            pady=(2, pad_y),
+        self.password = labeled_entry(
+            left,
+            "Password (optional)",
+            show="*",
+            placeholder_text="Leave blank for none",
         )
 
-        # ----------------------------
-        # Investigator controls
-        # ----------------------------
-        self.invest_frame = CTkFrame(self.main_frame, fg_color="transparent")
-        self.invest_frame.grid(row=2, column=1, sticky="nw")
-        self.invest_frame.grid_propagate(False)
-        self.invest_frame.configure(height=1)
+        # Investigators field with an add button and chip list
+        CTkLabel(left, text="Investigators", font=label_font).grid(
+            row=labeled_entry.row, column=0, sticky="w", pady=(0, 6)
+        )
+        invest_row = CTkFrame(left, fg_color="transparent")
+        invest_row.grid(row=labeled_entry.row + 1, column=0, sticky="ew", pady=(0, 6))
+        invest_row.grid_columnconfigure(0, weight=1)
+
+        self.investigators = CTkEntry(
+            invest_row,
+            font=entry_font,
+            placeholder_text="Type a name and press Enter",
+        )
+        self.investigators.configure(
+            fg_color=palette["entry_bg"],
+            border_color=palette["entry_border"],
+            text_color=("black", "white"),
+            placeholder_text_color=palette["text_muted"],
+        )
+        self.investigators.grid(row=0, column=0, sticky="ew", padx=(0, 8))
 
         add_invest_button = CTkButton(
-            self.main_frame,
-            text="+",
-            width=28,
+            invest_row,
+            text="Add",
+            width=64,
+            height=32,
+            corner_radius=10,
+            fg_color=palette["accent_violet"],
+            hover_color="#6d28d9",
+            text_color="white",
+            font=CTkFont(family="Segoe UI Semibold", size=13),
             command=lambda: [
                 self.add_investigator(),
                 self.investigators.delete(0, END),
             ],
-            corner_radius=8,
-            fg_color="#2563eb",
-            hover_color="#1e40af",
-            text_color="white",
         )
-        add_invest_button.grid(row=1, column=2, padx=pad_x, pady=pad_y)
+        add_invest_button.grid(row=0, column=1, sticky="e")
 
-        # ----------------------------
-        # RFID Options
-        # ----------------------------
+        self.invest_frame = CTkFrame(left, fg_color="transparent")
+        self.invest_frame.grid(row=labeled_entry.row + 2, column=0, sticky="ew", pady=(0, 8))
+        left.grid_columnconfigure(0, weight=1)
+        labeled_entry.row += 3
+
+        labeled_entry.row = 0
+        self.species = labeled_entry(
+            right,
+            "Species",
+            required=True,
+            placeholder_text="e.g., Mouse",
+        )
+
+        self.measure_items = labeled_entry(
+            right,
+            "Measurement Item",
+            required=False,
+            placeholder_text="e.g., Weight",
+            textvariable=StringVar(value="Weight"),
+        )
+
+        CTkLabel(right, text="RFID", font=label_font).grid(
+            row=labeled_entry.row, column=0, sticky="w", pady=(0, 6)
+        )
         self.rfid = BooleanVar(value=True)
-        self.rfid_frame = CTkFrame(self.main_frame, fg_color="transparent")
-        self.rfid_frame.grid(row=6, column=1, sticky="w")
+        self.rfid_frame = CTkFrame(right, fg_color="transparent")
+        self.rfid_frame.grid(row=labeled_entry.row + 1, column=0, sticky="w", pady=(0, 12))
         CTkRadioButton(
             self.rfid_frame,
             text="Yes",
             variable=self.rfid,
             value=1,
-        ).grid(row=0, column=0, padx=pad_x, pady=pad_y)
+            font=entry_font,
+            fg_color=palette["accent_teal"],
+            hover_color="#0d9488",
+        ).grid(row=0, column=0, padx=(0, 12), pady=0)
         CTkRadioButton(
             self.rfid_frame,
             text="No",
             variable=self.rfid,
             value=0,
-        ).grid(row=0, column=1, padx=pad_x, pady=pad_y)
+            font=entry_font,
+            fg_color=palette["accent_teal"],
+            hover_color="#0d9488",
+        ).grid(row=0, column=1, padx=(0, 0), pady=0)
 
-        for i in range(0, 10):
-            self.main_frame.grid_rowconfigure(i, weight=0)
-            self.main_frame.grid_columnconfigure(i, weight=1)
+        CTkLabel(bottom, text="Number of Animals *", font=label_font).grid(
+            row=0, column=0, sticky="w", pady=(0, 6)
+        )
+        CTkLabel(bottom, text="Number of Groups *", font=label_font).grid(
+            row=0, column=1, sticky="w", pady=(0, 6), padx=(12, 0)
+        )
+        CTkLabel(bottom, text="Max Animals per Cage *", font=label_font).grid(
+            row=0, column=2, sticky="w", pady=(0, 6), padx=(12, 0)
+        )
+
+        self.animal_num = CTkEntry(bottom, font=entry_font, placeholder_text="e.g., 24")
+        self.group_num = CTkEntry(bottom, font=entry_font, placeholder_text="e.g., 3")
+        self.num_per_cage = CTkEntry(bottom, font=entry_font, placeholder_text="e.g., 8")
+        for entry in (self.animal_num, self.group_num, self.num_per_cage):
+            entry.configure(
+                fg_color=palette["entry_bg"],
+                border_color=palette["entry_border"],
+                text_color=("black", "white"),
+                placeholder_text_color=palette["text_muted"],
+            )
+
+        self.animal_num.grid(row=1, column=0, sticky="ew")
+        self.group_num.grid(row=1, column=1, sticky="ew", padx=(12, 0))
+        self.num_per_cage.grid(row=1, column=2, sticky="ew", padx=(12, 0))
+
+        self.required_hint = CTkLabel(
+            body_root,
+            text="Fields marked * are required.",
+            font=subtitle_font,
+            text_color=palette["text_muted"],
+        )
+        self.required_hint.grid(row=2, column=0, sticky="w", padx=12, pady=(0, 0))
 
         # Next button and field tracking
         self.create_next_button()
@@ -255,19 +332,20 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         )
         self.next_button.configure(
             corner_radius=12,
-            height=50,
-            width=180,
-            font=("Segoe UI Semibold", 18),
+            height=40,
+            width=160,
+            font=("Segoe UI Semibold", 16),
             text_color="white",
-            fg_color="#2563eb",
-            hover_color="#1e40af",
+            fg_color=self.ui_palette["accent_green"],
+            hover_color="#16a34a",
+            text="Continue",
             command=lambda: [
                 self.check_animals_divisible(),
                 self._go_next(),
             ],
             state="disabled",
         )
-        self.next_button.place_configure(relx=0.93, rely=0.13, anchor="e")
+        self.next_button.place_configure(relx=1.0, rely=0.0, x=-16, y=8, anchor="ne")
 
     def bind_all_entries(self):
         """Bind entry changes to enable/disable the Next button."""
@@ -312,33 +390,34 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         for widget in self.invest_frame.winfo_children():
             widget.destroy()
 
-        funcs: List = []
-        buttons: List[CTkButton] = []
+        for i, investigator in enumerate(self.added_invest):
+            chip = CTkFrame(
+                self.invest_frame,
+                fg_color=("#f3f4f6", "#111827"),
+                corner_radius=999,
+                border_width=1,
+                border_color=("#e5e7eb", "#374151"),
+            )
+            chip.grid(row=i // 3, column=i % 3, sticky="w", padx=(0, 10), pady=(0, 10))
 
-        for idx, investigator in enumerate(self.added_invest):
             CTkLabel(
-                self.invest_frame,
+                chip,
                 text=investigator,
-            ).grid(row=idx, column=1, sticky=W, padx=10)
-            rem_button = CTkButton(
-                self.invest_frame,
-                text="-",
+                font=CTkFont(family="Segoe UI", size=13),
+            ).pack(side="left", padx=(12, 6), pady=6)
+
+            CTkButton(
+                chip,
+                text="×",
                 width=28,
-                corner_radius=8,
+                height=28,
+                corner_radius=999,
                 fg_color="#ef4444",
                 hover_color="#b91c1c",
                 text_color="white",
-            )
-            rem_button.grid(row=idx, column=2, padx=10)
-            buttons.append(rem_button)
-            funcs.append(lambda x=investigator: self.remove_investigator(x))
-
-        for i, func in enumerate(funcs):
-            buttons[i].configure(command=func)
-
-        self.invest_frame.configure(
-            height=(len(self.added_invest) * 40) or 1,
-        )
+                font=CTkFont(family="Segoe UI Semibold", size=14),
+                command=lambda x=investigator: self.remove_investigator(x),
+            ).pack(side="left", padx=(0, 8), pady=6)
 
     def add_investigator(self):
         """Add an investigator to the list if not already present."""
@@ -356,62 +435,79 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
     # ------------------------------------------------------------
     # Validation / Warnings
     # ------------------------------------------------------------
-    def raise_warning(self, option: int):
-        """Display a warning window based on a validation code."""
+    def raise_warning(self, message: str, title: str = "Warning"):
+        """Display a modal warning dialog."""
 
-        def dismiss(event=None):  # pylint: disable=unused-argument
-            message.destroy()
+        dialog = CTkToplevel(self)
+        dialog.title(title)
+        dialog.geometry("420x190")
+        dialog.resizable(False, False)
 
-        message = CTk()
-        message.title("WARNING")
-        message.geometry("340x180")
-        message.resizable(False, False)
+        def dismiss(_event=None):  # pylint: disable=unused-argument
+            try:
+                dialog.grab_release()
+            except Exception:  # pylint: disable=broad-exception-caught
+                pass
+            dialog.destroy()
 
-        texts = {
-            2: (
-                "Number of animals, groups, or max animals "
-                "per cage must be > 0."
-            ),
-            3: "Experiment name used. Please use another name.",
-            4: (
-                "Unequal Group Size: Please ensure total animals "
-                "≤ group capacity."
-            ),
-        }
         CTkLabel(
-            message,
-            text=texts.get(option, "Warning"),
-        ).grid(row=0, column=0, padx=10, pady=10)
+            dialog,
+            text=message,
+            wraplength=380,
+            font=("Segoe UI", 14),
+            justify="left",
+        ).pack(padx=16, pady=(18, 10), anchor="w")
+
         CTkButton(
-            message,
+            dialog,
             text="OK",
-            width=10,
+            width=90,
+            height=34,
+            corner_radius=10,
+            fg_color=self.ui_palette["accent_blue"],
+            hover_color="#1d4ed8",
+            text_color="white",
+            font=("Segoe UI Semibold", 14),
             command=dismiss,
-        ).grid(row=1, column=0, pady=10)
+        ).pack(pady=(0, 16))
+
         AudioManager.play(ERROR_SOUND)
-        message.bind("<KeyPress>", dismiss)
-        message.bind("<Button>", dismiss)
-        message.focus_force()
-        message.mainloop()
+        dialog.bind("<Escape>", dismiss)
+        dialog.bind("<Return>", dismiss)
+        dialog.focus_force()
+        dialog.grab_set()
 
     def check_animals_divisible(self):
         """Validate animal counts vs. groups and cage capacity."""
-        if not all(
-            [
-                self.animal_num.get(),
-                self.group_num.get(),
-                self.num_per_cage.get(),
-            ]
-        ):
-            self.raise_warning(2)
-        elif int(self.animal_num.get()) == 0 or int(self.group_num.get()) == 0:
-            self.raise_warning(2)
-        elif int(self.animal_num.get()) > (
-            int(self.group_num.get()) * int(self.num_per_cage.get())
-        ):
-            self.raise_warning(4)
-        else:
-            self.save_input()
+        raw_animals = self.animal_num.get().strip()
+        raw_groups = self.group_num.get().strip()
+        raw_max = self.num_per_cage.get().strip()
+
+        if not all([raw_animals, raw_groups, raw_max]):
+            self.raise_warning("Please fill out all required allocation fields.")
+            return
+
+        try:
+            animals = int(raw_animals)
+            groups = int(raw_groups)
+            max_per_cage = int(raw_max)
+        except ValueError:
+            self.raise_warning("Allocation fields must be whole numbers (e.g., 24, 3, 8).")
+            return
+
+        if animals <= 0 or groups <= 0 or max_per_cage <= 0:
+            self.raise_warning(
+                "Number of animals, groups, and max animals per cage must be greater than 0."
+            )
+            return
+
+        if animals > (groups * max_per_cage):
+            self.raise_warning(
+                "Unequal Group Size: Please ensure total animals are less than or equal to group capacity."
+            )
+            return
+
+        self.save_input()
 
     # ------------------------------------------------------------
     # Save + Navigation
