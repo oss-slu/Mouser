@@ -5,6 +5,9 @@ import os
 from collections import defaultdict
 from tkinter import filedialog
 from tkinter.ttk import Treeview, Style
+import csv
+from tkinter import dialog, filedialog
+import sqlite3
 
 from customtkinter import (
     CTkButton,
@@ -101,6 +104,84 @@ class DataAnalysisUI(MouserPage):
         self._build_table_section()
         self._build_chart_section()
         self.refresh_analysis_view()
+
+    def showSaveFileDialog(self):
+        '''Opens a file dialog for the user to select where to save the CSV file.'''
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv")],
+            title="Save CSV"
+        )
+        return file_path
+    
+    def get_measurement_names(self):
+        '''Retrieves measurement names from the database.'''
+        return self.database.get_measurement_name()
+    
+    def get_measurements_for_animal_today(self, animal_id):
+        '''Retrieves measurements for a specific animal for the current date.'''
+        today_date = str(date.today())
+        all_measurements_today = self.database.get_data_for_date(today_date)
+        measurement_names = self.get_measurement_names()
+        animal_measurements_dict = {}
+
+        for record in all_measurements_today:
+            record_animal_id = record[0]
+            measurement_name = record[1]  
+            measurement_value = record[2] 
+
+            if str(record_animal_id) == str(animal_id):
+                animal_measurements_dict[measurement_name] = measurement_value
+
+        ordered_measurements = []
+        for name in measurement_names:
+            if name in animal_measurements_dict:
+                ordered_measurements.append(animal_measurements_dict[name])
+            else:
+                ordered_measurements.append(None)  # placeholder if no measurement
+
+        return ordered_measurements
+    
+    def handle_export_csv(self):
+        '''Handles exporting the current data to a CSV file.'''
+        file_path = self.showSaveFileDialog()
+        if not file_path:
+            return  # User canceled export
+        
+        headers = ["Animal ID"] + self.get_measurement_names()
+        data_rows = [headers]
+
+        for animal in self.database.get_animals():
+            animal_id = animal[0]
+            measurements = self.get_measurements_for_animal_today(animal_id)
+            row = [animal_id] + measurements
+            data_rows.append(row)
+
+        try:
+            with open(file_path, 'w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerows(data_rows)
+
+            self.export_notification.configure(
+                text="CSV exported successfully!",
+                text_color="green",
+                fg_color="#d1fae5",  
+                padx=12,
+                pady=6,
+                corner_radius=10
+            )
+
+        except Exception as e:
+            print(f"Error exporting CSV: {e}")
+            self.export_notification.configure(
+                text="CSV export failed. Please try again.",
+                text_color="#b91c1c",  
+                fg_color="#fee2e2",    
+                padx=12,
+                pady=6,
+                corner_radius=10
+            )
+
 
     def _build_table_section(self):
         table_card = CTkFrame(
