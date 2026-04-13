@@ -164,6 +164,7 @@ sudo apt install socat
 ```
 
 - Multiple `.gitignore` files are spread throughout the application, mostly to prevent the `__pycache__` directory and certain databases from being pushed to git.
+- Check [System design / architecture](./docs/checkpoints/system-designs_artifact.md) for Mouser to know about the architecture in detail.
 
 ## Contributing to Mouser
 

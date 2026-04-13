@@ -1,6 +1,7 @@
 '''Data collection ui module.'''
 from datetime import date
 import re
+import tkinter as tk
 from tkinter.ttk import Treeview, Style
 import time
 from customtkinter import *
@@ -211,22 +212,40 @@ class DataCollectionUI(MouserPage):
             self.changing_value = selected[0]
 
     def _on_table_click(self, event):
-        """Handle click for inline edit on None values."""
+        """Handle click for inline edit in manual mode (no popups)."""
         if self.database.get_measurement_type() != 0:
             return
+
+        # If an editor is already open, don't try to open another one.
+        if getattr(self, "_inline_editor", None) is not None:
+            try:
+                if self._inline_editor.winfo_exists():
+                    return "break"
+            except Exception:
+                pass
         
         region = self.table.identify("region", event.x, event.y)
         if region == "cell":
             column_id = self.table.identify_column(event.x)
             row_id = self.table.identify_row(event.y)
-            if column_id == '#2':
-                val = self.table.item(row_id, "values")
-                if len(val) > 1 and str(val[1]) == 'None':
-                    # Set selection and changing_value without triggering inline edit multiple times
-                    self.changing_value = row_id
-                    # Use after_idle to ensure table updates complete before opening inline edit
-                    self.table.after_idle(lambda: self._enter_inline_edit(row_id, column_id))
-                    return "break"
+            if not row_id or column_id == "#1":
+                return
+
+            values = self.table.item(row_id, "values") or ()
+            try:
+                column_index = int(str(column_id).lstrip("#")) - 1
+            except ValueError:
+                return
+
+            if column_index <= 0 or column_index >= len(values):
+                return
+
+            # Keep selection behavior, but replace any popup flow with inline edit.
+            # Allow editing existing values too (not only None).
+            self.table.selection_set(row_id)
+            self.changing_value = row_id
+            self._enter_inline_edit(row_id, column_id)
+            return "break"
 
     def _enter_inline_edit(self, row_id, column_id):
         # Prevent multiple inline editors from opening
@@ -239,9 +258,39 @@ class DataCollectionUI(MouserPage):
             return
         x, y, width, height = bbox
 
-        # Define entry widget
-        entry = CTkEntry(self.table, width=width, height=height, font=("Arial", self._ui.get("table_font_size", 14)))
-        entry.place(x=x, y=y)
+        # Use a lightweight native tkinter Entry for fast, truly-inline editing (no popup).
+        # CTkEntry can look like a separate "box" overlay; a flat Entry blends into the cell.
+        style = Style()
+        background = style.lookup("DataCollection.Treeview", "fieldbackground") or style.lookup("Treeview", "fieldbackground") or "white"
+        foreground = style.lookup("DataCollection.Treeview", "foreground") or style.lookup("Treeview", "foreground") or "black"
+
+        entry = tk.Entry(
+            self.table,
+            bd=0,
+            highlightthickness=0,
+            relief="flat",
+            justify="center",
+            font=("Arial", self._ui.get("table_font_size", 14)),
+            background=background,
+            foreground=foreground,
+            insertbackground=foreground,
+        )
+        # Pre-fill with the current cell value (blank if None).
+        existing_values = self.table.item(row_id, "values") or ()
+        try:
+            column_index = int(str(column_id).lstrip("#")) - 1
+        except ValueError:
+            column_index = -1
+
+        initial_text = ""
+        if 0 <= column_index < len(existing_values):
+            cell_value = existing_values[column_index]
+            if cell_value is not None and str(cell_value).strip() not in ("", "None"):
+                initial_text = str(cell_value)
+
+        entry.place(x=x, y=y, width=width, height=height)
+        if initial_text:
+            entry.insert(0, initial_text)
         self._inline_editor = entry
 
         # Function to save when user presses Enter
@@ -266,7 +315,8 @@ class DataCollectionUI(MouserPage):
             cleanup_editor()
             
             # Then update the value (which will update both DB and table display)
-            self.change_selected_value(animal_id, [new_val])
+            if self.change_selected_value(animal_id, [new_val]):
+                AudioManager.play(SUCCESS_SOUND)
 
         def cleanup_editor(event=None):
             if hasattr(self, '_inline_editor') and self._inline_editor:
@@ -281,6 +331,10 @@ class DataCollectionUI(MouserPage):
         entry.bind("<FocusOut>", cleanup_editor)
         
         entry.focus_set()
+        try:
+            entry.selection_range(0, "end")
+        except Exception:
+            pass
 
     def set_status(self, text):
         """Update collection status line."""
@@ -593,11 +647,13 @@ class DataCollectionUI(MouserPage):
                     print(f"Error type: {type(save_error)}")
                     import traceback
                     print(f"Full traceback: {traceback.format_exc()}")
+            return True
         except Exception as e:
             self.raise_warning("Failed to save data for animal.")
             print(f"Top level error: {e}")
             import traceback
             print(f"Full traceback: {traceback.format_exc()}")
+            return False
 
     def get_values_for_date(self):
         '''Gets the data for the current date as a string in YYYY-MM-DD.'''
