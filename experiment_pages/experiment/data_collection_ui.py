@@ -1,12 +1,15 @@
 '''Data collection ui module.'''
 from datetime import date
 import re
+import csv
 import tkinter as tk
 from tkinter.ttk import Treeview, Style
+from tkinter import dialog, filedialog
 import time
+import sqlite3
 from customtkinter import *
-from shared.tk_models import *
 from CTkMessagebox import CTkMessagebox
+from shared.tk_models import *
 from databases.experiment_database import ExperimentDatabase
 from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
 from shared.audio import AudioManager
@@ -39,8 +42,21 @@ class DataCollectionUI(MouserPage):
 
         self.database = ExperimentDatabase(database_name)
 
+        # Database stores a single measurement name in `experiment.measurement`.
+        # Older code paths may return tuples from fetchone(); normalize to a string.
         self.measurement_items = self.database.get_measurement_items()
         self.menu_button.configure(command = self.press_back_to_menu_button)
+        self.export_notification = CTkLabel(
+            self,
+            text="",
+            text_color="green",
+            font=("Arial", 14),
+            fg_color="#ecfdf5",   # optional: makes it look like a real notification banner
+            corner_radius=8,
+            padx=10,
+            pady=5
+        )
+        self.export_notification.place(relx=0.5, rely=0.08, anchor=CENTER)
 
 
         ## ENSURE ANIMALS ARE IN DATABASE BEFORE EXPERIMENT FOR ALL EXPERIMENTS ##
@@ -84,10 +100,11 @@ class DataCollectionUI(MouserPage):
         #     animal_ids = [animal[0] for animal in self.database.get_animals()]  # Get all animal IDs
         #     self.database.insert_blank_data_for_day(animal_ids, today_date)  # Insert blank dataS
 
-        self.measurement_strings = []
-        self.measurement_strings.append(self.measurement_items)
-        self.measurement_ids = self.database.get_measurement_name()
-        print(self.measurement_items)
+        measurement_name = self.database.get_measurement_name()
+        if isinstance(measurement_name, (list, tuple)):
+            measurement_name = measurement_name[0] if measurement_name else None
+        self.measurement_strings = [measurement_name] if measurement_name else []
+        print("Measurement(s):", self.measurement_strings)
 
         if self.database.experiment_uses_rfid() == 0:
             start_function = self.auto_increment
@@ -139,9 +156,7 @@ class DataCollectionUI(MouserPage):
 
 
 
-        columns = ['animal_id']
-        print(self.database.get_measurement_name())
-        columns.append(str(self.database.get_measurement_name())) # Add measurement name as column
+        columns = ["animal_id", *self.measurement_strings]
 
         # Initialize the Treeview with the defined columns
         self.table = Treeview(self.table_frame,
@@ -192,6 +207,83 @@ class DataCollectionUI(MouserPage):
         self._inline_editor = None
 
         self.changer = ChangeMeasurementsDialog(parent, self, self.measurement_strings)
+
+    def showSaveFileDialog(self):
+        '''Opens a file dialog for the user to select where to save the CSV file.'''
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv")],
+            title="Save CSV"
+        )
+        return file_path
+    
+    def get_measurement_names(self):
+        '''Retrieves measurement names from the database.'''
+        return self.database.get_measurement_name()
+    
+    def get_measurements_for_animal_today(self, animal_id):
+        '''Retrieves measurements for a specific animal for the current date.'''
+        today_date = str(date.today())
+        all_measurements_today = self.database.get_data_for_date(today_date)
+        measurement_names = self.get_measurement_names()
+        animal_measurements_dict = {}
+
+        for record in all_measurements_today:
+            record_animal_id = record[0]
+            measurement_name = record[1]  
+            measurement_value = record[2] 
+
+            if str(record_animal_id) == str(animal_id):
+                animal_measurements_dict[measurement_name] = measurement_value
+
+        ordered_measurements = []
+        for name in measurement_names:
+            if name in animal_measurements_dict:
+                ordered_measurements.append(animal_measurements_dict[name])
+            else:
+                ordered_measurements.append(None)  # placeholder if no measurement
+
+        return ordered_measurements
+    
+    def handle_export_csv(self):
+        '''Handles exporting the current data to a CSV file.'''
+        file_path = self.showSaveFileDialog()
+        if not file_path:
+            return  # User canceled export
+        
+        headers = ["Animal ID"] + self.get_measurement_names()
+        data_rows = [headers]
+
+        for animal in self.database.get_animals():
+            animal_id = animal[0]
+            measurements = self.get_measurements_for_animal_today(animal_id)
+            row = [animal_id] + measurements
+            data_rows.append(row)
+
+        try:
+            with open(file_path, 'w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerows(data_rows)
+
+            self.export_notification.configure(
+                text="CSV exported successfully!",
+                text_color="green",
+                fg_color="#d1fae5",  
+                padx=12,
+                pady=6,
+                corner_radius=10
+            )
+
+        except Exception as e:
+            print(f"Error exporting CSV: {e}")
+            self.export_notification.configure(
+                text="CSV export failed. Please try again.",
+                text_color="#b91c1c",  
+                fg_color="#fee2e2",    
+                padx=12,
+                pady=6,
+                corner_radius=10
+            )
 
     def raise_warning(self, warning_message='An error occurred'):
         '''Raises a popup warning message.'''

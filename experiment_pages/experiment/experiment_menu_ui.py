@@ -220,12 +220,23 @@ class ExperimentMenuUI(MouserPage):
 
     def open_data_collection(self):
         """Open Data Collection Page."""
+        if self.experiment_db.experiment_uses_rfid() == 1 and not self.all_rfid_mapped():
+            messagebox.showinfo(
+                "RFID Mapping Required",
+                "This experiment uses RFID.\n\n"
+                "Map RFID for all animals before starting Data Collection.",
+            )
+            return
+
         from experiment_pages.experiment.data_collection_ui import (  # pylint: disable=import-error,import-outside-toplevel
             DataCollectionUI,
         )
 
-        page = DataCollectionUI(self.root, self, self.file_path, self.file_path)
-        page.raise_frame()
+        try:
+            page = DataCollectionUI(self.root, self, self.file_path, self.file_path)
+            page.raise_frame()
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            messagebox.showerror("Data Collection Error", f"Failed to open Data Collection page.\n\n{e}")
 
     def open_data_analysis(self):
         """Open Data Analysis Page."""
@@ -276,13 +287,19 @@ class ExperimentMenuUI(MouserPage):
             if not self.all_rfid_mapped():
                 self.collection_button.configure(state="disabled")
                 self.analysis_button.configure(state="disabled")
+                self.collection_button.configure(text="Data Collection")
+                self.analysis_button.configure(text="Data Analysis")
             else:
                 self.collection_button.configure(state="normal")
                 self.analysis_button.configure(state="normal")
+                self.collection_button.configure(text="Data Collection")
+                self.analysis_button.configure(text="Data Analysis")
             self.rfid_button.configure(state="normal")
         else:
             self.collection_button.configure(state="normal")
             self.analysis_button.configure(state="normal")
+            self.collection_button.configure(text="Data Collection")
+            self.analysis_button.configure(text="Data Analysis")
             self.rfid_button.configure(state="disabled")
 
     def disconnect_database(self):
