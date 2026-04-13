@@ -39,7 +39,7 @@ def open_file(root, experiments_frame):
 
     if not file_path:
         return
-
+    # pylint: disable=C0415
     from databases.experiment_database import ExperimentDatabase  # import here to avoid cycles
 
     # Close existing database connection if open

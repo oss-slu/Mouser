@@ -13,10 +13,10 @@ from tkinter import messagebox
 
 from customtkinter import CTkFrame, CTkButton, CTkFont, CTkScrollableFrame
 from shared.experiment import Experiment  # pylint: disable=import-error
+from shared.tk_models import MouserPage  # pylint: disable=import-error
 from databases.experiment_database import (  # pylint: disable=import-error
     ExperimentDatabase,
 )
-from shared.tk_models import MouserPage  # pylint: disable=import-error
 
 
 class ExperimentMenuUI(MouserPage):
@@ -347,7 +347,7 @@ class ExperimentMenuUI(MouserPage):
 
     def back_to_welcome(self):
         """Return to the main welcome screen."""
-        from ui.welcome_screen import ( 
+        from ui.welcome_screen import (  # pylint: disable=import-outside-toplevel
             setup_welcome_screen,
         )
 

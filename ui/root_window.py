@@ -12,7 +12,7 @@ from customtkinter import (
     set_window_scaling,
 )
 
-BASE_W, BASE_H = 1000, 720  
+BASE_W, BASE_H = 1000, 720
 
 def _center_on_screen(root, w, h):
     root.update_idletasks()
@@ -49,12 +49,12 @@ def create_root_window():
         default_font = tkFont.nametofont("TkDefaultFont")
         default_font.configure(size=int(default_font.cget("size") * scale_factor))
 
-    
+
     # Platform-specific window sizing: Linux
     w, h = BASE_W, BASE_H
     if platform.system() == "Linux":
         w += 50
-        h += 50 
+        h += 50
 
     _center_on_screen(root, w, h)
     root.minsize(w, h)

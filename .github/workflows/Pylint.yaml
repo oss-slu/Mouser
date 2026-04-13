@@ -8,10 +8,10 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version: [3.x]
+        python-version: [3.11]
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
@@ -19,11 +19,14 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install PortAudio
-      run: sudo apt-get install -y portaudio19-dev
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y portaudio19-dev
     - name: Install Dependencies and Pylint
       run: |
         python -m pip install --upgrade pip
         pip install pylint
+        pip install pyaudio
         pip install --upgrade setuptools wheel
         pip install -r requirements.txt
     - name: Analysing the code with pylint and handling exit code

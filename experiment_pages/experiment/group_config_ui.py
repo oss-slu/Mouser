@@ -3,7 +3,7 @@
 
 from customtkinter import (
     CTk, CTkFrame, CTkLabel, CTkEntry,
-    CTkButton, CTkRadioButton, BooleanVar, W, LEFT
+    CTkRadioButton, BooleanVar, W
 )
 from shared.tk_models import MouserPage, ChangePageButton
 from shared.scrollable_frame import ScrolledFrame

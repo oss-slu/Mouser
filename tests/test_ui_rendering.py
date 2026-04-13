@@ -6,7 +6,7 @@ pytest tests/test_ui_rendering.py -v -s
 import os
 import sys
 import time
-
+import sqlite3
 import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -28,6 +28,7 @@ class TestRealUIRendering:
     @pytest.fixture(scope="class")
     def tk_root(self):
         """Create a single Tk root for all tests (reuse to save time)."""
+        # pylint: disable=import-outside-toplevel
         from customtkinter import CTk
 
         root = CTk()
@@ -38,12 +39,13 @@ class TestRealUIRendering:
         # Cleanup
         try:
             root.destroy()
-        except Exception:
+        except sqlite3.DatabaseError:
             pass
 
     @pytest.fixture
     def test_db(self, tmp_path):
         """Create test database with moderate data."""
+        # pylint: disable=import-outside-toplevel
         from databases.experiment_database import ExperimentDatabase
 
         db_file = tmp_path / "ui_test.db"
@@ -62,8 +64,8 @@ class TestRealUIRendering:
         yield str(db_file)
 
         # Cleanup
-        if str(db_file) in ExperimentDatabase._instances:
-            ExperimentDatabase._instances[str(db_file)].close()
+        if str(db_file) in ExperimentDatabase.instances:
+            ExperimentDatabase.instances[str(db_file)].close()
 
     def test_experiment_menu_rendering(self, tk_root, test_db):
         """
@@ -71,6 +73,7 @@ class TestRealUIRendering:
 
         Creates UI components to measure actual rendering time.
         """
+        # pylint: disable=C0415
         from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 
         start = time.perf_counter()
@@ -105,6 +108,7 @@ class TestRealUIRendering:
         This page creates many widgets (buttons for each animal/cage)
         so it's a good stress test for widget creation performance.
         """
+        # pylint: disable=C0415
         from experiment_pages.experiment.cage_config_ui import CageConfigurationUI
 
         start = time.perf_counter()
@@ -134,6 +138,7 @@ class TestRealUIRendering:
         """
         Test: Updating cage configuration.
         """
+        # pylint: disable=C0415
         from experiment_pages.experiment.cage_config_ui import CageConfigurationUI
 
         # Create page first (not measured)
@@ -171,7 +176,9 @@ class TestRealUIRendering:
         This page includes a Treeview table with all animals,
         testing both CTk and Tkinter widget performance.
         """
+        # pylint: disable=C0415
         from experiment_pages.experiment.data_collection_ui import DataCollectionUI
+        # pylint: disable=C0415
         from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 
         # DataCollectionUI requires a real prev_page (menu) because it accesses menu_button
@@ -210,7 +217,9 @@ class TestRealUIRendering:
         """
         Test: ReviewUI (summary page) renders quickly.
         """
+        # pylint: disable=C0415
         from experiment_pages.experiment.review_ui import ReviewUI
+        # pylint: disable=C0415
         from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 
         # ReviewUI needs prev_page for the back button
@@ -262,7 +271,7 @@ class TestUIScaling:
 
         try:
             root.destroy()
-        except Exception:
+        except sqlite3.DatabaseError:
             pass
 
     @pytest.mark.parametrize("num_animals,expected_max_ms", [
@@ -274,7 +283,9 @@ class TestUIScaling:
         """
         Test: UI rendering time scales reasonably with dataset size.
         """
+        # pylint: disable=C0415
         from databases.experiment_database import ExperimentDatabase
+        # pylint: disable=C0415
         from experiment_pages.experiment.cage_config_ui import CageConfigurationUI
 
         # Create database with specified size
@@ -316,8 +327,8 @@ class TestUIScaling:
 
         # Cleanup
         cage_page.destroy()
-        if str(db_file) in ExperimentDatabase._instances:
-            ExperimentDatabase._instances[str(db_file)].close()
+        if str(db_file) in ExperimentDatabase.instances:
+            ExperimentDatabase.instances[str(db_file)].close()
 
         assert elapsed_ms < expected_max_ms, \
             f"With {num_animals} animals: {elapsed_ms:.2f}ms (max: {expected_max_ms}ms)"

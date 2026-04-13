@@ -631,6 +631,43 @@ class DataCollectionUI(MouserPage):
             title="Manual Weight Entry",
             text=f"Enter weight for Animal {animal_id}:",
         )
+        self.data_placeholder.grid(row=1, column=0, pady=(5, 15), sticky="nsew")
+
+        # --- Control Buttons ---
+        button_font = CTkFont("Segoe UI Semibold", 20)
+        button_style = {
+            "corner_radius": 12,
+            "height": 50,
+            "width": 350,
+            "font": button_font,
+            "text_color": "white",
+            "fg_color": "#2563eb",
+            "hover_color": "#1e40af"
+        }
+
+
+        CTkButton(
+            main_card, text="Start Collection", command=self.start_collection, **button_style
+        ).grid(row=2, column=0, pady=(10, 10))
+        CTkButton(
+            main_card, text="Stop Collection", command=self.stop_collection, **button_style
+        ).grid(row=3, column=0, pady=(5, 10))
+        CTkButton(
+            main_card, text="Back", command=self.back_to_menu, **button_style
+        ).grid(row=4, column=0, pady=(15, 25))
+
+    # --- Functional Logic (unchanged) ---
+    def start_collection(self):
+        """Start data collection (stub placeholder for real logic)."""
+        self.data_placeholder.configure(text="Collecting data...")
+
+    def stop_collection(self):
+        """Stop data collection (stub placeholder for real logic)."""
+        self.data_placeholder.configure(text="Data collection stopped.")
+
+    def back_to_menu(self):
+        """Navigate back to main experiment menu."""
+        # pylint: disable=import-outside-toplevel
         user_input = dialog.get_input() if dialog else None
         if user_input is None:
             self._measurement_in_progress = False

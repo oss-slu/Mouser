@@ -1,6 +1,7 @@
 '''
 Module that contains methods and classes that are used for the audio in our program.
 '''
+import os
 import wave
 from threading import Thread, Lock
 import os
@@ -10,7 +11,7 @@ class AudioManager:
     Contains the helper function play(String:filepath)
     '''
     _lock = Lock()
-    _is_playing = False 
+    _is_playing = False
 
     @staticmethod
     def __play(filepath): #pylint: disable= no-self-argument
@@ -48,7 +49,7 @@ class AudioManager:
                 out_stream.write(data)
                 data = audio_file.readframes(chunk)
 
-        except Exception as e:
+        except OSError as e:
             print(f"Error playing audio: {e}")
 
         finally:
@@ -63,7 +64,7 @@ class AudioManager:
                     audio_file.close()
                 AudioManager._is_playing = False
                 print(f"Audio {filepath} has ended.")
-            except Exception as cleanup_error:
+            except OSError as cleanup_error:
                 print(f"Error during audio cleanup: {cleanup_error}")
 
     @staticmethod

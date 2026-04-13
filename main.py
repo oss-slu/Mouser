@@ -15,6 +15,16 @@ import os
 import sys
 import shutil
 import tempfile
+import serial
+import regex
+import threading
+import atexit
+import tkinter as tk
+from queue import Queue, Empty
+from shared.logger import Logger
+from customtkinter import CTkLabel
+
+
 
 # Ensure project root is on sys.path so local packages (e.g. `databases`) can be
 # imported when running this script directly from the repo folder or from other
@@ -26,6 +36,64 @@ from shared.serial_port_controller import SerialPortController  # pylint: disabl
 from ui.root_window import create_root_window  # pylint: disable=wrong-import-position
 from ui.menu_bar import build_menu  # pylint: disable=wrong-import-position
 from ui.welcome_screen import setup_welcome_screen  # pylint: disable=wrong-import-position
+
+scan_queue = Queue()
+stop_event = threading.Event()
+
+SCANNER_PORT = "/dev/ttyUSB0"
+BAUD_RATE = 9600
+
+def connect_to_scanner(port, baud_rate):
+    '''Connect to the scanner via serial port'''
+    try:
+        scanner = serial.Serial(port, baud_rate, timeout=1)
+        Logger.log("ScannerConnection", 0, "ScannerConnectionOK")
+        return scanner
+    except serial.SerialException as e:
+        Logger.log("ScannerConnection", e.errno, "ScannerConnectionFailed")
+        sys.exit(1)
+
+def validate_scan(scan):
+    '''Validate the scanned data format'''
+    return bool(regex.match(r'^\d{12}$', scan))
+        
+def scan_loop(scanner=None):
+    '''Loop to read scans from the scanner and validate scanner'''
+    while not stop_event.is_set():
+        try:
+            if scanner and getattr(scanner, 'is_open', False):
+                scan = scanner.readline().decode('utf-8').strip()
+            else:
+                scan = scan_queue.get(timeout=0.5)
+
+            if scan:
+                Logger.log("ScanCaptured", 0, "ScanCapturedOK")
+
+                if validate_scan(scan):
+                    Logger.log("ScanValidated", 0, "ScanValidatedOK")
+                else:
+                    Logger.log("InvalidFormat", 0, "InvalidFormatDetected")
+
+        except Empty:
+            continue
+
+        except serial.SerialException as e:
+            Logger.log("ScanLoopError", e.errno if hasattr(e, 'errno') else -1, "ScanLoopError")
+
+        except Exception as e:
+            Logger.log("ScanLoopError", -1, f"UnexpectedError: {e}")
+            
+def program_exit_handler(scanner=None):
+    '''Handle program exit and log shutdown'''
+    Logger.log("ScannerShutdown", 0, "ScannerShutdownOK")
+    if scanner and getattr(scanner, 'is_open', False):
+        scanner.close()
+
+def end_program(scanner):
+    '''End the program gracefully'''
+    program_exit_handler(scanner)
+    sys.exit(0)
+
 
 
 # Global app variables
@@ -75,5 +143,27 @@ root.grid_columnconfigure(0, weight=1)
 main_frame.grid_rowconfigure(1, weight=1)
 main_frame.grid_columnconfigure(0, weight=1)
 
-# Start the main event loop
-root.mainloop()
+def on_closing():
+    stop_event.set()        
+    root.destroy()          
+root.protocol("WM_DELETE_WINDOW", on_closing)
+
+if __name__ == "__main__":
+    # Connect to scanner
+    scanner = None
+    atexit.register(program_exit_handler, scanner)
+
+    scan_queue.put("123456789012")
+    scan_queue.put("0123")
+    scan_queue.put("987654321098")  
+
+    scan_thread = threading.Thread(
+        target=scan_loop,
+        args=(scanner,),
+        daemon=False
+    )
+    scan_thread.start()
+
+    # Start the main application loop
+    root.mainloop()
+
