@@ -42,6 +42,8 @@ class DataCollectionUI(MouserPage):
 
         self.database = ExperimentDatabase(database_name)
 
+        # Database stores a single measurement name in `experiment.measurement`.
+        # Older code paths may return tuples from fetchone(); normalize to a string.
         self.measurement_items = self.database.get_measurement_items()
         self.menu_button.configure(command = self.press_back_to_menu_button)
         self.export_notification = CTkLabel(
@@ -98,9 +100,11 @@ class DataCollectionUI(MouserPage):
         #     animal_ids = [animal[0] for animal in self.database.get_animals()]  # Get all animal IDs
         #     self.database.insert_blank_data_for_day(animal_ids, today_date)  # Insert blank dataS
 
-        self.measurement_strings = self.measurement_items  # already a list
-        columns.extend(self.measurement_strings)  # adds each measurement as separate column
-        print(self.measurement_items)
+        measurement_name = self.database.get_measurement_name()
+        if isinstance(measurement_name, (list, tuple)):
+            measurement_name = measurement_name[0] if measurement_name else None
+        self.measurement_strings = [measurement_name] if measurement_name else []
+        print("Measurement(s):", self.measurement_strings)
 
         if self.database.experiment_uses_rfid() == 0:
             start_function = self.auto_increment
@@ -152,9 +156,7 @@ class DataCollectionUI(MouserPage):
 
 
 
-        columns = ['animal_id']
-        print(self.database.get_measurement_name())
-        columns.append(str(self.database.get_measurement_name())) # Add measurement name as column
+        columns = ["animal_id", *self.measurement_strings]
 
         # Initialize the Treeview with the defined columns
         self.table = Treeview(self.table_frame,
