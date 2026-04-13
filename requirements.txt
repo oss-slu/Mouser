@@ -10,4 +10,5 @@ customtkinter
 CTkMessagebox
 CTkMenuBar
 # git+https://github.com/taconi/playsound.git
+Pillow==12.0.0
 requests
