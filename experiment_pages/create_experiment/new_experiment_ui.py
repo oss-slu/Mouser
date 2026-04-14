@@ -306,6 +306,17 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         self.group_num.grid(row=1, column=1, sticky="ew", padx=(12, 0))
         self.num_per_cage.grid(row=1, column=2, sticky="ew", padx=(12, 0))
 
+        self.allocation_error = CTkLabel(
+            bottom,
+            text="",
+            font=CTkFont(family="Segoe UI", size=12),
+            text_color=palette["danger"],
+        )
+        self.allocation_error.grid(row=2, column=0, columnspan=3, sticky="w", pady=(8, 0))
+
+        self._allocation_valid = False
+        self._setup_allocation_validation()
+
         self.required_hint = CTkLabel(
             body_root,
             text="Fields marked * are required.",
@@ -317,6 +328,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         # Next button and field tracking
         self.create_next_button()
         self.bind_all_entries()
+        self._validate_allocation_live()
 
     # ------------------------------------------------------------
     # Navigation + Buttons
@@ -340,10 +352,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
             fg_color=self.ui_palette["accent_green"],
             hover_color="#16a34a",
             text="Continue",
-            command=lambda: [
-                self.check_animals_divisible(),
-                self._go_next(),
-            ],
+            command=self._on_continue,
             state="disabled",
         )
         self.next_button.place_configure(relx=1.0, rely=0.0, x=-16, y=8, anchor="ne")
@@ -361,6 +370,9 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         ]
         for entry in fields:
             entry.bind("<KeyRelease>", lambda event: self.enable_next_button())
+        for entry in (self.animal_num, self.group_num, self.num_per_cage):
+            entry.bind("<KeyRelease>", lambda _event: self._validate_allocation_live())
+            entry.bind("<FocusOut>", lambda _event: self._validate_allocation_live())
         self.investigators.bind(
             "<Return>",
             lambda event: [
@@ -371,6 +383,8 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
 
     def enable_next_button(self):
         """Enable Next only when all required fields are filled."""
+        if not self.next_button:
+            return
         required = [
             self.exper_name.get().strip(),
             self.species.get().strip(),
@@ -378,10 +392,65 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
             self.group_num.get().strip(),
             self.num_per_cage.get().strip(),
         ]
-        if all(required):
+        if all(required) and self._allocation_valid:
             self.next_button.configure(state="normal")
         else:
             self.next_button.configure(state="disabled")
+
+    # ------------------------------------------------------------
+    # Allocation Validation (live)
+    # ------------------------------------------------------------
+    def _setup_allocation_validation(self):
+        """Configure numeric-only validation for allocation entries."""
+        for entry in (self.animal_num, self.group_num, self.num_per_cage):
+            try:
+                vcmd = (self.register(self._validate_positive_int_entry), "%P")
+                entry.configure(validate="key", validatecommand=vcmd)
+            except Exception:  # pylint: disable=broad-exception-caught
+                # Some CustomTkinter builds may not expose Tk validate options; fall back to live checks.
+                pass
+
+    def _validate_positive_int_entry(self, proposed: str) -> bool:
+        """Tk validatecommand: allow only digits (or empty while editing)."""
+        return proposed == "" or proposed.isdigit()
+
+    def _set_allocation_error(self, message: str):
+        """Show/hide allocation error message."""
+        if hasattr(self, "allocation_error") and self.allocation_error:
+            self.allocation_error.configure(text=message)
+
+    def _validate_allocation_live(self):
+        """Validate allocation fields as the user types; disables Continue when invalid."""
+        entries = (self.animal_num, self.group_num, self.num_per_cage)
+        values = [e.get().strip() for e in entries]
+
+        invalid = [False, False, False]
+        message = ""
+
+        # Empty is handled by required-fields gating; only show errors when something is entered but invalid.
+        for idx, val in enumerate(values):
+            if not val:
+                continue
+            if not val.isdigit():
+                invalid[idx] = True
+                message = "Allocation fields must be positive integers (numbers only)."
+            else:
+                try:
+                    if int(val) <= 0:
+                        invalid[idx] = True
+                        message = "Allocation fields must be positive integers (> 0)."
+                except ValueError:
+                    invalid[idx] = True
+                    message = "Allocation fields must be positive integers (numbers only)."
+
+        for is_invalid, entry in zip(invalid, entries):
+            entry.configure(
+                border_color=self.ui_palette["danger"] if is_invalid else self.ui_palette["entry_border"]
+            )
+
+        self._allocation_valid = (not any(invalid)) and all(v != "" for v in values)
+        self._set_allocation_error(message if any(invalid) else "")
+        self.enable_next_button()
 
     # ------------------------------------------------------------
     # Investigator Logic
@@ -486,7 +555,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
 
         if not all([raw_animals, raw_groups, raw_max]):
             self.raise_warning("Please fill out all required allocation fields.")
-            return
+            return False
 
         try:
             animals = int(raw_animals)
@@ -494,21 +563,22 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
             max_per_cage = int(raw_max)
         except ValueError:
             self.raise_warning("Allocation fields must be whole numbers (e.g., 24, 3, 8).")
-            return
+            return False
 
         if animals <= 0 or groups <= 0 or max_per_cage <= 0:
             self.raise_warning(
                 "Number of animals, groups, and max animals per cage must be greater than 0."
             )
-            return
+            return False
 
         if animals > (groups * max_per_cage):
             self.raise_warning(
                 "Unequal Group Size: Please ensure total animals are less than or equal to group capacity."
             )
-            return
+            return False
 
         self.save_input()
+        return True
 
     # ------------------------------------------------------------
     # Save + Navigation
@@ -537,3 +607,10 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         """Navigate to Group Configuration with the current Experiment."""
         page = GroupConfigUI(self.input, self.root, self, self.menu_page)
         page.raise_frame()
+
+    def _on_continue(self):
+        """Validate the form and navigate only when valid."""
+        # Ensure the latest live validation state is applied before continuing.
+        self._validate_allocation_live()
+        if self.check_animals_divisible():
+            self._go_next()
