@@ -9,6 +9,7 @@ from customtkinter import (
     CTkEntry,
     CTkRadioButton,
     CTkButton,
+    CTkCheckBox,
     CTkFont,
     CTkToplevel,
     CTkScrollableFrame,
@@ -202,6 +203,19 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
             show="*",
             placeholder_text="Leave blank for none",
         )
+
+        self._password_visible = BooleanVar(value=False)
+        CTkCheckBox(
+            left,
+            text="Show password",
+            variable=self._password_visible,
+            onvalue=True,
+            offvalue=False,
+            font=CTkFont(family="Segoe UI", size=12),
+            text_color=palette["text_muted"],
+            command=self._toggle_password_visibility,
+        ).grid(row=labeled_entry.row, column=0, sticky="w", pady=(0, 10))
+        labeled_entry.row += 1
 
         # Investigators field with an add button and chip list
         CTkLabel(left, text="Investigators", font=label_font).grid(
@@ -507,6 +521,13 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         if person in self.added_invest:
             self.added_invest.remove(person)
             self.update_invest_frame()
+
+    def _toggle_password_visibility(self):
+        """Toggle masking of the password entry."""
+        try:
+            self.password.configure(show="" if self._password_visible.get() else "*")
+        except Exception:  # pylint: disable=broad-exception-caught
+            return
 
     # ------------------------------------------------------------
     # Validation / Warnings
