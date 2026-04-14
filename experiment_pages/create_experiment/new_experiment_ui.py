@@ -705,7 +705,6 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         self.input.set_num_animals(self.animal_num.get())
         self.input.set_num_groups(self.group_num.get())
         self.input.set_max_animals(self.num_per_cage.get())
-        AudioManager.play(SUCCESS_SOUND)
 
     def _go_next(self):
         """Navigate to Group Configuration with the current Experiment."""
