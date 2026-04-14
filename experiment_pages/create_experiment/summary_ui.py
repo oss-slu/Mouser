@@ -1,4 +1,6 @@
-"""Experiment Summary UI (modernized, fully functional)."""
+"""Experiment Summary UI (Step 3 of 3)."""
+
+from __future__ import annotations
 
 from tkinter import filedialog
 
@@ -10,10 +12,10 @@ from customtkinter import (
     CTkTextbox,
     CTkToplevel,
     CTkFont,
+    CTkScrollableFrame,
 )
 
 from shared.tk_models import MouserPage  # pylint: disable=import-error
-from shared.scrollable_frame import ScrolledFrame  # pylint: disable=import-error
 from shared.experiment import Experiment  # pylint: disable=import-error
 from shared.audio import AudioManager  # pylint: disable=import-error
 from shared.file_utils import SUCCESS_SOUND  # pylint: disable=import-error
@@ -29,67 +31,119 @@ class SummaryUI(MouserPage):
         prev_page: CTkFrame,
         menu_page: CTkFrame,
     ):
-        super().__init__(parent, "New Experiment - Summary", prev_page)
+        super().__init__(parent, "", prev_page)
+        try:
+            self.canvas.itemconfigure(self.rectangle, state="hidden")
+        except Exception:
+            pass
+
+        palette = {
+            "bg": ("#f8fafc", "#0b1220"),
+            "text_muted": ("#64748b", "#94a3b8"),
+            "card_border": ("#e2e8f0", "#223044"),
+            "entry_bg": ("#ffffff", "#0b1220"),
+            "entry_border": ("#cbd5e1", "#334155"),
+            "accent_blue": "#3b82f6",
+            "accent_amber": "#f59e0b",
+            "accent_green": "#22c55e",
+        }
+        self.ui_palette = palette
+        self.configure(fg_color=palette["bg"])
+
         self.experiment = experiment
         self.menu_page = menu_page
 
+        # Top actions
         if hasattr(self, "menu_button") and self.menu_button:
             self.menu_button.configure(
                 corner_radius=12,
-                height=50,
-                width=180,
-                font=("Segoe UI Semibold", 18),
+                height=36,
+                width=150,
+                font=("Segoe UI Semibold", 15),
                 text_color="white",
-                fg_color="#2563eb",
-                hover_color="#1e40af",
+                fg_color=palette["accent_amber"],
+                hover_color="#d97706",
             )
-            self.menu_button.place_configure(relx=0.05, rely=0.13, anchor="w")
+            self.menu_button.place_configure(relx=0.0, rely=0.0, x=16, y=8, anchor="nw")
 
         self.create_button = CTkButton(
             self,
             text="Create",
             corner_radius=12,
-            height=50,
-            width=180,
-            font=("Segoe UI Semibold", 18),
+            height=36,
+            width=150,
+            font=("Segoe UI Semibold", 15),
             text_color="white",
-            fg_color="#2563eb",
-            hover_color="#1e40af",
+            fg_color=palette["accent_green"],
+            hover_color="#16a34a",
             command=self.create_experiment,
         )
-        self.create_button.place_configure(relx=0.93, rely=0.13, anchor="e")
+        self.create_button.place_configure(relx=1.0, rely=0.0, x=-16, y=8, anchor="ne")
 
-        scroll_canvas = ScrolledFrame(self)
-        scroll_canvas.place(
-            relx=0.5,
-            rely=0.58,
-            relheight=0.7,
-            relwidth=0.9,
-            anchor="center",
-        )
+        # Main Layout (scrolling)
+        body_root = CTkScrollableFrame(self, fg_color="transparent")
+        body_root.place(relx=0.5, rely=0.0, y=56, anchor="n", relwidth=0.96, relheight=0.91)
+        body_root.grid_columnconfigure(0, weight=1)
+        body_root.grid_rowconfigure(1, weight=1)
 
-        self.main_frame = CTkFrame(
-            scroll_canvas,
-            corner_radius=16,
-            border_width=1,
-            border_color="#d1d5db",
-            fg_color=("white", "#2c2c2c"),
-        )
-        self.main_frame.pack(expand=True, pady=10, padx=10, fill="x")
+        title_font = CTkFont(family="Segoe UI Semibold", size=22)
+        subtitle_font = CTkFont(family="Segoe UI", size=12)
+        section_title_font = CTkFont(family="Segoe UI Semibold", size=14)
+        label_font = CTkFont(family="Segoe UI Semibold", size=12)
+        value_font = CTkFont(family="Segoe UI", size=13)
 
+        header = CTkFrame(body_root, fg_color="transparent")
+        header.grid(row=0, column=0, sticky="ew", padx=10, pady=(0, 6))
+        CTkLabel(header, text="Experiment Summary", font=title_font).pack(anchor="w")
         CTkLabel(
-            self.main_frame,
-            text="Experiment Summary",
-            font=("Segoe UI Semibold", 22),
-        ).pack(pady=(15, 10))
+            header,
+            text="Step 3 of 3 • Review everything before creating the experiment",
+            font=subtitle_font,
+            text_color=palette["text_muted"],
+        ).pack(anchor="w", pady=(2, 0))
 
-        self.summary_card = CTkFrame(
-            self.main_frame,
-            corner_radius=12,
-            fg_color=("white", "#1f2937"),
+        content = CTkFrame(body_root, fg_color="transparent")
+        content.grid(row=1, column=0, sticky="nsew", padx=10, pady=(0, 8))
+        content.grid_columnconfigure(0, weight=1)
+
+        def section(parent_section: CTkFrame, title: str, *, accent: str, bg_color):
+            box = CTkFrame(
+                parent_section,
+                corner_radius=12,
+                fg_color=bg_color,
+                border_width=1,
+                border_color=palette["card_border"],
+            )
+            CTkFrame(box, height=4, corner_radius=12, fg_color=accent).pack(fill="x")
+            CTkLabel(
+                box,
+                text=title,
+                font=section_title_font,
+                text_color=(accent, "#ffffff"),
+            ).pack(anchor="w", padx=12, pady=(8, 4))
+            body = CTkFrame(box, fg_color="transparent")
+            body.pack(fill="x", padx=12, pady=(0, 8))
+            body.grid_columnconfigure(0, weight=1)
+            return box, body
+
+        details_box, self.details_body = section(
+            content,
+            "Details",
+            accent=palette["accent_blue"],
+            bg_color=("#eff6ff", "#0b1b35"),
         )
-        self.summary_card.pack(padx=40, pady=(5, 15), fill="x")
+        details_box.grid(row=0, column=0, sticky="ew", pady=(0, 8))
 
+        notes_box, self.notes_body = section(
+            content,
+            "Additional Notes",
+            accent=palette["accent_amber"],
+            bg_color=("#fff7ed", "#2a1605"),
+        )
+        notes_box.grid(row=1, column=0, sticky="ew")
+
+        self._label_font = label_font
+        self._value_font = value_font
         self.display_summary()
 
     def display_summary(self):
@@ -107,39 +161,39 @@ class SummaryUI(MouserPage):
             "Uses RFID": "Yes" if self.experiment.uses_rfid() else "No",
         }
 
-        grid = CTkFrame(self.summary_card, fg_color="transparent")
-        grid.pack(pady=(10, 10), padx=15, anchor="w")
+        for widget in self.details_body.winfo_children():
+            widget.destroy()
+        for widget in self.notes_body.winfo_children():
+            widget.destroy()
 
-        font_label = CTkFont("Segoe UI", 16, "bold")
-        font_value = CTkFont("Segoe UI", 16)
+        grid = CTkFrame(self.details_body, fg_color="transparent")
+        grid.pack(fill="x", pady=(6, 6))
+        grid.grid_columnconfigure(0, weight=0)
+        grid.grid_columnconfigure(1, weight=1)
 
         for i, (label, value) in enumerate(details.items()):
             CTkLabel(
                 grid,
-                text=f"{label}:",
-                font=font_label,
-            ).grid(row=i, column=0, sticky="w", padx=10, pady=5)
+                text=label,
+                font=self._label_font,
+                text_color=self.ui_palette["text_muted"],
+            ).grid(row=i, column=0, sticky="w", padx=(0, 14), pady=4)
             CTkLabel(
                 grid,
                 text=value or "—",
-                font=font_value,
-            ).grid(row=i, column=1, sticky="w", padx=10, pady=5)
-
-        CTkLabel(
-            self.summary_card,
-            text="Additional Notes:",
-            font=("Segoe UI Semibold", 18),
-        ).pack(pady=(15, 5), anchor="w", padx=20)
+                font=self._value_font,
+                wraplength=720,
+                justify="left",
+            ).grid(row=i, column=1, sticky="w", pady=4)
 
         self.notes_entry = CTkTextbox(
-            self.summary_card,
-            width=600,
-            height=100,
-            font=("Segoe UI", 15),
+            self.notes_body,
+            height=120,
+            font=("Segoe UI", 13),
             wrap="word",
             corner_radius=10,
         )
-        self.notes_entry.pack(padx=20, pady=(0, 20), fill="x")
+        self.notes_entry.pack(fill="x", pady=(6, 6))
 
         existing_notes = getattr(self.experiment, "notes", "")
         if existing_notes:
@@ -147,8 +201,6 @@ class SummaryUI(MouserPage):
 
     def update_page(self):
         """Refresh the summary when experiment data changes."""
-        for widget in self.summary_card.winfo_children():
-            widget.destroy()
         self.display_summary()
 
     def create_experiment(self):
@@ -216,3 +268,4 @@ class SummaryUI(MouserPage):
             text_color="white",
             width=80,
         ).pack(pady=10)
+
