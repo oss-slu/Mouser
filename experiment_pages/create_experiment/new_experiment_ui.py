@@ -59,6 +59,10 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
 
         self.ui_palette = palette
         self.configure(fg_color=palette["bg"])
+        self._warning_hide_job = None
+        self.warning_banner = None
+        self.warning_title = None
+        self.warning_message = None
 
         # Page-specific header styling (keeps global MouserPage behavior intact).
         try:
@@ -82,6 +86,8 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
                 hover_color="#d97706",
             )
             self.menu_button.place_configure(relx=0.0, rely=0.0, x=16, y=8, anchor="nw")
+
+        self._build_warning_banner()
 
         self.input = Experiment()
         self.menu_page = menu_page
@@ -506,46 +512,123 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
     # Validation / Warnings
     # ------------------------------------------------------------
     def raise_warning(self, message: str, title: str = "Warning"):
-        """Display a modal warning dialog."""
+        """Show an in-page warning banner (no separate window)."""
+        AudioManager.play(ERROR_SOUND)
+        self._show_warning_banner(message, title=title)
 
-        dialog = CTkToplevel(self)
-        dialog.title(title)
-        dialog.geometry("420x190")
-        dialog.resizable(False, False)
+    def _build_warning_banner(self):
+        """Create a dismissible banner shown above the form content."""
+        if self.warning_banner:
+            return
 
-        def dismiss(_event=None):  # pylint: disable=unused-argument
+        self.warning_banner = CTkFrame(
+            self,
+            corner_radius=16,
+            fg_color=("#fff7ed", "#2a1605"),
+            border_width=1,
+            border_color=("#fed7aa", "#7c2d12"),
+        )
+        self.warning_banner.grid_columnconfigure(2, weight=1)
+        self.warning_banner.configure(width=460)
+
+        icon = CTkFrame(
+            self.warning_banner,
+            width=34,
+            height=34,
+            corner_radius=999,
+            fg_color=self.ui_palette["danger"],
+        )
+        icon.grid(row=0, column=0, rowspan=2, padx=(12, 10), pady=12, sticky="nw")
+        icon.grid_propagate(False)
+        CTkLabel(icon, text="!", font=("Segoe UI Semibold", 18), text_color="white").place(
+            relx=0.5, rely=0.5, anchor="center"
+        )
+
+        self.warning_title = CTkLabel(
+            self.warning_banner,
+            text="Warning",
+            font=("Segoe UI Semibold", 14),
+            text_color=("#7c2d12", "#fdba74"),
+        )
+        self.warning_title.grid(row=0, column=1, sticky="w", pady=(12, 0), padx=(0, 10))
+
+        self.warning_message = CTkLabel(
+            self.warning_banner,
+            text="",
+            font=("Segoe UI", 13),
+            text_color=("#7c2d12", "#fed7aa"),
+            wraplength=360,
+            justify="left",
+        )
+        self.warning_message.grid(row=1, column=1, sticky="w", pady=(2, 12), padx=(0, 10))
+
+        self.warning_close_btn = CTkButton(
+            self.warning_banner,
+            text="×",
+            width=32,
+            height=32,
+            corner_radius=999,
+            fg_color="transparent",
+            text_color=("#7c2d12", "#fed7aa"),
+            font=("Segoe UI Semibold", 16),
+            command=self._hide_warning_banner,
+        )
+        self.warning_close_btn.grid(row=0, column=2, rowspan=2, sticky="e", padx=(0, 12), pady=12)
+
+        def on_enter(_event=None):  # pylint: disable=unused-argument
+            self.warning_close_btn.configure(fg_color="#7c2d12", hover_color="#7c2d12", text_color="#fed7aa")
+
+        def on_leave(_event=None):  # pylint: disable=unused-argument
+            self.warning_close_btn.configure(
+                fg_color="transparent",
+                hover_color=("#ffedd5", "#3a1a07"),
+                text_color=("#7c2d12", "#fed7aa"),
+            )
+
+        on_leave()
+        self.warning_close_btn.bind("<Enter>", on_enter)
+        self.warning_close_btn.bind("<Leave>", on_leave)
+
+        try:
+            self.warning_banner.place_forget()
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
+
+    def _show_warning_banner(self, message: str, *, title: str = "Warning", duration_ms: int = 0):
+        """Show the in-page banner centered; stays until dismissed unless duration_ms > 0."""
+        if not self.warning_banner:
+            self._build_warning_banner()
+
+        if self._warning_hide_job:
             try:
-                dialog.grab_release()
+                self.after_cancel(self._warning_hide_job)
             except Exception:  # pylint: disable=broad-exception-caught
                 pass
-            dialog.destroy()
+            self._warning_hide_job = None
 
-        CTkLabel(
-            dialog,
-            text=message,
-            wraplength=380,
-            font=("Segoe UI", 14),
-            justify="left",
-        ).pack(padx=16, pady=(18, 10), anchor="w")
+        self.warning_title.configure(text=title)
+        self.warning_message.configure(text=message)
 
-        CTkButton(
-            dialog,
-            text="OK",
-            width=90,
-            height=34,
-            corner_radius=10,
-            fg_color=self.ui_palette["accent_blue"],
-            hover_color="#1d4ed8",
-            text_color="white",
-            font=("Segoe UI Semibold", 14),
-            command=dismiss,
-        ).pack(pady=(0, 16))
+        # Place centered on the page.
+        self.warning_banner.place(relx=0.5, rely=0.5, anchor="center", relwidth=0.55)
+        self.warning_banner.lift()
 
-        AudioManager.play(ERROR_SOUND)
-        dialog.bind("<Escape>", dismiss)
-        dialog.bind("<Return>", dismiss)
-        dialog.focus_force()
-        dialog.grab_set()
+        if duration_ms and duration_ms > 0:
+            self._warning_hide_job = self.after(duration_ms, self._hide_warning_banner)
+
+    def _hide_warning_banner(self):
+        """Hide the in-page banner."""
+        if self._warning_hide_job:
+            try:
+                self.after_cancel(self._warning_hide_job)
+            except Exception:  # pylint: disable=broad-exception-caught
+                pass
+            self._warning_hide_job = None
+        try:
+            if self.warning_banner:
+                self.warning_banner.place_forget()
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
 
     def check_animals_divisible(self):
         """Validate animal counts vs. groups and cage capacity."""
