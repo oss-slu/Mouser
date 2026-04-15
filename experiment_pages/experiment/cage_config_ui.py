@@ -1,8 +1,7 @@
 '''Contains cage configuration page and behaviour.'''
 from customtkinter import *
 from shared.tk_models import *
-from CTkMessagebox import CTkMessagebox
-from shared.scrollable_frame import ScrolledFrame
+from tkinter import messagebox
 from databases.database_controller import DatabaseController
 from shared.audio import AudioManager
 from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
@@ -11,50 +10,186 @@ from shared.file_utils import save_temp_to_file
 class CageConfigurationUI(MouserPage):
     '''The Frame that allows user to configure the cages.'''
     def __init__(self, database, parent: CTk, prev_page: CTkFrame = None, file_path = ''):
-        super().__init__(parent, "Group Configuration", prev_page)
+        super().__init__(parent, "Cage Configuration", prev_page)
+        try:
+            self.canvas.itemconfigure(self.rectangle, state="hidden")
+        except Exception:
+            pass
 
+        # Cohesive palette (light + dark) tuned for contrast and reduced "white canvas" feel.
+        palette = {
+            # Backgrounds
+            "bg": ("#eef2ff", "#0b1220"),  # indigo-50 / deep slate
+            "surface": ("#f0f9ff", "#0b1b35"),  # sky-50 / deep navy
+            "surface_alt": ("#f5f3ff", "#1b1133"),  # violet-50 / deep violet
+            "card_border": ("#cbd5e1", "#223044"),  # slate-300 / slate
+            # Text
+            "text": ("#0f172a", "#e5e7eb"),
+            "text_muted": ("#475569", "#94a3b8"),
+            # Accents
+            "accent_blue": "#2563eb",
+            "accent_teal": "#0d9488",
+            "accent_amber": "#f59e0b",
+            "accent_violet": "#7c3aed",
+            "accent_green": "#22c55e",
+            "danger": "#ef4444",
+            # Selection
+            "selected": ("#a7f3d0", "#065f46"),  # mint highlight
+            # Legacy (kept for compatibility if older code paths reference these)
+            "entry_bg": ("#ffffff", "#0b1220"),
+            "entry_border": ("#cbd5e1", "#334155"),
+        }
+        self.ui_palette = palette
+        self.configure(fg_color=palette["bg"])
+        self._cage_button_default_fg = palette["accent_blue"]
+        self._animal_button_default_fg = ("#e0f2fe", "#111827")
+
+        if hasattr(self, "menu_button") and self.menu_button:
+            self.menu_button.configure(
+                corner_radius=21,
+                height=42,
+                width=54,
+                font=("Segoe UI Semibold", 15),
+                text_color="white",
+                fg_color=palette["accent_amber"],
+                hover_color="#d97706",
+            )
+            self.menu_button.place_configure(relx=0.0, rely=0.0, x=16, y=12, anchor="nw")
+
+        # ----------------------------
+        # Main Layout (with scrolling)
+        # ----------------------------
+        body_root = CTkScrollableFrame(self, fg_color="transparent")
+        body_root.place(relx=0.5, rely=0.0, y=78, anchor="n", relwidth=0.96, relheight=0.88)
+        body_root.grid_columnconfigure(0, weight=1)
+        body_root.grid_rowconfigure(1, weight=1)
+
+        title_font = CTkFont(family="Segoe UI Semibold", size=24)
+        subtitle_font = CTkFont(family="Segoe UI", size=13)
+        section_title_font = CTkFont(family="Segoe UI Semibold", size=15)
+        action_font = CTkFont(family="Segoe UI Semibold", size=13)
+        entry_font = CTkFont(family="Segoe UI", size=13)
+
+        header = CTkFrame(body_root, fg_color="transparent")
+        header.grid(row=0, column=0, sticky="ew", padx=12, pady=(0, 10))
+        CTkLabel(
+            header,
+            text="Cage Configuration",
+            font=title_font,
+            text_color=palette["text"],
+        ).pack(anchor="w")
+        CTkLabel(
+            header,
+            text="Assign animals to groups with smart actions and polished cards.",
+            font=subtitle_font,
+            text_color=palette["text_muted"],
+        ).pack(anchor="w", pady=(2, 0))
+
+        content = CTkFrame(body_root, fg_color="transparent")
+        content.grid(row=1, column=0, sticky="nsew", padx=12, pady=(0, 10))
+        content.grid_columnconfigure(0, weight=1)
+        content.grid_rowconfigure(1, weight=1)
+
+        def section(parent_section: CTkFrame, title: str, *, accent: str, bg_color):
+            box = CTkFrame(
+                parent_section,
+                corner_radius=18,
+                fg_color=bg_color,
+                border_width=1,
+                border_color=palette["card_border"],
+            )
+            CTkFrame(box, height=6, corner_radius=18, fg_color=accent).pack(fill="x")
+            CTkLabel(
+                box,
+                text=title,
+                font=section_title_font,
+                text_color=(accent, "#ffffff"),
+            ).pack(anchor="w", padx=16, pady=(10, 6))
+            body = CTkFrame(box, fg_color="transparent")
+            body.pack(fill="both", expand=True, padx=16, pady=(0, 14))
+            body.grid_columnconfigure(0, weight=1)
+            return box, body
+
+        control_card, control_body = section(
+            content,
+            "Quick actions",
+            accent=palette["accent_blue"],
+            bg_color=palette["surface"],
+        )
+        control_card.grid(row=0, column=0, sticky="ew", pady=(0, 12))
+        control_body.grid_columnconfigure(0, weight=1)
+
+        button_frame = CTkFrame(control_body, fg_color="transparent")
+        button_frame.grid(row=0, column=0, sticky="ew", pady=(0, 10))
+        button_frame.grid_columnconfigure(0, weight=1)
+        button_frame.grid_columnconfigure(1, weight=1)
+        button_frame.grid_columnconfigure(2, weight=1)
+        button_frame.grid_columnconfigure(3, weight=1)
+
+        auto_button = CTkButton(
+            button_frame,
+            text='AutoSort',
+            fg_color=palette["accent_blue"],
+            hover_color="#2563eb",
+            text_color="white",
+            corner_radius=14,
+            font=action_font,
+            command=self.autosort,
+        )
+        random_button = CTkButton(
+            button_frame,
+            text='Randomize',
+            fg_color=palette["accent_violet"],
+            hover_color="#7c3aed",
+            text_color="white",
+            corner_radius=14,
+            font=action_font,
+            command=self.randomize,
+        )
+        swap_button = CTkButton(
+            button_frame,
+            text='Swap',
+            fg_color=palette["accent_teal"],
+            hover_color="#0f766e",
+            text_color="white",
+            corner_radius=14,
+            font=action_font,
+            command=self.perform_swap,
+        )
+        move_button = CTkButton(
+            button_frame,
+            text='Move Selected',
+            fg_color=palette["accent_amber"],
+            hover_color="#d97706",
+            text_color="white",
+            corner_radius=14,
+            font=action_font,
+            command=self.move_animal,
+        )
+
+        auto_button.grid(row=0, column=0, sticky="ew", padx=(0, 8), pady=4)
+        random_button.grid(row=0, column=1, sticky="ew", padx=8, pady=4)
+        swap_button.grid(row=0, column=2, sticky="ew", padx=8, pady=4)
+        move_button.grid(row=0, column=3, sticky="ew", padx=(8, 0), pady=4)
+
+        self.file_path = file_path
         self.prev_page = prev_page
         self.db = DatabaseController(database)
 
-        self.file_path = file_path
+        layout_card, layout_body = section(
+            content,
+            "Cage layout",
+            accent=palette["accent_violet"],
+            bg_color=palette["surface_alt"],
+        )
+        layout_card.grid(row=1, column=0, sticky="nsew")
+        layout_body.grid_rowconfigure(0, weight=1)
+        layout_body.grid_columnconfigure(0, weight=1)
 
-        scroll_canvas = ScrolledFrame(self)
-        scroll_canvas.place(relx=0.05, rely=0.20, relheight=0.75, relwidth=0.88)
+        self.config_frame = CTkFrame(layout_body, corner_radius=18, fg_color="transparent")
+        self.config_frame.grid(row=0, column=0, sticky="nsew")
+        self.config_frame.grid_columnconfigure(0, weight=1)
 
-        input_frame = CTkFrame(scroll_canvas)
-        self.config_frame = CTkFrame(scroll_canvas)
-
-        random_button = CTkButton(input_frame, text='Randomize', width=15,
-                            command=self.randomize)
-        swap_button = CTkButton(input_frame, text='Swap', width=15,
-                            command=self.perform_swap)
-        auto_button = CTkButton(input_frame, text='AutoSort', width=15,
-                                command=self.autosort)
-        move_button = CTkButton(input_frame, text='Move Groups', width=15,
-                                command=self.move_animal)
-
-        self.id_input = CTkEntry(input_frame, width=110)
-        self.cage_input = CTkEntry(input_frame, width=110)
-
-        self.id_input.insert(END, 'animal id')
-        self.cage_input.insert(END, 'group id')
-
-        self.id_input.bind("<Button-1>", lambda arg='id': self.clear_entry(arg))
-        self.cage_input.bind("<Button-1>", lambda arg='group': self.clear_entry(arg))
-
-        self.pad_x, self.pad_y = 10, 10
-
-        auto_button.grid(row=0, column=0, padx=self.pad_x, pady=self.pad_y)
-        random_button.grid(row=0, column=1, padx=self.pad_x, pady=self.pad_y)
-        swap_button.grid(row=0, column=2, padx=self.pad_x, pady=self.pad_y)
-        move_button.grid(row=0, column=3, padx=self.pad_x, pady=self.pad_y)
-
-        for i in range(0, 3):
-            input_frame.grid_columnconfigure(i, weight=1)
-        input_frame.grid_rowconfigure(0, weight=1)
-
-        input_frame.pack(side=TOP, fill=X, anchor='center')
-        self.config_frame.pack(side=TOP, fill=BOTH, anchor='center')
         self.animal_buttons = {}
         self.cage_buttons = {}
         self.selected_animals = set()
@@ -73,79 +208,118 @@ class CageConfigurationUI(MouserPage):
     def create_cage_layout(self):
         '''Creates the layout of all cages and their animals.'''
         cages = self.db.get_groups()  # Each group represents a cage
-        label_style = CTkFont("Arial", 12)
+        label_style = CTkFont("Segoe UI Semibold", 13)
+        tile_style = CTkFont("Segoe UI", 12)
 
-        for cage_name in cages:
-            cage_frame = CTkFrame(self.config_frame, border_width=3, border_color="#00e7ff", bg_color='#0097A7')
+        self.config_frame.grid_rowconfigure(0, weight=1)
+        max_columns = 2
 
-            # Cage header - now a button instead of a label
+        if not cages:
+            empty_state = CTkFrame(
+                self.config_frame,
+                corner_radius=18,
+                fg_color=("white", "#0c1430"),
+                border_width=1,
+                border_color=self.ui_palette["card_border"],
+            )
+            empty_state.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+            CTkLabel(
+                empty_state,
+                text="No groups configured yet.",
+                font=label_style,
+                text_color=self.ui_palette["text"],
+            ).pack(fill="x", padx=16, pady=(16, 6), anchor="w")
+            CTkLabel(
+                empty_state,
+                text="Go back and set up groups in Group Configuration.",
+                font=tile_style,
+                text_color=self.ui_palette["text_muted"],
+            ).pack(fill="x", padx=16, pady=(0, 16), anchor="w")
+            return
+
+        for index, cage_name in enumerate(cages):
+            row = index // max_columns
+            col = index % max_columns
+            cage_frame = CTkFrame(
+                self.config_frame,
+                corner_radius=18,
+                fg_color=("white", "#0c1430"),
+                border_width=1,
+                border_color=self.ui_palette["card_border"],
+            )
+            cage_frame.grid(row=row, column=col, sticky="nsew", padx=10, pady=10)
+            self.config_frame.grid_columnconfigure(col, weight=1)
+
+            header_bar = CTkFrame(cage_frame, fg_color="transparent")
+            header_bar.pack(fill="x", padx=14, pady=(14, 0))
+            CTkLabel(
+                header_bar,
+                text=f"Group {cage_name}",
+                font=label_style,
+                text_color=self.ui_palette["accent_blue"],
+            ).pack(side="left", anchor="w")
+            select_label = CTkLabel(
+                header_bar,
+                text="Select a cage to move animals",
+                font=tile_style,
+                text_color=self.ui_palette["text_muted"],
+            )
+            select_label.pack(side="right", anchor="e")
+
             cage_button = CTkButton(
                 cage_frame,
-                text=f'Group: {cage_name}',
+                text=f"{cage_name}",
                 command=lambda c=cage_name: self.select_cage(c),
-                fg_color='#0097A7',
-                hover_color="#00b8d4",
+                fg_color=self.ui_palette["accent_blue"],
+                hover_color="#2563eb",
                 text_color="white",
-                font=label_style
+                font=label_style,
+                corner_radius=14,
             )
-            cage_button.pack(side=TOP, padx=self.pad_x, pady=self.pad_y, anchor='center')
+            cage_button.pack(fill="x", padx=14, pady=(10, 12))
             self.cage_buttons[cage_name] = cage_button
 
-            # Create header frame for labels
-            header_frame = CTkFrame(cage_frame)
-            CTkLabel(header_frame, text='Animal ID').pack(side=LEFT, padx=8, pady=4, anchor='w')
-            header_frame.pack(fill=X, padx=self.pad_x, pady=(0, 4))
-
-            # Get and display animals in this cage using the database controller
             animals = self.db.get_animals_in_group(cage_name)
-
             if not animals:
-                empty_row = CTkLabel(
+                CTkLabel(
                     cage_frame,
-                    text='No animals assigned',
-                    text_color=("#4b5563", "#d1d5db")
-                )
-                empty_row.pack(fill=X, padx=self.pad_x, pady=(4, 8), anchor='w')
+                    text="No animals assigned",
+                    text_color=self.ui_palette["text_muted"],
+                    font=tile_style,
+                ).pack(fill="x", padx=14, pady=(0, 14), anchor="w")
             else:
                 for animal in animals:
                     animal_id = str(animal[0])
-                    # Create a new frame for each animal to hold the button
-                    animal_frame = CTkFrame(cage_frame)
                     animal_button = CTkButton(
-                        animal_frame,
+                        cage_frame,
                         text=animal_id,
                         command=lambda a=animal_id: self.toggle_animal_selection(a),
-                        fg_color="#0097A7",
-                        hover_color="#00b8d4",
-                        text_color="white"
+                        fg_color=self._animal_button_default_fg,
+                        hover_color="#93c5fd",
+                        text_color=self.ui_palette["text"],
+                        font=tile_style,
+                        corner_radius=12,
                     )
-                    animal_button.pack(fill=X, pady=2)
-                    animal_frame.pack(fill=X, pady=1, padx=self.pad_x)
+                    animal_button.pack(fill="x", padx=14, pady=4)
                     self.animal_buttons[animal_id] = animal_button
 
-            cage_frame.pack(side=LEFT, expand=TRUE, fill=BOTH, anchor='center')
-
     def select_cage(self, cage_name):
-        '''Handles cage selection by updating the cage input field and visual feedback.'''
+        '''Handles cage selection by updating visual feedback.'''
         button = self.cage_buttons.get(cage_name)
         if button:
             if self.selected_cage == cage_name:
                 # Deselect current cage
                 self.selected_cage = None
-                button.configure(fg_color="#0097A7")  # Reset to default blue
-                self.cage_input.delete(0, END)
-                self.cage_input.insert(0, 'cage id')
+                button.configure(fg_color=self._cage_button_default_fg)
                 print(f"Deselected Group: {cage_name}")
             else:
                 # Deselect previous cage if any
                 if self.selected_cage and self.selected_cage in self.cage_buttons:
-                    self.cage_buttons[self.selected_cage].configure(fg_color="#0097A7")
+                    self.cage_buttons[self.selected_cage].configure(fg_color=self._cage_button_default_fg)
 
                 # Select new cage
                 self.selected_cage = cage_name
-                button.configure(fg_color="#D5E8D4")  # Selected state green
-                self.cage_input.delete(0, END)
-                self.cage_input.insert(0, cage_name)
+                button.configure(fg_color=self.ui_palette["selected"])
                 print(f"Selected group: {cage_name}")
 
     def toggle_animal_selection(self, animal_id):
@@ -154,22 +328,15 @@ class CageConfigurationUI(MouserPage):
         if button:
             if animal_id in self.selected_animals:
                 self.selected_animals.remove(animal_id)
-                button.configure(fg_color="#0097A7")  # Reset to default blue
+                button.configure(fg_color=self._animal_button_default_fg)
                 print(f"Deselected animal: {animal_id}")
             else:
                 self.selected_animals.add(animal_id)
-                button.configure(fg_color="#D5E8D4")  # Selected state green
+                button.configure(fg_color=self.ui_palette["selected"])
                 print(f"Selected animal: {animal_id}")
             print(f"Currently selected animals: {self.selected_animals}")
         else:
             print(f"Error: No button found for Animal ID: {animal_id}")
-
-    def clear_entry(self, input_type):
-        '''Clears entry from input frames.'''
-        if input_type == 'id':
-            self.id_input.delete(0, END)
-        else:
-            self.cage_input.delete(0, END)
 
     def randomize(self):
         '''Autosorts the animals into cages.'''
@@ -180,13 +347,11 @@ class CageConfigurationUI(MouserPage):
 
     def autosort(self):
         '''Calls database's autosort function after user confirmation.'''
-        confirm = CTkMessagebox(
-            title= "Confirm AutoSort",
-            message= "Are you sure you want to AutoSort? \nThis will remove measurements used to sort from the database.",
-            option_1="No",
-            option_2="Yes"
+        confirmed = messagebox.askyesno(
+            title="Confirm AutoSort",
+            message="Are you sure you want to AutoSort?\nThis will remove measurements used to sort from the database.",
         )
-        if confirm.get() == "Yes":
+        if confirmed:
             self.db.autosort()
             self.update_config_frame()
             self.save()
@@ -268,21 +433,43 @@ class CageConfigurationUI(MouserPage):
         AudioManager.play(SUCCESS_SOUND)
 
     def raise_warning(self, message):
-        '''Raises a warning page with the given message.'''
-        message_window = CTk()
-        message_window.title("WARNING")
-        message_window.geometry('320x100')
+        '''Raises a warning dialog with the given message.'''
+        palette = getattr(self, "ui_palette", None) or {
+            "bg": ("#f8fafc", "#0b1220"),
+            "text": ("#0f172a", "#e2e8f0"),
+            "text_muted": ("#64748b", "#94a3b8"),
+            "accent_amber": "#f59e0b",
+        }
+        message_window = CTkToplevel(self)
+        message_window.title("Warning")
+        message_window.geometry('360x140')
         message_window.resizable(False, False)
+        message_window.configure(fg_color=palette["bg"])
 
-        label = CTkLabel(message_window, text=message)
-        label.grid(row=0, column=0, padx=10, pady=10)
+        CTkLabel(
+            message_window,
+            text=message,
+            wraplength=320,
+            justify=LEFT,
+            text_color=palette["text"],
+            font=CTkFont("Segoe UI", 12),
+        ).pack(fill="x", padx=20, pady=(20, 10))
 
-        ok_button = CTkButton(message_window, text="OK", width=10,
-                            command=lambda: message_window.destroy())
-        ok_button.grid(row=2, column=0, padx=10, pady=10)
+        ok_button = CTkButton(
+            message_window,
+            text="OK",
+            width=100,
+            corner_radius=12,
+            fg_color=palette["accent_amber"],
+            hover_color="#d97706",
+            text_color="white",
+            command=message_window.destroy,
+        )
+        ok_button.pack(pady=(0, 16))
 
         AudioManager.play(ERROR_SOUND)
-        message_window.mainloop()
+        message_window.grab_set()
+        message_window.wait_window()
 
     def save_to_database(self):
         '''Saves updated values to database.'''

@@ -104,9 +104,19 @@ class MouserPage(CTkFrame):
         self.title = title
 
         self.configure(fg_color=DEFAULT_PAGE_BG)
-        default_bg = DEFAULT_PAGE_BG[0] if get_appearance_mode().lower() != "dark" else DEFAULT_PAGE_BG[1]
-        self.canvas = CTkCanvas(self, width=600, height=600, highlightthickness=0, bg=default_bg)
+        self.canvas = CTkCanvas(
+            self,
+            width=600,
+            height=600,
+            highlightthickness=0,
+            bg=self._resolve_bg_color(),
+        )
         self.canvas.grid(row=0, column=0, columnspan=4, sticky="nsew")
+        # Ensure the legacy canvas stays behind modern CTk widgets (buttons/frames).
+        try:
+            self.canvas.lower()
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
 
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
@@ -122,9 +132,55 @@ class MouserPage(CTkFrame):
 
         self.check_window_size()
 
+    def configure(self, **kwargs):  # pylint: disable=arguments-differ
+        """Extend CTkFrame.configure to keep the legacy canvas in sync.
+
+        Many pages call `self.configure(fg_color=...)` after `super().__init__`.
+        Without syncing, the old canvas can briefly show as a mismatched rectangle.
+        """
+        super().configure(**kwargs)
+        if "fg_color" in kwargs:
+            self._sync_canvas_bg()
+
+    def _resolve_bg_color(self):
+        """Return a concrete (non-tuple) background color for Tk widgets like Canvas."""
+        try:
+            fg_color = self.cget("fg_color")
+        except Exception:  # pylint: disable=broad-exception-caught
+            fg_color = DEFAULT_PAGE_BG
+
+        if isinstance(fg_color, (tuple, list)) and len(fg_color) >= 2:
+            return fg_color[1] if get_appearance_mode().lower() == "dark" else fg_color[0]
+        return fg_color
+
+    def _sync_canvas_bg(self):
+        """Keep the legacy canvas background in sync with the page fg_color.
+
+        Many modern pages place their own frames; if the canvas background is out
+        of sync (e.g., after theme changes or page-specific palettes), it can
+        appear as a 'white box' behind the UI.
+        """
+        if hasattr(self, "canvas") and self.canvas:
+            try:
+                self.canvas.configure(bg=self._resolve_bg_color())
+            except Exception:  # pylint: disable=broad-exception-caught
+                pass
+
+    def _lift_nav_widgets(self):
+        """Keep navigation buttons clickable/visible above page content."""
+        for widget in (self.menu_button, self.next_button, self.previous_button):
+            if widget is None:
+                continue
+            try:
+                widget.lift()
+            except Exception:  # pylint: disable=broad-exception-caught
+                pass
+
     def raise_frame(self):
         '''Raises the page frame in the stacking order.'''
         raise_frame(self)
+        self._sync_canvas_bg()
+        self._lift_nav_widgets()
 
     def set_next_button(self, next_page):
 
@@ -132,21 +188,26 @@ class MouserPage(CTkFrame):
         if self.next_button:
             self.next_button.destroy()
         self.next_button = ChangePageButton(self, next_page, False)
+        self._lift_nav_widgets()
 
     def set_previous_button(self, previous_page):
         '''Sets previous_button to be a ChangePageButton that navigates to previous_page.'''
         if self.previous_button:
             self.previous_button.destroy()
         self.previous_button = ChangePageButton(self, previous_page, True)
+        self._lift_nav_widgets()
 
     def set_menu_button(self, menu_page):
         '''Sets menu_button to be a ChangePageButton that navigates to menu_page.'''
         if self.menu_button:
             self.menu_button.destroy()
         self.menu_button = MenuButton(self, menu_page)
+        self._lift_nav_widgets()
 
     def check_window_size(self):
         '''Checks to see if the window size and page size match.If they don't, resizes the page to match'''
+        self._sync_canvas_bg()
+        self._lift_nav_widgets()
         window = self.winfo_toplevel()
         if window.winfo_height() != self.canvas.winfo_height():
             self.resize_canvas_height(window.winfo_height())

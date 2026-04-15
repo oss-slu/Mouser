@@ -211,12 +211,40 @@ class ExperimentMenuUI(MouserPage):
 
     def open_cage_config(self):
         """Open Cage Configuration Page."""
-        from experiment_pages.experiment.cage_config_ui import (  # pylint: disable=import-error,import-outside-toplevel
-            CageConfigUI,
-        )
+        try:
+            # Validate that the experiment DB is readable before opening the page.
+            # If the DB is encrypted/invalid, this prevents a silent callback failure.
+            from databases.experiment_database import (  # pylint: disable=import-error,import-outside-toplevel
+                ExperimentDatabase,
+            )
 
-        page = CageConfigUI(self.file_path, self.root, self, self.file_path)
-        page.raise_frame()
+            db = ExperimentDatabase(self.file_path)
+            if db.get_number_groups() == 0:
+                messagebox.showinfo(
+                    "Groups Required",
+                    "No groups are configured yet.\n\n"
+                    "Create groups in Group Configuration before assigning cages.",
+                )
+                self.open_group_config()
+                return
+
+            from experiment_pages.experiment.cage_config_ui import (  # pylint: disable=import-error,import-outside-toplevel
+                CageConfigUI,
+            )
+
+            page = CageConfigUI(self.file_path, self.root, self, self.file_path)
+            page.raise_frame()
+        except sqlite3.DatabaseError as exc:
+            messagebox.showerror(
+                "Cage Configuration Error",
+                "This experiment file could not be opened as a database.\n\n"
+                f"{exc}",
+            )
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            messagebox.showerror(
+                "Cage Configuration Error",
+                f"Failed to open Cage Configuration page.\n\n{exc}",
+            )
 
     def open_data_collection(self):
         """Open Data Collection Page."""

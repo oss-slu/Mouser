@@ -68,7 +68,7 @@ class GroupConfigUI(MouserPage):
             self.menu_button.configure(
                 corner_radius=12,
                 height=36,
-                width=150,
+                width=54,
                 font=("Segoe UI Semibold", 15),
                 text_color="white",
                 fg_color=palette["accent_amber"],
@@ -86,7 +86,8 @@ class GroupConfigUI(MouserPage):
         # Main Layout (scrolling)
         # ----------------------------
         body_root = CTkScrollableFrame(self, fg_color="transparent")
-        body_root.place(relx=0.5, rely=0.0, y=56, anchor="n", relwidth=0.96, relheight=0.91)
+        # Offset content below the top navigation buttons so the title is never covered.
+        body_root.place(relx=0.5, rely=0.0, y=78, anchor="n", relwidth=0.96, relheight=0.88)
         body_root.grid_columnconfigure(0, weight=1)
         body_root.grid_rowconfigure(1, weight=1)
 
