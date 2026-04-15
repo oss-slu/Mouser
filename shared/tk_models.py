@@ -8,6 +8,22 @@ from customtkinter import *
 
 current_frame: CTkFrame = None
 
+# Shared default palette derived from experiment_pages/create_experiment/new_experiment_ui.py
+DEFAULT_PAGE_BG = ("#f8fafc", "#0b1220")
+DEFAULT_HEADER_COLOR = "#0f172a"
+DEFAULT_TEXT_MUTED = ("#64748b", "#94a3b8")
+DEFAULT_CARD_BORDER = ("#e2e8f0", "#223044")
+DEFAULT_ENTRY_BG = ("#ffffff", "#0b1220")
+DEFAULT_ENTRY_BORDER = ("#cbd5e1", "#334155")
+DEFAULT_ACCENT_BLUE = "#3b82f6"
+DEFAULT_ACCENT_VIOLET = "#8b5cf6"
+DEFAULT_ACCENT_TEAL = "#14b8a6"
+DEFAULT_ACCENT_AMBER = "#f59e0b"
+DEFAULT_ACCENT_GREEN = "#22c55e"
+DEFAULT_DANGER = "#ef4444"
+DEFAULT_ICON_LEFT = "\u2B05"
+DEFAULT_ICON_RIGHT = "\u27A1"
+
 
 def get_ui_metrics():
     """Return cross-platform UI sizing values to keep layouts consistent."""
@@ -81,18 +97,19 @@ def create_nav_button(parent: CTkFrame, name: str, button_image: PhotoImage, fra
 
 class MouserPage(CTkFrame):
 
-    '''Standard pageframe used throughout the program.'''
+    '''Standard page frame used throughout the program without a default header.'''
     def __init__(self, parent: CTk, title: str, menu_page: CTkFrame = None):
         super().__init__(parent)
         self.root = parent
         self.title = title
 
-        self.canvas = CTkCanvas(self, width=600, height=600)
-        self.canvas.grid(row=0, column=0, columnspan= 4)
-        self.rectangle = self.canvas.create_rectangle(0, 0, 600, 50, fill='#0097A7')
-        self.title_label = self.canvas.create_text(300, 13, anchor="n")
-        self.canvas.itemconfig(self.title_label, text=title, font=("Arial", 18))
+        self.configure(fg_color=DEFAULT_PAGE_BG)
+        default_bg = DEFAULT_PAGE_BG[0] if get_appearance_mode().lower() != "dark" else DEFAULT_PAGE_BG[1]
+        self.canvas = CTkCanvas(self, width=600, height=600, highlightthickness=0, bg=default_bg)
+        self.canvas.grid(row=0, column=0, columnspan=4, sticky="nsew")
 
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
         self.canvas.grid_rowconfigure(0, weight=1)
         self.canvas.grid_columnconfigure(0, weight=1)
 
@@ -120,7 +137,7 @@ class MouserPage(CTkFrame):
         '''Sets previous_button to be a ChangePageButton that navigates to previous_page.'''
         if self.previous_button:
             self.previous_button.destroy()
-        self.previous_button = ChangePageButton(self, previous_page, False)
+        self.previous_button = ChangePageButton(self, previous_page, True)
 
     def set_menu_button(self, menu_page):
         '''Sets menu_button to be a ChangePageButton that navigates to menu_page.'''
@@ -146,8 +163,10 @@ class MouserPage(CTkFrame):
         '''Resizes page width.'''
         self.canvas.config(width=root_width)
 
-        self.canvas.coords(self.rectangle, 0, 0, root_width, 50)
-        self.canvas.coords(self.title_label, (root_width/2), 13)
+        if hasattr(self, "rectangle"):
+            self.canvas.coords(self.rectangle, 0, 0, root_width, 50)
+        if hasattr(self, "title_label"):
+            self.canvas.coords(self.title_label, (root_width/2), 13)
 
 
 class ChangeableFrame(ABC, CTkFrame):
@@ -173,13 +192,14 @@ class MenuButton(CTkButton):
     '''A standard button that navigates backwards in the program.'''
     def __init__(self, page: CTkFrame, previous_page: MouserPage):
         metrics = get_ui_metrics()
-        button_font = CTkFont("Segoe UI Semibold", metrics["nav_font_size"])
+        icon_font = CTkFont("Segoe UI Symbol", metrics["nav_font_size"] + 4)
+        icon_size = max(metrics["nav_height"], 48)
 
-        super().__init__(page, text="Back to Menu", compound=TOP,
-                         width=metrics["nav_width"], height=metrics["nav_height"],
-                         font=button_font, command=self.navigate,
-                         corner_radius=12, text_color="white",
-                         fg_color="#2563eb", hover_color="#1e40af")
+        super().__init__(page, text=DEFAULT_ICON_LEFT, compound=TOP,
+                         width=icon_size, height=icon_size,
+                         font=icon_font, command=self.navigate,
+                         corner_radius=icon_size // 2, text_color="white",
+                         fg_color=DEFAULT_ACCENT_AMBER, hover_color="#d97706")
         self.place(relx=0.15, rely=0.15, anchor=CENTER)
         self.previous_page = previous_page
 
@@ -193,13 +213,18 @@ class MenuButton(CTkButton):
 class ChangePageButton(CTkButton):
     '''A standard button that navigates somewhere else in the program.'''
     def __init__(self, page: CTkFrame, next_page: MouserPage, previous: bool = True):
-        text = "Next"
-        x = 0.75
-        if previous:
-            text = "Previous"
-            x = 0.25
-        super().__init__(page, text=text, compound=TOP,
-                         width=15, command = self.navigate)
+        metrics = get_ui_metrics()
+        icon_font = CTkFont("Segoe UI Symbol", metrics["nav_font_size"] + 4)
+        icon_text = DEFAULT_ICON_LEFT if previous else DEFAULT_ICON_RIGHT
+        x = 0.25 if previous else 0.75
+        button_color = DEFAULT_ACCENT_AMBER if previous else DEFAULT_ACCENT_BLUE
+        hover_color = "#d97706" if previous else "#2563eb"
+
+        super().__init__(page, text=icon_text, compound=TOP,
+                         width=80, height=48,
+                         font=icon_font, command=self.navigate,
+                         corner_radius=24, text_color="white",
+                         fg_color=button_color, hover_color=hover_color)
         self.place(relx=x, rely=0.85, anchor=CENTER)
         self.next_page = next_page
 
