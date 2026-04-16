@@ -17,16 +17,16 @@ def build_menu(root, experiments_frame, rfid_serial_port_controller):
         pady=3
     )
 
-    # --- File Menu ---
-    file_menu = menu_bar.add_cascade(
-        "File",
+    # --- Single Menu (replaces File/Settings) ---
+    app_menu = menu_bar.add_cascade(
+        "Menu",
         fg_color=("#e2e8f0", "#1f2937"),
         hover_color=("#cbd5e1", "#374151"),
         text_color=("#0f172a", "#f9fafb"),
         corner_radius=8
     )
-    file_dropdown = CustomDropdownMenu(
-        widget=file_menu,
+    app_dropdown = CustomDropdownMenu(
+        widget=app_menu,
         bg_color=("#ffffff", "#0f172a"),
         fg_color=("#ffffff", "#0f172a"),
         border_color=("#cbd5e1", "#374151"),
@@ -34,29 +34,11 @@ def build_menu(root, experiments_frame, rfid_serial_port_controller):
         text_color=("#0f172a", "#f9fafb"),
         hover_color=("#e2e8f0", "#1f2937")
     )
-    file_dropdown.add_option("New Experiment", lambda: create_file(root, experiments_frame))
-    file_dropdown.add_option("Open Experiment", lambda: open_file(root, experiments_frame))
-    file_dropdown.add_option("Save File", save_file)
-
-    # --- Settings Menu ---
-    settings_menu = menu_bar.add_cascade(
-        "Settings",
-        fg_color=("#e2e8f0", "#1f2937"),
-        hover_color=("#cbd5e1", "#374151"),
-        text_color=("#0f172a", "#f9fafb"),
-        corner_radius=8
-    )
-    settings_dropdown = CustomDropdownMenu(
-        widget=settings_menu,
-        bg_color=("#ffffff", "#0f172a"),
-        fg_color=("#ffffff", "#0f172a"),
-        border_color=("#cbd5e1", "#374151"),
-        separator_color=("#e5e7eb", "#1f2937"),
-        text_color=("#0f172a", "#f9fafb"),
-        hover_color=("#e2e8f0", "#1f2937")
-    )
-    settings_dropdown.add_option("Serial Port", lambda: open_serial_port_setting(rfid_serial_port_controller))
-    settings_dropdown.add_option("Test Serials", lambda: open_test(root))
+    app_dropdown.add_option("New Experiment", lambda: create_file(root, experiments_frame))
+    app_dropdown.add_option("Open Experiment", lambda: open_file(root, experiments_frame))
+    app_dropdown.add_option("Save File", save_file)
+    app_dropdown.add_option("Serial Port Settings", lambda: open_serial_port_setting(rfid_serial_port_controller))
+    app_dropdown.add_option("Equipment Testing", lambda: open_test(root))
 
     # Inline note: menu_bar styling inherits global CTk theme
     root.config(menu=menu_bar)
