@@ -111,10 +111,10 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
 
         header = CTkFrame(body_root, fg_color="transparent")
         header.grid(row=0, column=0, sticky="ew", padx=12, pady=(0, 10))
-        CTkLabel(header, text="Create Experiment", font=title_font).pack(anchor="w")
+        CTkLabel(header, text="🧪 Create Experiment", font=title_font).pack(anchor="w")
         CTkLabel(
             header,
-            text="Step 1 of 3 • Enter core details",
+            text="Enter core details ✨",
             font=subtitle_font,
             text_color=palette["text_muted"],
         ).pack(anchor="w", pady=(2, 0))
@@ -147,7 +147,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
 
         left_box, left = section(
             content,
-            "Basics",
+            "🧾 Basics",
             accent=palette["accent_blue"],
             bg_color=("#eff6ff", "#0b1b35"),
         )
@@ -155,7 +155,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
 
         right_box, right = section(
             content,
-            "Subjects & Data",
+            "🐭 Subjects & Data",
             accent=palette["accent_violet"],
             bg_color=("#f5f3ff", "#1b1133"),
         )
@@ -163,7 +163,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
 
         bottom_box, bottom = section(
             content,
-            "Allocation",
+            "📊 Allocation",
             accent=palette["accent_teal"],
             bg_color=("#ecfeff", "#042f2e"),
         )
@@ -192,7 +192,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
 
         self.exper_name = labeled_entry(
             left,
-            "Experiment Name",
+            "🧪 Experiment Name",
             required=True,
             placeholder_text="e.g., Dose Response A",
         )
@@ -207,7 +207,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         self._password_visible = BooleanVar(value=False)
         CTkCheckBox(
             left,
-            text="Show password",
+            text="👁️ Show password",
             variable=self._password_visible,
             onvalue=True,
             offvalue=False,
@@ -218,7 +218,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         labeled_entry.row += 1
 
         # Investigators field with an add button and chip list
-        CTkLabel(left, text="Investigators", font=label_font).grid(
+        CTkLabel(left, text="🧑‍🔬 Investigators", font=label_font).grid(
             row=labeled_entry.row, column=0, sticky="w", pady=(0, 6)
         )
         invest_row = CTkFrame(left, fg_color="transparent")
@@ -228,7 +228,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         self.investigators = CTkEntry(
             invest_row,
             font=entry_font,
-            placeholder_text="Type a name and press Enter",
+            placeholder_text="Type a name and press Enter ↩️",
         )
         self.investigators.configure(
             fg_color=palette["entry_bg"],
@@ -240,7 +240,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
 
         add_invest_button = CTkButton(
             invest_row,
-            text="Add",
+            text="➕ Add",
             width=64,
             height=32,
             corner_radius=10,
@@ -263,7 +263,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         labeled_entry.row = 0
         self.species = labeled_entry(
             right,
-            "Species",
+            "🐭 Species",
             required=True,
             placeholder_text="e.g., Mouse",
         )
@@ -276,7 +276,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
             textvariable=StringVar(value="Weight"),
         )
 
-        CTkLabel(right, text="RFID", font=label_font).grid(
+        CTkLabel(right, text="🏷️ RFID", font=label_font).grid(
             row=labeled_entry.row, column=0, sticky="w", pady=(0, 6)
         )
         self.rfid = BooleanVar(value=True)
@@ -301,13 +301,13 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
             hover_color="#0d9488",
         ).grid(row=0, column=1, padx=(0, 0), pady=0)
 
-        CTkLabel(bottom, text="Number of Animals *", font=label_font).grid(
+        CTkLabel(bottom, text="🐭 Number of Animals *", font=label_font).grid(
             row=0, column=0, sticky="w", pady=(0, 6)
         )
-        CTkLabel(bottom, text="Number of Groups *", font=label_font).grid(
+        CTkLabel(bottom, text="🧩 Number of Groups *", font=label_font).grid(
             row=0, column=1, sticky="w", pady=(0, 6), padx=(12, 0)
         )
-        CTkLabel(bottom, text="Max Animals per Cage *", font=label_font).grid(
+        CTkLabel(bottom, text="🏠 Max Animals per Cage *", font=label_font).grid(
             row=0, column=2, sticky="w", pady=(0, 6), padx=(12, 0)
         )
 
@@ -339,7 +339,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
 
         self.required_hint = CTkLabel(
             body_root,
-            text="Fields marked * are required.",
+            text="Fields marked * are required. ✅",
             font=subtitle_font,
             text_color=palette["text_muted"],
         )
@@ -371,7 +371,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
             text_color="white",
             fg_color=self.ui_palette["accent_green"],
             hover_color="#16a34a",
-            text="Continue",
+            text="Continue ➡️",
             command=self._on_continue,
             state="disabled",
         )
