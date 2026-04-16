@@ -1,4 +1,4 @@
-"""Group configuration UI (Step 2 of 3)."""
+"""Group configuration UI."""
 # pylint: disable=too-many-instance-attributes, import-error
 
 from __future__ import annotations
@@ -69,7 +69,7 @@ class GroupConfigUI(MouserPage):
                 corner_radius=12,
                 height=36,
                 width=54,
-                font=("Segoe UI Semibold", 15),
+                font=("Segoe UI Semibold", 20),
                 text_color="white",
                 fg_color=palette["accent_amber"],
                 hover_color="#d97706",
@@ -87,27 +87,26 @@ class GroupConfigUI(MouserPage):
         # ----------------------------
         body_root = CTkScrollableFrame(self, fg_color="transparent")
         # Offset content below the top navigation buttons so the title is never covered.
-        body_root.place(relx=0.5, rely=0.0, y=78, anchor="n", relwidth=0.96, relheight=0.88)
+        body_root.place(relx=0.5, rely=0.0, y=65, anchor="n", relwidth=0.96, relheight=0.88)
         body_root.grid_columnconfigure(0, weight=1)
         body_root.grid_rowconfigure(1, weight=1)
 
-        title_font = CTkFont(family="Segoe UI Semibold", size=22)
-        subtitle_font = CTkFont(family="Segoe UI", size=12)
-        section_title_font = CTkFont(family="Segoe UI Semibold", size=14)
-        label_font = CTkFont(family="Segoe UI Semibold", size=12)
-        entry_font = CTkFont(family="Segoe UI", size=13)
+        # Match sizing from new_experiment_ui.py for visual consistency.
+        title_font = CTkFont(family="Segoe UI Semibold", size=26)
+        subtitle_font = CTkFont(family="Segoe UI", size=14)
+        section_title_font = CTkFont(family="Segoe UI Semibold", size=16)
+        label_font = CTkFont(family="Segoe UI Semibold", size=13)
+        entry_font = CTkFont(family="Segoe UI", size=14)
 
         header = CTkFrame(body_root, fg_color="transparent")
         header.grid(row=0, column=0, sticky="ew", padx=10, pady=(0, 6))
         header.grid_columnconfigure(0, weight=1)
         header.grid_columnconfigure(1, weight=0)
 
-        header_left = CTkFrame(header, fg_color="transparent")
-        header_left.grid(row=0, column=0, sticky="w")
-        CTkLabel(header_left, text="Group Configuration", font=title_font).pack(anchor="w")
+        CTkLabel(header, text="🧩 Group Configuration", font=title_font).pack(anchor="w")
         CTkLabel(
-            header_left,
-            text="Step 2 of 3 • Name your groups and choose input method",
+            header,
+            text="Name your groups and choose input method ✨",
             font=subtitle_font,
             text_color=palette["text_muted"],
         ).pack(anchor="w", pady=(2, 0))
@@ -126,7 +125,7 @@ class GroupConfigUI(MouserPage):
                 border_width=1,
                 border_color=palette["card_border"],
             )
-            CTkFrame(box, height=4, corner_radius=12, fg_color=accent).pack(fill="x")
+            CTkFrame(box, height=5, corner_radius=12, fg_color=accent).pack(fill="x")
             CTkLabel(
                 box,
                 text=title,
@@ -140,7 +139,7 @@ class GroupConfigUI(MouserPage):
 
         groups_box, groups_body = section(
             content,
-            "Group Names",
+            "🏷️ Group Names",
             accent=palette["accent_violet"],
             bg_color=("#f5f3ff", "#1b1133"),
         )
@@ -156,7 +155,7 @@ class GroupConfigUI(MouserPage):
 
         method_box, method_body = section(
             content,
-            "Input Method",
+            "🛠️ Input Method",
             accent=palette["accent_teal"],
             bg_color=("#ecfeff", "#042f2e"),
         )
@@ -186,7 +185,7 @@ class GroupConfigUI(MouserPage):
             text_color="white",
             fg_color=self.ui_palette["accent_green"],
             hover_color="#16a34a",
-            text="Continue",
+            text="➡️",
             command=lambda: [self.save_experiment(), self.next_button.navigate()],
         )
         self.next_button.place_configure(relx=1.0, rely=0.0, x=-16, y=8, anchor="ne")
@@ -198,11 +197,11 @@ class GroupConfigUI(MouserPage):
 
         self.next_button = CTkButton(
             self,
-            text="Save & Return",
+            text="💾",
             corner_radius=12,
             height=36,
-            width=150,
-            font=("Segoe UI Semibold", 15),
+            width=54,
+            font=("Segoe UI Semibold", 20),
             text_color="white",
             fg_color=self.ui_palette["accent_green"],
             hover_color="#16a34a",
@@ -234,11 +233,11 @@ class GroupConfigUI(MouserPage):
 
             CTkLabel(
                 wrapper,
-                text=f"Group {i + 1}",
+                text=f"🧩 Group {i + 1}",
                 font=self._label_font,
             ).grid(row=0, column=0, sticky="w", pady=(0, 2))
 
-            entry = CTkEntry(wrapper, font=self._entry_font, placeholder_text="e.g., Control")
+            entry = CTkEntry(wrapper, font=self._entry_font, placeholder_text="e.g., Control 🧪")
             entry.configure(
                 fg_color=self.ui_palette["entry_bg"],
                 border_color=self.ui_palette["entry_border"],
@@ -262,14 +261,14 @@ class GroupConfigUI(MouserPage):
 
         CTkLabel(
             self.item_frame,
-            text=f"Measurement: {item}",
+            text=f"📏 Measurement: {item}",
             font=self._entry_font,
             text_color=self.ui_palette["text_muted"],
         ).grid(row=0, column=0, sticky=W, padx=(0, 10))
 
         auto = CTkRadioButton(
             self.item_frame,
-            text="Automatic",
+            text="⚙️ Automatic",
             variable=self.type,
             value=True,
             font=self._entry_font,
@@ -278,7 +277,7 @@ class GroupConfigUI(MouserPage):
         )
         man = CTkRadioButton(
             self.item_frame,
-            text="Manual",
+            text="✍️ Manual",
             variable=self.type,
             value=False,
             font=self._entry_font,
