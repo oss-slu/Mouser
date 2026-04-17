@@ -1,0 +1,96 @@
+2026-02-09 12:13:39 | INFO     | ======================================================================
+2026-02-09 12:13:39 | INFO     | MOUSER STARTUP DIAGNOSTICS  —  2026-02-09T18:13:39.429699+00:00
+2026-02-09 12:13:39 | INFO     | ======================================================================
+2026-02-09 12:13:39 | INFO     | [OS] System        : Windows
+2026-02-09 12:13:39 | INFO     | [OS] Release       : 11
+2026-02-09 12:13:39 | INFO     | [OS] Version       : 10.0.26200
+2026-02-09 12:13:39 | INFO     | [OS] Machine       : AMD64
+2026-02-09 12:13:39 | INFO     | [OS] Processor     : Intel64 Family 6 Model 140 Stepping 2, GenuineIntel
+2026-02-09 12:13:39 | INFO     | [OS] Platform      : Windows-11-10.0.26200-SP0
+2026-02-09 12:13:39 | INFO     | [Python] Version   : 3.12.3 | packaged by conda-forge | (main, Apr 15 2024, 18:20:11) [MSC v.1938 64 bit (AMD64)]
+2026-02-09 12:13:39 | INFO     | [Python] Executable: C:\Users\Panic\Capstone\Mouser\.venv\Scripts\python.exe
+2026-02-09 12:13:39 | INFO     | [Python] Prefix    : C:\Users\Panic\Capstone\Mouser\.venv
+2026-02-09 12:13:39 | INFO     | [Python] Frozen    : False
+2026-02-09 12:13:39 | INFO     | [User] Username    : Panic
+2026-02-09 12:13:39 | INFO     | [User] Admin       : False
+2026-02-09 12:13:39 | INFO     | ----------------------------------------------------------------------
+2026-02-09 12:13:39 | INFO     | FILE-SYSTEM PERMISSIONS
+2026-02-09 12:13:39 | INFO     | ----------------------------------------------------------------------
+2026-02-09 12:13:39 | INFO     |   [OK] C:\Users\Panic\Capstone\Mouser | R=True W=True X=True
+2026-02-09 12:13:39 | INFO     |   [OK] C:\Users\Panic\Capstone\Mouser | R=True W=True X=True
+2026-02-09 12:13:39 | INFO     |   [OK] C:\Users\Panic\Capstone\Mouser\settings | R=True W=True X=True
+2026-02-09 12:13:39 | INFO     |   [OK] C:\Users\Panic\Capstone\Mouser\settings\app_config.json | R=True W=True X=True
+2026-02-09 12:13:39 | INFO     |   [OK] C:\Users\Panic\Capstone\Mouser\settings\serial ports | R=True W=True X=True
+2026-02-09 12:13:39 | INFO     |   [OK] C:\Users\Panic\Capstone\Mouser\settings\serial ports\preference | R=True W=True X=True
+2026-02-09 12:13:39 | INFO     |   [OK] C:\Users\Panic\Capstone\Mouser\databases | R=True W=True X=True
+2026-02-09 12:13:39 | INFO     |   [OK] C:\Users\Panic\Capstone\Mouser\shared | R=True W=True X=True
+2026-02-09 12:13:39 | INFO     |   [OK] C:\Users\Panic\Capstone\Mouser\shared\sounds | R=True W=True X=True
+2026-02-09 12:13:39 | INFO     |   [OK] C:\Users\Panic\Capstone\Mouser\shared\images | R=True W=True X=True
+2026-02-09 12:13:39 | INFO     |   [OK] C:\Users\Panic\Capstone\Mouser\logs | R=True W=True X=True
+2026-02-09 12:13:39 | INFO     | ----------------------------------------------------------------------
+2026-02-09 12:13:39 | INFO     | CONFIGURATION FILES
+2026-02-09 12:13:39 | INFO     | ----------------------------------------------------------------------
+2026-02-09 12:13:39 | INFO     |   [FOUND] C:\Users\Panic\Capstone\Mouser\settings\app_config.json
+2026-02-09 12:13:39 | INFO     |     Content keys: ['auto_update']
+2026-02-09 12:13:39 | INFO     |   [SERIAL CFG] C:\Users\Panic\Capstone\Mouser\settings\serial ports\com3reader.csv  (34 bytes)
+2026-02-09 12:13:39 | INFO     |   [SERIAL CFG] C:\Users\Panic\Capstone\Mouser\settings\serial ports\com4cal.csv  (34 bytes)
+2026-02-09 12:13:39 | INFO     |   [PREF:reader] C:\Users\Panic\Capstone\Mouser\settings\serial ports\preference\reader\rfid_config.txt
+2026-02-09 12:13:39 | INFO     |     -> references: com3reader.csv
+2026-02-09 12:13:39 | INFO     |   [PREF:device] C:\Users\Panic\Capstone\Mouser\settings\serial ports\preference\device\preferred_config.txt
+2026-02-09 12:13:39 | INFO     |     -> references: com4cal.csv
+2026-02-09 12:13:39 | INFO     | ----------------------------------------------------------------------
+2026-02-09 12:13:39 | INFO     | SERIAL SUBSYSTEM  (enumeration only — no ports opened)
+2026-02-09 12:13:39 | INFO     | ----------------------------------------------------------------------
+2026-02-09 12:13:39 | INFO     |   pyserial version : 3.5
+2026-02-09 12:13:39 | INFO     |   Detected 0 port(s):
+2026-02-09 12:13:39 | INFO     | ----------------------------------------------------------------------
+2026-02-09 12:13:39 | INFO     | Startup diagnostics complete. Log file: C:\Users\Panic\Capstone\Mouser\logs\mouser_startup.log
+2026-02-09 12:13:39 | INFO     | ======================================================================
+2026-02-09 12:19:32 | INFO     | ======================================================================
+2026-02-09 12:19:32 | INFO     | MOUSER STARTUP DIAGNOSTICS  —  2026-02-09T18:19:32.177950+00:00
+2026-02-09 12:19:32 | INFO     | ======================================================================
+2026-02-09 12:19:32 | INFO     | [OS] System        : Windows
+2026-02-09 12:19:32 | INFO     | [OS] Release       : 11
+2026-02-09 12:19:32 | INFO     | [OS] Version       : 10.0.26200
+2026-02-09 12:19:32 | INFO     | [OS] Machine       : AMD64
+2026-02-09 12:19:32 | INFO     | [OS] Processor     : Intel64 Family 6 Model 140 Stepping 2, GenuineIntel
+2026-02-09 12:19:32 | INFO     | [OS] Platform      : Windows-11-10.0.26200-SP0
+2026-02-09 12:19:32 | INFO     | [Python] Version   : 3.12.3 | packaged by conda-forge | (main, Apr 15 2024, 18:20:11) [MSC v.1938 64 bit (AMD64)]
+2026-02-09 12:19:32 | INFO     | [Python] Executable: C:\Users\Panic\Capstone\Mouser\.venv\Scripts\python.exe
+2026-02-09 12:19:32 | INFO     | [Python] Prefix    : C:\Users\Panic\Capstone\Mouser\.venv
+2026-02-09 12:19:32 | INFO     | [Python] Frozen    : False
+2026-02-09 12:19:32 | INFO     | [User] Username    : Panic
+2026-02-09 12:19:32 | INFO     | [User] Admin       : False
+2026-02-09 12:19:32 | INFO     | ----------------------------------------------------------------------
+2026-02-09 12:19:32 | INFO     | FILE-SYSTEM PERMISSIONS
+2026-02-09 12:19:32 | INFO     | ----------------------------------------------------------------------
+2026-02-09 12:19:32 | INFO     |   [OK] C:\Users\Panic\Capstone\Mouser | R=True W=True X=True
+2026-02-09 12:19:32 | INFO     |   [OK] C:\Users\Panic\Capstone\Mouser | R=True W=True X=True
+2026-02-09 12:19:32 | INFO     |   [OK] C:\Users\Panic\Capstone\Mouser\settings | R=True W=True X=True
+2026-02-09 12:19:32 | INFO     |   [OK] C:\Users\Panic\Capstone\Mouser\settings\app_config.json | R=True W=True X=True
+2026-02-09 12:19:32 | INFO     |   [OK] C:\Users\Panic\Capstone\Mouser\settings\serial ports | R=True W=True X=True
+2026-02-09 12:19:32 | INFO     |   [OK] C:\Users\Panic\Capstone\Mouser\settings\serial ports\preference | R=True W=True X=True
+2026-02-09 12:19:32 | INFO     |   [OK] C:\Users\Panic\Capstone\Mouser\databases | R=True W=True X=True
+2026-02-09 12:19:32 | INFO     |   [OK] C:\Users\Panic\Capstone\Mouser\shared | R=True W=True X=True
+2026-02-09 12:19:32 | INFO     |   [OK] C:\Users\Panic\Capstone\Mouser\shared\sounds | R=True W=True X=True
+2026-02-09 12:19:32 | INFO     |   [OK] C:\Users\Panic\Capstone\Mouser\shared\images | R=True W=True X=True
+2026-02-09 12:19:32 | INFO     |   [OK] C:\Users\Panic\Capstone\Mouser\logs | R=True W=True X=True
+2026-02-09 12:19:32 | INFO     | ----------------------------------------------------------------------
+2026-02-09 12:19:32 | INFO     | CONFIGURATION FILES
+2026-02-09 12:19:32 | INFO     | ----------------------------------------------------------------------
+2026-02-09 12:19:32 | INFO     |   [FOUND] C:\Users\Panic\Capstone\Mouser\settings\app_config.json
+2026-02-09 12:19:32 | INFO     |     Content keys: ['auto_update']
+2026-02-09 12:19:32 | INFO     |   [SERIAL CFG] C:\Users\Panic\Capstone\Mouser\settings\serial ports\com3reader.csv  (34 bytes)
+2026-02-09 12:19:32 | INFO     |   [SERIAL CFG] C:\Users\Panic\Capstone\Mouser\settings\serial ports\com4cal.csv  (34 bytes)
+2026-02-09 12:19:32 | INFO     |   [PREF:reader] C:\Users\Panic\Capstone\Mouser\settings\serial ports\preference\reader\rfid_config.txt
+2026-02-09 12:19:32 | INFO     |     -> references: com3reader.csv
+2026-02-09 12:19:32 | INFO     |   [PREF:device] C:\Users\Panic\Capstone\Mouser\settings\serial ports\preference\device\preferred_config.txt
+2026-02-09 12:19:32 | INFO     |     -> references: com4cal.csv
+2026-02-09 12:19:32 | INFO     | ----------------------------------------------------------------------
+2026-02-09 12:19:32 | INFO     | SERIAL SUBSYSTEM  (enumeration only — no ports opened)
+2026-02-09 12:19:32 | INFO     | ----------------------------------------------------------------------
+2026-02-09 12:19:32 | INFO     |   pyserial version : 3.5
+2026-02-09 12:19:32 | INFO     |   Detected 0 port(s):
+2026-02-09 12:19:32 | INFO     | ----------------------------------------------------------------------
+2026-02-09 12:19:32 | INFO     | Startup diagnostics complete. Log file: C:\Users\Panic\Capstone\Mouser\logs\mouser_startup.log
+2026-02-09 12:19:32 | INFO     | ======================================================================
