@@ -29,6 +29,29 @@ class DataCollectionUI(MouserPage):
         self._ui = ui
         action_button_font = CTkFont("Segoe UI Semibold", ui["action_font_size"])
         table_font_size = ui["table_font_size"]
+        is_dark = get_appearance_mode().lower() == "dark"
+
+        def _pick(color_value):
+            if isinstance(color_value, (tuple, list)) and len(color_value) >= 2:
+                return color_value[1] if is_dark else color_value[0]
+            return color_value
+        self._pick = _pick
+
+        self._palette = {
+            "page_bg": ("#eef2ff", "#0b1220"),
+            "card_bg": ("#ffffff", "#101827"),
+            "card_border": ("#c7d2fe", "#22304a"),
+            "text": ("#0f172a", "#e5e7eb"),
+            "muted_text": ("#334155", "#cbd5e1"),
+            # Table styling (more "realistic" grid look)
+            "table_bg": ("#ffffff", "#0b1220"),
+            "table_alt_bg": ("#f8fafc", "#0f172a"),
+            "table_header_bg": ("#e0f2fe", "#1e293b"),
+            "table_header_fg": ("#0f172a", "#e5e7eb"),
+            "table_selected_bg": ("#dbeafe", "#1d4ed8"),
+            "table_selected_fg": ("#111827", "#ffffff"),
+        }
+        self.configure(fg_color=self._palette["page_bg"])
 
         self.parent = parent
 
@@ -42,21 +65,129 @@ class DataCollectionUI(MouserPage):
 
         self.database = ExperimentDatabase(database_name)
 
+        def _split_measurements(raw_value):
+            if raw_value is None:
+                return []
+            if isinstance(raw_value, (list, tuple)):
+                parts = []
+                for item in raw_value:
+                    parts.extend(_split_measurements(item))
+                return parts
+            text = str(raw_value).strip()
+            if not text:
+                return []
+            # Common separators used in the project UI/DB.
+            parts = re.split(r"[,\n;/|]+", text)
+            return [p.strip() for p in parts if p and p.strip()]
+
+        def _format_measurement_header(name: str) -> str:
+            text = (name or "").strip()
+            if not text:
+                return "Value"
+            # Render units on a second line when written like "Weight (g)".
+            match = re.match(r"^(.*)\s+\((.*)\)\s*$", text)
+            if match:
+                return f"{match.group(1).strip()}\n({match.group(2).strip()})"
+            # Normalize common labels used by devices.
+            lowered = text.lower()
+            if lowered == "caliper":
+                return "Length\n(mm)"
+            if lowered == "weight":
+                return "Weight\n(g)"
+            return text
+
         # Database stores a single measurement name in `experiment.measurement`.
         # Older code paths may return tuples from fetchone(); normalize to a string.
         self.measurement_items = self.database.get_measurement_items()
-        self.menu_button.configure(command = self.press_back_to_menu_button)
+        if hasattr(self, "menu_button") and self.menu_button:
+            self.menu_button.configure(command=self.press_back_to_menu_button)
+            # Match back-button styling from the modern pages.
+            try:
+                self.menu_button.configure(
+                    corner_radius=12,
+                    height=40,
+                    width=54,
+                    text="\u2B05",
+                    font=("Segoe UI Semibold", 20),
+                    text_color="white",
+                    fg_color="#f59e0b",
+                    hover_color="#d97706",
+                )
+                self.menu_button.place_configure(relx=0.0, rely=0.0, x=16, y=8, anchor="nw")
+            except Exception:  # pylint: disable=broad-exception-caught
+                pass
+
+        # Top bar (reference layout)
+        top_bar = CTkFrame(self, fg_color=self._palette["card_bg"], corner_radius=0, height=84)
+        top_bar.place(relx=0.0, rely=0.0, relwidth=1.0)
+        CTkFrame(top_bar, fg_color=_pick(self._palette["card_border"]), height=1).pack(
+            side="bottom", fill="x"
+        )
+
+        # Back button (keep regular Mouser styling used across pages)
+        if hasattr(self, "menu_button") and self.menu_button:
+            try:
+                self.menu_button.configure(
+                    corner_radius=12,
+                    height=40,
+                    width=54,
+                    text="\u2B05",
+                    font=("Segoe UI Semibold", 20),
+                    text_color="white",
+                    fg_color="#f59e0b",
+                    hover_color="#d97706",
+                )
+                self.menu_button.place_configure(in_=top_bar, relx=0.0, rely=0.0, x=16, y=22, anchor="nw")
+            except Exception:  # pylint: disable=broad-exception-caught
+                pass
+
+        # Title/subtitle are shown above the Start Scanning button (left panel) per updated layout.
+
+        header_right = CTkFrame(top_bar, fg_color="transparent")
+        header_right.place(relx=1.0, rely=0.0, x=-16, y=18, anchor="ne")
+        self.status_chip = CTkFrame(
+            header_right,
+            fg_color=_pick(self._palette["table_alt_bg"]),
+            corner_radius=16,
+            border_width=1,
+            border_color=_pick(self._palette["card_border"]),
+        )
+        self.status_chip.grid(row=0, column=0, padx=(0, 10), pady=4, sticky="e")
+        self.status_chip_label = CTkLabel(
+            self.status_chip,
+            text="● Idle",
+            font=CTkFont("Segoe UI Semibold", 12),
+            text_color=("#047857", "#34d399"),
+        )
+        self.status_chip_label.pack(padx=12, pady=6)
+
+        self.export_csv_button = CTkButton(
+            header_right,
+            text="⇩  Export CSV",
+            width=120,
+            height=34,
+            corner_radius=10,
+            fg_color=self._palette["card_bg"],
+            hover_color=_pick(self._palette["table_alt_bg"]),
+            border_width=1,
+            border_color=_pick(self._palette["card_border"]),
+            text_color=_pick(self._palette["text"]),
+            font=CTkFont("Segoe UI Semibold", 13),
+            command=self.handle_export_csv,
+        )
+        self.export_csv_button.grid(row=0, column=1, pady=4, sticky="e")
+
         self.export_notification = CTkLabel(
             self,
             text="",
-            text_color="green",
-            font=("Arial", 14),
-            fg_color="#ecfdf5",   # optional: makes it look like a real notification banner
+            text_color=_pick(self._palette["muted_text"]),
+            font=CTkFont("Segoe UI Semibold", 13),
+            fg_color="transparent",
             corner_radius=8,
             padx=10,
             pady=5
         )
-        self.export_notification.place(relx=0.5, rely=0.08, anchor=CENTER)
+        self.export_notification.place(relx=0.5, rely=0.0, y=86, anchor="n")
 
 
         ## ENSURE ANIMALS ARE IN DATABASE BEFORE EXPERIMENT FOR ALL EXPERIMENTS ##
@@ -103,99 +234,418 @@ class DataCollectionUI(MouserPage):
         measurement_name = self.database.get_measurement_name()
         if isinstance(measurement_name, (list, tuple)):
             measurement_name = measurement_name[0] if measurement_name else None
-        self.measurement_strings = [measurement_name] if measurement_name else []
+        self.measurement_strings = _split_measurements(measurement_name)
         print("Measurement(s):", self.measurement_strings)
 
         if self.database.experiment_uses_rfid() == 0:
             start_function = self.auto_increment
-            start_button_text = "Start"
+            start_button_text = "▶ Start"
         else:
             start_function = self.rfid_listen
-            start_button_text = "Start Scanning"
+            start_button_text = "▶ Start scanning"
 
+        self._scan_start_function = start_function
+        self._scan_start_text = start_button_text
+        self._scan_stop_text = "Stop scanning"
+        self._scan_is_running = False
+        self._scan_button_style_start = {
+            "fg_color": ("#16a34a", "#16a34a"),
+            "hover_color": ("#15803d", "#15803d"),
+            "border_width": 0,
+            "text_color": "#ffffff",
+        }
+        self._scan_button_style_stop = {
+            "fg_color": ("#ef4444", "#ef4444"),
+            "hover_color": ("#dc2626", "#dc2626"),
+            "border_width": 0,
+            "text_color": "#ffffff",
+        }
 
+        # Body layout (left content + right sidebar)
+        body = CTkFrame(self, fg_color="transparent")
+        body.place(relx=0.5, rely=0.0, y=88, anchor="n", relwidth=0.94, relheight=0.90)
+        body.grid_rowconfigure(0, weight=1)
+        body.grid_columnconfigure(0, weight=3)
+        body.grid_columnconfigure(1, weight=2)
 
+        self.left_panel = CTkFrame(body, fg_color="transparent")
+        self.left_panel.grid(row=0, column=0, sticky="nsew", padx=(0, 16))
+        self.left_panel.grid_columnconfigure(0, weight=1)
+        # Layout: header, summary tiles, controls, table, spacer.
+        self.left_panel.grid_rowconfigure(0, weight=0)
+        self.left_panel.grid_rowconfigure(1, weight=0)
+        self.left_panel.grid_rowconfigure(2, weight=0)
+        self.left_panel.grid_rowconfigure(3, weight=0)
+        self.left_panel.grid_rowconfigure(4, weight=1)
 
-        self.auto_increment_button = CTkButton(self,
-                                               text=start_button_text,
-                                               compound=TOP,
-                                               width=ui["action_width"], height=ui["action_height"],
-                                               font=action_button_font,
-                                               command= start_function)
-        self.auto_increment_button.place(relx=0.35, rely=0.30, anchor=CENTER)
-        self.auto_inc_id = -1
+        self.right_panel = CTkFrame(body, fg_color="transparent")
+        self.right_panel.grid(row=0, column=1, sticky="nsew")
+        self.right_panel.grid_columnconfigure(0, weight=1)
+        self.right_panel.grid_rowconfigure(1, weight=0)
+        self.right_panel.grid_rowconfigure(2, weight=1)
 
-        self.stop_button = CTkButton(self,
-                                     text="Stop Listening",
-                                     compound=TOP,
-                                     width=ui["action_width"], height=ui["action_height"],
-                                     font=action_button_font,
-                                     command= self.stop_listening)
-        self.stop_button.place(relx=0.55, rely=0.30, anchor=CENTER)
-        self.stop_button.configure(state="disabled")
+        # Header above Start Scanning (matches reference structure)
+        left_header = CTkFrame(self.left_panel, fg_color="transparent")
+        left_header.grid(row=0, column=0, sticky="ew", pady=(0, 6))
 
-        self.status_label = CTkLabel(
-            self,
-            text="Status: Idle",
-            font=("Arial", max(14, ui["label_font_size"])),
-            text_color=("#1f2937", "#d1d5db"),
+        left_title_row = CTkFrame(left_header, fg_color="transparent")
+        left_title_row.pack(anchor="w")
+        CTkLabel(
+            left_title_row,
+            text="\U0001f4ca",
+            font=CTkFont("Segoe UI Semibold", 18),
+            text_color=self._palette["text"],
+            width=0,
+        ).pack(side="left", padx=(0, 8))
+        CTkLabel(
+            left_title_row,
+            text="Data collection",
+            font=CTkFont("Segoe UI Semibold", 24),
+            text_color=self._palette["text"],
+        ).pack(side="left")
+        CTkLabel(
+            left_header,
+            text=f"Collect today\u2019s measurements \u00b7 {date.today().strftime('%B %d, %Y')}",
+            font=CTkFont("Segoe UI", 12),
+            text_color=self._palette["muted_text"],
+        ).pack(anchor="w", pady=(2, 0))
+
+        # Summary tiles under header (total / measured / remaining / completion).
+        stats_row = CTkFrame(self.left_panel, fg_color="transparent")
+        stats_row.grid(row=1, column=0, sticky="ew", pady=(0, 10))
+        for col in range(4):
+            stats_row.grid_columnconfigure(col, weight=1, uniform="stats")
+
+        def _stat_tile(col_index, title, value_color, tile_bg, tile_border):
+            tile = CTkFrame(
+                stats_row,
+                fg_color=_pick(tile_bg),
+                corner_radius=14,
+                border_width=1,
+                border_color=_pick(tile_border),
+            )
+            tile.grid(row=0, column=col_index, sticky="ew", padx=6, pady=0)
+            CTkLabel(
+                tile,
+                text=title,
+                font=CTkFont("Segoe UI", 12),
+                text_color=self._palette["muted_text"],
+                anchor="w",
+            ).pack(fill="x", padx=14, pady=(12, 0))
+            value_label = CTkLabel(
+                tile,
+                text="--",
+                font=CTkFont("Segoe UI Semibold", 26),
+                text_color=value_color,
+                anchor="w",
+            )
+            value_label.pack(fill="x", padx=14, pady=(2, 12))
+            return value_label
+
+        self.total_animals_value = _stat_tile(
+            0,
+            "Total animals",
+            _pick(self._palette["text"]),
+            ("#f1f5f9", "#0f172a"),
+            ("#94a3b8", "#475569"),
         )
-        self.status_label.place(relx=0.5, rely=0.39, anchor=CENTER)
+        self.measured_today_value = _stat_tile(
+            1,
+            "Measured\ntoday",
+            ("#16a34a", "#34d399"),
+            ("#ecfdf5", "#042f2e"),
+            ("#34d399", "#34d399"),
+        )
+        self.remaining_value = _stat_tile(
+            2,
+            "Remaining",
+            ("#a16207", "#fbbf24"),
+            ("#fffbeb", "#2e1f0a"),
+            ("#f59e0b", "#f59e0b"),
+        )
+        self.completion_value = _stat_tile(
+            3,
+            "Completion",
+            ("#4f46e5", "#818cf8"),
+            ("#eef2ff", "#111827"),
+            ("#818cf8", "#818cf8"),
+        )
+
+        control_bar = CTkFrame(self.left_panel, fg_color="transparent")
+        control_bar.grid(row=2, column=0, sticky="ew", pady=(0, 10))
+        control_bar.grid_columnconfigure(0, weight=1)
+        control_bar.grid_columnconfigure(1, weight=1)
 
         self.animals = self.database.get_animals()
-        self.table_frame = CTkFrame(
-            self,
-            fg_color=("white", "#27272a"),
-            corner_radius=14,
-            border_width=1,
-            border_color="#d1d5db",
+        total_animals = len(self.animals)
+
+
+
+
+        self.scan_button = CTkButton(
+            control_bar,
+            text=start_button_text,
+            compound=TOP,
+            width=210,
+            height=44,
+            font=CTkFont("Segoe UI Semibold", 14),
+            fg_color=_pick(self._scan_button_style_start["fg_color"]),
+            hover_color=_pick(self._scan_button_style_start["hover_color"]),
+            border_width=self._scan_button_style_start["border_width"],
+            text_color=self._scan_button_style_start["text_color"],
+            command=self._toggle_scanning,
         )
-        self.table_frame.place(relx=0.50, rely=0.66, relheight=0.44, relwidth=0.55, anchor=CENTER)
+        self.scan_button.grid(row=0, column=0, columnspan=2, padx=0, pady=6)
+        self._set_scan_button_state(False)
+        # Backwards-compatible alias used throughout this module.
+        self.auto_increment_button = self.scan_button
+        self.auto_inc_id = -1
+
+        # Keep the original status label for internal updates, but show status via chip.
+        self.status_label = CTkLabel(self, text="Status: Idle")
+        self.status_label.place_forget()
+
+        # Table container (layout only). Keep it visually transparent so the Treeview is the only "box".
+        self.table_frame = CTkFrame(
+            self.left_panel,
+            fg_color="transparent",
+            corner_radius=0,
+            border_width=0,
+        )
+        self.table_frame.grid(row=3, column=0, sticky="new")
         self.table_frame.grid_columnconfigure(0, weight=1)
-        self.table_frame.grid_rowconfigure(0, weight=1)
+        self.table_frame.grid_rowconfigure(0, weight=0)
+
+        CTkFrame(self.left_panel, fg_color="transparent").grid(row=4, column=0, sticky="nsew")
 
 
 
-        columns = ["animal_id", *self.measurement_strings]
+        display_measurements = self.measurement_strings if self.measurement_strings else ["Value"]
+        columns = ["animal_id", *display_measurements, "status"]
 
         # Initialize the Treeview with the defined columns
-        self.table = Treeview(self.table_frame,
-                              columns=columns, show='headings',
-                              selectmode="browse",
-                              height=max(len(self.animals), 10),
-                              style="DataCollection.Treeview")
+        self.table = Treeview(
+            self.table_frame,
+            columns=columns,
+            show="headings",
+            selectmode="browse",
+            height=13,
+            style="DataCollection.Treeview",
+        )
 
-        # Set up the column headings
+        # Set up the column headings / table theme.
         style = Style()
-        style.configure("DataCollection.Treeview", font=("Arial", table_font_size), rowheight=ui["table_row_height"] + 4)
-        style.configure("DataCollection.Treeview.Heading", font=("Arial", table_font_size, "bold"))
-        style.map("DataCollection.Treeview", background=[("selected", "#bfdbfe")], foreground=[("selected", "#111827")])
+        try:
+            if style.theme_use() in {"vista", "xpnative"}:
+                style.theme_use("clam")
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
+
+        style.configure(
+            "DataCollection.Treeview",
+            background=_pick(self._palette["table_bg"]),
+            fieldbackground=_pick(self._palette["table_bg"]),
+            foreground=_pick(self._palette["text"]),
+            rowheight=ui["table_row_height"] + 4,
+            font=("Segoe UI", max(12, table_font_size)),
+            borderwidth=0,
+        )
+        style.configure(
+            "DataCollection.Treeview.Heading",
+            background=_pick(self._palette["table_header_bg"]),
+            foreground=_pick(self._palette["table_header_fg"]),
+            font=("Segoe UI Semibold", max(12, table_font_size)),
+            relief="flat",
+            padding=(10, 6),
+        )
+        style.map(
+            "DataCollection.Treeview",
+            background=[("selected", _pick(self._palette["table_selected_bg"]))],
+            foreground=[("selected", _pick(self._palette["table_selected_fg"]))],
+        )
+        style.map(
+            "DataCollection.Treeview.Heading",
+            background=[("active", _pick(self._palette["table_selected_bg"]))],
+            foreground=[("active", _pick(self._palette["table_selected_fg"]))],
+        )
+
+        # Row stage colors (reference: Done/Scanning/Pending)
+        self.table.tag_configure("done", background=_pick(("#d1fae5", "#064e3b")), foreground=_pick(self._palette["text"]))
+        self.table.tag_configure("scanning", background=_pick(("#ede9fe", "#312e81")), foreground=_pick(self._palette["text"]))
+        self.table.tag_configure("pending", background=_pick(self._palette["card_bg"]), foreground=_pick(self._palette["text"]))
 
         for i, column in enumerate(columns):
-
-            if i != 0: # i!= 0 means the column will hold measurement data
-                text = self.measurement_strings[i-1]
-            else: # i == 0, column is for animal id
-                text = "Animal ID"
+            if column == "animal_id":
+                text = "Animal"
+                width = 160
+            elif column == "status":
+                text = "Status"
+                width = 120
+            else:
+                text = _format_measurement_header(str(column))
+                width = 130
 
             print(f"Setting heading for column: {column} with text: {text}")  # Debugging line
             if text:  # Only set heading if text is not empty
                 self.table.heading(column, text=text, anchor="center")
-            self.table.column(column, anchor="center", width=220, stretch=True)
+            self.table.column(column, anchor="center", width=width, stretch=True)
 
         # Add the table to the grid
         self.table.grid(row=0, column=0, sticky='nsew')
         table_scroll = CTkScrollbar(self.table_frame, orientation=VERTICAL, command=self.table.yview)
         self.table.configure(yscrollcommand=table_scroll.set)
-        table_scroll.grid(row=0, column=1, sticky='ns')
+        table_scroll.configure(
+            fg_color="transparent",
+            button_color=_pick(self._palette["card_border"]),
+            button_hover_color=_pick(self._palette["table_selected_bg"]),
+        )
+        table_scroll.grid(row=0, column=1, sticky='ns', padx=(8, 0))
 
-        self.date_label = CTkLabel(self)
+        self.date_label = CTkLabel(self, text="Current Date: --")
+        self.date_label.place_forget()
 
-        self.animals = self.database.get_animals()  # Fetches Animal ID and RFID
         for animal in self.animals:
             animal_id = animal[0]
-            value = (animal_id, None)  # Initial values with just ID
-            self.table.insert('', END, values=value)
+            values = [animal_id, *([None] * len(display_measurements)), "Pending"]
+            self.table.insert("", END, values=tuple(values), tags=("pending",))
+
+        # Right sidebar (UI-only scaffolding; no device logic wired yet)
+        devices_card = CTkFrame(
+            self.right_panel,
+            fg_color=self._palette["card_bg"],
+            corner_radius=14,
+            border_width=1,
+            border_color=self._palette["card_border"],
+        )
+        devices_card.grid(row=0, column=0, sticky="ew", pady=(0, 12))
+        devices_card.grid_columnconfigure(0, weight=1)
+
+        CTkLabel(
+            devices_card,
+            text="Devices",
+            font=CTkFont("Segoe UI Semibold", 14),
+            text_color=self._palette["text"],
+        ).grid(row=0, column=0, sticky="w", padx=14, pady=(12, 0))
+        CTkLabel(
+            devices_card,
+            text="4 registered · 2 connected",
+            font=CTkFont("Segoe UI", 12),
+            text_color=self._palette["muted_text"],
+        ).grid(row=1, column=0, sticky="w", padx=14, pady=(0, 10))
+
+        def _device_row(parent_frame, row_index, title, subtitle, state):
+            def _parse_com_port(subtitle_text: str):
+                if not subtitle_text:
+                    return None, ""
+                match = re.search(r"\bCOM\d+\b", str(subtitle_text), flags=re.IGNORECASE)
+                if not match:
+                    return None, str(subtitle_text).strip()
+                com_port = match.group(0).upper()
+                remainder = (str(subtitle_text)[: match.start()] + str(subtitle_text)[match.end() :]).strip()
+                remainder = re.sub(r"^[\s\u00c2\u00b7\u2022·•\-\u2013\u2014|:]+", "", remainder).strip()
+                return com_port, remainder
+
+            state_map = {
+                "ok": {"bg": ("#ecfdf5", "#042f2e"), "border": ("#34d399", "#34d399"), "dot": ("#10b981", "#10b981")},
+                "warn": {"bg": ("#fffbeb", "#2e1f0a"), "border": ("#f59e0b", "#f59e0b"), "dot": ("#f59e0b", "#f59e0b")},
+                "error": {"bg": ("#fee2e2", "#3f1d1d"), "border": ("#ef4444", "#ef4444"), "dot": ("#ef4444", "#ef4444")},
+                "idle": {"bg": ("#f3f4f6", "#111827"), "border": ("#d1d5db", "#374151"), "dot": ("#9ca3af", "#9ca3af")},
+            }
+            colors = state_map.get(state, state_map["idle"])
+            row = CTkFrame(
+                parent_frame,
+                fg_color=_pick(colors["bg"]),
+                corner_radius=12,
+                border_width=1,
+                border_color=_pick(colors["border"]),
+            )
+            row.grid(row=row_index, column=0, sticky="ew", padx=14, pady=4)
+            row.grid_columnconfigure(0, weight=1)
+            row.grid_columnconfigure(1, weight=0)
+            row.grid_columnconfigure(2, weight=0)
+
+            com_port, subtitle_line = _parse_com_port(subtitle)
+            title_text = title if not subtitle_line else f"{title} ({subtitle_line})"
+
+            CTkLabel(
+                row,
+                text=title_text,
+                font=CTkFont("Segoe UI Semibold", 13),
+                text_color=self._palette["text"],
+            ).grid(row=0, column=0, sticky="w", padx=12, pady=8)
+
+            if com_port:
+                CTkLabel(
+                    row,
+                    text=com_port,
+                    font=CTkFont("Segoe UI Semibold", 12),
+                    text_color=self._palette["muted_text"],
+                ).grid(row=0, column=1, sticky="e", padx=(0, 10), pady=8)
+            CTkLabel(
+                row,
+                text="●",
+                font=CTkFont("Segoe UI Semibold", 14),
+                text_color=_pick(colors["dot"]),
+            ).grid(row=0, column=2, sticky="e", padx=12, pady=8)
+
+        _device_row(devices_card, 2, "Balance", "COM3 · g", "ok")
+        _device_row(devices_card, 3, "Caliper", "COM5 · mm", "ok")
+        _device_row(devices_card, 4, "Glucometer", "COM7 · error", "error")
+        _device_row(devices_card, 5, "RFID reader", "COM9 · idle", "idle")
+
+        CTkButton(
+            devices_card,
+            text="+  Add device",
+            height=38,
+            corner_radius=12,
+            fg_color=self._palette["card_bg"],
+            hover_color=_pick(self._palette["table_alt_bg"]),
+            border_width=1,
+            border_color=_pick(self._palette["card_border"]),
+            text_color=_pick(self._palette["text"]),
+            font=CTkFont("Segoe UI Semibold", 13),
+        ).grid(row=6, column=0, sticky="ew", padx=14, pady=(8, 14))
+
+        activity_card = CTkFrame(
+            self.right_panel,
+            fg_color=self._palette["card_bg"],
+            corner_radius=14,
+            border_width=1,
+            border_color=self._palette["card_border"],
+        )
+        activity_card.grid(row=1, column=0, sticky="ew")
+        activity_card.grid_columnconfigure(0, weight=1)
+        activity_card.grid_rowconfigure(1, weight=0)
+
+        CTkLabel(
+            activity_card,
+            text="Activity log",
+            font=CTkFont("Segoe UI Semibold", 14),
+            text_color=self._palette["text"],
+        ).grid(row=0, column=0, sticky="w", padx=14, pady=(12, 8))
+
+        log_frame = CTkScrollableFrame(
+            activity_card, fg_color="transparent", corner_radius=0, border_width=0, height=215
+        )
+        log_frame.grid(row=1, column=0, sticky="ew", padx=12, pady=(0, 12))
+        log_frame.grid_columnconfigure(0, weight=1)
+
+        CTkFrame(self.right_panel, fg_color="transparent").grid(row=2, column=0, sticky="nsew")
+
+        for line in [
+            ("09:41", "Saved 24.3 g for Mouse 004"),
+            ("09:39", "Mouse 003 fully measured"),
+            ("09:35", "COM7 error — glucometer lost"),
+            ("09:31", "Session started · 8 animals"),
+            ("09:30", "Balance COM3 connected"),
+        ]:
+            CTkLabel(
+                log_frame,
+                text=f"{line[0]}   {line[1]}",
+                font=CTkFont("Segoe UI", 12),
+                text_color=self._palette["muted_text"],
+                anchor="w",
+            ).grid(sticky="w", padx=4, pady=4)
 
 
         self.get_values_for_date()
@@ -219,7 +669,20 @@ class DataCollectionUI(MouserPage):
     
     def get_measurement_names(self):
         '''Retrieves measurement names from the database.'''
-        return self.database.get_measurement_name()
+        # Prefer the parsed measurement list used to build the UI columns.
+        try:
+            if hasattr(self, "measurement_strings") and self.measurement_strings:
+                return list(self.measurement_strings)
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
+        name = self.database.get_measurement_name()
+        if name is None:
+            return []
+        if isinstance(name, (list, tuple)):
+            name = name[0] if name else None
+        if not name:
+            return []
+        return [item.strip() for item in str(name).split(",") if item.strip()]
     
     def get_measurements_for_animal_today(self, animal_id):
         '''Retrieves measurements for a specific animal for the current date.'''
@@ -230,8 +693,9 @@ class DataCollectionUI(MouserPage):
 
         for record in all_measurements_today:
             record_animal_id = record[0]
-            measurement_name = record[1]  
-            measurement_value = record[2] 
+            # Legacy DB queries may return (animal_id, value) only.
+            measurement_name = record[1] if len(record) > 2 else (measurement_names[0] if measurement_names else "Value")
+            measurement_value = record[2] if len(record) > 2 else (record[1] if len(record) > 1 else None)
 
             if str(record_animal_id) == str(animal_id):
                 animal_measurements_dict[measurement_name] = measurement_value
@@ -320,7 +784,8 @@ class DataCollectionUI(MouserPage):
         if region == "cell":
             column_id = self.table.identify_column(event.x)
             row_id = self.table.identify_row(event.y)
-            if not row_id or column_id == "#1":
+            last_column = f"#{len(self.table['columns'] or ())}"
+            if not row_id or column_id in {"#1", last_column}:
                 return
 
             values = self.table.item(row_id, "values") or ()
@@ -430,8 +895,55 @@ class DataCollectionUI(MouserPage):
 
     def set_status(self, text):
         """Update collection status line."""
+        def _update():
+            try:
+                if hasattr(self, "status_label") and self.status_label and self.status_label.winfo_exists():
+                    self.status_label.configure(text=f"Status: {text}")
+            except Exception:
+                pass
+
+            if hasattr(self, "status_chip_label") and self.status_chip_label:
+                chip_text = (text or "").strip() or "Idle"
+                color = ("#047857", "#34d399")
+                lowered = chip_text.lower()
+                if "error" in lowered or "failed" in lowered:
+                    color = ("#b91c1c", "#f87171")
+                elif "starting" in lowered or "scanning" in lowered or "listening" in lowered:
+                    color = ("#92400e", "#fbbf24")
+                self.status_chip_label.configure(text=f"● {chip_text}", text_color=color)
+
         if self.winfo_exists():
-            self.after(0, lambda: self.status_label.configure(text=f"Status: {text}"))
+            self.after(0, _update)
+
+    def _set_scan_button_state(self, running: bool):
+        self._scan_is_running = bool(running)
+        if hasattr(self, "scan_button") and self.scan_button and self.scan_button.winfo_exists():
+            text = self._scan_stop_text if self._scan_is_running else self._scan_start_text
+            style = self._scan_button_style_stop if self._scan_is_running else self._scan_button_style_start
+            try:
+                self.scan_button.configure(
+                    text=text,
+                    fg_color=self._pick(style["fg_color"]),
+                    hover_color=self._pick(style["hover_color"]),
+                    border_width=style["border_width"],
+                    text_color=style["text_color"],
+                )
+            except Exception:  # pylint: disable=broad-exception-caught
+                pass
+
+    def _toggle_scanning(self):
+        """Single-button start/stop for RFID scanning."""
+        # Auto-increment mode has no explicit stop action here.
+        if self.database.experiment_uses_rfid() != 1:
+            if hasattr(self, "_scan_start_function") and self._scan_start_function:
+                self._scan_start_function()
+            return
+
+        if getattr(self, "_scan_is_running", False):
+            self.stop_listening()
+        else:
+            if hasattr(self, "_scan_start_function") and self._scan_start_function:
+                self._scan_start_function()
 
     def open_changer(self):
         '''Opens the changer frame for the selected animal id.'''
@@ -456,8 +968,7 @@ class DataCollectionUI(MouserPage):
             self.set_status("RFID listener already running.")
             return  # Prevent multiple listeners
         self.set_status("Starting RFID listener...")
-        self.auto_increment_button.configure(state="disabled")
-        self.stop_button.configure(state="normal")
+        self._set_scan_button_state(True)
 
         # Check if more data for the day needs to be collected
         if not self.database.is_data_collected_for_date(self.current_date):
@@ -531,8 +1042,7 @@ class DataCollectionUI(MouserPage):
                     self.rfid_reader.stop()
                     self.rfid_reader.close()
                     self.rfid_reader = None
-                self.auto_increment_button.configure(state="normal")
-                self.stop_button.configure(state="disabled")
+                self._set_scan_button_state(False)
                 print("🛑 RFID listener thread ended.")
 
         self.rfid_thread = threading.Thread(target=listen, daemon=True)
@@ -569,8 +1079,7 @@ class DataCollectionUI(MouserPage):
         self.rfid_thread = None
         self._measurement_in_progress = False
         print("✅ RFID listener cleanup completed.")
-        self.auto_increment_button.configure(state="normal")
-        self.stop_button.configure(state="disabled")
+        self._set_scan_button_state(False)
         self.set_status("Listener stopped.")
 
         # Safely stop and close the changer
@@ -692,7 +1201,13 @@ class DataCollectionUI(MouserPage):
                     table_animal_id = self.table.item(child)["values"][0]
                     # Handle type conversions for comparison
                     if str(animal_id_to_change) == str(table_animal_id):
-                        self.table.item(child, values=(animal_id_to_change, new_value))
+                        column_ids = self.table["columns"] or ()
+                        measurement_slots = max(len(column_ids) - 2, 1)
+                        measurement_values = list(list_of_values[:measurement_slots]) if isinstance(list_of_values, (list, tuple)) else [new_value]
+                        measurement_values = [None if v is None or str(v).strip() == "" else v for v in measurement_values]
+                        measurement_values = (measurement_values + ([None] * measurement_slots))[:measurement_slots]
+                        row_values = [animal_id_to_change] + measurement_values + ["Done"]
+                        self.table.item(child, values=tuple(row_values), tags=("done",))
                         updated = True
                         # Force table to refresh/redraw
                         self.table.update_idletasks()
@@ -750,28 +1265,60 @@ class DataCollectionUI(MouserPage):
     def get_values_for_date(self):
         '''Gets the data for the current date as a string in YYYY-MM-DD.'''
         self.current_date = str(date.today())
-        self.date_label.destroy()
         date_text = "Current Date: " + self.current_date
-        self.date_label = CTkLabel(self, text=date_text, font=("Arial", self._ui["label_font_size"]))
-        self.date_label.place(relx=0.5, rely=0.20, anchor=CENTER)
+        try:
+            if hasattr(self, "date_label") and self.date_label and self.date_label.winfo_exists():
+                self.date_label.configure(text=date_text)
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
 
         # Get all measurements for current date
         values = self.database.get_data_for_date(self.current_date)
+        values_by_animal = {str(animal_id): measurement_value for animal_id, measurement_value in values}
+        column_ids = self.table["columns"] or ()
+        measurement_slots = max(len(column_ids) - 2, 1)
+        done_count = 0
+        total_count = len(self.table.get_children()) or 0
 
         # Update each row in the table
         for child in self.table.get_children():
             animal_id = self.table.item(child)["values"][0]
-            found_data = False
-            for val in values:
-                if str(val[0]) == str(animal_id):  # val[0] is animal_id
-                    # Update table with animal_id, rfid, and measurement value
-                    self.table.item(child, values=(animal_id, val[1]))  # val[1] is measurement_value
-                    found_data = True
-                    break
+            measurement_value = values_by_animal.get(str(animal_id))
+            measurement_values = [None] * measurement_slots
+            if isinstance(measurement_value, (list, tuple)):
+                for index in range(min(measurement_slots, len(measurement_value))):
+                    measurement_values[index] = measurement_value[index]
+            elif isinstance(measurement_value, str) and measurement_slots > 1 and any(sep in measurement_value for sep in (",", ";", "|")):
+                parts = [p.strip() for p in re.split(r"[,\n;/|]+", measurement_value) if p and p.strip()]
+                for index in range(min(measurement_slots, len(parts))):
+                    measurement_values[index] = parts[index]
+            else:
+                measurement_values[0] = measurement_value
+            if measurement_value is not None:
+                done_count += 1
+                status = "Done"
+                tag = "done"
+            else:
+                status = "Pending"
+                tag = "pending"
 
-            if not found_data:
-                # If no measurement found, show animal_id and rfid with None for measurement
-                self.table.item(child, values=(animal_id, None))
+            row_values = [animal_id] + measurement_values + [status]
+            self.table.item(child, values=tuple(row_values), tags=(tag,))
+
+        # Update summary tiles (UI only)
+        try:
+            remaining = max(total_count - done_count, 0)
+            completion = int(round((done_count / float(total_count)) * 100)) if total_count else 0
+            if hasattr(self, "total_animals_value") and self.total_animals_value:
+                self.total_animals_value.configure(text=str(total_count))
+            if hasattr(self, "measured_today_value") and self.measured_today_value:
+                self.measured_today_value.configure(text=str(done_count))
+            if hasattr(self, "remaining_value") and self.remaining_value:
+                self.remaining_value.configure(text=str(remaining))
+            if hasattr(self, "completion_value") and self.completion_value:
+                self.completion_value.configure(text=f"{completion}%")
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
 
     def raise_frame(self):
         '''Raise the frame for this UI'''
