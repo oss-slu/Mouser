@@ -2,6 +2,8 @@
 from datetime import date
 import re
 import csv
+from collections import deque
+from functools import partial
 import tkinter as tk
 import tkinter.font as tkfont
 from tkinter.ttk import Treeview, Style
@@ -75,6 +77,8 @@ class DataCollectionUI(MouserPage):
         self._active_animal_id = None
         self._measurement_serial_threads = {}
         self._measurement_serial_stop = threading.Event()
+        self._activity_entries = deque(maxlen=200)
+        self._last_device_status = {}
 
         self.current_file_path = file_path
         self.menu_page = prev_page
@@ -661,6 +665,7 @@ class DataCollectionUI(MouserPage):
             row.grid_columnconfigure(0, weight=1)
             row.grid_columnconfigure(1, weight=0)
             row.grid_columnconfigure(2, weight=0)
+            row.grid_columnconfigure(3, weight=0)
 
             left = CTkFrame(row, fg_color="transparent")
             left.grid(row=0, column=0, sticky="w", padx=12, pady=8)
@@ -702,12 +707,29 @@ class DataCollectionUI(MouserPage):
             )
             dot_label.grid(row=0, column=2, sticky="e", padx=12, pady=8)
 
+            delete_button = CTkButton(
+                row,
+                text="🗑",
+                width=34,
+                height=30,
+                corner_radius=10,
+                fg_color="transparent",
+                hover_color=_pick(self._palette["table_alt_bg"]),
+                border_width=1,
+                border_color=_pick(self._palette["card_border"]),
+                text_color=_pick(self._palette["muted_text"]),
+                font=CTkFont("Segoe UI Semibold", 12),
+            )
+            delete_button.grid(row=0, column=3, sticky="e", padx=(0, 12), pady=8)
+            delete_button.grid_remove()
+
             return {
                 "frame": row,
                 "title": title_label,
                 "status": status_label,
                 "port": port_label,
                 "dot": dot_label,
+                "delete": delete_button,
             }
 
         def _selected_measurement_devices():
@@ -891,11 +913,17 @@ class DataCollectionUI(MouserPage):
         self._resolve_serial_port_for_device = _resolve_serial_port_for_device
 
         self._selected_devices = _selected_measurement_devices()
+        self._device_row_factory = _device_row
         self._device_row_widgets = []
         for idx, device in enumerate(self._selected_devices):
-            self._device_row_widgets.append(
-                _device_row(self.devices_rows_frame, idx, device.get("name", "Device"), "", "", "idle")
-            )
+            widgets = _device_row(self.devices_rows_frame, idx, device.get("name", "Device"), "", "", "idle")
+            self._device_row_widgets.append(widgets)
+            if device.get("kind") == "device":
+                try:
+                    widgets["delete"].configure(command=partial(self._on_delete_device_clicked, device.get("name")))
+                    widgets["delete"].grid()
+                except Exception:
+                    pass
 
         def _scroll_devices_to_bottom():
             """Ensure the last row in the devices scroll area is visible."""
@@ -949,6 +977,16 @@ class DataCollectionUI(MouserPage):
                 status_text = "Not found" if not any_com_present else "Not found"
                 state = "warn" if any_com_present else "idle"
 
+                # Ensure delete button visibility for all measurement devices (including custom-added ones).
+                try:
+                    if kind == "device":
+                        widgets["delete"].configure(command=partial(self._on_delete_device_clicked, name))
+                        widgets["delete"].grid()
+                    else:
+                        widgets["delete"].grid_remove()
+                except Exception:
+                    pass
+
                 if kind == "reader" and self.database.experiment_uses_rfid() == 1 and self._rfid_input_mode == "hid":
                     port_text = "HID"
                     # Connected only when we can infer an attached wedge device (or recently received a tag).
@@ -974,6 +1012,21 @@ class DataCollectionUI(MouserPage):
                         port_text = ""
                         status_text = "Not found"
                         state = "warn" if any_com_present else "idle"
+
+                # Activity: only log device state changes (avoid spam during polling).
+                try:
+                    device_key = (str(name), str(kind))
+                    prev = self._last_device_status.get(device_key)
+                    now_state = (status_text, port_text)
+                    if prev != now_state:
+                        self._last_device_status[device_key] = now_state
+                        if status_text == "Connected":
+                            shown_port = port_text or ("HID" if (kind == "reader" and self._rfid_input_mode == "hid") else "")
+                            self._log_activity(f"{name} connected (Port: {shown_port})")
+                        else:
+                            self._log_activity(f"{name} not found")
+                except Exception:
+                    pass
 
                 try:
                     widgets["title"].configure(text=name)
@@ -1038,10 +1091,24 @@ class DataCollectionUI(MouserPage):
                 return
 
             # Add to the devices list only (no serial pre-configuration required).
+            try:
+                if any(
+                    (d.get("kind") == "device" and str(d.get("name") or "").strip().lower() == name.lower())
+                    for d in (self._selected_devices or [])
+                ):
+                    self.raise_warning("Device already exists.")
+                    _hide_inline_add_row()
+                    return
+            except Exception:
+                pass
             self._selected_devices.append({"name": name, "kind": "device"})
-            self._device_row_widgets.append(
-                _device_row(self.devices_rows_frame, len(self._device_row_widgets), name, "", "", "idle")
-            )
+            new_widgets = _device_row(self.devices_rows_frame, len(self._device_row_widgets), name, "", "", "idle")
+            self._device_row_widgets.append(new_widgets)
+            try:
+                new_widgets["delete"].configure(command=partial(self._on_delete_device_clicked, name))
+                new_widgets["delete"].grid()
+            except Exception:
+                pass
             self._add_measurement_column(name)
             try:
                 if getattr(self, "_scan_is_running", False):
@@ -1175,28 +1242,25 @@ class DataCollectionUI(MouserPage):
             text_color=self._palette["text"],
         ).grid(row=0, column=0, sticky="w", padx=14, pady=(12, 8))
 
-        log_frame = CTkScrollableFrame(
-            activity_card, fg_color="transparent", corner_radius=0, border_width=0, height=215
+        self.activity_text = CTkTextbox(
+            activity_card,
+            height=215,
+            font=("Segoe UI", 12),
+            wrap="word",
+            fg_color=_pick(self._palette["table_alt_bg"]),
+            text_color=_pick(self._palette["text"]),
+            border_width=1,
+            border_color=_pick(self._palette["card_border"]),
+            corner_radius=12,
         )
-        log_frame.grid(row=1, column=0, sticky="ew", padx=12, pady=(0, 12))
-        log_frame.grid_columnconfigure(0, weight=1)
+        self.activity_text.grid(row=1, column=0, sticky="ew", padx=12, pady=(0, 12))
+        try:
+            self.activity_text.configure(state="disabled")
+        except Exception:
+            pass
 
         CTkFrame(self.right_panel, fg_color="transparent").grid(row=2, column=0, sticky="nsew")
-
-        for line in [
-            ("09:41", "Saved 24.3 g for Mouse 004"),
-            ("09:39", "Mouse 003 fully measured"),
-            ("09:35", "COM7 error — glucometer lost"),
-            ("09:31", "Session started · 8 animals"),
-            ("09:30", "Balance COM3 connected"),
-        ]:
-            CTkLabel(
-                log_frame,
-                text=f"{line[0]}   {line[1]}",
-                font=CTkFont("Segoe UI", 12),
-                text_color=self._palette["muted_text"],
-                anchor="w",
-            ).grid(sticky="w", padx=4, pady=4)
+        self._log_activity("Ready.")
 
 
         self.get_values_for_date()
@@ -1208,6 +1272,48 @@ class DataCollectionUI(MouserPage):
         self._inline_editor = None
 
         self.changer = ChangeMeasurementsDialog(parent, self, self.measurement_strings)
+
+    def _log_activity(self, message: str):
+        """Append a line to the Activity log."""
+        try:
+            msg = str(message).strip()
+        except Exception:
+            msg = ""
+        if not msg:
+            return
+
+        timestamp = time.strftime("%H:%M:%S")
+        line = f"{timestamp}  {msg}"
+        try:
+            self._activity_entries.append(line)
+        except Exception:
+            return
+
+        if not hasattr(self, "activity_text") or not self.activity_text:
+            return
+
+        def _render():
+            if not self.winfo_exists():
+                return
+            try:
+                self.activity_text.configure(state="normal")
+            except Exception:
+                pass
+            try:
+                self.activity_text.delete("1.0", "end")
+                self.activity_text.insert("end", "\n".join(self._activity_entries))
+                self.activity_text.see("end")
+            except Exception:
+                pass
+            try:
+                self.activity_text.configure(state="disabled")
+            except Exception:
+                pass
+
+        try:
+            self.after(0, _render)
+        except Exception:
+            pass
 
     def _update_table_hscroll_visibility(self):
         """Show the bottom horizontal scrollbar only when needed."""
@@ -1249,8 +1355,9 @@ class DataCollectionUI(MouserPage):
             return None
 
         try:
-            from shared.serial_port_controller import SerialPortController  # pylint: disable=import-error
-            controller = SerialPortController("reader")
+            controller = getattr(self, "_serial_controllers", {}).get("reader")
+            if not controller:
+                return "hid"
             configured_port = getattr(controller, "reader_port", None)
             available = [dev for dev, _desc in controller.get_available_ports() or []]
             if configured_port and configured_port in available:
@@ -1536,6 +1643,209 @@ class DataCollectionUI(MouserPage):
                 self.changer.measurement_items = list(self.measurement_strings)
         except Exception:
             pass
+
+    def _delete_device(self, name: str):
+        """Delete a device from the Devices card and remove its measurement column."""
+        text = str(name or "").strip()
+        if not text:
+            return
+
+        def _norm_key(value: str) -> str:
+            try:
+                v = str(value or "").strip().lower()
+            except Exception:
+                return ""
+            # Remove separators/newlines/etc. to make matching robust.
+            key = re.sub(r"[^a-z0-9]+", "", v)
+            # Backwards compatibility: stored as "Custom:<name>" in older experiments.
+            if key.startswith("custom") and len(key) > 6:
+                key = key[6:]
+            return key
+
+        target_key = _norm_key(text)
+        if not target_key:
+            return
+
+        # Don't allow deleting all measurement columns.
+        if len(self.measurement_strings or []) <= 1:
+            self.raise_warning("At least one measurement device is required.")
+            return
+
+        # Find the measurement column index.
+        measurement_index = None
+        for idx, item in enumerate(self.measurement_strings or []):
+            if _norm_key(item) == target_key:
+                measurement_index = idx
+                break
+        if measurement_index is None:
+            # Fallback: try prefix match (handles odd truncation or formatting).
+            for idx, item in enumerate(self.measurement_strings or []):
+                item_key = _norm_key(item)
+                if item_key and (item_key.startswith(target_key) or target_key.startswith(item_key)):
+                    measurement_index = idx
+                    break
+        if measurement_index is None:
+            try:
+                keys = [f"{str(i)}:{_norm_key(v)}" for i, v in enumerate(self.measurement_strings or [])]
+                self._log_activity(
+                    f"Delete failed: could not find column for '{text}'. Columns={keys}"
+                )
+            except Exception:
+                self._log_activity(f"Delete failed: could not find column for '{text}'")
+            return
+
+        # Stop listeners while we reshuffle indices.
+        restart_listeners = bool(getattr(self, "_scan_is_running", False))
+        if restart_listeners:
+            try:
+                self._stop_measurement_serial_listeners()
+            except Exception:
+                pass
+
+        # Update DB measurement slots: delete+shift IDs so remaining columns still map correctly.
+        try:
+            if hasattr(self.database, "delete_measurement_column"):
+                self.database.delete_measurement_column(measurement_index + 1)
+        except Exception:
+            pass
+
+        # Update measurement strings and persist new measurement list.
+        self.measurement_strings = list(self.measurement_strings or [])
+        try:
+            self.measurement_strings.pop(measurement_index)
+        except Exception:
+            return
+        try:
+            if hasattr(self.database, "update_measurement_name"):
+                self.database.update_measurement_name(", ".join(self.measurement_strings))
+        except Exception:
+            pass
+
+        # Remove device from right-side list (only the first matching device entry).
+        try:
+            for i, dev in enumerate(list(self._selected_devices or [])):
+                if dev.get("kind") == "device" and _norm_key(dev.get("name")) == target_key:
+                    self._selected_devices.pop(i)
+                    break
+        except Exception:
+            pass
+
+        # Rebuild the left table columns to match.
+        try:
+            columns = ["animal_id", *self.measurement_strings, "status"]
+            self.table.configure(columns=columns)
+
+            table_font_size = int(self._ui.get("table_font_size", 14)) if hasattr(self, "_ui") else 14
+            heading_font = tkfont.Font(family="Segoe UI Semibold", size=max(12, table_font_size))
+
+            def _measure_heading_width(heading_text: str) -> int:
+                try:
+                    lines = str(heading_text or "").split("\n")
+                except Exception:
+                    lines = [str(heading_text)]
+                max_px = 0
+                for line in lines:
+                    try:
+                        max_px = max(max_px, int(heading_font.measure(str(line))))
+                    except Exception:
+                        max_px = max(max_px, len(str(line)) * 8)
+                return max_px + 36
+
+            for column in columns:
+                if column == "animal_id":
+                    heading_text = "Animal"
+                    width = 160
+                elif column == "status":
+                    heading_text = "Status"
+                    width = 120
+                else:
+                    heading_text = self._format_measurement_header(str(column)) if hasattr(self, "_format_measurement_header") else str(column)
+                    width = max(130, _measure_heading_width(heading_text))
+                self.table.heading(column, text=heading_text, anchor="center")
+                self.table.column(column, anchor="center", width=width, stretch=(column == "status"))
+        except Exception:
+            pass
+
+        # Update in-memory row values quickly (remove the cell at the deleted column position).
+        try:
+            remove_at = measurement_index + 1  # account for animal_id at 0
+            for child in self.table.get_children():
+                values = list(self.table.item(child).get("values") or [])
+                if len(values) > remove_at:
+                    values.pop(remove_at)
+                self.table.item(child, values=tuple(values))
+        except Exception:
+            pass
+
+        # Update changer dialog measurement items.
+        try:
+            if hasattr(self, "changer") and self.changer:
+                self.changer.measurement_items = list(self.measurement_strings)
+        except Exception:
+            pass
+
+        # Rebuild the device rows UI so indexes/buttons match.
+        try:
+            self._rebuild_devices_rows()
+        except Exception:
+            pass
+
+        # Refresh values/status/tiles with updated schema.
+        try:
+            self.get_values_for_date()
+        except Exception:
+            pass
+
+        try:
+            self.after(50, self._update_table_hscroll_visibility)
+        except Exception:
+            pass
+
+        self._log_activity(f"Deleted device: {text}")
+
+        if restart_listeners:
+            try:
+                self._start_measurement_serial_listeners()
+            except Exception:
+                pass
+
+    def _on_delete_device_clicked(self, name: str):
+        """UI handler for delete buttons; logs failures instead of failing silently."""
+        try:
+            self._delete_device(name)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            try:
+                self._log_activity(f"Delete failed for {name}: {exc}")
+            except Exception:
+                pass
+
+    def _rebuild_devices_rows(self):
+        """Rebuild the devices list UI after add/delete."""
+        if not hasattr(self, "devices_rows_frame") or not self.devices_rows_frame:
+            return
+        factory = getattr(self, "_device_row_factory", None)
+        if not factory:
+            return
+
+        for widget in list(self.devices_rows_frame.winfo_children()):
+            try:
+                widget.destroy()
+            except Exception:
+                pass
+
+        self._device_row_widgets = []
+        for idx, device in enumerate(self._selected_devices or []):
+            widgets = factory(self.devices_rows_frame, idx, device.get("name", "Device"), "", "", "idle")
+            self._device_row_widgets.append(widgets)
+            if device.get("kind") == "device":
+                try:
+                    widgets["delete"].configure(command=partial(self._on_delete_device_clicked, device.get("name")))
+                    widgets["delete"].grid()
+                except Exception:
+                    pass
+
+        # Hide any inline-add row if present (it will be recreated on demand).
+        self._inline_add_device_row = None
     
     def get_measurement_names(self):
         '''Retrieves measurement names from the database.'''
@@ -1834,6 +2144,7 @@ class DataCollectionUI(MouserPage):
                 self.set_status("HID listener already running.")
                 return
             self.set_status("Starting HID RFID listener...")
+            self._log_activity("Started scanning (HID RFID).")
             self._set_scan_button_state(True)
             self.rfid_stop_event.clear()
             self._start_hid_rfid_listening()
@@ -1854,6 +2165,7 @@ class DataCollectionUI(MouserPage):
             self.set_status("RFID listener already running.")
             return  # Prevent multiple listeners
         self.set_status("Starting RFID listener...")
+        self._log_activity("Started scanning (serial RFID).")
         self._set_scan_button_state(True)
 
         # Check if more data for the day needs to be collected
@@ -1943,6 +2255,7 @@ class DataCollectionUI(MouserPage):
         '''Stops the RFID listener and ensures the serial port is released.'''
         print("🛑 Stopping RFID listener...")
         self.set_status("Stopping listener...")
+        self._log_activity("Stopped scanning.")
 
         # Set the stop event first
         self.rfid_stop_event.set()
@@ -1995,6 +2308,7 @@ class DataCollectionUI(MouserPage):
         """Select scanned animal and capture weight for that animal."""
         self._active_animal_id = animal_id
         self.select_animal_by_id(animal_id)
+        self._log_activity(f"RFID matched Animal {animal_id}.")
 
         # Automatic mode: do not block scanning with a single weight-capture thread.
         # Instead, route device readings (balance/caliper/etc.) into the active row as they arrive.
@@ -2255,7 +2569,17 @@ class DataCollectionUI(MouserPage):
             existing = existing + ([None] * (measurement_index - len(existing) + 1))
 
         existing[measurement_index] = value
-        return self.change_selected_value(animal_id_to_change, existing)
+        ok = self.change_selected_value(animal_id_to_change, existing)
+        if ok:
+            try:
+                measurement_name = None
+                if hasattr(self, "measurement_strings") and self.measurement_strings and measurement_index < len(self.measurement_strings):
+                    measurement_name = self.measurement_strings[measurement_index]
+                measurement_name = str(measurement_name or f"Measurement {measurement_index + 1}")
+                self._log_activity(f"Animal {animal_id_to_change}: {measurement_name} = {value}")
+            except Exception:
+                pass
+        return ok
 
     def get_values_for_date(self):
         '''Gets the data for the current date as a string in YYYY-MM-DD.'''

@@ -214,7 +214,6 @@ class ExperimentDatabase:
         '''Returns whether the experiment uses RFID (0 or 1).'''
         self._c.execute("SELECT uses_rfid FROM experiment")
         result = self._c.fetchone()
-        print("Experiment uses RFID:", result)
         return result[0] if result else 0
 
     def get_animals(self):
@@ -568,6 +567,44 @@ class ExperimentDatabase:
         """Updates the measurement name(s) string in the experiment table."""
         self._c.execute("UPDATE experiment SET measurement = ?", (measurement,))
         self._conn.commit()
+
+    def delete_measurement_column(self, measurement_id: int):
+        """Delete a measurement slot globally and shift later slots left by 1.
+
+        This keeps `measurement_id` values aligned with the experiment's measurement name list.
+        """
+        try:
+            target = int(measurement_id)
+        except Exception:
+            return
+        if target <= 0:
+            return
+
+        try:
+            self._conn.execute("BEGIN")
+            # Remove the target slot.
+            self._c.execute(
+                "DELETE FROM animal_measurements WHERE measurement_id = ?",
+                (target,),
+            )
+
+            # Shift all later slots down by 1, without collisions:
+            # 1) move them out of range, 2) shift back minus 1.
+            self._c.execute(
+                "UPDATE animal_measurements SET measurement_id = measurement_id + 1000 WHERE measurement_id > ?",
+                (target,),
+            )
+            self._c.execute(
+                "UPDATE animal_measurements SET measurement_id = measurement_id - 1001 WHERE measurement_id > ?",
+                (target + 1000,),
+            )
+            self._conn.commit()
+        except sqlite3.Error as e:
+            print(f"Error deleting measurement column: {e}")
+            try:
+                self._conn.rollback()
+            except Exception:
+                pass
 
     def get_all_animal_ids(self):
         '''Returns a list of all active animal IDs that have RFIDs mapped to them.'''
