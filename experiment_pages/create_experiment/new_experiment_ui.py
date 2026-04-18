@@ -80,8 +80,10 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
             self.menu_button.configure(
                 corner_radius=12,
                 height=40,
-                width=160,
-                font=("Segoe UI Semibold", 16),
+                width=54,
+                # Match ExperimentMenuUI: compact amber button with a bold left-arrow icon.
+                text="\u2B05",
+                font=("Segoe UI Semibold", 20),
                 text_color="white",
                 fg_color=palette["accent_amber"],
                 hover_color="#d97706",
@@ -111,10 +113,10 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
 
         header = CTkFrame(body_root, fg_color="transparent")
         header.grid(row=0, column=0, sticky="ew", padx=12, pady=(0, 10))
-        CTkLabel(header, text="Create Experiment", font=title_font).pack(anchor="w")
+        CTkLabel(header, text="🧪 Create Experiment", font=title_font).pack(anchor="w")
         CTkLabel(
             header,
-            text="Step 1 of 3 • Enter core details",
+            text="Enter core details ✨",
             font=subtitle_font,
             text_color=palette["text_muted"],
         ).pack(anchor="w", pady=(2, 0))
@@ -147,7 +149,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
 
         left_box, left = section(
             content,
-            "Basics",
+            "🧾 Basics",
             accent=palette["accent_blue"],
             bg_color=("#eff6ff", "#0b1b35"),
         )
@@ -155,7 +157,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
 
         right_box, right = section(
             content,
-            "Subjects & Data",
+            "🐭 Subjects & Data",
             accent=palette["accent_violet"],
             bg_color=("#f5f3ff", "#1b1133"),
         )
@@ -163,7 +165,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
 
         bottom_box, bottom = section(
             content,
-            "Allocation",
+            "📊 Allocation",
             accent=palette["accent_teal"],
             bg_color=("#ecfeff", "#042f2e"),
         )
@@ -192,7 +194,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
 
         self.exper_name = labeled_entry(
             left,
-            "Experiment Name",
+            "🧪 Experiment Name",
             required=True,
             placeholder_text="e.g., Dose Response A",
         )
@@ -218,7 +220,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         labeled_entry.row += 1
 
         # Investigators field with an add button and chip list
-        CTkLabel(left, text="Investigators", font=label_font).grid(
+        CTkLabel(left, text="🧑‍🔬 Investigators", font=label_font).grid(
             row=labeled_entry.row, column=0, sticky="w", pady=(0, 6)
         )
         invest_row = CTkFrame(left, fg_color="transparent")
@@ -228,7 +230,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         self.investigators = CTkEntry(
             invest_row,
             font=entry_font,
-            placeholder_text="Type a name and press Enter",
+            placeholder_text="Type a name and press Enter ↩️",
         )
         self.investigators.configure(
             fg_color=palette["entry_bg"],
@@ -240,7 +242,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
 
         add_invest_button = CTkButton(
             invest_row,
-            text="Add",
+            text="➕ Add",
             width=64,
             height=32,
             corner_radius=10,
@@ -263,20 +265,70 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         labeled_entry.row = 0
         self.species = labeled_entry(
             right,
-            "Species",
+            "🐭 Species",
             required=True,
             placeholder_text="e.g., Mouse",
         )
 
-        self.measure_items = labeled_entry(
-            right,
-            "Measurement Item",
-            required=False,
-            placeholder_text="e.g., Weight",
-            textvariable=StringVar(value="Weight"),
+        CTkLabel(right, text="Measurement Devices *", font=label_font).grid(
+            row=labeled_entry.row, column=0, sticky="w", pady=(0, 4)
         )
+        self._device_balancer = BooleanVar(value=False)
+        self._device_caliper = BooleanVar(value=False)
+        self._device_custom = BooleanVar(value=False)
 
-        CTkLabel(right, text="RFID", font=label_font).grid(
+        self.measurement_devices_frame = CTkFrame(right, fg_color="transparent")
+        self.measurement_devices_frame.grid(row=labeled_entry.row + 1, column=0, sticky="ew", pady=(0, 10))
+        self.measurement_devices_frame.grid_columnconfigure(0, weight=0)
+        self.measurement_devices_frame.grid_columnconfigure(1, weight=0)
+        self.measurement_devices_frame.grid_columnconfigure(2, weight=1)
+
+        CTkCheckBox(
+            self.measurement_devices_frame,
+            text="Balancer",
+            variable=self._device_balancer,
+            font=entry_font,
+            fg_color=palette["accent_teal"],
+            hover_color="#0d9488",
+            command=lambda: [self._sync_measurement_devices(), self.enable_next_button()],
+        ).grid(row=0, column=0, sticky="w", padx=(0, 12), pady=0)
+        CTkCheckBox(
+            self.measurement_devices_frame,
+            text="Caliper",
+            variable=self._device_caliper,
+            font=entry_font,
+            fg_color=palette["accent_teal"],
+            hover_color="#0d9488",
+            command=lambda: [self._sync_measurement_devices(), self.enable_next_button()],
+        ).grid(row=0, column=1, sticky="w", padx=(0, 12), pady=0)
+        CTkCheckBox(
+            self.measurement_devices_frame,
+            text="Custom",
+            variable=self._device_custom,
+            font=entry_font,
+            fg_color=palette["accent_teal"],
+            hover_color="#0d9488",
+            command=lambda: [self._sync_measurement_devices(), self.enable_next_button()],
+        ).grid(row=0, column=2, sticky="w", padx=(0, 0), pady=0)
+
+        self.custom_device_type = CTkEntry(
+            self.measurement_devices_frame,
+            font=entry_font,
+            placeholder_text="Enter custom device type (e.g., Thermometer)",
+        )
+        self.custom_device_type.configure(
+            fg_color=palette["entry_bg"],
+            border_color=palette["entry_border"],
+            text_color=("black", "white"),
+            placeholder_text_color=palette["text_muted"],
+        )
+        self.custom_device_type.grid(row=1, column=0, columnspan=3, sticky="ew", pady=(10, 0))
+        self.custom_device_type.grid_remove()
+        self.custom_device_type.bind("<KeyRelease>", lambda _event: self.enable_next_button())
+
+        labeled_entry.row += 2
+
+        CTkLabel(right, text="🏷️ RFID", font=label_font).grid(
             row=labeled_entry.row, column=0, sticky="w", pady=(0, 6)
         )
         self.rfid = BooleanVar(value=True)
@@ -301,13 +353,13 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
             hover_color="#0d9488",
         ).grid(row=0, column=1, padx=(0, 0), pady=0)
 
-        CTkLabel(bottom, text="Number of Animals *", font=label_font).grid(
+        CTkLabel(bottom, text="🐭 Number of Animals *", font=label_font).grid(
             row=0, column=0, sticky="w", pady=(0, 6)
         )
-        CTkLabel(bottom, text="Number of Groups *", font=label_font).grid(
+        CTkLabel(bottom, text="🧩 Number of Groups *", font=label_font).grid(
             row=0, column=1, sticky="w", pady=(0, 6), padx=(12, 0)
         )
-        CTkLabel(bottom, text="Max Animals per Cage *", font=label_font).grid(
+        CTkLabel(bottom, text="🏠 Max Animals per Cage *", font=label_font).grid(
             row=0, column=2, sticky="w", pady=(0, 6), padx=(12, 0)
         )
 
@@ -339,7 +391,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
 
         self.required_hint = CTkLabel(
             body_root,
-            text="Fields marked * are required.",
+            text="Fields marked * are required. ✅",
             font=subtitle_font,
             text_color=palette["text_muted"],
         )
@@ -366,12 +418,12 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         self.next_button.configure(
             corner_radius=12,
             height=40,
-            width=160,
-            font=("Segoe UI Semibold", 16),
+            width=54,
+            font=("Segoe UI Semibold", 20),
             text_color="white",
             fg_color=self.ui_palette["accent_green"],
             hover_color="#16a34a",
-            text="Continue",
+            text="\u27A1",
             command=self._on_continue,
             state="disabled",
         )
@@ -383,7 +435,6 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
             self.exper_name,
             self.password,
             self.species,
-            self.measure_items,
             self.animal_num,
             self.group_num,
             self.num_per_cage,
@@ -405,6 +456,11 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         """Enable Next only when all required fields are filled."""
         if not self.next_button:
             return
+
+        if not (self._device_balancer.get() or self._device_caliper.get() or self._device_custom.get()):
+            self.next_button.configure(state="disabled")
+            return
+
         required = [
             self.exper_name.get().strip(),
             self.species.get().strip(),
@@ -412,10 +468,39 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
             self.group_num.get().strip(),
             self.num_per_cage.get().strip(),
         ]
+        if self._device_custom.get() and not self.custom_device_type.get().strip():
+            self.next_button.configure(state="disabled")
+            return
         if all(required) and self._allocation_valid:
             self.next_button.configure(state="normal")
         else:
             self.next_button.configure(state="disabled")
+
+    def _sync_measurement_devices(self):
+        """Show/hide custom device entry based on selection."""
+        try:
+            if self._device_custom.get():
+                self.custom_device_type.grid()
+            else:
+                self.custom_device_type.grid_remove()
+        except Exception:  # pylint: disable=broad-exception-caught
+            return
+
+    def _get_measurement_items_string(self) -> str:
+        """Return a single string representing selected measurement devices."""
+        parts: List[str] = []
+
+        if self._device_balancer.get():
+            parts.append("Weight")
+        if self._device_caliper.get():
+            parts.append("Caliper")
+        if self._device_custom.get():
+            custom = self.custom_device_type.get().strip()
+            parts.append(f"Custom:{custom}" if custom else "Custom")
+
+        if not parts:
+            return "Weight"
+        return ", ".join(parts)
 
     # ------------------------------------------------------------
     # Allocation Validation (live)
@@ -480,6 +565,11 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         for widget in self.invest_frame.winfo_children():
             widget.destroy()
 
+        try:
+            self.invest_frame.grid_columnconfigure(0, weight=1)
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
+
         for i, investigator in enumerate(self.added_invest):
             chip = CTkFrame(
                 self.invest_frame,
@@ -488,13 +578,17 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
                 border_width=1,
                 border_color=("#e5e7eb", "#374151"),
             )
-            chip.grid(row=i // 3, column=i % 3, sticky="w", padx=(0, 10), pady=(0, 10))
+            chip.grid(row=i, column=0, sticky="ew", padx=(0, 10), pady=(0, 10))
+            chip.grid_columnconfigure(0, weight=1)
 
             CTkLabel(
                 chip,
-                text=investigator,
+                text=self._format_investigator_chip_text(investigator),
                 font=CTkFont(family="Segoe UI", size=13),
-            ).pack(side="left", padx=(12, 6), pady=6)
+                justify="left",
+                anchor="w",
+                wraplength=260,
+            ).grid(row=0, column=0, sticky="w", padx=(12, 6), pady=6)
 
             CTkButton(
                 chip,
@@ -507,7 +601,23 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
                 text_color="white",
                 font=CTkFont(family="Segoe UI Semibold", size=14),
                 command=lambda x=investigator: self.remove_investigator(x),
-            ).pack(side="left", padx=(0, 8), pady=6)
+            ).grid(row=0, column=1, sticky="e", padx=(0, 8), pady=6)
+
+    def _format_investigator_chip_text(self, name: str, *, chunk: int = 18) -> str:
+        """Wrap long investigator names so chips never force the layout wider."""
+        text = str(name or "")
+        if not text:
+            return ""
+
+        # If there are spaces/newlines, let the label wrap naturally.
+        if " " in text or "\n" in text:
+            return text
+
+        # Hard-break very long unbroken strings.
+        if len(text) <= (chunk * 2):
+            return text
+
+        return "\n".join(text[i : i + chunk] for i in range(0, len(text), chunk))
 
     def add_investigator(self):
         """Add an investigator to the list if not already present."""
@@ -700,7 +810,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         self.input.set_investigators(investigators)
 
         self.input.set_species(self.species.get())
-        self.input.set_measurement_item(self.measure_items.get())
+        self.input.set_measurement_item(self._get_measurement_items_string())
         self.input.set_uses_rfid(self.rfid.get())
         self.input.set_num_animals(self.animal_num.get())
         self.input.set_num_groups(self.group_num.get())
