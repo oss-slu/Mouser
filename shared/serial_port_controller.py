@@ -57,6 +57,38 @@ class SerialPortController():
             available_ports.append((port_.device, getattr(port_, 'description', '')))  # robust attribute access
         return available_ports
 
+    def get_available_ports_detailed(self):
+        """Returns a list of available ports with extra metadata (best-effort).
+
+        Output items are dicts:
+          - device (e.g. 'COM5' or '/dev/ttyUSB0')
+          - description
+          - hwid
+          - vid, pid
+          - manufacturer, product, serial_number
+
+        This is useful for auto-detection based on USB/serial descriptors without requiring users
+        to pre-configure a COM port.
+        """
+        ports = list(self.comports_fn())
+        detailed = []
+        for port_ in ports:
+            if port_ in self.ports_in_used:
+                continue
+            detailed.append(
+                {
+                    "device": getattr(port_, "device", None),
+                    "description": getattr(port_, "description", "") or "",
+                    "hwid": getattr(port_, "hwid", "") or "",
+                    "vid": getattr(port_, "vid", None),
+                    "pid": getattr(port_, "pid", None),
+                    "manufacturer": getattr(port_, "manufacturer", "") or "",
+                    "product": getattr(port_, "product", "") or "",
+                    "serial_number": getattr(port_, "serial_number", "") or "",
+                }
+            )
+        return detailed
+
     def get_available_ports_name(self):
         '''Returns a list of available system ports.'''
         available_ports = []
