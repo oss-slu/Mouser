@@ -36,8 +36,9 @@ class ExperimentDatabase:
 
 
     def _initialize_tables(self):  # Call to work with singleton changes
+        """Create base tables if missing and upgrade legacy schemas."""
         try:
-            self._c.execute('''CREATE TABLE experiment (
+            self._c.execute('''CREATE TABLE IF NOT EXISTS experiment (
                                 name TEXT,
                                 species TEXT,
                                 uses_rfid INTEGER,
@@ -47,42 +48,219 @@ class ExperimentDatabase:
                                 measurement_type INTEGER,
                                 id TEXT,
                                 investigators TEXT,
-                                measurement TEXT);''')
+                                measurement TEXT,
+                                organization TEXT,
+                                cell_line TEXT,
+                                strain TEXT,
+                                calc_method INTEGER,
+                                tumors_per_animal INTEGER,
+                                tumor_labels TEXT,
+                                measurement_mode TEXT
+                            );''')
 
-            self._c.execute('''CREATE TABLE animals (
+            self._c.execute('''CREATE TABLE IF NOT EXISTS animals (
                                 animal_id INTEGER PRIMARY KEY,
                                 group_id INTEGER,
+                                cage_id INTEGER,
                                 rfid TEXT UNIQUE,
                                 remarks TEXT,
-                                active INTEGER);''')
+                                active INTEGER
+                            );''')
 
-            self._c.execute('''CREATE TABLE animal_measurements (
+            self._c.execute('''CREATE TABLE IF NOT EXISTS animal_measurements (
                                 measurement_id INTEGER,
                                 animal_id INTEGER,
                                 timestamp TEXT,
                                 value REAL,
                                 FOREIGN KEY(animal_id) REFERENCES animals(animal_id),
-                                PRIMARY KEY (animal_id, timestamp, measurement_id));''')
+                                PRIMARY KEY (animal_id, timestamp, measurement_id)
+                            );''')
 
-            self._c.execute('''CREATE TABLE groups (
+            self._c.execute('''CREATE TABLE IF NOT EXISTS groups (
                                 group_id INTEGER PRIMARY KEY,
                                 name TEXT,
                                 num_animals INTEGER,
-                                cage_capacity INTEGER);''')
+                                cage_capacity INTEGER
+                            );''')
+
+            self._c.execute('''CREATE TABLE IF NOT EXISTS cages (
+                                cage_id INTEGER PRIMARY KEY,
+                                group_id INTEGER,
+                                cage_number INTEGER,
+                                label TEXT,
+                                FOREIGN KEY(group_id) REFERENCES groups(group_id)
+                            );''')
+
+            self._c.execute('''CREATE TABLE IF NOT EXISTS tumors (
+                                tumor_id INTEGER PRIMARY KEY,
+                                animal_id INTEGER,
+                                group_id INTEGER,
+                                cage_id INTEGER,
+                                tumor_index INTEGER,
+                                location_label TEXT,
+                                measurement_order INTEGER,
+                                date_removed TEXT,
+                                censored INTEGER,
+                                FOREIGN KEY(animal_id) REFERENCES animals(animal_id)
+                            );''')
+
+            self._c.execute('''CREATE TABLE IF NOT EXISTS tumor_measurements (
+                                measurement_id INTEGER PRIMARY KEY,
+                                tumor_id INTEGER,
+                                date_measured TEXT,
+                                length REAL,
+                                width REAL,
+                                status TEXT,
+                                FOREIGN KEY(tumor_id) REFERENCES tumors(tumor_id)
+                            );''')
 
             self._conn.commit()
+            self._ensure_schema()
         except sqlite3.OperationalError:
             pass
 
-    def setup_experiment(self, name, species, uses_rfid, num_animals, num_groups,
-                         cage_max, measurement_type, experiment_id, investigators, measurement):
-        '''Initializes Experiment'''
-        investigators_str = ', '.join(investigators)  # Convert list to comma-separated string
-        self._c.execute('''INSERT INTO experiment (name, species, uses_rfid, num_animals,
-                        num_groups, cage_max, measurement_type, id, investigators, measurement)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                        (name, species, uses_rfid, num_animals, num_groups,
-                         cage_max, measurement_type, experiment_id, investigators_str, measurement))
+    def _table_has_column(self, table_name, column_name):
+        self._c.execute(f"PRAGMA table_info({table_name})")
+        return any(row[1] == column_name for row in self._c.fetchall())
+
+    def _add_column_if_missing(self, table_name, column_name, column_type, default_sql=None):
+        if self._table_has_column(table_name, column_name):
+            return
+        self._c.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}")
+        if default_sql is not None:
+            self._c.execute(f"UPDATE {table_name} SET {column_name} = {default_sql}")
+
+    def _ensure_schema(self):
+        """Upgrade legacy schema in-place to support tumor-level data."""
+        # Experiment table upgrades
+        self._add_column_if_missing("experiment", "organization", "TEXT")
+        self._add_column_if_missing("experiment", "cell_line", "TEXT")
+        self._add_column_if_missing("experiment", "strain", "TEXT")
+        self._add_column_if_missing("experiment", "calc_method", "INTEGER", "0")
+        self._add_column_if_missing("experiment", "tumors_per_animal", "INTEGER", "1")
+        self._add_column_if_missing("experiment", "tumor_labels", "TEXT", "'Tumor 1'")
+        self._add_column_if_missing("experiment", "measurement_mode", "TEXT", "'weight'")
+
+        # Animals table upgrades
+        self._add_column_if_missing("animals", "cage_id", "INTEGER")
+
+        self._conn.commit()
+        self._ensure_cages_for_groups()
+
+    def _ensure_cages_for_groups(self):
+        """Create cages and assign animals to cages if missing."""
+        # If cages table already has rows, assume migration done.
+        self._c.execute("SELECT COUNT(*) FROM cages")
+        existing = self._c.fetchone()[0]
+        if existing and existing > 0:
+            return
+
+        # Build cages per group based on capacity and animal count.
+        self._c.execute("SELECT group_id, cage_capacity FROM groups ORDER BY group_id")
+        groups = self._c.fetchall()
+        if not groups:
+            return
+
+        for group_id, capacity in groups:
+            if not capacity or int(capacity) <= 0:
+                capacity = 1
+            self._c.execute(
+                "SELECT animal_id FROM animals WHERE group_id = ? ORDER BY animal_id",
+                (group_id,),
+            )
+            animal_ids = [row[0] for row in self._c.fetchall()]
+            num_cages = max(1, (len(animal_ids) + capacity - 1) // capacity)
+            cage_ids = []
+            for cage_number in range(1, num_cages + 1):
+                self._c.execute(
+                    "INSERT INTO cages (group_id, cage_number, label) VALUES (?, ?, ?)",
+                    (group_id, cage_number, f"Cage {cage_number}"),
+                )
+                cage_ids.append(self._c.lastrowid)
+
+            # Assign animals to cages sequentially
+            for idx, animal_id in enumerate(animal_ids):
+                cage_idx = idx // capacity
+                if cage_idx >= len(cage_ids):
+                    cage_idx = len(cage_ids) - 1
+                self._c.execute(
+                    "UPDATE animals SET cage_id = ? WHERE animal_id = ?",
+                    (cage_ids[cage_idx], animal_id),
+                )
+
+        self._conn.commit()
+
+    def setup_experiment(
+        self,
+        name,
+        species,
+        uses_rfid,
+        num_animals,
+        num_groups,
+        cage_max,
+        measurement_type,
+        experiment_id,
+        investigators,
+        measurement,
+        organization=None,
+        cell_line=None,
+        strain=None,
+        calc_method=0,
+        tumors_per_animal=1,
+        tumor_labels=None,
+        measurement_mode="tumor",
+    ):
+        """Initializes Experiment."""
+        investigators_str = ", ".join(investigators)  # Convert list to comma-separated string
+        # Normalize inputs
+        try:
+            calc_method = int(calc_method)
+        except Exception:
+            calc_method = 0
+        calc_method = max(0, min(10, calc_method))
+        try:
+            tumors_per_animal = int(tumors_per_animal)
+        except Exception:
+            tumors_per_animal = 1
+        tumors_per_animal = max(1, min(4, tumors_per_animal))
+
+        if tumor_labels is None:
+            tumor_labels = ["Tumor 1"]
+        labels = [str(t).strip() for t in tumor_labels if str(t).strip()]
+        while len(labels) < tumors_per_animal:
+            labels.append(f"Tumor {len(labels) + 1}")
+        if len(labels) > tumors_per_animal:
+            labels = labels[:tumors_per_animal]
+        tumor_labels_str = ", ".join(labels)
+
+        self._c.execute(
+            '''INSERT INTO experiment (
+                name, species, uses_rfid, num_animals, num_groups, cage_max,
+                measurement_type, id, investigators, measurement,
+                organization, cell_line, strain, calc_method, tumors_per_animal,
+                tumor_labels, measurement_mode
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+            (
+                name,
+                species,
+                uses_rfid,
+                num_animals,
+                num_groups,
+                cage_max,
+                measurement_type,
+                experiment_id,
+                investigators_str,
+                measurement,
+                organization,
+                cell_line,
+                strain,
+                calc_method,
+                tumors_per_animal,
+                tumor_labels_str,
+                measurement_mode,
+            ),
+        )
         self._conn.commit()
 
     def setup_groups(self, group_names, cage_capacity):
@@ -112,9 +290,10 @@ class ExperimentDatabase:
     def add_animal(self, animal_id, rfid, group_id, remarks=''):
         '''Adds animal to experiment.'''
         try:
-            self._c.execute('''INSERT INTO animals (animal_id, group_id, rfid, remarks, active)
-                            VALUES (?, ?, ?, ?, 1)''',
-                            (animal_id, group_id, rfid, remarks))
+            cage_id = self._assign_animal_to_cage(group_id)
+            self._c.execute('''INSERT INTO animals (animal_id, group_id, cage_id, rfid, remarks, active)
+                            VALUES (?, ?, ?, ?, ?, 1)''',
+                            (animal_id, group_id, cage_id, rfid, remarks))
 
             # Update group animal count
             self._c.execute('''UPDATE groups
@@ -122,6 +301,9 @@ class ExperimentDatabase:
                             WHERE group_id = ?''', (group_id,))
 
             self._conn.commit()
+            # Auto-create tumors for tumor-mode experiments
+            if self.get_measurement_mode() == "tumor":
+                self.ensure_tumors_for_animal(animal_id)
             return animal_id
         except sqlite3.Error as e:
             print(f"Error adding animal: {e}")
@@ -339,20 +521,17 @@ class ExperimentDatabase:
 
     def get_cages_by_group(self):
         '''Returns a dictionary of group IDs mapped to their cage information.'''
-        self._c.execute('''
-            SELECT group_id, name, cage_capacity
-            FROM groups
-        ''')
-        groups = self._c.fetchall()
-
-        # Create a simulated cage structure based on group capacity
+        self._c.execute(
+            '''
+            SELECT g.group_id, c.cage_id
+            FROM groups g
+            JOIN cages c ON c.group_id = g.group_id
+            ORDER BY g.group_id, c.cage_number
+            '''
+        )
         cages_by_group = {}
-        for group in groups:
-            group_id, _, capacity = group
-            # Create virtual cage IDs for the group based on capacity
-            num_cages = (self.get_group_animal_count(group_id) + capacity - 1) // capacity
-            cages_by_group[group_id] = list(range(1, num_cages + 1))
-
+        for group_id, cage_id in self._c.fetchall():
+            cages_by_group.setdefault(group_id, []).append(cage_id)
         return cages_by_group
 
     def get_group_animal_count(self, group_id):
@@ -371,7 +550,7 @@ class ExperimentDatabase:
         return result[0] if result else None
 
     def get_animals_in_cage(self, group_name):
-        '''Returns animals in a virtual cage based on group and cage number.'''
+        '''Returns animals in a group (legacy behavior).'''
         try:
             self._c.execute('''
                 SELECT animal_id
@@ -385,28 +564,50 @@ class ExperimentDatabase:
             print(f"Database error: {e}")
             return []
 
+    def get_cages(self):
+        """Return list of cages with group and label."""
+        self._c.execute(
+            '''
+            SELECT c.cage_id, c.group_id, c.cage_number, c.label, g.name
+            FROM cages c
+            JOIN groups g ON g.group_id = c.group_id
+            ORDER BY c.group_id, c.cage_number
+            '''
+        )
+        return self._c.fetchall()
+
+    def get_animals_in_cage_id(self, cage_id):
+        """Returns animals assigned to a specific cage_id."""
+        self._c.execute(
+            '''
+            SELECT animal_id
+            FROM animals
+            WHERE cage_id = ? AND active = 1
+            ORDER BY animal_id
+            ''',
+            (cage_id,),
+        )
+        return self._c.fetchall()
+
     def get_cage_assignments(self):
         '''Returns a dictionary of animal IDs mapped to their cage assignments.'''
         cage_assignments = {}
-        groups = self._c.execute('SELECT group_id, cage_capacity FROM groups').fetchall()
-
-        for group_id, capacity in groups:
-            animals = self._c.execute('''
-                SELECT animal_id
-                FROM animals
-                WHERE group_id = ? AND active = 1
-                ORDER BY animal_id
-            ''', (group_id,)).fetchall()
-
-            for i, animal in enumerate(animals):
-                cage_number = (i // capacity) + 1
-                cage_assignments[animal[0]] = (group_id, cage_number)
+        animals = self._c.execute(
+            '''
+            SELECT animal_id, group_id, cage_id
+            FROM animals
+            WHERE active = 1
+            ORDER BY animal_id
+            '''
+        ).fetchall()
+        for animal_id, group_id, cage_id in animals:
+            cage_assignments[animal_id] = (group_id, cage_id)
 
         return cage_assignments
 
     def get_groups(self):
         '''Returns a list of all group names in the database.'''
-        self._c.execute("SELECT name FROM groups")
+        self._c.execute("SELECT name FROM groups ORDER BY group_id")
         return [group[0] for group in self._c.fetchall()]
 
     def update_group_names(self, group_names):
@@ -426,9 +627,9 @@ class ExperimentDatabase:
         self._conn.commit()
 
     def get_animal_current_cage(self, animal_id):
-        '''Returns the current cage (group_id) for an animal'''
+        '''Returns the current cage_id for an animal'''
         self._c.execute('''
-            SELECT group_id
+            SELECT cage_id
             FROM animals
             WHERE animal_id = ? AND active = 1
         ''', (animal_id,))
@@ -436,7 +637,7 @@ class ExperimentDatabase:
         return result[0] if result else None
 
     def update_animal_cage(self, animal_id, new_group_id):
-        '''Updates an animal's cage assignment by updating its group_id'''
+        '''Updates an animal's cage assignment by updating its cage_id and group_id'''
         try:
             # Get current group_id
             self._c.execute('''
@@ -446,15 +647,29 @@ class ExperimentDatabase:
             ''', (animal_id,))
             old_group = self._c.fetchone()
 
+            # new_group_id is now a cage_id
+            cage_id = new_group_id
+            self._c.execute(
+                "SELECT group_id FROM cages WHERE cage_id = ?",
+                (cage_id,),
+            )
+            new_group_row = self._c.fetchone()
+            if not new_group_row:
+                return False
+            new_group_id = new_group_row[0]
+
             if old_group:
                 old_group_id = old_group[0]
 
-                # Update animal's group
-                self._c.execute('''
+                # Update animal's group + cage
+                self._c.execute(
+                    '''
                     UPDATE animals
-                    SET group_id = ?
+                    SET group_id = ?, cage_id = ?
                     WHERE animal_id = ? AND active = 1
-                ''', (new_group_id, animal_id))
+                    ''',
+                    (new_group_id, cage_id, animal_id),
+                )
 
                 # Update old group's count
                 self._c.execute('''
@@ -508,6 +723,199 @@ class ExperimentDatabase:
         '''Updates measurement_type in the experiment table.'''
         self._c.execute("UPDATE experiment SET measurement_type = ?", (measurement_type,))
         self._conn.commit()
+
+    def get_measurement_mode(self):
+        """Returns measurement mode: 'tumor' or 'weight'."""
+        self._c.execute("SELECT measurement_mode FROM experiment")
+        result = self._c.fetchone()
+        return result[0] if result and result[0] else "weight"
+
+    def set_measurement_mode(self, mode):
+        """Set measurement mode for experiment."""
+        self._c.execute("UPDATE experiment SET measurement_mode = ?", (mode,))
+        self._conn.commit()
+
+    def get_calc_method(self):
+        self._c.execute("SELECT calc_method FROM experiment")
+        result = self._c.fetchone()
+        return int(result[0]) if result and result[0] is not None else 0
+
+    def get_tumors_per_animal(self):
+        self._c.execute("SELECT tumors_per_animal FROM experiment")
+        result = self._c.fetchone()
+        return int(result[0]) if result and result[0] is not None else 1
+
+    def get_tumor_labels(self):
+        self._c.execute("SELECT tumor_labels FROM experiment")
+        result = self._c.fetchone()
+        if not result or not result[0]:
+            return ["Tumor 1"]
+        return [t.strip() for t in str(result[0]).split(",") if t.strip()]
+
+    def get_organization(self):
+        self._c.execute("SELECT organization FROM experiment")
+        result = self._c.fetchone()
+        return result[0] if result else None
+
+    def get_cell_line(self):
+        self._c.execute("SELECT cell_line FROM experiment")
+        result = self._c.fetchone()
+        return result[0] if result else None
+
+    def get_strain(self):
+        self._c.execute("SELECT strain FROM experiment")
+        result = self._c.fetchone()
+        return result[0] if result else None
+
+    def _assign_animal_to_cage(self, group_id):
+        """Assign animal to a cage within group, creating cages if needed."""
+        self._c.execute("SELECT cage_capacity FROM groups WHERE group_id = ?", (group_id,))
+        row = self._c.fetchone()
+        capacity = int(row[0]) if row and row[0] else 1
+
+        self._c.execute("SELECT COUNT(*) FROM animals WHERE group_id = ?", (group_id,))
+        count_row = self._c.fetchone()
+        existing_count = count_row[0] if count_row else 0
+        # Determine cage number for the next animal
+        cage_number = (existing_count // capacity) + 1
+
+        # Find existing cage
+        self._c.execute(
+            "SELECT cage_id FROM cages WHERE group_id = ? AND cage_number = ?",
+            (group_id, cage_number),
+        )
+        existing = self._c.fetchone()
+        if existing:
+            return existing[0]
+
+        # Create new cage
+        self._c.execute(
+            "INSERT INTO cages (group_id, cage_number, label) VALUES (?, ?, ?)",
+            (group_id, cage_number, f"Cage {cage_number}"),
+        )
+        return self._c.lastrowid
+
+    def ensure_tumors_for_animal(self, animal_id):
+        """Create tumors for animal if missing."""
+        self._c.execute("SELECT COUNT(*) FROM tumors WHERE animal_id = ?", (animal_id,))
+        count = self._c.fetchone()[0]
+        if count and count > 0:
+            return
+
+        self._c.execute("SELECT group_id, cage_id FROM animals WHERE animal_id = ?", (animal_id,))
+        row = self._c.fetchone()
+        if not row:
+            return
+        group_id, cage_id = row
+        tumors_per_animal = self.get_tumors_per_animal()
+        labels = self.get_tumor_labels()
+        # Pad labels if needed
+        while len(labels) < tumors_per_animal:
+            labels.append(f"Tumor {len(labels) + 1}")
+
+        for tumor_index in range(1, tumors_per_animal + 1):
+            measurement_order = (int(animal_id) - 1) * tumors_per_animal + tumor_index
+            self._c.execute(
+                '''INSERT INTO tumors (
+                    animal_id, group_id, cage_id, tumor_index, location_label,
+                    measurement_order, date_removed, censored
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+                (
+                    animal_id,
+                    group_id,
+                    cage_id,
+                    tumor_index,
+                    labels[tumor_index - 1],
+                    measurement_order,
+                    None,
+                    0,
+                ),
+            )
+        self._conn.commit()
+
+    def get_tumors_for_animal(self, animal_id):
+        self._c.execute(
+            '''SELECT tumor_id, tumor_index, location_label, measurement_order, date_removed, censored
+               FROM tumors
+               WHERE animal_id = ?
+               ORDER BY tumor_index''',
+            (animal_id,),
+        )
+        return self._c.fetchall()
+
+    def get_all_tumors(self):
+        self._c.execute(
+            '''SELECT tumor_id, animal_id, group_id, cage_id, tumor_index, location_label, measurement_order
+               FROM tumors
+               ORDER BY measurement_order'''
+        )
+        return self._c.fetchall()
+
+    def add_tumor_measurement(self, tumor_id, date_measured, length, width, status="measured"):
+        self._c.execute(
+            '''INSERT INTO tumor_measurements (tumor_id, date_measured, length, width, status)
+               VALUES (?, ?, ?, ?, ?)''',
+            (tumor_id, date_measured, length, width, status),
+        )
+        self._conn.commit()
+
+    def upsert_tumor_measurement(self, tumor_id, date_measured, length, width, status="measured"):
+        allowed = {"measured", "dead", "skipped", "censored"}
+        if status not in allowed:
+            status = "measured"
+        self._c.execute(
+            '''SELECT measurement_id FROM tumor_measurements
+               WHERE tumor_id = ? AND date_measured = ?''',
+            (tumor_id, date_measured),
+        )
+        row = self._c.fetchone()
+        if row:
+            self._c.execute(
+                '''UPDATE tumor_measurements
+                   SET length = ?, width = ?, status = ?
+                   WHERE tumor_id = ? AND date_measured = ?''',
+                (length, width, status, tumor_id, date_measured),
+            )
+        else:
+            self._c.execute(
+                '''INSERT INTO tumor_measurements (tumor_id, date_measured, length, width, status)
+                   VALUES (?, ?, ?, ?, ?)''',
+                (tumor_id, date_measured, length, width, status),
+            )
+        self._conn.commit()
+
+    def get_tumor_measurements_by_date(self, date_measured):
+        self._c.execute(
+            '''SELECT t.tumor_id, t.animal_id, t.group_id, t.cage_id, t.tumor_index,
+                      m.date_measured, m.length, m.width, m.status
+               FROM tumor_measurements m
+               JOIN tumors t ON t.tumor_id = m.tumor_id
+               WHERE m.date_measured = ?
+               ORDER BY t.measurement_order''',
+            (date_measured,),
+        )
+        return self._c.fetchall()
+
+    def get_tumor_measurement(self, tumor_id, date_measured):
+        self._c.execute(
+            '''SELECT length, width, status
+               FROM tumor_measurements
+               WHERE tumor_id = ? AND date_measured = ?''',
+            (tumor_id, date_measured),
+        )
+        return self._c.fetchone()
+
+    def get_tumor_measurements_for_group_date(self, group_id, date_measured):
+        self._c.execute(
+            '''SELECT t.tumor_id, t.animal_id, t.tumor_index, t.location_label,
+                      m.length, m.width, m.status
+               FROM tumor_measurements m
+               JOIN tumors t ON t.tumor_id = m.tumor_id
+               WHERE t.group_id = ? AND m.date_measured = ?
+               ORDER BY t.measurement_order''',
+            (group_id, date_measured),
+        )
+        return self._c.fetchall()
 
     def get_all_animal_ids(self):
         '''Returns a list of all active animal IDs that have RFIDs mapped to them.'''
@@ -722,6 +1130,7 @@ class ExperimentDatabase:
                 ''', (group_id,))
 
             self._conn.commit()
+            self._ensure_cages_for_groups()
             return True
 
         except Exception as e:
@@ -811,6 +1220,7 @@ class ExperimentDatabase:
                 use_largest = not use_largest
 
             self._conn.commit()
+            self._ensure_cages_for_groups()
             return True
 
         except Exception as e:
@@ -824,3 +1234,31 @@ class ExperimentDatabase:
                         WHERE name = ?''', (cage_name,))
         result = self._c.fetchone()
         return result[0] if result else None
+
+    def assign_cages_for_group(self, group_id):
+        """Rebuild cages for group and assign animals sequentially."""
+        self._c.execute("SELECT cage_capacity FROM groups WHERE group_id = ?", (group_id,))
+        row = self._c.fetchone()
+        capacity = int(row[0]) if row and row[0] else 1
+        self._c.execute("DELETE FROM cages WHERE group_id = ?", (group_id,))
+        self._c.execute(
+            "SELECT animal_id FROM animals WHERE group_id = ? AND active = 1 ORDER BY animal_id",
+            (group_id,),
+        )
+        animal_ids = [row[0] for row in self._c.fetchall()]
+        num_cages = max(1, (len(animal_ids) + capacity - 1) // capacity)
+        cage_ids = []
+        for cage_number in range(1, num_cages + 1):
+            self._c.execute(
+                "INSERT INTO cages (group_id, cage_number, label) VALUES (?, ?, ?)",
+                (group_id, cage_number, f"Cage {cage_number}"),
+            )
+            cage_ids.append(self._c.lastrowid)
+        for idx, animal_id in enumerate(animal_ids):
+            cage_idx = idx // capacity
+            cage_id = cage_ids[min(cage_idx, len(cage_ids) - 1)]
+            self._c.execute(
+                "UPDATE animals SET cage_id = ? WHERE animal_id = ?",
+                (cage_id, animal_id),
+            )
+        self._conn.commit()

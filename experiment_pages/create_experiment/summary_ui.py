@@ -97,8 +97,13 @@ class SummaryUI(MouserPage):
         details = {
             "Experiment Name": self.experiment.get_name(),
             "Investigators": ", ".join(self.experiment.get_investigators()),
+            "Organization": self.experiment.get_organization(),
             "Species": self.experiment.get_species(),
-            "Measurement Items": self.experiment.get_measurement_items(),
+            "Cell Line": self.experiment.get_cell_line(),
+            "Strain": self.experiment.get_strain(),
+            "Tumors per Animal": str(self.experiment.get_tumors_per_animal()),
+            "Tumor Labels": ", ".join(self.experiment.get_tumor_labels() or []),
+            "Calc Method": str(self.experiment.get_calc_method()),
             "Number of Animals": self.experiment.get_num_animals(),
             "Animals per Cage": self.experiment.get_max_animals(),
             "Group Names": ", ".join(self.experiment.group_names)

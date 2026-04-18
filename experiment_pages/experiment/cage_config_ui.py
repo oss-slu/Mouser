@@ -37,10 +37,10 @@ class CageConfigurationUI(MouserPage):
         self.cage_input = CTkEntry(input_frame, width=110)
 
         self.id_input.insert(END, 'animal id')
-        self.cage_input.insert(END, 'group id')
+        self.cage_input.insert(END, 'cage id')
 
         self.id_input.bind("<Button-1>", lambda arg='id': self.clear_entry(arg))
-        self.cage_input.bind("<Button-1>", lambda arg='group': self.clear_entry(arg))
+        self.cage_input.bind("<Button-1>", lambda arg='cage': self.clear_entry(arg))
 
         self.pad_x, self.pad_y = 10, 10
 
@@ -72,24 +72,27 @@ class CageConfigurationUI(MouserPage):
 
     def create_cage_layout(self):
         '''Creates the layout of all cages and their animals.'''
-        cages = self.db.get_groups()  # Each group represents a cage
+        cages = self.db.get_cages()
         label_style = CTkFont("Arial", 12)
 
-        for cage_name in cages:
+        for cage_id, group_id, cage_number, label, group_name in cages:
             cage_frame = CTkFrame(self.config_frame, border_width=3, border_color="#00e7ff", bg_color='#0097A7')
 
-            # Cage header - now a button instead of a label
+            display = f"Group: {group_name} | Cage {cage_number}"
+            if label:
+                display = f"{display} ({label})"
+
             cage_button = CTkButton(
                 cage_frame,
-                text=f'Group: {cage_name}',
-                command=lambda c=cage_name: self.select_cage(c),
+                text=display,
+                command=lambda c=cage_id: self.select_cage(c),
                 fg_color='#0097A7',
                 hover_color="#00b8d4",
                 text_color="white",
                 font=label_style
             )
             cage_button.pack(side=TOP, padx=self.pad_x, pady=self.pad_y, anchor='center')
-            self.cage_buttons[cage_name] = cage_button
+            self.cage_buttons[str(cage_id)] = cage_button
 
             # Create header frame for labels
             header_frame = CTkFrame(cage_frame)
@@ -97,7 +100,7 @@ class CageConfigurationUI(MouserPage):
             header_frame.pack(fill=X, padx=self.pad_x, pady=(0, 4))
 
             # Get and display animals in this cage using the database controller
-            animals = self.db.get_animals_in_group(cage_name)
+            animals = self.db.get_animals_in_cage_id(cage_id)
 
             if not animals:
                 empty_row = CTkLabel(
@@ -125,28 +128,28 @@ class CageConfigurationUI(MouserPage):
 
             cage_frame.pack(side=LEFT, expand=TRUE, fill=BOTH, anchor='center')
 
-    def select_cage(self, cage_name):
+    def select_cage(self, cage_id):
         '''Handles cage selection by updating the cage input field and visual feedback.'''
-        button = self.cage_buttons.get(cage_name)
+        button = self.cage_buttons.get(str(cage_id))
         if button:
-            if self.selected_cage == cage_name:
+            if self.selected_cage == cage_id:
                 # Deselect current cage
                 self.selected_cage = None
                 button.configure(fg_color="#0097A7")  # Reset to default blue
                 self.cage_input.delete(0, END)
                 self.cage_input.insert(0, 'cage id')
-                print(f"Deselected Group: {cage_name}")
+                print(f"Deselected Cage: {cage_id}")
             else:
                 # Deselect previous cage if any
-                if self.selected_cage and self.selected_cage in self.cage_buttons:
-                    self.cage_buttons[self.selected_cage].configure(fg_color="#0097A7")
+                if self.selected_cage and str(self.selected_cage) in self.cage_buttons:
+                    self.cage_buttons[str(self.selected_cage)].configure(fg_color="#0097A7")
 
                 # Select new cage
-                self.selected_cage = cage_name
+                self.selected_cage = cage_id
                 button.configure(fg_color="#D5E8D4")  # Selected state green
                 self.cage_input.delete(0, END)
-                self.cage_input.insert(0, cage_name)
-                print(f"Selected group: {cage_name}")
+                self.cage_input.insert(0, str(cage_id))
+                print(f"Selected cage: {cage_id}")
 
     def toggle_animal_selection(self, animal_id):
         '''Toggles the selection state of an animal.'''
@@ -229,13 +232,14 @@ class CageConfigurationUI(MouserPage):
             self.raise_warning("Please select a target cage.")
             return
 
-        target_cage = self.selected_cage  # The display name
-        target_group = self.db.get_cage_number(target_cage)  # The internal number
+        target_cage = self.selected_cage  # cage_id
 
         # Check if moving would exceed cage maximum
-        target_cage_count = len(self.db.get_animals_in_group(target_cage))
+        target_cage_count = len(self.db.get_animals_in_cage_id(target_cage))
         if target_cage_count + len(self.selected_animals) > self.db.get_cage_max():
-            self.raise_warning(f"Moving these animals would exceed the maximum capacity of {self.db.get_cage_max()}.")
+            self.raise_warning(
+                f"Moving these animals would exceed the maximum capacity of {self.db.get_cage_max()}."
+            )
             return
 
         # Track if any animals were actually moved
@@ -247,11 +251,11 @@ class CageConfigurationUI(MouserPage):
             current_cage = self.db.get_animal_current_cage(animal_id)
 
             # Skip if animal is already in target cage
-            if current_cage == target_group:
+            if current_cage == target_cage:
                 continue
 
-            # Perform the move using the database controller with internal group number
-            self.db.update_animal_cage(animal_id, target_group)
+            # Perform the move using the database controller with cage id
+            self.db.update_animal_cage(animal_id, target_cage)
             animals_moved = True
 
         if not animals_moved:

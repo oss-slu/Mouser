@@ -178,6 +178,13 @@ class ExperimentMenuUI(MouserPage):
         exp.set_name(db.get_experiment_name() or "")
         exp.set_num_groups(str(db.get_number_groups()))
         exp.set_group_names(db.get_groups() or [])
+        exp.set_organization(db.get_organization() or "")
+        exp.set_cell_line(db.get_cell_line() or "")
+        exp.set_strain(db.get_strain() or "")
+        exp.set_tumors_per_animal(db.get_tumors_per_animal())
+        exp.set_tumor_labels(db.get_tumor_labels())
+        exp.set_calc_method(db.get_calc_method())
+        exp.set_measurement_mode(db.get_measurement_mode())
 
         items = db.get_measurement_items()
         if items:
@@ -220,20 +227,30 @@ class ExperimentMenuUI(MouserPage):
 
     def open_data_collection(self):
         """Open Data Collection Page."""
-        from experiment_pages.experiment.data_collection_ui import (  # pylint: disable=import-error,import-outside-toplevel
-            DataCollectionUI,
-        )
-
-        page = DataCollectionUI(self.root, self, self.file_path, self.file_path)
+        if self.experiment_db.get_measurement_mode() == "tumor":
+            from experiment_pages.experiment.data_collection_tumor_ui import (  # pylint: disable=import-error,import-outside-toplevel
+                TumorDataCollectionUI,
+            )
+            page = TumorDataCollectionUI(self.root, self, self.file_path, self.file_path)
+        else:
+            from experiment_pages.experiment.data_collection_ui import (  # pylint: disable=import-error,import-outside-toplevel
+                DataCollectionUI,
+            )
+            page = DataCollectionUI(self.root, self, self.file_path, self.file_path)
         page.raise_frame()
 
     def open_data_analysis(self):
         """Open Data Analysis Page."""
-        from experiment_pages.experiment.data_analysis_ui import (  # pylint: disable=import-error,import-outside-toplevel
-            DataAnalysisUI,
-        )
-
-        page = DataAnalysisUI(self.root, self, self.file_path)
+        if self.experiment_db.get_measurement_mode() == "tumor":
+            from experiment_pages.experiment.data_analysis_tumor_ui import (  # pylint: disable=import-error,import-outside-toplevel
+                TumorDataAnalysisUI,
+            )
+            page = TumorDataAnalysisUI(self.root, self, self.file_path)
+        else:
+            from experiment_pages.experiment.data_analysis_ui import (  # pylint: disable=import-error,import-outside-toplevel
+                DataAnalysisUI,
+            )
+            page = DataAnalysisUI(self.root, self, self.file_path)
         page.raise_frame()
 
     def open_map_rfid(self):

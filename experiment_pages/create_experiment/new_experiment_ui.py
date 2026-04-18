@@ -94,28 +94,48 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         ).grid(row=1, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
         CTkLabel(
             self.main_frame,
+            text="Organization",
+        ).grid(row=1, column=2, sticky=W, padx=pad_x, pady=(pad_y, 2))
+        CTkLabel(
+            self.main_frame,
             text="Species",
         ).grid(row=3, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
         CTkLabel(
             self.main_frame,
-            text="Measurement Items",
+            text="Cell Line",
         ).grid(row=4, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
         CTkLabel(
             self.main_frame,
-            text="RFID",
+            text="Strain",
+        ).grid(row=5, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
+        CTkLabel(
+            self.main_frame,
+            text="Tumors per Animal",
         ).grid(row=6, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
         CTkLabel(
             self.main_frame,
-            text="Number of Animals",
+            text="Tumor Labels (comma-separated)",
         ).grid(row=7, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
         CTkLabel(
             self.main_frame,
-            text="Number of Groups",
+            text="Calc Method (0-10)",
         ).grid(row=8, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
         CTkLabel(
             self.main_frame,
-            text="Max Animals per Cage",
+            text="RFID",
         ).grid(row=9, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
+        CTkLabel(
+            self.main_frame,
+            text="Number of Animals",
+        ).grid(row=10, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
+        CTkLabel(
+            self.main_frame,
+            text="Number of Groups",
+        ).grid(row=11, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
+        CTkLabel(
+            self.main_frame,
+            text="Max Animals per Cage",
+        ).grid(row=12, column=0, sticky=W, padx=pad_x, pady=(pad_y, 2))
 
         # ----------------------------
         # Input Fields
@@ -123,12 +143,13 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         self.exper_name = CTkEntry(self.main_frame, width=180)
         self.password = CTkEntry(self.main_frame, width=160, show="*")
         self.investigators = CTkEntry(self.main_frame, width=180)
+        self.organization = CTkEntry(self.main_frame, width=160)
         self.species = CTkEntry(self.main_frame, width=180)
-        self.measure_items = CTkEntry(
-            self.main_frame,
-            width=180,
-            textvariable=StringVar(value="Weight"),
-        )
+        self.cell_line = CTkEntry(self.main_frame, width=180)
+        self.strain = CTkEntry(self.main_frame, width=180)
+        self.tumors_per_animal = CTkEntry(self.main_frame, width=140)
+        self.tumor_labels = CTkEntry(self.main_frame, width=260)
+        self.calc_method = CTkEntry(self.main_frame, width=140)
         self.animal_num = CTkEntry(self.main_frame, width=140)
         self.group_num = CTkEntry(self.main_frame, width=140)
         self.num_per_cage = CTkEntry(self.main_frame, width=140)
@@ -154,6 +175,13 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
             padx=pad_x,
             pady=(2, pad_y),
         )
+        self.organization.grid(
+            row=1,
+            column=3,
+            sticky=W,
+            padx=pad_x,
+            pady=(2, pad_y),
+        )
         self.species.grid(
             row=3,
             column=1,
@@ -161,29 +189,60 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
             padx=pad_x,
             pady=(2, pad_y),
         )
-        self.measure_items.grid(
+        self.cell_line.grid(
             row=4,
             column=1,
             sticky=W,
             padx=pad_x,
             pady=(2, pad_y),
         )
-        self.animal_num.grid(
+        self.strain.grid(
+            row=5,
+            column=1,
+            sticky=W,
+            padx=pad_x,
+            pady=(2, pad_y),
+        )
+        self.tumors_per_animal.grid(
+            row=6,
+            column=1,
+            sticky=W,
+            padx=pad_x,
+            pady=(2, pad_y),
+        )
+        self.tumors_per_animal.insert(0, "1")
+        self.tumor_labels.grid(
             row=7,
             column=1,
             sticky=W,
             padx=pad_x,
             pady=(2, pad_y),
         )
-        self.group_num.grid(
+        self.tumor_labels.insert(0, "Tumor 1")
+        self.calc_method.grid(
             row=8,
             column=1,
             sticky=W,
             padx=pad_x,
             pady=(2, pad_y),
         )
+        self.calc_method.insert(0, "0")
+        self.animal_num.grid(
+            row=10,
+            column=1,
+            sticky=W,
+            padx=pad_x,
+            pady=(2, pad_y),
+        )
+        self.group_num.grid(
+            row=11,
+            column=1,
+            sticky=W,
+            padx=pad_x,
+            pady=(2, pad_y),
+        )
         self.num_per_cage.grid(
-            row=9,
+            row=12,
             column=1,
             sticky=W,
             padx=pad_x,
@@ -218,7 +277,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         # ----------------------------
         self.rfid = BooleanVar(value=True)
         self.rfid_frame = CTkFrame(self.main_frame, fg_color="transparent")
-        self.rfid_frame.grid(row=6, column=1, sticky="w")
+        self.rfid_frame.grid(row=9, column=1, sticky="w")
         CTkRadioButton(
             self.rfid_frame,
             text="Yes",
@@ -232,7 +291,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
             value=0,
         ).grid(row=0, column=1, padx=pad_x, pady=pad_y)
 
-        for i in range(0, 10):
+        for i in range(0, 13):
             self.main_frame.grid_rowconfigure(i, weight=0)
             self.main_frame.grid_columnconfigure(i, weight=1)
 
@@ -275,7 +334,9 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
             self.exper_name,
             self.password,
             self.species,
-            self.measure_items,
+            self.tumors_per_animal,
+            self.tumor_labels,
+            self.calc_method,
             self.animal_num,
             self.group_num,
             self.num_per_cage,
@@ -295,6 +356,9 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         required = [
             self.exper_name.get().strip(),
             self.species.get().strip(),
+            self.tumors_per_animal.get().strip(),
+            self.tumor_labels.get().strip(),
+            self.calc_method.get().strip(),
             self.animal_num.get().strip(),
             self.group_num.get().strip(),
             self.num_per_cage.get().strip(),
@@ -377,6 +441,8 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
                 "Unequal Group Size: Please ensure total animals "
                 "≤ group capacity."
             ),
+            5: "Tumors per animal must be between 1 and 4.",
+            6: "Calc method must be an integer between 0 and 10.",
         }
         CTkLabel(
             message,
@@ -404,6 +470,10 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
             ]
         ):
             self.raise_warning(2)
+        elif not self.tumors_per_animal.get().isdigit() or not (1 <= int(self.tumors_per_animal.get()) <= 4):
+            self.raise_warning(5)
+        elif not self.calc_method.get().isdigit() or not (0 <= int(self.calc_method.get()) <= 10):
+            self.raise_warning(6)
         elif int(self.animal_num.get()) == 0 or int(self.group_num.get()) == 0:
             self.raise_warning(2)
         elif int(self.animal_num.get()) > (
@@ -429,7 +499,15 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         self.input.set_investigators(investigators)
 
         self.input.set_species(self.species.get())
-        self.input.set_measurement_item(self.measure_items.get())
+        self.input.set_organization(self.organization.get())
+        self.input.set_cell_line(self.cell_line.get())
+        self.input.set_strain(self.strain.get())
+        self.input.set_tumors_per_animal(self.tumors_per_animal.get())
+        labels = [s.strip() for s in self.tumor_labels.get().split(",") if s.strip()]
+        self.input.set_tumor_labels(labels if labels else ["Tumor 1"])
+        self.input.set_calc_method(self.calc_method.get())
+        self.input.set_measurement_item("Tumor")
+        self.input.set_measurement_mode("tumor")
         self.input.set_uses_rfid(self.rfid.get())
         self.input.set_num_animals(self.animal_num.get())
         self.input.set_num_groups(self.group_num.get())

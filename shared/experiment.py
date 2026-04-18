@@ -11,6 +11,9 @@ class Experiment():
         self.name = ''
         self.investigators = []
         self.species = ''
+        self.organization = ''
+        self.cell_line = ''
+        self.strain = ''
         self.item = ''
         self.id = ''
         self.rfid = False
@@ -20,6 +23,10 @@ class Experiment():
         self.animals_per_group = ''
         self.group_names = []
         self.data_collect_type = int
+        self.calc_method = 0
+        self.tumors_per_animal = 1
+        self.tumor_labels = ["Tumor 1"]
+        self.measurement_mode = "tumor"
         self.date_created = str(date.today())
         self.password = None
 
@@ -38,9 +45,30 @@ class Experiment():
         '''Sets species.'''
         self.species = species
 
+    def set_organization(self, organization):
+        self.organization = organization
+
+    def set_cell_line(self, cell_line):
+        self.cell_line = cell_line
+
+    def set_strain(self, strain):
+        self.strain = strain
+
     def set_measurement_item(self, items):
         '''Sets measurement items.'''
         self.item = items
+
+    def set_calc_method(self, calc_method):
+        self.calc_method = int(calc_method)
+
+    def set_tumors_per_animal(self, tumors_per_animal):
+        self.tumors_per_animal = int(tumors_per_animal)
+
+    def set_tumor_labels(self, tumor_labels):
+        self.tumor_labels = tumor_labels
+
+    def set_measurement_mode(self, mode):
+        self.measurement_mode = mode
 
     def set_uses_rfid(self, rfid):
         '''Sets if experiment uses rfid.'''
@@ -105,6 +133,27 @@ class Experiment():
         '''Returns the list of measurement items of the experiment.'''
         return self.item
 
+    def get_organization(self):
+        return self.organization
+
+    def get_cell_line(self):
+        return self.cell_line
+
+    def get_strain(self):
+        return self.strain
+
+    def get_calc_method(self):
+        return self.calc_method
+
+    def get_tumors_per_animal(self):
+        return self.tumors_per_animal
+
+    def get_tumor_labels(self):
+        return self.tumor_labels
+
+    def get_measurement_mode(self):
+        return self.measurement_mode
+
     def uses_rfid(self):
         '''Returns if experiment uses RFID.'''
         return self.rfid
@@ -143,6 +192,25 @@ class Experiment():
 
     def save_to_database(self, directory: str):
         '''Saves experiment object to a file.'''
+        # Hard validation + normalization
+        try:
+            tumors_per_animal = int(self.tumors_per_animal)
+        except Exception:
+            tumors_per_animal = 1
+        tumors_per_animal = max(1, min(4, tumors_per_animal))
+
+        try:
+            calc_method = int(self.calc_method)
+        except Exception:
+            calc_method = 0
+        calc_method = max(0, min(10, calc_method))
+
+        labels = [str(s).strip() for s in (self.tumor_labels or []) if str(s).strip()]
+        while len(labels) < tumors_per_animal:
+            labels.append(f"Tumor {len(labels) + 1}")
+        if len(labels) > tumors_per_animal:
+            labels = labels[:tumors_per_animal]
+
         if self.password:
             file = directory + '/' + self.name + '.pmouser'
         else:
@@ -164,7 +232,14 @@ class Experiment():
             measurement_type=self.data_collect_type,
             experiment_id=self.id,
             investigators=self.investigators,
-            measurement=self.item
+            measurement=self.item,
+            organization=self.organization,
+            cell_line=self.cell_line,
+            strain=self.strain,
+            calc_method=calc_method,
+            tumors_per_animal=tumors_per_animal,
+            tumor_labels=labels,
+            measurement_mode=self.measurement_mode,
         )
         
         # Setup groups with cage capacity

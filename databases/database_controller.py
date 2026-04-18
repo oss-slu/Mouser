@@ -20,8 +20,8 @@ class DatabaseController():
         animals_in_cage = {}
 
         # Group animals by their assigned cage
-        for animal_id, (cage_number) in cage_assignments.items():
-            cage_key = str(cage_number)
+        for animal_id, (_group_id, cage_id) in cage_assignments.items():
+            cage_key = str(cage_id)
             if cage_key not in animals_in_cage:
                 animals_in_cage[cage_key] = []
             animals_in_cage[cage_key].append(str(animal_id))
@@ -50,6 +50,10 @@ class DatabaseController():
         '''Returns a list of all group names in the database.'''
         return self.db.get_groups()
 
+    def get_cages(self):
+        """Returns list of cages with metadata."""
+        return self.db.get_cages()
+
     def get_num_cages(self):
         '''Returns the number of cages across all groups.'''
         total_cages = 0
@@ -66,6 +70,10 @@ class DatabaseController():
     def get_animals_in_group(self, group_name):
         '''Returns list of animals in a given group/cage'''
         return self.db.get_animals_in_cage(group_name)
+
+    def get_animals_in_cage_id(self, cage_id):
+        """Returns list of animals in a specific cage."""
+        return self.db.get_animals_in_cage_id(cage_id)
 
     def get_measurement_items(self):
         '''Returns a list of all measurement items in the database.'''
@@ -143,5 +151,4 @@ class DatabaseController():
     def close(self):
         '''Closes the database file.'''
         self.db.close()
-
 
