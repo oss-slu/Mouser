@@ -2,9 +2,11 @@
 """Data exporting and analysis page."""
 
 import os
+from datetime import datetime, timedelta
 from collections import defaultdict
 from tkinter import filedialog
 from tkinter.ttk import Treeview, Style
+from PIL import Image, ImageDraw
 
 from customtkinter import (
     CTkButton,
@@ -13,7 +15,12 @@ from customtkinter import (
     CTkLabel,
     CTkScrollbar,
     CTkToplevel,
+    CTkOptionMenu,
+    CTkScrollableFrame,
     CENTER,
+    CTkFont,
+    CTkImage,
+    get_appearance_mode,
 )
 
 from shared.tk_models import MouserPage, get_ui_metrics
@@ -25,11 +32,84 @@ from shared.file_utils import SUCCESS_SOUND
 class DataAnalysisUI(MouserPage):
     """Data exporting UI with table and weight trend graph."""
 
+    @staticmethod
+    def _draw_export_icon(color: str, size: int) -> Image.Image:
+        image = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(image)
+        stroke = max(2, size // 10)
+        mid = size // 2
+        top = size // 5
+        bottom = size - size // 4
+
+        # Arrow shaft
+        draw.line((mid, top, mid, bottom - stroke), fill=color, width=stroke)
+        # Arrow head
+        head = size // 4
+        draw.polygon(
+            [(mid - head // 2, bottom - head), (mid + head // 2, bottom - head), (mid, bottom)],
+            fill=color,
+        )
+        # Tray
+        tray_y = size - size // 6
+        margin = size // 4
+        draw.rounded_rectangle(
+            (margin, tray_y - stroke * 2, size - margin, tray_y + stroke * 2),
+            radius=stroke * 2,
+            outline=color,
+            width=stroke,
+        )
+        return image
+
+    @staticmethod
+    def _draw_refresh_icon(color: str, size: int) -> Image.Image:
+        image = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(image)
+        stroke = max(2, size // 10)
+        pad = size // 5
+        box = (pad, pad, size - pad, size - pad)
+        # Arc
+        draw.arc(box, start=40, end=330, fill=color, width=stroke)
+        # Arrow head (near top-right)
+        tip_x = size - pad
+        tip_y = pad + stroke
+        head = size // 5
+        draw.polygon(
+            [
+                (tip_x, tip_y),
+                (tip_x - head, tip_y + head // 3),
+                (tip_x - head // 3, tip_y + head),
+            ],
+            fill=color,
+        )
+        return image
+
     def __init__(self, parent, prev_page=None, db_file=None):
         super().__init__(parent, "Data Exporting", prev_page)
         ui = get_ui_metrics()
         self.db_file = db_file
         self.ui = ui
+        is_dark = get_appearance_mode().lower() == "dark"
+
+        def _pick(color_value):
+            if isinstance(color_value, (tuple, list)) and len(color_value) >= 2:
+                return color_value[1] if is_dark else color_value[0]
+            return color_value
+
+        self._pick = _pick
+        self._palette = {
+            "page_bg": ("#eef2ff", "#0b1220"),
+            "card_bg": ("#ffffff", "#101827"),
+            "card_border": ("#c7d2fe", "#22304a"),
+            "text": ("#0f172a", "#e5e7eb"),
+            "muted_text": ("#334155", "#cbd5e1"),
+            "table_bg": ("#ffffff", "#0b1220"),
+            "table_alt_bg": ("#f8fafc", "#0f172a"),
+            "table_header_bg": ("#e0f2fe", "#1e293b"),
+            "table_header_fg": ("#0f172a", "#e5e7eb"),
+            "table_selected_bg": ("#dbeafe", "#1d4ed8"),
+            "table_selected_fg": ("#111827", "#ffffff"),
+        }
+        self.configure(fg_color=self._palette["page_bg"])
         self.chart_colors = [
             "#2563eb",
             "#dc2626",
@@ -40,96 +120,341 @@ class DataAnalysisUI(MouserPage):
             "#be123c",
         ]
         self._export_notice = None
+        self._range_days = None  # None = All
 
-        self.main_frame = CTkFrame(
-            self,
-            corner_radius=16,
-            fg_color=("white", "#27272a"),
+        # Top bar
+        top_bar = CTkFrame(self, fg_color=self._palette["card_bg"], corner_radius=0, height=84)
+        top_bar.place(relx=0.0, rely=0.0, relwidth=1.0)
+        CTkFrame(top_bar, fg_color=_pick(self._palette["card_border"]), height=1).pack(side="bottom", fill="x")
+
+        if hasattr(self, "menu_button") and self.menu_button:
+            try:
+                self.menu_button.configure(
+                    corner_radius=12,
+                    height=40,
+                    width=54,
+                    text="⬅",
+                    font=("Segoe UI Semibold", 20),
+                    text_color="white",
+                    fg_color="#f59e0b",
+                    hover_color="#d97706",
+                )
+                self.menu_button.place_configure(in_=top_bar, relx=0.0, rely=0.0, x=16, y=22, anchor="nw")
+            except Exception:
+                pass
+
+        # Sidebar owns Refresh/Export buttons (functional).
+
+        # Body layout (content + sidebar)
+        body = CTkFrame(self, fg_color="transparent")
+        body.place(relx=0.5, rely=0.0, y=88, anchor="n", relwidth=0.94, relheight=0.90)
+        body.grid_rowconfigure(0, weight=1)
+        body.grid_columnconfigure(0, weight=4)
+        body.grid_columnconfigure(1, weight=1)
+
+        self.left_panel = CTkFrame(body, fg_color="transparent")
+        self.left_panel.grid(row=0, column=0, sticky="nsew", padx=(0, 16))
+        self.left_panel.grid_columnconfigure(0, weight=1)
+        self.left_panel.grid_rowconfigure(0, weight=0)  # header
+        self.left_panel.grid_rowconfigure(1, weight=0)  # tiles
+        self.left_panel.grid_rowconfigure(2, weight=0)  # chart
+        self.left_panel.grid_rowconfigure(3, weight=0)  # table
+        self.left_panel.grid_rowconfigure(4, weight=1)  # spacer
+
+        self.sidebar = CTkFrame(body, fg_color="transparent")
+        self.sidebar.grid(row=0, column=1, sticky="nsew")
+        self.sidebar.grid_columnconfigure(0, weight=1)
+        self.sidebar.grid_rowconfigure(2, weight=1)
+
+        # Header
+        left_header = CTkFrame(self.left_panel, fg_color="transparent")
+        left_header.grid(row=0, column=0, sticky="ew", pady=(0, 6))
+
+        title_row = CTkFrame(left_header, fg_color="transparent")
+        title_row.pack(anchor="w")
+        CTkLabel(
+            title_row,
+            text="📈",
+            font=CTkFont("Segoe UI Semibold", 18),
+            text_color=self._palette["text"],
+            width=0,
+        ).pack(side="left", padx=(0, 8))
+        CTkLabel(
+            title_row,
+            text="Data analysis",
+            font=CTkFont("Segoe UI Semibold", 24),
+            text_color=self._palette["text"],
+        ).pack(side="left")
+        CTkLabel(
+            left_header,
+            text="Export and visualize weight trends",
+            font=CTkFont("Segoe UI", 12),
+            text_color=self._palette["muted_text"],
+        ).pack(anchor="w", pady=(2, 0))
+
+        # Summary tiles (Animals / Dates / Points / Latest date)
+        stats_row = CTkFrame(self.left_panel, fg_color="transparent")
+        stats_row.grid(row=1, column=0, sticky="ew", pady=(0, 10))
+        for col in range(4):
+            stats_row.grid_columnconfigure(col, weight=1, uniform="stats")
+
+        def _stat_tile(col_index, title, value_color, tile_bg, tile_border):
+            tile = CTkFrame(
+                stats_row,
+                fg_color=_pick(tile_bg),
+                corner_radius=14,
+                border_width=1,
+                border_color=_pick(tile_border),
+            )
+            tile.grid(row=0, column=col_index, sticky="ew", padx=6, pady=0)
+            CTkLabel(
+                tile,
+                text=title,
+                font=CTkFont("Segoe UI", 12),
+                text_color=self._palette["muted_text"],
+                anchor="w",
+            ).pack(fill="x", padx=14, pady=(12, 0))
+            value_label = CTkLabel(
+                tile,
+                text="--",
+                font=CTkFont("Segoe UI Semibold", 26),
+                text_color=value_color,
+                anchor="w",
+            )
+            value_label.pack(fill="x", padx=14, pady=(2, 12))
+            return value_label
+
+        self.animals_value = _stat_tile(
+            0,
+            "Animals",
+            _pick(self._palette["text"]),
+            ("#f1f5f9", "#0f172a"),
+            ("#94a3b8", "#475569"),
+        )
+        self.dates_value = _stat_tile(
+            1,
+            "Dates",
+            ("#2563eb", "#60a5fa"),
+            ("#eef2ff", "#111827"),
+            ("#818cf8", "#818cf8"),
+        )
+        self.points_value = _stat_tile(
+            2,
+            "Points",
+            ("#16a34a", "#34d399"),
+            ("#ecfdf5", "#042f2e"),
+            ("#34d399", "#34d399"),
+        )
+        self.latest_value = _stat_tile(
+            3,
+            "Latest",
+            ("#a16207", "#fbbf24"),
+            ("#fffbeb", "#2e1f0a"),
+            ("#f59e0b", "#f59e0b"),
+        )
+
+        # Summary label kept for compatibility but hidden (tiles show stats).
+        self.summary_label = CTkLabel(
+            self.left_panel,
+            text="",
+            font=CTkFont("Segoe UI", 12),
+            text_color=_pick(self._palette["muted_text"]),
+        )
+
+        CTkFrame(self.left_panel, fg_color="transparent").grid(row=4, column=0, sticky="nsew")
+
+        # Sidebar controls
+        sidebar_card = CTkFrame(
+            self.sidebar,
+            fg_color=self._palette["card_bg"],
+            corner_radius=14,
             border_width=1,
-            border_color="#d1d5db",
+            border_color=self._palette["card_border"],
         )
-        self.main_frame.place(relx=0.53, rely=0.58, relwidth=0.82, relheight=0.78, anchor=CENTER)
-        self.main_frame.grid_columnconfigure(0, weight=1)
-        self.main_frame.grid_rowconfigure(2, weight=3)
-        self.main_frame.grid_rowconfigure(3, weight=4)
+        sidebar_card.grid(row=0, column=0, sticky="ew", pady=(0, 12))
+        sidebar_card.grid_columnconfigure(0, weight=1)
 
-        title_label = CTkLabel(
-            self.main_frame,
-            text="Data Analysis & Export",
-            font=("Arial", 24, "bold"),
-            text_color=("#111827", "#e5e7eb"),
-        )
-        title_label.grid(row=0, column=0, padx=18, pady=(16, 8), sticky="w")
-
-        controls = CTkFrame(self.main_frame, fg_color="transparent")
-        controls.grid(row=1, column=0, padx=16, pady=(2, 8), sticky="ew")
-        controls.grid_columnconfigure(2, weight=1)
+        CTkLabel(
+            sidebar_card,
+            text="Controls",
+            font=CTkFont("Segoe UI Semibold", 14),
+            text_color=self._palette["text"],
+        ).grid(row=0, column=0, sticky="w", padx=14, pady=(12, 6))
 
         self.export_button = CTkButton(
-            controls,
-            text="Export Data to CSV",
-            command=self.export_to_csv,
-            width=ui["action_width"],
-            height=ui["action_height"],
-            font=("Segoe UI Semibold", ui["action_font_size"]),
+            sidebar_card,
+            text="⭳  Export CSV",
+            height=42,
+            corner_radius=12,
             fg_color="#2563eb",
             hover_color="#1e40af",
             text_color="white",
+            font=CTkFont("Segoe UI Semibold", 16),
+            command=self.export_to_csv,
         )
-        self.export_button.grid(row=0, column=0, padx=(0, 10), pady=4, sticky="w")
+        self.export_button.grid(row=1, column=0, sticky="ew", padx=14, pady=(0, 8))
 
         self.refresh_button = CTkButton(
-            controls,
-            text="Refresh View",
+            sidebar_card,
+            text="⟲  Refresh",
+            height=42,
+            corner_radius=12,
+            fg_color=self._palette["card_bg"],
+            hover_color=self._pick(self._palette["table_alt_bg"]),
+            border_width=1,
+            border_color=self._pick(self._palette["card_border"]),
+            text_color=self._pick(self._palette["text"]),
+            font=CTkFont("Segoe UI Semibold", 16),
             command=self.refresh_analysis_view,
-            width=ui["action_width"],
-            height=ui["action_height"],
-            font=("Segoe UI Semibold", ui["action_font_size"]),
-            fg_color="#2563eb",
-            hover_color="#1e40af",
-            text_color="white",
         )
-        self.refresh_button.grid(row=0, column=1, padx=(0, 10), pady=4, sticky="w")
+        self.refresh_button.grid(row=2, column=0, sticky="ew", padx=14, pady=(0, 12))
 
-        self.summary_label = CTkLabel(
-            controls,
-            text="",
-            font=("Arial", 14),
-            text_color=("#374151", "#d1d5db"),
+        device_card = CTkFrame(
+            self.sidebar,
+            fg_color=self._palette["card_bg"],
+            corner_radius=14,
+            border_width=1,
+            border_color=self._palette["card_border"],
         )
-        self.summary_label.grid(row=0, column=2, padx=8, pady=4, sticky="e")
+        device_card.grid(row=1, column=0, sticky="ew")
+        device_card.grid_columnconfigure(0, weight=1)
 
-        self._build_table_section()
-        self._build_chart_section()
+        CTkLabel(
+            device_card,
+            text="Device / Measurement",
+            font=CTkFont("Segoe UI Semibold", 14),
+            text_color=self._palette["text"],
+        ).grid(row=0, column=0, sticky="w", padx=14, pady=(12, 6))
+
+        self._measurement_choices = self._get_measurement_choices()
+        self._selected_measurement_key = self._measurement_choices[0]["key"] if self._measurement_choices else "weight"
+        self._selected_measurement_id = self._measurement_choices[0]["id"] if self._measurement_choices else 1
+        self._selected_measurement_label = self._measurement_choices[0]["label"] if self._measurement_choices else "Weight"
+
+        self.device_menu = CTkOptionMenu(
+            device_card,
+            values=[c["label"] for c in self._measurement_choices] or ["Weight"],
+            command=self._on_device_selected,
+            fg_color=self._palette["card_bg"],
+            button_color=self._pick(self._palette["table_alt_bg"]),
+            button_hover_color=self._pick(self._palette["table_selected_bg"]),
+            text_color=self._pick(self._palette["text"]),
+            dropdown_fg_color=self._pick(self._palette["card_bg"]),
+            dropdown_text_color=self._pick(self._palette["text"]),
+            dropdown_hover_color=self._pick(self._palette["table_alt_bg"]),
+            font=CTkFont("Segoe UI", 12),
+        )
+        self.device_menu.grid(row=1, column=0, sticky="ew", padx=14, pady=(0, 14))
+
+        self._build_chart_section(parent=self.left_panel)
+        self._build_table_section(parent=self.left_panel)
         self.refresh_analysis_view()
 
-    def _build_table_section(self):
+    def _split_measurements(self, raw_value):
+        if raw_value is None:
+            return []
+        text = str(raw_value).strip()
+        if not text:
+            return []
+        parts = [p.strip() for p in text.replace("\n", ",").split(",")]
+        return [p for p in parts if p]
+
+    def _get_measurement_choices(self):
+        """Build measurement choices from the experiment's measurement string (UI only)."""
+        if not self.db_file or not os.path.exists(self.db_file):
+            return [{"key": "weight", "label": "Weight", "id": 1}]
+
+        try:
+            db = ExperimentDatabase(self.db_file)
+            measurement_name = db.get_measurement_items()
+            if isinstance(measurement_name, (list, tuple)):
+                measurement_name = measurement_name[0] if measurement_name else None
+        except Exception:
+            measurement_name = None
+
+        items = self._split_measurements(measurement_name)
+        if not items:
+            items = ["weight"]
+
+        choices = []
+        for idx, item in enumerate(items, start=1):
+            key = str(item).strip().lower()
+            label = str(item).strip() or f"Measurement {idx}"
+            if key == "caliper":
+                label = "Caliper (Length)"
+            elif key == "weight":
+                label = "Balance (Weight)"
+            choices.append({"key": key, "label": label, "id": idx})
+        return choices
+
+    def _on_device_selected(self, selected_label):
+        for choice in self._measurement_choices:
+            if choice["label"] == selected_label:
+                self._selected_measurement_key = choice["key"]
+                self._selected_measurement_id = choice["id"]
+                self._selected_measurement_label = choice["label"]
+                break
+        self.refresh_analysis_view()
+
+    def _build_table_section(self, parent):
         table_card = CTkFrame(
-            self.main_frame,
-            fg_color=("white", "#18181b"),
-            corner_radius=12,
+            parent,
+            fg_color=self._palette["card_bg"],
+            corner_radius=14,
             border_width=1,
-            border_color="#d1d5db",
+            border_color=self._pick(self._palette["card_border"]),
         )
-        table_card.grid(row=2, column=0, padx=16, pady=(4, 10), sticky="nsew")
+        table_card.grid(row=3, column=0, sticky="ew")
         table_card.grid_columnconfigure(0, weight=1)
         table_card.grid_rowconfigure(0, weight=1)
 
+        # Inset helps the rounded border look clean around a ttk Treeview (square corners).
+        table_inset = CTkFrame(
+            table_card,
+            fg_color=self._pick(self._palette["table_bg"]),
+            corner_radius=12,
+            border_width=0,
+        )
+        table_inset.grid(row=0, column=0, sticky="ew", padx=7, pady=7)
+        table_inset.grid_columnconfigure(0, weight=1)
+        table_inset.grid_rowconfigure(0, weight=1)
+
         style = Style()
+        try:
+            if style.theme_use() in {"vista", "xpnative"}:
+                style.theme_use("clam")
+        except Exception:
+            pass
         style.configure(
             "Export.Treeview",
-            font=("Arial", self.ui["table_font_size"]),
+            background=self._pick(self._palette["table_bg"]),
+            fieldbackground=self._pick(self._palette["table_bg"]),
+            foreground=self._pick(self._palette["text"]),
+            font=("Segoe UI", max(12, self.ui["table_font_size"])),
             rowheight=self.ui["table_row_height"] + 2,
+            borderwidth=0,
         )
-        style.configure("Export.Treeview.Heading", font=("Arial", self.ui["table_font_size"], "bold"))
-        style.map("Export.Treeview", background=[("selected", "#bfdbfe")], foreground=[("selected", "#111827")])
+        style.configure(
+            "Export.Treeview.Heading",
+            background=self._pick(self._palette["table_header_bg"]),
+            foreground=self._pick(self._palette["table_header_fg"]),
+            font=("Segoe UI Semibold", max(12, self.ui["table_font_size"])),
+            relief="flat",
+            padding=(10, 6),
+        )
+        style.map(
+            "Export.Treeview",
+            background=[("selected", self._pick(self._palette["table_selected_bg"]))],
+            foreground=[("selected", self._pick(self._palette["table_selected_fg"]))],
+        )
 
         self.table = Treeview(
-            table_card,
+            table_inset,
             columns=("date", "animal_id", "weight"),
             show="headings",
             style="Export.Treeview",
             selectmode="browse",
+            height=8,
         )
         self.table.heading("date", text="Date", anchor="center")
         self.table.heading("animal_id", text="Animal ID", anchor="center")
@@ -139,50 +464,242 @@ class DataAnalysisUI(MouserPage):
         self.table.column("weight", width=170, anchor="center", stretch=True)
         self.table.grid(row=0, column=0, sticky="nsew")
 
-        scrollbar = CTkScrollbar(table_card, orientation="vertical", command=self.table.yview)
-        self.table.configure(yscrollcommand=scrollbar.set)
-        scrollbar.grid(row=0, column=1, sticky="ns")
+        try:
+            self.table.tag_configure("odd", background=self._pick(self._palette["table_alt_bg"]))
+            self.table.tag_configure("even", background=self._pick(self._palette["table_bg"]))
+        except Exception:
+            pass
 
-    def _build_chart_section(self):
+        scrollbar = CTkScrollbar(table_inset, orientation="vertical", command=self.table.yview)
+        self.table.configure(yscrollcommand=scrollbar.set)
+        scrollbar.grid(row=0, column=1, sticky="ns", padx=(2, 0))
+
+    def _build_chart_section(self, parent):
         chart_card = CTkFrame(
-            self.main_frame,
-            fg_color=("white", "#18181b"),
+            parent,
+            fg_color=self._palette["card_bg"],
             corner_radius=12,
             border_width=1,
-            border_color="#d1d5db",
+            border_color=self._pick(self._palette["card_border"]),
+            height=250,
         )
-        chart_card.grid(row=3, column=0, padx=16, pady=(0, 14), sticky="nsew")
+        chart_card.grid(row=2, column=0, sticky="ew", pady=(0, 8))
         chart_card.grid_columnconfigure(0, weight=1)
-        chart_card.grid_rowconfigure(0, weight=1)
+        chart_card.grid_rowconfigure(0, weight=0)
+        chart_card.grid_rowconfigure(1, weight=0)
+        chart_card.grid_rowconfigure(2, weight=1)
+        chart_card.grid_propagate(False)
 
-        self.chart_canvas = CTkCanvas(chart_card, highlightthickness=0, bg="white")
-        self.chart_canvas.grid(row=0, column=0, sticky="nsew", padx=8, pady=8)
+        header = CTkFrame(chart_card, fg_color="transparent")
+        header.grid(row=0, column=0, sticky="ew", padx=12, pady=(10, 0))
+        header.grid_columnconfigure(0, weight=1)
+
+        CTkLabel(
+            header,
+            text="Weight trends",
+            font=CTkFont("Segoe UI Semibold", 13),
+            text_color=self._palette["text"],
+        ).grid(row=0, column=0, sticky="w")
+
+        chips = CTkFrame(header, fg_color="transparent")
+        chips.grid(row=0, column=1, sticky="e")
+
+        self._range_buttons = {}
+
+        def _chip(col, text, key, days):
+            btn = CTkButton(
+                chips,
+                text=text,
+                width=44,
+                height=26,
+                corner_radius=999,
+                fg_color=self._pick(self._palette["card_bg"]),
+                hover_color=self._pick(self._palette["table_alt_bg"]),
+                border_width=1,
+                border_color=self._pick(self._palette["card_border"]),
+                text_color=self._pick(self._palette["text"]),
+                font=CTkFont("Segoe UI Semibold", 11),
+                command=lambda d=days: self._on_range_chip(d),
+            )
+            btn.grid(row=0, column=col, padx=4)
+            self._range_buttons[key] = btn
+
+        _chip(0, "All", "all", None)
+        _chip(1, "7d", "7", 7)
+        _chip(2, "14d", "14", 14)
+        _chip(3, "28d", "28", 28)
+        self._set_range(self._range_days)
+
+        CTkFrame(chart_card, fg_color=self._pick(self._palette["card_border"]), height=1).grid(
+            row=1, column=0, sticky="ew"
+        )
+
+        content = CTkFrame(chart_card, fg_color="transparent")
+        content.grid(row=2, column=0, sticky="nsew", padx=12, pady=(8, 12))
+        content.grid_columnconfigure(0, weight=1)
+        content.grid_columnconfigure(1, weight=0)
+        content.grid_rowconfigure(0, weight=1)
+
+        self.chart_canvas = CTkCanvas(
+            content, highlightthickness=0, bg=self._pick(self._palette["table_bg"])
+        )
+        self.chart_canvas.grid(row=0, column=0, sticky="nsew")
         self.chart_canvas.bind("<Configure>", lambda _e: self.refresh_analysis_view(redraw_only=True))
 
-    def _load_weight_rows(self):
+        legend_card = CTkFrame(
+            content,
+            fg_color=self._pick(self._palette["card_bg"]),
+            corner_radius=12,
+            border_width=1,
+            border_color=self._pick(self._palette["card_border"]),
+            width=140,
+        )
+        legend_card.grid(row=0, column=1, sticky="ns", padx=(12, 0))
+        legend_card.grid_propagate(False)
+        legend_card.grid_columnconfigure(0, weight=1)
+        legend_card.grid_rowconfigure(1, weight=1)
+
+        CTkLabel(
+            legend_card,
+            text="Animals",
+            font=CTkFont("Segoe UI Semibold", 12),
+            text_color=self._pick(self._palette["text"]),
+        ).grid(row=0, column=0, sticky="w", padx=10, pady=(10, 6))
+
+        self.legend_frame = CTkScrollableFrame(
+            legend_card,
+            fg_color="transparent",
+            corner_radius=0,
+            border_width=0,
+            width=140,
+            height=1,
+        )
+        self.legend_frame.grid(row=1, column=0, sticky="nsew", padx=6, pady=(0, 8))
+        self.legend_frame.grid_columnconfigure(0, weight=1)
+
+    def _load_measurement_rows(self, measurement_id: int):
         if not self.db_file or not os.path.exists(self.db_file):
             return []
         db = ExperimentDatabase(self.db_file)
-        db._c.execute(
-            """
-            SELECT DATE(timestamp) as measurement_date, animal_id, value
-            FROM animal_measurements
-            WHERE value IS NOT NULL
-              AND (measurement_id IS NULL OR measurement_id = 1)
-            ORDER BY measurement_date ASC, animal_id ASC
-            """
-        )
+        if int(measurement_id or 1) == 1:
+            db._c.execute(
+                """
+                SELECT DATE(timestamp) as measurement_date, animal_id, value
+                FROM animal_measurements
+                WHERE value IS NOT NULL
+                  AND (measurement_id IS NULL OR measurement_id = 1)
+                ORDER BY measurement_date ASC, animal_id ASC
+                """
+            )
+        else:
+            db._c.execute(
+                """
+                SELECT DATE(timestamp) as measurement_date, animal_id, value
+                FROM animal_measurements
+                WHERE value IS NOT NULL
+                  AND measurement_id = ?
+                ORDER BY measurement_date ASC, animal_id ASC
+                """,
+                (int(measurement_id),),
+            )
         rows = db._c.fetchall()
         return [(str(d), int(aid), float(val)) for d, aid, val in rows]
 
+    def _set_range(self, days):
+        self._range_days = days
+        try:
+            if hasattr(self, "_range_buttons") and self._range_buttons:
+                for key, btn in self._range_buttons.items():
+                    selected = (key == "all" and days is None) or (key == str(days))
+                    btn.configure(
+                        fg_color="#2563eb" if selected else self._pick(self._palette["card_bg"]),
+                        text_color="white" if selected else self._pick(self._palette["text"]),
+                        border_width=0 if selected else 1,
+                        border_color=self._pick(self._palette["card_border"]),
+                        hover_color="#1e40af" if selected else self._pick(self._palette["table_alt_bg"]),
+                    )
+        except Exception:
+            pass
+
+    def _on_range_chip(self, days):
+        self._set_range(days)
+        self.refresh_analysis_view()
+
+    def _filter_rows_by_range(self, rows):
+        if not rows or self._range_days is None:
+            return rows
+        try:
+            max_date = max(datetime.strptime(r[0], "%Y-%m-%d").date() for r in rows)
+        except Exception:
+            return rows
+        min_date = max_date - timedelta(days=int(self._range_days) - 1)
+        filtered = []
+        for d, aid, val in rows:
+            try:
+                row_date = datetime.strptime(d, "%Y-%m-%d").date()
+            except Exception:
+                continue
+            if row_date >= min_date:
+                filtered.append((d, aid, val))
+        return filtered
+
     def refresh_analysis_view(self, redraw_only=False):
-        rows = self._load_weight_rows()
+        rows = self._load_measurement_rows(getattr(self, "_selected_measurement_id", 1))
+        rows = self._filter_rows_by_range(rows)
         if not redraw_only:
             self._populate_table(rows)
+            self._populate_legend(rows)
             animal_count = len({r[1] for r in rows})
             date_count = len({r[0] for r in rows})
-            self.summary_label.configure(text=f"Animals: {animal_count} | Dates: {date_count} | Points: {len(rows)}")
+            points_count = len(rows)
+            self.summary_label.configure(text="")
+            latest_date = max((r[0] for r in rows), default="-")
+            try:
+                if hasattr(self, "animals_value") and self.animals_value:
+                    self.animals_value.configure(text=str(animal_count))
+                if hasattr(self, "dates_value") and self.dates_value:
+                    self.dates_value.configure(text=str(date_count))
+                if hasattr(self, "points_value") and self.points_value:
+                    self.points_value.configure(text=str(points_count))
+                if hasattr(self, "latest_value") and self.latest_value:
+                    self.latest_value.configure(text=str(latest_date))
+            except Exception:
+                pass
         self._draw_trend_chart(rows)
+
+    def _populate_legend(self, rows):
+        try:
+            if not hasattr(self, "legend_frame") or self.legend_frame is None:
+                return
+            for child in self.legend_frame.winfo_children():
+                child.destroy()
+        except Exception:
+            return
+
+        animals = sorted({aid for _d, aid, _v in rows})
+        text_color = self._pick(self._palette["text"])
+
+        for idx, animal_id in enumerate(animals):
+            color = self.chart_colors[idx % len(self.chart_colors)]
+            row = CTkFrame(self.legend_frame, fg_color="transparent")
+            row.grid(row=idx, column=0, sticky="ew", padx=2, pady=0)
+            row.grid_columnconfigure(1, weight=1)
+
+            CTkLabel(
+                row,
+                text="●",
+                font=CTkFont("Segoe UI Semibold", 12),
+                text_color=color,
+                width=0,
+            ).grid(row=0, column=0, sticky="w", padx=(2, 6))
+
+            CTkLabel(
+                row,
+                text=f"Animal {animal_id}",
+                font=CTkFont("Segoe UI", 11),
+                text_color=text_color,
+                anchor="w",
+            ).grid(row=0, column=1, sticky="w")
 
     def _populate_table(self, rows):
         date_list = sorted({measurement_date for measurement_date, _animal_id, _weight in rows})
@@ -199,31 +716,47 @@ class DataAnalysisUI(MouserPage):
 
         for item in self.table.get_children():
             self.table.delete(item)
-        for animal_id in animal_ids:
+        for idx, animal_id in enumerate(animal_ids):
             row_values = [animal_id]
             for measurement_date in date_list:
                 value = lookup.get((measurement_date, animal_id))
                 row_values.append(f"{value:.2f}" if value is not None else "-")
-            self.table.insert("", "end", values=tuple(row_values))
+            tag = "even" if idx % 2 == 0 else "odd"
+            self.table.insert("", "end", values=tuple(row_values), tags=(tag,))
 
     def _draw_trend_chart(self, rows):
         canvas = self.chart_canvas
         canvas.delete("all")
         width = max(canvas.winfo_width(), 200)
         height = max(canvas.winfo_height(), 180)
-        left, right, top, bottom = 96, 190, 18, 64
+        left, right, top, bottom = 96, 40, 18, 64
         plot_w = max(width - left - right, 50)
         plot_h = max(height - top - bottom, 50)
 
-        canvas.create_rectangle(left, top, left + plot_w, top + plot_h, outline="#9ca3af", width=1)
-        canvas.create_text(24, top + plot_h / 2, text="Weight of Animal", anchor="center", angle=90, fill="#111827")
-        canvas.create_text(left + plot_w / 2, height - 16, text="Date", fill="#111827")
+        text_color = self._pick(self._palette["text"])
+        muted_text = self._pick(self._palette["muted_text"])
+        border_color = self._pick(self._palette["card_border"])
+        grid_color = self._pick(("#e5e7eb", "#22304a"))
+
+        y_label = getattr(self, "_selected_measurement_label", "Measurement")
+        canvas.create_rectangle(
+            left,
+            top,
+            left + plot_w,
+            top + plot_h,
+            outline=border_color,
+            width=1,
+            fill=self._pick(self._palette["table_bg"]),
+        )
+        canvas.create_text(24, top + plot_h / 2, text=y_label, anchor="center", angle=90, fill=text_color)
+        canvas.create_text(left + plot_w / 2, height - 16, text="Date", fill=text_color)
 
         if not rows:
-            canvas.create_text(width / 2, height / 2, text="No data available yet.", fill="#6b7280")
+            canvas.create_text(width / 2, height / 2, text="No data available yet.", fill=muted_text)
             return
 
         dates = sorted({row[0] for row in rows})
+        date_index = {d: idx for idx, d in enumerate(dates)}
         by_animal = defaultdict(list)
         min_w = min(row[2] for row in rows)
         max_w = max(row[2] for row in rows)
@@ -248,8 +781,8 @@ class DataAnalysisUI(MouserPage):
         for i in range(6):
             value = min_w + (max_w - min_w) * (i / 5)
             y = to_y(value)
-            canvas.create_line(left, y, left + plot_w, y, fill="#e5e7eb")
-            canvas.create_text(left - 8, y, text=f"{value:.1f}", anchor="e", fill="#4b5563")
+            canvas.create_line(left, y, left + plot_w, y, fill=grid_color, dash=(2, 4))
+            canvas.create_text(left - 8, y, text=f"{value:.1f}", anchor="e", fill=muted_text)
 
         max_labels = 8
         if len(dates) <= max_labels:
@@ -261,17 +794,14 @@ class DataAnalysisUI(MouserPage):
                 label_dates.append(dates[-1])
         for d in label_dates:
             x = x_map[d]
-            canvas.create_line(x, top + plot_h, x, top + plot_h + 4, fill="#6b7280")
-            if len(dates) <= 6:
-                canvas.create_text(x, top + plot_h + 10, text=d, anchor="n", fill="#4b5563")
-            else:
-                canvas.create_text(x, top + plot_h + 14, text=d, angle=35, anchor="w", fill="#4b5563")
+            canvas.create_line(x, top, x, top + plot_h, fill=grid_color, dash=(2, 4))
+            canvas.create_line(x, top + plot_h, x, top + plot_h + 4, fill=muted_text)
+            label = f"d{date_index.get(d, 0) + 1}"
+            canvas.create_text(x, top + plot_h + 10, text=label, anchor="n", fill=muted_text)
 
         ordered_animals = [aid for aid, _pts in sorted(by_animal.items())]
         animal_index = {aid: idx for idx, aid in enumerate(ordered_animals)}
 
-        legend_x = left + plot_w + 20
-        legend_y = top + 8
         for idx, (animal_id, points) in enumerate(sorted(by_animal.items())):
             color = self.chart_colors[idx % len(self.chart_colors)]
             points = sorted(points, key=lambda p: p[0])
@@ -291,8 +821,6 @@ class DataAnalysisUI(MouserPage):
                     canvas.create_text(x + 6, y + label_dy, text=f"{w:.1f}", anchor="w", fill=color, font=("Arial", 9))
             if len(coords) >= 4 and len(dates) > 1:
                 canvas.create_line(*coords, fill=color, width=2, smooth=False)
-            canvas.create_rectangle(legend_x, legend_y + idx * 18, legend_x + 10, legend_y + 10 + idx * 18, fill=color, outline=color)
-            canvas.create_text(legend_x + 16, legend_y + 5 + idx * 18, text=f"Animal {animal_id}", anchor="w", fill="#111827")
 
     def dismiss_export_notice(self):
         if self._export_notice is not None:
