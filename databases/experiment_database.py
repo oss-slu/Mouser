@@ -568,6 +568,32 @@ class ExperimentDatabase:
         self._c.execute("UPDATE experiment SET measurement = ?", (measurement,))
         self._conn.commit()
 
+    def backup_to_file(self, target_path: str):
+        """Safely copy the current database state into another SQLite file.
+
+        Uses SQLite's backup API to avoid corrupting/losing data while connections are open.
+        """
+        if not target_path:
+            return
+        try:
+            target_path = os.path.abspath(str(target_path))
+        except Exception:
+            return
+        if target_path == ":memory:":
+            return
+        try:
+            if getattr(self, "_conn", None) is None:
+                return
+            self._conn.commit()
+            dest = sqlite3.connect(target_path, timeout=5.0)
+            try:
+                self._conn.backup(dest)
+                dest.commit()
+            finally:
+                dest.close()
+        except sqlite3.Error as e:
+            print(f"Error backing up database to file: {e}")
+
     def delete_measurement_column(self, measurement_id: int):
         """Delete a measurement slot globally and shift later slots left by 1.
 

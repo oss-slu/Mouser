@@ -11,6 +11,7 @@ from tkinter import dialog, filedialog
 import time
 import sqlite3
 import serial
+import os
 from customtkinter import *
 from CTkMessagebox import CTkMessagebox
 from shared.tk_models import *
@@ -29,7 +30,7 @@ from shared.hid_wedge import HIDWedgeListener
 class DataCollectionUI(MouserPage):
     '''Page Frame for Data Collection.'''
 
-    def __init__(self, parent: CTk, prev_page: CTkFrame = None, database_name = "", file_path = ""):
+    def __init__(self, parent: CTk, prev_page: CTkFrame = None, database_name = "", file_path = "", original_file_path: str | None = None):
 
         super().__init__(parent, "Data Collection", prev_page)
         ui = get_ui_metrics()
@@ -81,6 +82,7 @@ class DataCollectionUI(MouserPage):
         self._last_device_status = {}
 
         self.current_file_path = file_path
+        self.original_file_path = original_file_path or file_path
         self.menu_page = prev_page
 
         self.database = ExperimentDatabase(database_name)
@@ -2515,9 +2517,22 @@ class DataCollectionUI(MouserPage):
                     self.database._conn.commit()
                     print("Changes committed")
 
-                    print(f"Attempting to save {self.database.db_file} to {self.current_file_path}")
-                    save_temp_to_file(self.database.db_file, self.current_file_path)
-                    print("Autosave Success!")
+                    # Persist temp DB back to the original experiment file when needed.
+                    original_path = os.path.abspath(getattr(self, "original_file_path", "") or "")
+                    db_path = os.path.abspath(getattr(self.database, "db_file", "") or "")
+                    if original_path and db_path and original_path != ":memory:" and db_path != ":memory:" and original_path != db_path:
+                        # Do not auto-save into encrypted originals without the password flow.
+                        if str(original_path).lower().endswith(".pmouser"):
+                            print("Autosave skipped for encrypted experiment; use Save flow.")
+                        else:
+                            print(f"Autosave backup {db_path} -> {original_path}")
+                            if hasattr(self.database, "backup_to_file"):
+                                self.database.backup_to_file(original_path)
+                            else:
+                                save_temp_to_file(db_path, original_path)
+                            print("Autosave Success!")
+                    else:
+                        print("Autosave: committed to SQLite (no backup needed).")
 
                     FlashOverlay(
                         parent=self,
@@ -2672,8 +2687,15 @@ class DataCollectionUI(MouserPage):
         self.stop_listening()
         self._stop_device_polling()
 
+        # Avoid stacking a new ExperimentMenuUI instance on top of the existing one.
+        # The DataCollection page is opened from an ExperimentMenuUI and should return to it directly.
+        if getattr(self, "menu_page", None) is not None:
+            self.menu_page.raise_frame()
+            return
+
+        # Fallback for legacy call-sites that didn't provide a menu_page.
         from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
-        new_page = ExperimentMenuUI(self.parent, self.current_file_path, self.menu_page)
+        new_page = ExperimentMenuUI(self.parent, self.current_file_path, None)
         new_page.raise_frame()
 
 

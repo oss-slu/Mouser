@@ -69,7 +69,12 @@ def open_file(root, experiments_frame):
                     global_state["temp_file_path"] = temp_path_local
 
                     # Open Experiment Menu using the decrypted temp file
-                    page = ExperimentMenuUI(root, temp_path_local, experiments_frame)
+                    page = ExperimentMenuUI(
+                        root,
+                        temp_path_local,
+                        experiments_frame,
+                        original_file_path=file_path,
+                    )
                     page.raise_frame()
                     password_prompt.destroy()
                 else:
@@ -86,7 +91,12 @@ def open_file(root, experiments_frame):
         global_state["temp_file_path"] = temp_file
 
         # Open Experiment Menu using the temp copy
-        page = ExperimentMenuUI(root, temp_file, experiments_frame)
+        page = ExperimentMenuUI(
+            root,
+            temp_file,
+            experiments_frame,
+            original_file_path=file_path,
+        )
         page.raise_frame()
 
 

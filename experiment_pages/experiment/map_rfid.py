@@ -949,11 +949,14 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                 # Close the database connection
                 self.db.close()  # This will now handle the singleton cleanup
 
-                # Local import to avoid circular dependency
-                from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+                # Return to the existing ExperimentMenuUI instead of creating a new instance.
+                if getattr(self, "menu_page", None) is not None:
+                    self.menu_page.raise_frame()
+                    return
 
-                # Create new ExperimentMenuUI instance with the same file
-                new_page = ExperimentMenuUI(self.parent, self.file_path, self.menu_page)
+                # Fallback for legacy call-sites that didn't provide a menu_page.
+                from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+                new_page = ExperimentMenuUI(self.parent, self.file_path, None)
                 new_page.raise_frame()
 
             except Exception as e:
