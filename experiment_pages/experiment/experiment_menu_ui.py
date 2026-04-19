@@ -897,6 +897,8 @@ class ExperimentMenuUI(MouserPage):
 
     def disable_buttons_if_needed(self):
         """Disable/enable actions based on RFID mapping requirement."""
+        if getattr(self.experiment_db, "_c", None) is None or getattr(self.experiment_db, "_conn", None) is None:
+            self.experiment_db = ExperimentDatabase(self.file_path)
         if hasattr(self, "group_tile"):
             self.group_tile.set_enabled(True)
         if self.experiment_db.experiment_uses_rfid() == 1:
