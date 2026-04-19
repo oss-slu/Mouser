@@ -2,6 +2,7 @@
 import sqlite3
 import os
 from datetime import datetime
+import re
 
 class ExperimentDatabase:
     '''SQLite Database Object for Experiments.'''
@@ -17,22 +18,24 @@ class ExperimentDatabase:
 
     def __new__(cls, file=":memory:"):
         '''Builds Database connections if singleton does not exist for this file'''
-        if file not in cls._instances:
-            instance = super(ExperimentDatabase, cls).__new__(cls)
-            # Absolute path prevents file locking issues caused by relative path resolution differences
-            # check_same_thread=False allows access from multiple Tkinter callbacks
-            # timeout=5.0 allows retry if DB is briefly locked by another thread
-            if file == ":memory:":
-                abs_path = file
-            else:
-                abs_path = os.path.abspath(file)
-            abs_path = os.path.abspath(file)
-            instance.db_file = abs_path
-            instance._conn = sqlite3.connect(abs_path, timeout=5.0, check_same_thread=False)
-            instance._c = instance._conn.cursor()
-            instance._initialize_tables()
-            cls._instances[file] = instance
-        return cls._instances[file]
+        if file in cls._instances:
+            existing = cls._instances[file]
+            # If the instance was closed, recreate the connection.
+            if getattr(existing, "_conn", None) is not None:
+                return existing
+
+        instance = super(ExperimentDatabase, cls).__new__(cls)
+        # Absolute path prevents file locking issues caused by relative path resolution differences
+        # check_same_thread=False allows access from multiple Tkinter callbacks
+        # timeout=5.0 allows retry if DB is briefly locked by another thread
+        abs_path = file if file == ":memory:" else os.path.abspath(file)
+        abs_path = os.path.abspath(abs_path) if abs_path != ":memory:" else abs_path
+        instance.db_file = abs_path
+        instance._conn = sqlite3.connect(abs_path, timeout=5.0, check_same_thread=False)
+        instance._c = instance._conn.cursor()
+        instance._initialize_tables()
+        cls._instances[file] = instance
+        return instance
 
 
     def _initialize_tables(self):  # Call to work with singleton changes
@@ -202,10 +205,6 @@ class ExperimentDatabase:
                 self._conn.close()
                 self._conn = None
 
-                # Remove this instance from the instances dictionary
-                if self.db_file in ExperimentDatabase._instances:
-                    del ExperimentDatabase._instances[self.db_file]
-
                 return True
         except sqlite3.Error as e:
             print(f"Error during database cleanup: {e}")
@@ -215,7 +214,6 @@ class ExperimentDatabase:
         '''Returns whether the experiment uses RFID (0 or 1).'''
         self._c.execute("SELECT uses_rfid FROM experiment")
         result = self._c.fetchone()
-        print("Experiment uses RFID:", result)
         return result[0] if result else 0
 
     def get_animals(self):
@@ -259,12 +257,45 @@ class ExperimentDatabase:
         '''Gets all measurements for a specific date.'''
         try:
             self._c.execute('''
-                SELECT animal_id, value
+                SELECT animal_id, measurement_id, value
                 FROM animal_measurements
                 WHERE timestamp = ?
-                AND (measurement_id = 1)
+                AND measurement_id IS NOT NULL
+                AND measurement_id != 0
+                ORDER BY animal_id ASC, measurement_id ASC
             ''', (date,))
-            return self._c.fetchall()
+            rows = self._c.fetchall()
+
+            # Determine how many measurement slots this experiment expects.
+            measurement_name = self.get_measurement_name()
+            if isinstance(measurement_name, (list, tuple)):
+                measurement_name = measurement_name[0] if measurement_name else None
+            parts = [p.strip() for p in re.split(r"[,\n;/|]+", str(measurement_name or "").strip()) if p and p.strip()]
+            expected_count = max(len(parts), 1)
+            max_id = max((mid for _aid, mid, _val in rows if mid is not None), default=1)
+            measurement_count = max(expected_count, int(max_id or 1))
+
+            values_by_animal = {}
+            for animal_id, measurement_id, value in rows:
+                key = str(animal_id)
+                if key not in values_by_animal:
+                    values_by_animal[key] = [None] * measurement_count
+                try:
+                    index = int(measurement_id) - 1
+                except Exception:
+                    continue
+                if 0 <= index < measurement_count:
+                    values_by_animal[key][index] = value
+
+            result = []
+            for key in sorted(values_by_animal.keys(), key=lambda x: int(x) if str(x).isdigit() else str(x)):
+                animal_id = int(key) if str(key).isdigit() else key
+                values = values_by_animal[key]
+                if measurement_count == 1:
+                    result.append((animal_id, values[0]))
+                else:
+                    result.append((animal_id, tuple(values)))
+            return result
         except sqlite3.Error as e:
             print(f"Error getting data for date: {e}")
             return []
@@ -272,6 +303,13 @@ class ExperimentDatabase:
     def is_data_collected_for_date(self, date):
         '''Checks if all active animals have measurements for provided date as a TRUE/FALSE'''
         try:
+            # Determine how many measurement slots this experiment expects.
+            measurement_name = self.get_measurement_name()
+            if isinstance(measurement_name, (list, tuple)):
+                measurement_name = measurement_name[0] if measurement_name else None
+            parts = [p.strip() for p in re.split(r"[,\n;/|]+", str(measurement_name or "").strip()) if p and p.strip()]
+            measurement_count = max(len(parts), 1)
+
             # First get count of active animals
             self._c.execute('''
                 SELECT COUNT(*)
@@ -280,20 +318,25 @@ class ExperimentDatabase:
             ''')
             total_active_animals = self._c.fetchone()[0]
 
-            # Then get count of animals with non-null measurements for the date
-            self._c.execute('''
-                SELECT COUNT(DISTINCT a.animal_id)
-                FROM animals a
-                JOIN animal_measurements m ON a.animal_id = m.animal_id
-                WHERE a.active = 1
-                AND m.timestamp = ?
-                AND m.value IS NOT NULL
-                AND (m.measurement_id IS NULL OR m.measurement_id != 0)
-            ''', (date,))
-            animals_with_measurements = self._c.fetchone()[0]
+            if total_active_animals <= 0:
+                return True
 
-            # Return True only if all active animals have measurements
-            return animals_with_measurements >= total_active_animals
+            # Count distinct measurement ids with non-null values for each active animal on the date.
+            self._c.execute('''
+                SELECT a.animal_id, COUNT(DISTINCT m.measurement_id) as cnt
+                FROM animals a
+                LEFT JOIN animal_measurements m
+                    ON a.animal_id = m.animal_id
+                    AND m.timestamp = ?
+                    AND m.value IS NOT NULL
+                    AND m.measurement_id BETWEEN 1 AND ?
+                WHERE a.active = 1
+                GROUP BY a.animal_id
+            ''', (date, measurement_count))
+            rows = self._c.fetchall() or []
+
+            complete_animals = sum(1 for _aid, cnt in rows if int(cnt or 0) >= measurement_count)
+            return complete_animals >= total_active_animals
 
         except sqlite3.Error as e:
             print(f"Error checking data collection status: {e}")
@@ -303,14 +346,19 @@ class ExperimentDatabase:
     def add_data_entry(self, date, animal_id, values, measurement_id=1):
         '''Adds a measurement entry for an animal on a specific date.'''
         try:
-            # Handle both single values and lists/tuples
-            value = values[0] if isinstance(values, (list, tuple)) else values
-
-            # Insert new measurement
-            self._c.execute('''
-                INSERT INTO animal_measurements (animal_id, timestamp, value, measurement_id)
-                VALUES (?, ?, ?, ?)
-            ''', (animal_id, date, value, measurement_id))
+            # Support multiple measurement values by storing each into its own measurement_id slot.
+            if isinstance(values, (list, tuple)) and len(values) > 1:
+                for idx, value in enumerate(values):
+                    self._c.execute('''
+                        INSERT INTO animal_measurements (animal_id, timestamp, value, measurement_id)
+                        VALUES (?, ?, ?, ?)
+                    ''', (animal_id, date, value, int(measurement_id) + idx))
+            else:
+                value = values[0] if isinstance(values, (list, tuple)) else values
+                self._c.execute('''
+                    INSERT INTO animal_measurements (animal_id, timestamp, value, measurement_id)
+                    VALUES (?, ?, ?, ?)
+                ''', (animal_id, date, value, measurement_id))
 
             self._conn.commit()
         except sqlite3.Error as e:
@@ -320,6 +368,12 @@ class ExperimentDatabase:
     def change_data_entry(self, date, animal_id, value, measurement_id=1):
         '''Updates a measurement entry for an animal on a specific date.'''
         try:
+            # Support multiple measurement values by upserting sequential measurement_id slots.
+            if isinstance(value, (list, tuple)) and len(value) > 1:
+                for idx, item in enumerate(value):
+                    self.change_data_entry(date, animal_id, item, int(measurement_id) + idx)
+                return
+
             # Update existing measurement
             self._c.execute('''
                 UPDATE animal_measurements
@@ -508,6 +562,75 @@ class ExperimentDatabase:
         '''Updates measurement_type in the experiment table.'''
         self._c.execute("UPDATE experiment SET measurement_type = ?", (measurement_type,))
         self._conn.commit()
+
+    def update_measurement_name(self, measurement: str):
+        """Updates the measurement name(s) string in the experiment table."""
+        self._c.execute("UPDATE experiment SET measurement = ?", (measurement,))
+        self._conn.commit()
+
+    def backup_to_file(self, target_path: str):
+        """Safely copy the current database state into another SQLite file.
+
+        Uses SQLite's backup API to avoid corrupting/losing data while connections are open.
+        """
+        if not target_path:
+            return
+        try:
+            target_path = os.path.abspath(str(target_path))
+        except Exception:
+            return
+        if target_path == ":memory:":
+            return
+        try:
+            if getattr(self, "_conn", None) is None:
+                return
+            self._conn.commit()
+            dest = sqlite3.connect(target_path, timeout=5.0)
+            try:
+                self._conn.backup(dest)
+                dest.commit()
+            finally:
+                dest.close()
+        except sqlite3.Error as e:
+            print(f"Error backing up database to file: {e}")
+
+    def delete_measurement_column(self, measurement_id: int):
+        """Delete a measurement slot globally and shift later slots left by 1.
+
+        This keeps `measurement_id` values aligned with the experiment's measurement name list.
+        """
+        try:
+            target = int(measurement_id)
+        except Exception:
+            return
+        if target <= 0:
+            return
+
+        try:
+            self._conn.execute("BEGIN")
+            # Remove the target slot.
+            self._c.execute(
+                "DELETE FROM animal_measurements WHERE measurement_id = ?",
+                (target,),
+            )
+
+            # Shift all later slots down by 1, without collisions:
+            # 1) move them out of range, 2) shift back minus 1.
+            self._c.execute(
+                "UPDATE animal_measurements SET measurement_id = measurement_id + 1000 WHERE measurement_id > ?",
+                (target,),
+            )
+            self._c.execute(
+                "UPDATE animal_measurements SET measurement_id = measurement_id - 1001 WHERE measurement_id > ?",
+                (target + 1000,),
+            )
+            self._conn.commit()
+        except sqlite3.Error as e:
+            print(f"Error deleting measurement column: {e}")
+            try:
+                self._conn.rollback()
+            except Exception:
+                pass
 
     def get_all_animal_ids(self):
         '''Returns a list of all active animal IDs that have RFIDs mapped to them.'''

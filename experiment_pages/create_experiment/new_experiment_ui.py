@@ -491,15 +491,15 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         parts: List[str] = []
 
         if self._device_balancer.get():
-            parts.append("Weight")
+            parts.append("Balancer")
         if self._device_caliper.get():
             parts.append("Caliper")
         if self._device_custom.get():
             custom = self.custom_device_type.get().strip()
-            parts.append(f"Custom:{custom}" if custom else "Custom")
+            parts.append(custom if custom else "Custom")
 
         if not parts:
-            return "Weight"
+            return "Balancer"
         return ", ".join(parts)
 
     # ------------------------------------------------------------

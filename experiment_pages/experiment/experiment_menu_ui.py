@@ -224,7 +224,17 @@ class ExperimentMenuUI(MouserPage):
             return {"font_size": 18, "height": 50, "width": 470}
         return {"font_size": 17, "height": 48, "width": 450}
 
-    def __init__(self, root, file_path, menu_page=None):
+    def __init__(self, root=None, file_path=None, menu_page=None, original_file_path=None, **kwargs):
+        # Backward-compatible argument names used in some call sites/tests.
+        if root is None:
+            root = kwargs.get("parent")
+        if file_path is None:
+            file_path = kwargs.get("name") or kwargs.get("file_path")
+        if menu_page is None:
+            menu_page = kwargs.get("prev_page")
+        if original_file_path is None:
+            original_file_path = kwargs.get("full_path") or kwargs.get("original_path") or kwargs.get("original_file_path")
+
         super().__init__(root, "Experiment Menu", menu_page)
 
         palette = {
@@ -267,6 +277,7 @@ class ExperimentMenuUI(MouserPage):
 
         self.root = root
         self.file_path = file_path
+        self.original_file_path = original_file_path or file_path
         self.menu_page = menu_page
         self.experiment_db = ExperimentDatabase(self.file_path)
         self._ensure_notebook_table()
@@ -831,7 +842,13 @@ class ExperimentMenuUI(MouserPage):
         )
 
         try:
-            page = DataCollectionUI(self.root, self, self.file_path, self.file_path)
+            page = DataCollectionUI(
+                parent=self.root,
+                prev_page=self,
+                database_name=self.file_path,
+                file_path=self.file_path,
+                original_file_path=getattr(self, "original_file_path", None),
+            )
             page.raise_frame()
         except Exception as e:  # pylint: disable=broad-exception-caught
             messagebox.showerror("Data Collection Error", f"Failed to open Data Collection page.\n\n{e}")
