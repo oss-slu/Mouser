@@ -937,31 +937,40 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
     def press_back_to_menu_button(self):
         '''Handles back to menu button press.'''
-        if len(self.db.get_all_animals_rfid()) != self.db.get_total_number_animals():
-            self.raise_warning('Not all animals have been mapped to RFIDs')
-        else:
-            try:
-                # Close threads first
-                self.stop_listening()
-                # Save database state to permanent file
-                self.save()
+        try:
+            # If another page closed the shared singleton connection, reopen it so this page can
+            # complete its checks and navigation without crashing.
+            if self.db is None or getattr(self.db, "_c", None) is None or getattr(self.db, "_conn", None) is None:
+                reopen_path = self.file_path or getattr(self.db, "db_file", None) or ":memory:"
+                self.db = ExperimentDatabase(reopen_path)
 
-                # Close the database connection
-                self.db.close()  # This will now handle the singleton cleanup
+            if len(self.db.get_all_animals_rfid()) != self.db.get_total_number_animals():
+                self.raise_warning('Not all animals have been mapped to RFIDs')
+                return
 
-                # Return to the existing ExperimentMenuUI instead of creating a new instance.
-                if getattr(self, "menu_page", None) is not None:
-                    self.menu_page.raise_frame()
-                    return
+            # Close threads first
+            self.stop_listening()
+            # Save database state to permanent file
+            self.save()
 
-                # Fallback for legacy call-sites that didn't provide a menu_page.
-                from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
-                new_page = ExperimentMenuUI(self.parent, self.file_path, None)
-                new_page.raise_frame()
+            # Do not close the experiment database here: `ExperimentMenuUI` holds a reference to
+            # the shared singleton instance, and closing it would invalidate that reference.
 
-            except Exception as e:
-                self.raise_warning("An error occurred while saving or cleaning up.")
-                print(f"Error during save and cleanup: {e}")
+            # Return to the existing ExperimentMenuUI instead of creating a new instance.
+            if getattr(self, "menu_page", None) is not None:
+                self.menu_page.raise_frame()
+                return
+
+            # Fallback for legacy call-sites that didn't provide a menu_page.
+            from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+            new_page = ExperimentMenuUI(self.parent, self.file_path, None)
+            new_page.raise_frame()
+
+        except Exception as e:
+            self.raise_warning("An error occurred while saving or cleaning up.")
+            print(f"Error during save and cleanup: {e}")
+            import traceback
+            print(f"Full traceback: {traceback.format_exc()}")
 
 
 
