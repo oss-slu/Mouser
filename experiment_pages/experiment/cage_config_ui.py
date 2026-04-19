@@ -6,6 +6,7 @@ from databases.database_controller import DatabaseController
 from shared.audio import AudioManager
 from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
 from shared.file_utils import save_temp_to_file
+from shared.hid_wedge import HIDWedgeListener
 
 class CageConfigurationUI(MouserPage):
     '''The Frame that allows user to configure the cages.'''
@@ -15,6 +16,14 @@ class CageConfigurationUI(MouserPage):
             self.canvas.itemconfigure(self.rectangle, state="hidden")
         except Exception:
             pass
+
+        self._hid_listener = None
+        self._rfid_enabled_var = BooleanVar(value=True)
+        self._rfid_entry_var = StringVar(value="")
+        self._rfid_status_label = None
+        self._rfid_entry = None
+        self._uses_rfid = False
+        self.bind("<Destroy>", self._on_destroy, add="+")
 
         # Cohesive palette (light + dark) tuned for contrast and reduced "white canvas" feel.
         palette = {
@@ -175,6 +184,13 @@ class CageConfigurationUI(MouserPage):
         self.file_path = file_path
         self.prev_page = prev_page
         self.db = DatabaseController(database)
+        try:
+            self._uses_rfid = self.db.db.experiment_uses_rfid() == 1
+        except Exception:
+            self._uses_rfid = False
+
+        self._build_rfid_scan_ui(control_body, entry_font=entry_font, accent=palette["accent_teal"])
+        self._init_hid_scan_listener()
 
         layout_card, layout_body = section(
             content,
@@ -196,6 +212,168 @@ class CageConfigurationUI(MouserPage):
         self.selected_cage = None
 
         self.update_config_frame()
+
+    def _build_rfid_scan_ui(self, parent: CTkFrame, *, entry_font: CTkFont, accent: str):
+        scan_row = CTkFrame(parent, fg_color="transparent")
+        scan_row.grid(row=1, column=0, sticky="ew")
+        scan_row.grid_columnconfigure(1, weight=1)
+
+        label = "RFID scan" if self._uses_rfid else "Scan animal ID"
+        CTkLabel(
+            scan_row,
+            text=label,
+            font=CTkFont(family="Segoe UI Semibold", size=12),
+            text_color=self.ui_palette["text"],
+        ).grid(row=0, column=0, sticky="w", padx=(0, 10), pady=(2, 0))
+
+        self._rfid_entry = CTkEntry(
+            scan_row,
+            textvariable=self._rfid_entry_var,
+            placeholder_text="Scan tag and press Enter",
+            font=entry_font,
+        )
+        self._rfid_entry.grid(row=0, column=1, sticky="ew", pady=(2, 0))
+        self._rfid_entry.bind("<Return>", self._on_scan_entry_return, add="+")
+        self._rfid_entry.bind("<KP_Enter>", self._on_scan_entry_return, add="+")
+
+        CTkSwitch(
+            scan_row,
+            text="Enable",
+            variable=self._rfid_enabled_var,
+            onvalue=True,
+            offvalue=False,
+            command=self._on_toggle_rfid_enabled,
+            fg_color=accent,
+            progress_color=accent,
+        ).grid(row=0, column=2, sticky="e", padx=(10, 0), pady=(2, 0))
+
+        self._rfid_status_label = CTkLabel(
+            parent,
+            text="RFID scanning enabled (HID keyboard-wedge)."
+            if self._uses_rfid
+            else "Scanning enabled (HID keyboard-wedge).",
+            font=CTkFont(family="Segoe UI", size=12),
+            text_color=self.ui_palette["text_muted"],
+        )
+        self._rfid_status_label.grid(row=2, column=0, sticky="w", pady=(8, 0))
+
+    def _init_hid_scan_listener(self):
+        if self._hid_listener:
+            try:
+                self._hid_listener.stop()
+            except Exception:
+                pass
+            self._hid_listener = None
+
+        def on_tag(tag: str):
+            self._handle_scan_value(tag, source="hid")
+
+        self._hid_listener = HIDWedgeListener(self, on_tag=on_tag, capture_all=True)
+        self.after(50, self._start_or_stop_hid_listener)
+
+    def _on_toggle_rfid_enabled(self):
+        self._start_or_stop_hid_listener()
+
+    def _start_or_stop_hid_listener(self):
+        if not self._hid_listener:
+            return
+        enabled = bool(self._rfid_enabled_var.get())
+        try:
+            if enabled:
+                self._hid_listener.start()
+                try:
+                    self.focus_force()
+                except Exception:
+                    pass
+                self._set_rfid_status(
+                    "RFID scanning enabled (Scan Tag)."
+                    if self._uses_rfid
+                    else "Scanning enabled (scan animal ID)."
+                )
+            else:
+                self._hid_listener.stop()
+                self._set_rfid_status("RFID scanning disabled." if self._uses_rfid else "Scanning disabled.")
+        except Exception as e:
+            self._set_rfid_status(f"RFID listener error: {e}")
+
+    def _set_rfid_status(self, message: str):
+        if not self._rfid_status_label or not self._rfid_status_label.winfo_exists():
+            return
+        try:
+            self._rfid_status_label.configure(text=message)
+        except Exception:
+            return
+
+    def _on_scan_entry_return(self, _event=None):
+        value = (self._rfid_entry_var.get() or "").strip()
+        self._rfid_entry_var.set("")
+        if value:
+            self._handle_scan_value(value, source="entry")
+        return "break"
+
+    def _handle_scan_value(self, scan_value: str, *, source: str):
+        scan_value = (scan_value or "").strip()
+        if not scan_value:
+            return
+        if not bool(self._rfid_enabled_var.get()):
+            return
+
+        animal_id = None
+        try:
+            if self._uses_rfid:
+                animal_id = self.db.db.get_animal_id(scan_value)
+        except Exception:
+            animal_id = None
+
+        # Fallback: treat the scanned value as an animal id (useful for non-RFID experiments,
+        # or if the reader is configured as a keyboard wedge but tags aren't mapped yet).
+        if animal_id is None:
+            candidate = scan_value
+            if candidate.isdigit():
+                try:
+                    candidate = str(int(candidate))
+                except Exception:
+                    pass
+            if candidate in getattr(self.db, "valid_ids", []):
+                animal_id = candidate
+
+        if animal_id is None:
+            if self._uses_rfid:
+                self.raise_warning(f"RFID '{scan_value}' is not mapped to an active animal.")
+            else:
+                self.raise_warning(f"Animal '{scan_value}' was not found.")
+            self._set_rfid_status(f"No match for '{scan_value}' ({source}).")
+            return
+
+        animal_id = str(animal_id)
+        if animal_id not in self.animal_buttons:
+            # UI might be stale; refresh once.
+            self.update_config_frame()
+
+        if animal_id not in self.animal_buttons:
+            self.raise_warning(f"Animal '{animal_id}' is not present on this page.")
+            self._set_rfid_status(f"Matched {animal_id}, but not visible ({source}).")
+            return
+
+        if animal_id not in self.selected_animals:
+            self.selected_animals.add(animal_id)
+            self.animal_buttons[animal_id].configure(fg_color=self.ui_palette["selected"])
+            self._set_rfid_status(f"Selected animal {animal_id} ({source}).")
+        else:
+            # Already selected: keep selection and just update status.
+            self.animal_buttons[animal_id].configure(fg_color=self.ui_palette["selected"])
+            self._set_rfid_status(f"Animal {animal_id} already selected ({source}).")
+
+    def _on_destroy(self, event=None):
+        # Avoid stopping the listener for descendant widget destroys.
+        if event is not None and getattr(event, "widget", None) is not self:
+            return
+        if self._hid_listener:
+            try:
+                self._hid_listener.stop()
+            except Exception:
+                pass
+            self._hid_listener = None
 
     def update_config_frame(self):
         '''Updates the config frame to reflect new information.'''
