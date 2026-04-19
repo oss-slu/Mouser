@@ -25,33 +25,43 @@ class CageConfigurationUI(MouserPage):
         self._uses_rfid = False
         self.bind("<Destroy>", self._on_destroy, add="+")
 
-        # Cohesive palette (light + dark) tuned for contrast and reduced "white canvas" feel.
+        # Match the Experiment Menu palette for a consistent look across pages.
+        # (See: experiment_pages/experiment/experiment_menu_ui.py)
         palette = {
             # Backgrounds
-            "bg": ("#eef2ff", "#0b1220"),  # indigo-50 / deep slate
-            "surface": ("#f0f9ff", "#0b1b35"),  # sky-50 / deep navy
-            "surface_alt": ("#f5f3ff", "#1b1133"),  # violet-50 / deep violet
-            "card_border": ("#cbd5e1", "#223044"),  # slate-300 / slate
+            "bg": ("#f1f5f9", "#0b1220"),
+            "surface": ("#ffffff", "#0b1220"),
+            "surface_alt": ("#ffffff", "#0b1220"),
+            "card_border": ("#e2e8f0", "#223044"),
             # Text
             "text": ("#0f172a", "#e5e7eb"),
-            "text_muted": ("#475569", "#94a3b8"),
+            "text_muted": ("#64748b", "#94a3b8"),
             # Accents
-            "accent_blue": "#2563eb",
-            "accent_teal": "#0d9488",
+            "accent_blue": "#3b82f6",
+            "accent_violet": "#8b5cf6",
+            "accent_teal": "#14b8a6",
             "accent_amber": "#f59e0b",
-            "accent_violet": "#7c3aed",
             "accent_green": "#22c55e",
             "danger": "#ef4444",
             # Selection
-            "selected": ("#a7f3d0", "#065f46"),  # mint highlight
+            "selected": ("#dbeafe", "#1e3a8a"),  # blue highlight
             # Legacy (kept for compatibility if older code paths reference these)
-            "entry_bg": ("#ffffff", "#0b1220"),
-            "entry_border": ("#cbd5e1", "#334155"),
+            "entry_bg": DEFAULT_ENTRY_BG,
+            "entry_border": DEFAULT_ENTRY_BORDER,
+            # Quick-action tile colors (pulled from Experiment Menu tile styles)
+            "tile_analyze_bg": "#eff6ff",
+            "tile_analyze_hover": "#dbeafe",
+            "tile_summary_bg": "#f5f3ff",
+            "tile_summary_hover": "#ede9fe",
+            "tile_invest_bg": "#ecfeff",
+            "tile_invest_hover": "#cffafe",
+            "tile_cage_bg": "#fffbeb",
+            "tile_cage_hover": "#fef3c7",
         }
         self.ui_palette = palette
         self.configure(fg_color=palette["bg"])
         self._cage_button_default_fg = palette["accent_blue"]
-        self._animal_button_default_fg = ("#e0f2fe", "#111827")
+        self._animal_button_default_fg = ("#eff6ff", "#0b1220")
 
         if hasattr(self, "menu_button") and self.menu_button:
             self.menu_button.configure(
@@ -138,9 +148,11 @@ class CageConfigurationUI(MouserPage):
         auto_button = CTkButton(
             button_frame,
             text='AutoSort',
-            fg_color=palette["accent_blue"],
-            hover_color="#2563eb",
-            text_color="white",
+            fg_color=palette["tile_analyze_bg"],
+            hover_color=palette["tile_analyze_hover"],
+            text_color=palette["text"],
+            border_width=1,
+            border_color=palette["accent_blue"],
             corner_radius=14,
             font=action_font,
             command=self.autosort,
@@ -148,9 +160,11 @@ class CageConfigurationUI(MouserPage):
         random_button = CTkButton(
             button_frame,
             text='Randomize',
-            fg_color=palette["accent_violet"],
-            hover_color="#7c3aed",
-            text_color="white",
+            fg_color=palette["tile_summary_bg"],
+            hover_color=palette["tile_summary_hover"],
+            text_color=palette["text"],
+            border_width=1,
+            border_color=palette["accent_violet"],
             corner_radius=14,
             font=action_font,
             command=self.randomize,
@@ -158,9 +172,11 @@ class CageConfigurationUI(MouserPage):
         swap_button = CTkButton(
             button_frame,
             text='Swap',
-            fg_color=palette["accent_teal"],
-            hover_color="#0f766e",
-            text_color="white",
+            fg_color=palette["tile_invest_bg"],
+            hover_color=palette["tile_invest_hover"],
+            text_color=palette["text"],
+            border_width=1,
+            border_color=palette["accent_teal"],
             corner_radius=14,
             font=action_font,
             command=self.perform_swap,
@@ -168,9 +184,11 @@ class CageConfigurationUI(MouserPage):
         move_button = CTkButton(
             button_frame,
             text='Move Selected',
-            fg_color=palette["accent_amber"],
-            hover_color="#d97706",
-            text_color="white",
+            fg_color=palette["tile_cage_bg"],
+            hover_color=palette["tile_cage_hover"],
+            text_color=palette["text"],
+            border_width=1,
+            border_color=palette["accent_amber"],
             corner_radius=14,
             font=action_font,
             command=self.move_animal,
@@ -231,6 +249,10 @@ class CageConfigurationUI(MouserPage):
             textvariable=self._rfid_entry_var,
             placeholder_text="Scan tag and press Enter",
             font=entry_font,
+            fg_color=self.ui_palette["entry_bg"],
+            border_color=self.ui_palette["entry_border"],
+            text_color=self.ui_palette["text"],
+            placeholder_text_color=self.ui_palette["text_muted"],
         )
         self._rfid_entry.grid(row=0, column=1, sticky="ew", pady=(2, 0))
         self._rfid_entry.bind("<Return>", self._on_scan_entry_return, add="+")
@@ -390,13 +412,13 @@ class CageConfigurationUI(MouserPage):
         tile_style = CTkFont("Segoe UI", 12)
 
         self.config_frame.grid_rowconfigure(0, weight=1)
-        max_columns = 2
+        max_columns = 3
 
         if not cages:
             empty_state = CTkFrame(
                 self.config_frame,
                 corner_radius=18,
-                fg_color=("white", "#0c1430"),
+                fg_color=self.ui_palette["surface"],
                 border_width=1,
                 border_color=self.ui_palette["card_border"],
             )
@@ -421,7 +443,7 @@ class CageConfigurationUI(MouserPage):
             cage_frame = CTkFrame(
                 self.config_frame,
                 corner_radius=18,
-                fg_color=("white", "#0c1430"),
+                fg_color=self.ui_palette["surface"],
                 border_width=1,
                 border_color=self.ui_palette["card_border"],
             )
@@ -605,7 +627,7 @@ class CageConfigurationUI(MouserPage):
         self.selected_animals.clear()
         self.selected_cage = None
         if target_cage in self.cage_buttons:  # Use display name for button lookup
-            self.cage_buttons[target_cage].configure(fg_color="#0097A7")  # Reset cage button color
+            self.cage_buttons[target_cage].configure(fg_color=self._cage_button_default_fg)  # Reset cage button color
         self.update_config_frame()
         self.save()
         AudioManager.play(SUCCESS_SOUND)
