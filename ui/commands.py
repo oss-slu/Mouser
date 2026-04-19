@@ -13,7 +13,7 @@ These handlers are now centralized here, replacing inline logic in main.py.
 
 import os
 from tkinter.filedialog import askopenfilename
-from customtkinter import CTkLabel, CTkButton, CTkToplevel, CTkEntry
+from customtkinter import CTkLabel, CTkButton, CTkToplevel, CTkEntry, CTkTextbox
 from CTkMessagebox import CTkMessagebox
 
 from shared.serial_port_settings import SerialPortSetting
@@ -30,6 +30,66 @@ global_state = {
     "current_file_path": None,
     "password": None
 }
+
+
+def open_documentation_popup(root):
+    """Opens a popup window showing step-by-step usage guidance (placeholder)."""
+    existing = getattr(root, "_mouser_info_popup", None)
+    if existing is not None:
+        try:
+            existing.lift()
+            existing.focus_force()
+            return
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
+
+    popup = CTkToplevel(root)
+    popup.title("Mouser Documentation")
+    popup.geometry("720x520")
+    try:
+        popup.transient(root)
+    except Exception:  # pylint: disable=broad-exception-caught
+        pass
+
+    def on_close():
+        try:
+            delattr(root, "_mouser_info_popup")
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
+        popup.destroy()
+
+    popup.protocol("WM_DELETE_WINDOW", on_close)
+    root._mouser_info_popup = popup
+
+    CTkLabel(
+        popup,
+        text="How to use Mouser (step-by-step)",
+        font=("Segoe UI Semibold", 18),
+    ).pack(padx=18, pady=(16, 8), anchor="w")
+
+    body = (
+        "1) Start a new experiment\n"
+        "   - Click File → New Experiment.\n"
+        "   - Fill in the experiment details and proceed through the pages.\n\n"
+        "2) Open an existing experiment\n"
+        "   - Click File → Open Experiment.\n"
+        "   - Select a .mouser or .pmouser file.\n"
+        "   - If the file is encrypted (.pmouser), enter the password.\n\n"
+        "3) Work in the experiment menu\n"
+        "   - Review or update experiment setup.\n"
+        "   - Navigate through steps using the on-screen controls.\n\n"
+        "Documentation links will be connected here later."
+    )
+
+    try:
+        text_box = CTkTextbox(popup, wrap="word")
+        text_box.pack(padx=18, pady=(0, 12), fill="both", expand=True)
+        text_box.insert("1.0", body)
+        text_box.configure(state="disabled")
+    except Exception:  # pylint: disable=broad-exception-caught
+        CTkLabel(popup, text=body, justify="left", wraplength=680).pack(padx=18, pady=(0, 12), anchor="w")
+
+    CTkButton(popup, text="Close", command=on_close, width=120).pack(padx=18, pady=(0, 16), anchor="e")
 
 
 def open_file(root, experiments_frame):

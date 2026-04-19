@@ -24,6 +24,7 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from shared.tk_models import MouserPage, raise_frame  # pylint: disable=wrong-import-position
 from shared.serial_port_controller import SerialPortController  # pylint: disable=wrong-import-position
 from ui.root_window import create_root_window  # pylint: disable=wrong-import-position
+from ui.menu_bar import build_menu  # pylint: disable=wrong-import-position
 from ui.welcome_screen import setup_welcome_screen  # pylint: disable=wrong-import-position
 
 
@@ -62,6 +63,7 @@ root.rfid_serial_port_controller = rfid_serial_port_controller
 experiments_frame = setup_welcome_screen(root, main_frame)
 
 # Final grid configuration
+build_menu(root, experiments_frame)
 raise_frame(experiments_frame)
 root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)
