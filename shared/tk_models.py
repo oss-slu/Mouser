@@ -8,6 +8,22 @@ from customtkinter import *
 
 current_frame: CTkFrame = None
 
+# Fixed application background for all pages.
+DEFAULT_PAGE_BG = "#ccd7e8"
+DEFAULT_HEADER_COLOR = "#0f172a"
+DEFAULT_TEXT_MUTED = ("#64748b", "#94a3b8")
+DEFAULT_CARD_BORDER = ("#e2e8f0", "#223044")
+DEFAULT_ENTRY_BG = ("#ffffff", "#0b1220")
+DEFAULT_ENTRY_BORDER = ("#cbd5e1", "#334155")
+DEFAULT_ACCENT_BLUE = "#3b82f6"
+DEFAULT_ACCENT_VIOLET = "#8b5cf6"
+DEFAULT_ACCENT_TEAL = "#14b8a6"
+DEFAULT_ACCENT_AMBER = "#f59e0b"
+DEFAULT_ACCENT_GREEN = "#22c55e"
+DEFAULT_DANGER = "#ef4444"
+DEFAULT_ICON_LEFT = "\u2B05"
+DEFAULT_ICON_RIGHT = "\u27A1"
+
 
 def get_ui_metrics():
     """Return cross-platform UI sizing values to keep layouts consistent."""
@@ -70,6 +86,15 @@ def raise_frame(frame: CTkFrame): #pylint: disable= redefined-outer-name
         current_frame.pack_forget()
     current_frame = frame
     current_frame.pack()
+
+    # Keep the top menu bar background in sync with the active page.
+    try:
+        root = current_frame.winfo_toplevel()
+        from ui.menu_bar import sync_menu_background  # pylint: disable=import-outside-toplevel
+
+        sync_menu_background(root, current_frame)
+    except Exception:  # pylint: disable=broad-exception-caught
+        pass
    
 def create_nav_button(parent: CTkFrame, name: str, button_image: PhotoImage, frame: CTkFrame, relx: float, rely: float): #pylint: disable= line-too-long,redefined-outer-name
     '''Makes a navigation button to the various sub-menus of the program.'''
@@ -81,18 +106,29 @@ def create_nav_button(parent: CTkFrame, name: str, button_image: PhotoImage, fra
 
 class MouserPage(CTkFrame):
 
-    '''Standard pageframe used throughout the program.'''
+    '''Standard page frame used throughout the program without a default header.'''
     def __init__(self, parent: CTk, title: str, menu_page: CTkFrame = None):
         super().__init__(parent)
         self.root = parent
         self.title = title
 
-        self.canvas = CTkCanvas(self, width=600, height=600)
-        self.canvas.grid(row=0, column=0, columnspan= 4)
-        self.rectangle = self.canvas.create_rectangle(0, 0, 600, 50, fill='#0097A7')
-        self.title_label = self.canvas.create_text(300, 13, anchor="n")
-        self.canvas.itemconfig(self.title_label, text=title, font=("Arial", 18))
+        self.configure(fg_color=DEFAULT_PAGE_BG)
+        self.canvas = CTkCanvas(
+            self,
+            width=600,
+            height=600,
+            highlightthickness=0,
+            bg=self._resolve_bg_color(),
+        )
+        self.canvas.grid(row=0, column=0, columnspan=4, sticky="nsew")
+        # Ensure the legacy canvas stays behind modern CTk widgets (buttons/frames).
+        try:
+            self.canvas.lower()
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
 
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
         self.canvas.grid_rowconfigure(0, weight=1)
         self.canvas.grid_columnconfigure(0, weight=1)
 
@@ -105,9 +141,55 @@ class MouserPage(CTkFrame):
 
         self.check_window_size()
 
+    def configure(self, **kwargs):  # pylint: disable=arguments-differ
+        """Extend CTkFrame.configure to keep the legacy canvas in sync.
+
+        Many pages call `self.configure(fg_color=...)` after `super().__init__`.
+        Without syncing, the old canvas can briefly show as a mismatched rectangle.
+        """
+        super().configure(**kwargs)
+        if "fg_color" in kwargs:
+            self._sync_canvas_bg()
+
+    def _resolve_bg_color(self):
+        """Return a concrete (non-tuple) background color for Tk widgets like Canvas."""
+        try:
+            fg_color = self.cget("fg_color")
+        except Exception:  # pylint: disable=broad-exception-caught
+            fg_color = DEFAULT_PAGE_BG
+
+        if isinstance(fg_color, (tuple, list)) and len(fg_color) >= 2:
+            return fg_color[1] if get_appearance_mode().lower() == "dark" else fg_color[0]
+        return fg_color
+
+    def _sync_canvas_bg(self):
+        """Keep the legacy canvas background in sync with the page fg_color.
+
+        Many modern pages place their own frames; if the canvas background is out
+        of sync (e.g., after theme changes or page-specific palettes), it can
+        appear as a 'white box' behind the UI.
+        """
+        if hasattr(self, "canvas") and self.canvas:
+            try:
+                self.canvas.configure(bg=self._resolve_bg_color())
+            except Exception:  # pylint: disable=broad-exception-caught
+                pass
+
+    def _lift_nav_widgets(self):
+        """Keep navigation buttons clickable/visible above page content."""
+        for widget in (self.menu_button, self.next_button, self.previous_button):
+            if widget is None:
+                continue
+            try:
+                widget.lift()
+            except Exception:  # pylint: disable=broad-exception-caught
+                pass
+
     def raise_frame(self):
         '''Raises the page frame in the stacking order.'''
         raise_frame(self)
+        self._sync_canvas_bg()
+        self._lift_nav_widgets()
 
     def set_next_button(self, next_page):
 
@@ -115,21 +197,26 @@ class MouserPage(CTkFrame):
         if self.next_button:
             self.next_button.destroy()
         self.next_button = ChangePageButton(self, next_page, False)
+        self._lift_nav_widgets()
 
     def set_previous_button(self, previous_page):
         '''Sets previous_button to be a ChangePageButton that navigates to previous_page.'''
         if self.previous_button:
             self.previous_button.destroy()
-        self.previous_button = ChangePageButton(self, previous_page, False)
+        self.previous_button = ChangePageButton(self, previous_page, True)
+        self._lift_nav_widgets()
 
     def set_menu_button(self, menu_page):
         '''Sets menu_button to be a ChangePageButton that navigates to menu_page.'''
         if self.menu_button:
             self.menu_button.destroy()
         self.menu_button = MenuButton(self, menu_page)
+        self._lift_nav_widgets()
 
     def check_window_size(self):
         '''Checks to see if the window size and page size match.If they don't, resizes the page to match'''
+        self._sync_canvas_bg()
+        self._lift_nav_widgets()
         window = self.winfo_toplevel()
         if window.winfo_height() != self.canvas.winfo_height():
             self.resize_canvas_height(window.winfo_height())
@@ -146,8 +233,10 @@ class MouserPage(CTkFrame):
         '''Resizes page width.'''
         self.canvas.config(width=root_width)
 
-        self.canvas.coords(self.rectangle, 0, 0, root_width, 50)
-        self.canvas.coords(self.title_label, (root_width/2), 13)
+        if hasattr(self, "rectangle"):
+            self.canvas.coords(self.rectangle, 0, 0, root_width, 50)
+        if hasattr(self, "title_label"):
+            self.canvas.coords(self.title_label, (root_width/2), 13)
 
 
 class ChangeableFrame(ABC, CTkFrame):
@@ -173,13 +262,14 @@ class MenuButton(CTkButton):
     '''A standard button that navigates backwards in the program.'''
     def __init__(self, page: CTkFrame, previous_page: MouserPage):
         metrics = get_ui_metrics()
-        button_font = CTkFont("Segoe UI Semibold", metrics["nav_font_size"])
+        icon_font = CTkFont("Segoe UI Symbol", metrics["nav_font_size"] + 4)
+        icon_size = max(metrics["nav_height"], 48)
 
-        super().__init__(page, text="Back to Menu", compound=TOP,
-                         width=metrics["nav_width"], height=metrics["nav_height"],
-                         font=button_font, command=self.navigate,
-                         corner_radius=12, text_color="white",
-                         fg_color="#2563eb", hover_color="#1e40af")
+        super().__init__(page, text=DEFAULT_ICON_LEFT, compound=TOP,
+                         width=icon_size, height=icon_size,
+                         font=icon_font, command=self.navigate,
+                         corner_radius=icon_size // 2, text_color="white",
+                         fg_color=DEFAULT_ACCENT_AMBER, hover_color="#d97706")
         self.place(relx=0.15, rely=0.15, anchor=CENTER)
         self.previous_page = previous_page
 
@@ -193,13 +283,18 @@ class MenuButton(CTkButton):
 class ChangePageButton(CTkButton):
     '''A standard button that navigates somewhere else in the program.'''
     def __init__(self, page: CTkFrame, next_page: MouserPage, previous: bool = True):
-        text = "Next"
-        x = 0.75
-        if previous:
-            text = "Previous"
-            x = 0.25
-        super().__init__(page, text=text, compound=TOP,
-                         width=15, command = self.navigate)
+        metrics = get_ui_metrics()
+        icon_font = CTkFont("Segoe UI Symbol", metrics["nav_font_size"] + 4)
+        icon_text = DEFAULT_ICON_LEFT if previous else DEFAULT_ICON_RIGHT
+        x = 0.25 if previous else 0.75
+        button_color = DEFAULT_ACCENT_AMBER if previous else DEFAULT_ACCENT_BLUE
+        hover_color = "#d97706" if previous else "#2563eb"
+
+        super().__init__(page, text=icon_text, compound=TOP,
+                         width=80, height=48,
+                         font=icon_font, command=self.navigate,
+                         corner_radius=24, text_color="white",
+                         fg_color=button_color, hover_color=hover_color)
         self.place(relx=x, rely=0.85, anchor=CENTER)
         self.next_page = next_page
 

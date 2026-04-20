@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mouser — User Manual</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #eef3f7; --surface: #f7fbff; --surface2: #eef5fb; --surface3: #e3edf7;
+  --border: rgba(15, 23, 42, 0.12); --border-md: rgba(15, 23, 42, 0.18); --border-strong: rgba(15, 23, 42, 0.24);
+  --text: #0f1f38; --text-muted: #314765; --text-hint: #5f738f;
+  --green: #158f57; --green-dim: rgba(21,143,87,0.12); --green-border: rgba(21,143,87,0.3);
+  --blue: #1f6feb; --blue-dim: rgba(31,111,235,0.1); --blue-border: rgba(31,111,235,0.28);
+  --amber: #b86909; --amber-dim: rgba(184,105,9,0.12); --amber-border: rgba(184,105,9,0.3);
+  --red: #c93b3b; --red-dim: rgba(201,59,59,0.11); --red-border: rgba(201,59,59,0.3);
+  --purple: #6f55d9; --purple-dim: rgba(111,85,217,0.11); --purple-border: rgba(111,85,217,0.28);
+  --teal: #0f8a8a; --teal-dim: rgba(15,138,138,0.11); --teal-border: rgba(15,138,138,0.28);
+  --card-r: 12px; --sidebar-w: 224px;
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.7; display: flex; min-height: 100vh; }
+.sidebar { position: fixed; top: 0; left: 0; width: var(--sidebar-w); height: 100vh; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; z-index: 100; }
+.sidebar-logo { padding: 26px 22px 20px; border-bottom: 1px solid var(--border); }
+.sidebar-logo-mark { width: 34px; height: 34px; background: var(--green); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 17px; margin-bottom: 11px; }
+.sidebar-logo-name { font-size: 14.5px; font-weight: 600; color: var(--text); letter-spacing: -0.01em; }
+.sidebar-logo-sub { font-size: 10.5px; color: var(--text-hint); text-transform: uppercase; letter-spacing: 0.07em; margin-top: 2px; }
+.sidebar-section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-hint); font-weight: 600; padding: 18px 22px 7px; }
+.sidebar nav { flex: 1; padding-bottom: 20px; }
+.nav-item { display: flex; align-items: center; gap: 9px; padding: 7px 22px; font-size: 12.5px; color: var(--text-muted); text-decoration: none; cursor: pointer; position: relative; transition: color 0.15s, background 0.15s; }
+.nav-item:hover { color: var(--text); background: var(--surface2); }
+.nav-item.active { color: var(--green); background: var(--green-dim); }
+.nav-item.active::before { content: ''; position: absolute; left: 0; top: 4px; bottom: 4px; width: 2.5px; background: var(--green); border-radius: 0 2px 2px 0; }
+.nav-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text-hint); flex-shrink: 0; transition: background 0.15s; }
+.nav-item.active .nav-dot { background: var(--green); }
+.nav-item:hover .nav-dot { background: var(--text-muted); }
+.sidebar-footer { padding: 14px 22px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-hint); }
+.sidebar-footer span { display: block; }
+.sidebar-footer span + span { margin-top: 2px; }
+.main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.hero { background: var(--surface); border-bottom: 1px solid var(--border); padding: 54px 60px 50px; position: relative; overflow: hidden; }
+.hero-grid { position: absolute; inset: 0; background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px); background-size: 40px 40px; mask-image: radial-gradient(ellipse 60% 100% at 90% 50%, black 0%, transparent 70%); }
+.hero-glow { position: absolute; top: -80px; right: -80px; width: 380px; height: 380px; border-radius: 50%; background: radial-gradient(circle, rgba(52,201,123,0.07) 0%, transparent 70%); pointer-events: none; }
+.hero-version { position: absolute; top: 22px; right: 60px; font-size: 10.5px; color: var(--text-hint); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.06em; }
+.hero-eyebrow { display: inline-flex; align-items: center; gap: 7px; background: var(--green-dim); border: 1px solid var(--green-border); border-radius: 100px; padding: 4px 14px 4px 10px; font-size: 11px; font-weight: 500; color: var(--green); letter-spacing: 0.02em; margin-bottom: 22px; position: relative; }
+.eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: blink 2.2s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.35} }
+.hero h1 { font-family: 'Instrument Serif', serif; font-size: 52px; font-weight: 400; color: var(--text); line-height: 1.08; margin-bottom: 18px; letter-spacing: -0.02em; position: relative; }
+.hero h1 em { font-style: italic; color: var(--text-muted); }
+.hero-desc { font-size: 14.5px; color: var(--text-muted); max-width: 470px; line-height: 1.7; font-weight: 300; position: relative; }
+.wf-banner { background: var(--surface2); border-bottom: 1px solid var(--border); padding: 20px 60px; }
+.wf-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.wf-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; color: var(--text-hint); white-space: nowrap; padding-right: 12px; border-right: 1px solid var(--border-md); }
+.wf-steps { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.wf-step { display: flex; align-items: center; gap: 7px; background: var(--surface3); border: 1px solid var(--border-md); border-radius: 8px; padding: 6px 13px; }
+.wf-step-num { width: 18px; height: 18px; border-radius: 50%; background: var(--green); color: #000; font-size: 9.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.wf-step-name { font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; }
+.wf-arr { color: var(--text-hint); font-size: 12px; padding: 0 2px; }
+.wf-opt-row { display: flex; align-items: center; gap: 9px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.wf-opt-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; color: var(--text-hint); white-space: nowrap; padding-right: 12px; border-right: 1px solid var(--border-md); }
+.wf-chip { display: inline-flex; align-items: center; gap: 5px; background: transparent; border: 1px dashed var(--border-strong); border-radius: 6px; padding: 4px 11px; font-size: 11.5px; color: var(--text-muted); white-space: nowrap; }
+.wf-note { font-size: 11.5px; color: var(--text-hint); font-style: italic; }
+.content { padding: 48px 60px 80px; max-width: 860px; }
+.toc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-r); padding: 22px 26px; margin-bottom: 48px; }
+.toc-hdr { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; color: var(--text-hint); margin-bottom: 16px; }
+.toc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
+.toc-item { display: flex; align-items: center; gap: 9px; padding: 6px 0; text-decoration: none; border-bottom: 1px solid var(--border); transition: color 0.15s; }
+.toc-item:hover .toc-name { color: var(--green); }
+.toc-n { font-family: 'JetBrains Mono',monospace; font-size: 10px; color: var(--text-hint); width: 20px; flex-shrink: 0; }
+.toc-name { font-size: 12.5px; color: var(--text-muted); }
+.section { margin-bottom: 56px; }
+.section-hdr { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 24px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
+.s-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; margin-top: 4px; border: 1px solid; }
+.si-g { background: var(--green-dim); border-color: var(--green-border); }
+.si-b { background: var(--blue-dim); border-color: var(--blue-border); }
+.si-a { background: var(--amber-dim); border-color: var(--amber-border); }
+.si-p { background: var(--purple-dim); border-color: var(--purple-border); }
+.si-t { background: var(--teal-dim); border-color: var(--teal-border); }
+.si-r { background: var(--red-dim); border-color: var(--red-border); }
+.s-num { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; color: var(--text-hint); margin-bottom: 4px; font-family: 'JetBrains Mono', monospace; }
+h2 { font-family: 'Instrument Serif', serif; font-size: 26px; font-weight: 400; color: var(--text); line-height: 1.2; letter-spacing: -0.01em; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-r); padding: 20px 24px; margin-bottom: 12px; }
+.card-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.09em; font-weight: 600; color: var(--text-hint); margin-bottom: 14px; }
+.card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.card-sm { background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-r); padding: 18px 20px; transition: border-color 0.2s; }
+.card-sm:hover { border-color: var(--border-md); }
+.tbl-wrap { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead tr { background: var(--surface2); }
+th { text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.09em; font-weight: 600; color: var(--text-hint); padding: 10px 16px; border-bottom: 1px solid var(--border); }
+td { padding: 11px 16px; color: var(--text-muted); border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.55; }
+td:first-child { color: var(--text); font-weight: 500; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(15, 23, 42, 0.03); }
+.steps { display: flex; flex-direction: column; }
+.step { display: flex; gap: 14px; position: relative; }
+.step:not(:last-child)::before { content: ''; position: absolute; left: 13px; top: 32px; bottom: -8px; width: 1px; background: var(--border-md); }
+.step-num { width: 26px; height: 26px; border-radius: 50%; background: var(--green-dim); border: 1px solid var(--green-border); color: var(--green); font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 4px; position: relative; z-index: 1; }
+.step-body { padding-bottom: 20px; flex: 1; }
+.step-title { font-weight: 600; font-size: 13px; color: var(--text); padding-top: 4px; margin-bottom: 3px; }
+.step-desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.65; }
+.opt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.opt-card { border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; background: var(--surface2); }
+.opt-card.on { border-color: var(--green-border); background: var(--green-dim); }
+.opt-lbl { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 7px; }
+.opt-lbl.g { color: var(--green); }
+.opt-lbl.b { color: var(--blue); }
+.opt-desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.6; }
+.note { border-radius: 8px; padding: 12px 15px; font-size: 12.5px; line-height: 1.6; display: flex; gap: 10px; align-items: flex-start; margin-top: 10px; border: 1px solid; }
+.note-ico { font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+.note.info    { background: var(--blue-dim);  border-color: var(--blue-border);  color: #1e4fa8; }
+.note.warn    { background: var(--amber-dim); border-color: var(--amber-border); color: #8a4f07; }
+.note.danger  { background: var(--red-dim);   border-color: var(--red-border);   color: #8f2f2f; }
+.note.success { background: var(--green-dim); border-color: var(--green-border); color: #0f6f43; }
+.note strong  { color: inherit; font-weight: 600; }
+.badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 100px; font-size: 10.5px; font-weight: 500; border: 1px solid; }
+.bg  { background: var(--green-dim); border-color: var(--green-border); color: var(--green); }
+.bb  { background: var(--blue-dim);  border-color: var(--blue-border);  color: var(--blue); }
+.ba  { background: var(--amber-dim); border-color: var(--amber-border); color: var(--amber); }
+.br  { background: var(--red-dim);   border-color: var(--red-border);   color: var(--red); }
+.bgr { background: var(--surface3);  border-color: var(--border-md);    color: var(--text-muted); }
+.fc { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 6px; font-size: 11.5px; font-weight: 500; font-family: 'JetBrains Mono', monospace; border: 1px solid; white-space: nowrap; }
+.fc-m { background: var(--blue-dim);  border-color: var(--blue-border);  color: var(--blue); }
+.fc-p { background: var(--amber-dim); border-color: var(--amber-border); color: var(--amber); }
+.sf { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.sp { padding: 5px 13px; border-radius: 100px; font-size: 11.5px; font-weight: 500; border: 1px solid; display: inline-flex; align-items: center; gap: 4px; }
+.sp-p { background: var(--surface3);   border-color: var(--border-md);     color: var(--text-muted); }
+.sp-i { background: var(--amber-dim);  border-color: var(--amber-border);  color: var(--amber); }
+.sp-d { background: var(--green-dim);  border-color: var(--green-border);  color: var(--green); }
+.sa   { color: var(--text-hint); font-size: 13px; }
+.ag { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.ai { display: flex; gap: 11px; align-items: flex-start; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 13px 15px; }
+.ai-icon { width: 30px; height: 30px; border-radius: 7px; background: var(--surface3); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.ai-name { font-size: 12.5px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+.ai-desc { font-size: 11.5px; color: var(--text-muted); line-height: 1.5; }
+.hc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+.hc { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--card-r); padding: 16px 18px; display: flex; gap: 13px; align-items: flex-start; transition: border-color 0.2s; }
+.hc:hover { border-color: var(--border-md); }
+.hc-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; border: 1px solid; }
+.hci-g { background: var(--green-dim);  border-color: var(--green-border); }
+.hci-b { background: var(--blue-dim);   border-color: var(--blue-border); }
+.hci-p { background: var(--purple-dim); border-color: var(--purple-border); }
+.hci-t { background: var(--teal-dim);   border-color: var(--teal-border); }
+.hci-a { background: var(--amber-dim);  border-color: var(--amber-border); }
+.hc-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+.hc-desc  { font-size: 12px; color: var(--text-muted); line-height: 1.55; }
+.tr { background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-r); padding: 18px 22px; margin-bottom: 10px; transition: border-color 0.2s; }
+.tr:hover { border-color: var(--border-md); }
+.tr-q { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 13px; color: var(--text); margin-bottom: 11px; }
+.tr-badge { background: var(--red-dim); border: 1px solid var(--red-border); color: var(--red); font-size: 9.5px; font-weight: 700; padding: 2px 7px; border-radius: 100px; flex-shrink: 0; }
+.tr-ans { display: flex; flex-direction: column; gap: 6px; padding-left: 3px; }
+.tr-a { font-size: 12.5px; color: var(--text-muted); line-height: 1.6; display: flex; gap: 9px; }
+.tr-a::before { content: '→'; color: var(--green); flex-shrink: 0; font-weight: 600; }
+/* Notebook inline card */
+.nb-card { background: var(--surface2); border: 1px solid var(--border-md); border-radius: var(--card-r); margin-top: 20px; overflow: hidden; }
+.nb-card-hdr { display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-bottom: 1px solid var(--border); background: var(--surface3); }
+.nb-card-icon { font-size: 16px; }
+.nb-card-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.nb-card-sub { font-size: 11.5px; color: var(--text-hint); margin-left: auto; }
+.nb-tbl-grid { display: grid; grid-template-columns: 1fr 1fr; }
+.nb-col { padding: 16px 20px; }
+.nb-col:first-child { border-right: 1px solid var(--border); }
+.nb-col-hdr { font-size: 10px; text-transform: uppercase; letter-spacing: 0.09em; font-weight: 600; margin-bottom: 12px; }
+.nb-col-hdr.pos { color: var(--green); }
+.nb-col-hdr.neg { color: var(--red); }
+.nb-row { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; color: var(--text-muted); line-height: 1.55; padding: 5px 0; border-bottom: 1px solid var(--border); }
+.nb-row:last-child { border-bottom: none; }
+.nb-dot-pos { width: 5px; height: 5px; border-radius: 50%; background: var(--green); flex-shrink: 0; margin-top: 6px; }
+.nb-dot-neg { width: 5px; height: 5px; border-radius: 50%; background: var(--red); flex-shrink: 0; margin-top: 6px; }
+/* checklist */
+.check-list { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.check-item { display: flex; align-items: flex-start; gap: 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 11px 14px; }
+.check-n { width: 20px; height: 20px; border-radius: 50%; background: var(--green-dim); border: 1px solid var(--green-border); color: var(--green); font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.check-text { font-size: 12.5px; color: var(--text-muted); line-height: 1.55; }
+code { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; background: var(--surface3); border: 1px solid var(--border-md); border-radius: 4px; padding: 1px 6px; color: var(--green); }
+.kbd { display: inline-flex; align-items: center; background: var(--surface3); border: 1px solid var(--border-md); border-bottom-width: 2px; border-radius: 5px; padding: 1px 7px; font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text-muted); white-space: nowrap; }
+hr { border: none; border-top: 1px solid var(--border); margin: 48px 0; }
+p { color: var(--text-muted); font-size: 13px; line-height: 1.7; margin-bottom: 10px; }
+p:last-child { margin-bottom: 0; }
+strong { color: var(--text); font-weight: 600; }
+.footer { margin-top: 56px; padding: 22px 0 0; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.footer-l { font-size: 12px; color: var(--text-hint); display: flex; align-items: center; gap: 7px; }
+.footer-r { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--text-hint); }
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-mark">🐭</div>
+    <div class="sidebar-logo-name">Mouser</div>
+    <div class="sidebar-logo-sub">User Manual</div>
+  </div>
+  <nav>
+    <div class="sidebar-section-label">Getting Started</div>
+    <a class="nav-item active" href="#home"><div class="nav-dot"></div>Home Screen</a>
+    <a class="nav-item" href="#new-experiment"><div class="nav-dot"></div>New Experiment</a>
+    <a class="nav-item" href="#open-experiment"><div class="nav-dot"></div>Open Experiment</a>
+    <a class="nav-item" href="#equipment-testing"><div class="nav-dot"></div>Equipment Testing</a>
+    <a class="nav-item" href="#serial-port-testing"><div class="nav-dot"></div>Serial Port Testing</a>
+    <div class="sidebar-section-label">Core Workflow</div>
+    <a class="nav-item" href="#experiment-menu"><div class="nav-dot"></div>Experiment Menu</a>
+    <a class="nav-item" href="#map-rfid"><div class="nav-dot"></div>Map RFID</a>
+    <a class="nav-item" href="#data-collection"><div class="nav-dot"></div>Data Collection</a>
+    <a class="nav-item" href="#data-analysis"><div class="nav-dot"></div>Data Analysis</a>
+    <div class="sidebar-section-label">Configuration</div>
+    <a class="nav-item" href="#group-config"><div class="nav-dot"></div>Group Configuration</a>
+    <a class="nav-item" href="#cage-config"><div class="nav-dot"></div>Cage Configuration</a>
+    <div class="sidebar-section-label">Reference</div>
+    <a class="nav-item" href="#investigators"><div class="nav-dot"></div>Investigators</a>
+    <a class="nav-item" href="#review-summary"><div class="nav-dot"></div>Review Summary</a>
+    <a class="nav-item" href="#troubleshoot"><div class="nav-dot"></div>Troubleshooting</a>
+    <a class="nav-item" href="#files"><div class="nav-dot"></div>File Types &amp; Safety</a>
+  </nav>
+  <div class="sidebar-footer">
+    <span>Mouser v1.0</span>
+    <span style="margin-top:3px;">Animal Experiment Software</span>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-glow"></div>
+    <div class="hero-version">MANUAL · v1.0</div>
+    <div class="hero-eyebrow"><div class="eyebrow-dot"></div>Animal Experiment Workflow Software</div>
+    <h1>Mouser<br><em>Workflow Guide</em></h1>
+    <p class="hero-desc">A desktop application for running animal experiments with RFID-based identification and streamlined measurement entry — designed for minimal mouse and keyboard interaction.</p>
+  </div>
+
+  <div class="wf-banner">
+    <div class="wf-row">
+      <div class="wf-label">Core Workflow</div>
+      <div class="wf-steps">
+        <div class="wf-step"><div class="wf-step-num">1</div><div class="wf-step-name">📡 Map RFID</div></div>
+        <div class="wf-arr">›</div>
+        <div class="wf-step"><div class="wf-step-num">2</div><div class="wf-step-name">📋 Data Collection</div></div>
+        <div class="wf-arr">›</div>
+        <div class="wf-step"><div class="wf-step-num">3</div><div class="wf-step-name">📊 Data Analysis &amp; Export</div></div>
+      </div>
+    </div>
+    <div class="wf-opt-row">
+      <div class="wf-opt-label">Modify</div>
+      <div class="wf-chip">👥 Group Configuration</div>
+      <div class="wf-chip">🏠 Cage Configuration</div>
+      <div class="wf-note">— use anytime to adjust groups or cage assignments</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- TOC -->
+    <div class="toc">
+      <div class="toc-hdr">Table of Contents</div>
+      <div class="toc-grid">
+        <a class="toc-item" href="#home"><span class="toc-n">01</span><span class="toc-name">Home Screen</span></a>
+        <a class="toc-item" href="#new-experiment"><span class="toc-n">02</span><span class="toc-name">New Experiment</span></a>
+        <a class="toc-item" href="#open-experiment"><span class="toc-n">03</span><span class="toc-name">Open Experiment</span></a>
+        <a class="toc-item" href="#equipment-testing"><span class="toc-n">04</span><span class="toc-name">Equipment Testing</span></a>
+        <a class="toc-item" href="#serial-port-testing"><span class="toc-n">05</span><span class="toc-name">Serial Port Testing</span></a>
+        <a class="toc-item" href="#experiment-menu"><span class="toc-n">06</span><span class="toc-name">Experiment Menu</span></a>
+        <a class="toc-item" href="#map-rfid"><span class="toc-n">07</span><span class="toc-name">Map RFID</span></a>
+        <a class="toc-item" href="#data-collection"><span class="toc-n">08</span><span class="toc-name">Data Collection</span></a>
+        <a class="toc-item" href="#data-analysis"><span class="toc-n">09</span><span class="toc-name">Data Analysis &amp; Export</span></a>
+        <a class="toc-item" href="#group-config"><span class="toc-n">10</span><span class="toc-name">Group Configuration</span></a>
+        <a class="toc-item" href="#cage-config"><span class="toc-n">11</span><span class="toc-name">Cage Configuration</span></a>
+        <a class="toc-item" href="#investigators"><span class="toc-n">12</span><span class="toc-name">Investigators</span></a>
+        <a class="toc-item" href="#review-summary"><span class="toc-n">13</span><span class="toc-name">Review Summary</span></a>
+        <a class="toc-item" href="#troubleshoot"><span class="toc-n">14</span><span class="toc-name">Troubleshooting</span></a>
+        <a class="toc-item" href="#files"><span class="toc-n">15</span><span class="toc-name">File Types &amp; Safety</span></a>
+      </div>
+    </div>
+
+    <!-- §01 HOME -->
+    <div class="section" id="home">
+      <div class="section-hdr">
+        <div class="s-icon si-g">🏠</div>
+        <div class="s-meta"><div class="s-num">Section 01</div><h2>Home Screen</h2></div>
+      </div>
+      <p>When you launch Mouser, the Home Screen offers four entry points. The first two are also accessible via <span class="kbd">File</span> in the menu bar.</p>
+      <div class="hc-grid">
+        <div class="hc">
+          <div class="hc-icon hci-g">✨</div>
+          <div><div class="hc-title">New Experiment</div><div class="hc-desc">Create a new experiment file and save it to a folder of your choice.</div></div>
+        </div>
+        <div class="hc">
+          <div class="hc-icon hci-b">📂</div>
+          <div><div class="hc-title">Open Experiment</div><div class="hc-desc">Resume an existing <code>.mouser</code> or <code>.pmouser</code> file.</div></div>
+        </div>
+        <div class="hc">
+          <div class="hc-icon hci-p">🔬</div>
+          <div><div class="hc-title">Equipment Testing</div><div class="hc-desc">Validate connected devices before collecting real experimental data.</div></div>
+        </div>
+        <div class="hc">
+          <div class="hc-icon hci-t">🔌</div>
+          <div><div class="hc-title">Serial Port Testing</div><div class="hc-desc">Configure and verify serial port connections for readers and devices.</div></div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+    <!-- §02 NEW EXPERIMENT -->
+    <div class="section" id="new-experiment">
+      <div class="section-hdr">
+        <div class="s-icon si-b">✨</div>
+        <div class="s-meta"><div class="s-num">Section 02</div><h2>Create a New Experiment</h2></div>
+      </div>
+      <p>Go to <strong>Home → New Experiment</strong> (or <span class="kbd">File → New Experiment</span>) and complete the three-step setup wizard.</p>
+      <div class="card" style="margin-top:16px;">
+        <div class="card-lbl">Step 1 — Fill in experiment details</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Field</th><th>Required?</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td>Experiment Name</td><td><span class="badge br">Required</span></td><td>A clear, descriptive name for your experiment.</td></tr>
+              <tr><td>Password</td><td><span class="badge bgr">Optional</span></td><td>Setting a password saves the file as an encrypted <code>.pmouser</code>.</td></tr>
+              <tr><td>Investigators</td><td><span class="badge bgr">Optional</span></td><td>Names of personnel running the experiment.</td></tr>
+              <tr><td>Species</td><td><span class="badge bgr">Optional</span></td><td>Animal species being studied.</td></tr>
+              <tr><td>Measurement Items</td><td><span class="badge bgr">Optional</span></td><td>What you plan to record — e.g. weight, temperature.</td></tr>
+              <tr><td>Animal / Group Count</td><td><span class="badge bgr">Optional</span></td><td>Number of animals, groups, and animals per cage.</td></tr>
+              <tr><td>Uses RFID</td><td><span class="badge bgr">Optional</span></td><td>Enable if animals will be identified by RFID tag scans.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-lbl">Step 2 — Configure groups &amp; choose input method</div>
+        <p style="margin-bottom:10px;">Name each group, then select how measurements will be entered:</p>
+        <div class="opt-grid">
+          <div class="opt-card on">
+            <div class="opt-lbl g">⚡ Automatic</div>
+            <div class="opt-desc">For workflows using connected hardware or RFID scanning. Measurements are captured directly from the device.</div>
+          </div>
+          <div class="opt-card">
+            <div class="opt-lbl b">⌨️ Manual</div>
+            <div class="opt-desc">For workflows where the investigator types measurement values directly into Mouser.</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-lbl">Step 3 — Review &amp; save</div>
+        <p>Review the <strong>Summary</strong> page, click <strong>Create</strong>, then choose a folder to save the experiment file.</p>
+      </div>
+      <div class="note warn"><div class="note-ico">⚠️</div><div>Avoid saving experiment files to network drives or removable storage — these can be unreliable and may cause data loss.</div></div>
+    </div>
+    <hr>
+
+    <!-- §03 OPEN -->
+    <div class="section" id="open-experiment">
+      <div class="section-hdr">
+        <div class="s-icon si-a">📂</div>
+        <div class="s-meta"><div class="s-num">Section 03</div><h2>Open an Existing Experiment</h2></div>
+      </div>
+      <p>Go to <strong>Home → Open Experiment</strong> (or <span class="kbd">File → Open Experiment</span>) and select your file. Mouser supports two formats:</p>
+      <div class="card" style="margin-top:16px;">
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div style="display:flex;align-items:flex-start;gap:14px;">
+            <span class="fc fc-m">📄 .mouser</span>
+            <div style="font-size:12.5px;color:var(--text-muted);padding-top:2px;">Standard experiment database file. Opens directly — no password required.</div>
+          </div>
+          <div style="border-top:1px solid var(--border);padding-top:16px;display:flex;align-items:flex-start;gap:14px;">
+            <span class="fc fc-p">🔒 .pmouser</span>
+            <div style="font-size:12.5px;color:var(--text-muted);padding-top:2px;">Password-protected encrypted file. You will be prompted to enter the correct password before the experiment opens.</div>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top:10px;">After opening, Mouser takes you directly to the <strong>Experiment Menu</strong> for that file.</p>
+    </div>
+    <hr>
+
+    <!-- §04 EQUIPMENT TESTING -->
+    <div class="section" id="equipment-testing">
+      <div class="section-hdr">
+        <div class="s-icon si-p">🔬</div>
+        <div class="s-meta"><div class="s-num">Section 04</div><h2>Equipment Testing</h2></div>
+      </div>
+      <p>Use <strong>Home → Equipment Testing</strong> before live sessions to verify connected measurement devices are operating correctly. Do not skip this step when using new or reconfigured hardware.</p>
+      <div class="card" style="margin-top:16px;">
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">Connect devices</div>
+              <div class="step-desc">Attach your scale, sensor, or other supported measurement hardware before opening the Equipment Testing view.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">Run signal checks</div>
+              <div class="step-desc">Confirm that values update in Mouser when the device state changes — for example, placing a weight on a scale or triggering a sensor.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">Resolve warnings</div>
+              <div class="step-desc">Address any unrecognized or unstable devices shown in the test view before proceeding to Data Collection.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="note danger"><div class="note-ico">🚨</div><div>Do not begin Data Collection until all required devices are recognized and returning stable readings in the Equipment Testing view.</div></div>
+    </div>
+    <hr>
+
+    <!-- §05 SERIAL PORT TESTING -->
+    <div class="section" id="serial-port-testing">
+      <div class="section-hdr">
+        <div class="s-icon si-t">🔌</div>
+        <div class="s-meta"><div class="s-num">Section 05</div><h2>Serial Port Testing</h2></div>
+      </div>
+      <p>Use <strong>Home → Serial Port Testing</strong> to confirm your RFID reader or serial-connected device is reachable on the expected COM port before starting an experiment session.</p>
+      <div class="card" style="margin-top:16px;">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Check</th><th>What To Confirm</th></tr></thead>
+            <tbody>
+              <tr><td>Port Selection</td><td>The selected COM port matches the device shown by your operating system.</td></tr>
+              <tr><td>Communication Settings</td><td>Baud rate and serial parameters match your device specification.</td></tr>
+              <tr><td>Live Read Test</td><td>Incoming data appears in Mouser when scanning a tag or sending a test value from the device.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="note warn"><div class="note-ico">⚠️</div><div>If no data appears during the live read test, close any other software that may be holding the same COM port open, then retest.</div></div>
+    </div>
+    <hr>
+
+    <!-- §06 EXPERIMENT MENU -->
+    <div class="section" id="experiment-menu">
+      <div class="section-hdr">
+        <div class="s-icon si-p">🗂️</div>
+        <div class="s-meta"><div class="s-num">Section 06</div><h2>Experiment Menu</h2></div>
+      </div>
+      <p>The <strong>Experiment Menu</strong> is your central hub once an experiment is open. All major actions are accessible from here.</p>
+      <div class="card" style="margin-top:16px;">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Menu Item</th><th>Purpose</th></tr></thead>
+            <tbody>
+              <tr><td>📡 Map RFID</td><td>Link animals to RFID tags before data collection. <strong>Required</strong> if RFID is enabled.</td></tr>
+              <tr><td>📋 Data Collection</td><td>Record today's measurements for each animal in the experiment.</td></tr>
+              <tr><td>📊 Data Analysis</td><td>View trends and export data to spreadsheets or statistics tools.</td></tr>
+              <tr><td>🔍 Review Summary</td><td>Confirm core experiment settings before collecting or exporting data.</td></tr>
+              <tr><td>👥 Investigators</td><td>View or update the list of personnel on this experiment.</td></tr>
+              <tr><td>📓 Experiment Notebook</td><td>Record narrative context, protocol deviations, and session notes.</td></tr>
+              <tr><td>⚙️ Group Configuration</td><td><span class="badge bgr" style="margin-right:6px;">Optional</span>Modify group names and input method after experiment creation.</td></tr>
+              <tr><td>🏠 Cage Configuration</td><td><span class="badge bgr" style="margin-right:6px;">Optional</span>Modify cage assignments — move, swap, autosort, or randomize animals.</td></tr>
+              <tr><td>🗑️ Delete Experiment</td><td><span class="badge br" style="margin-right:6px;">Destructive</span>Permanently removes the experiment file. Cannot be undone.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="note danger"><div class="note-ico">🚨</div><div><strong>Delete Experiment</strong> permanently deletes the file — there is no recycle bin or undo. Use with extreme caution.</div></div>
+
+      <!-- Experiment Notebook inline -->
+      <div class="nb-card">
+        <div class="nb-card-hdr">
+          <span class="nb-card-icon">📓</span>
+          <span class="nb-card-title">Experiment Notebook</span>
+          <span class="nb-card-sub">Accessible from Experiment Menu</span>
+        </div>
+        <div style="padding: 14px 20px 6px; font-size:12.5px; color:var(--text-muted); line-height:1.65;">
+          Use the Experiment Notebook to record narrative context that does not belong in numeric measurement fields — protocol deviations, environment observations, and session-to-session notes for investigators.
+        </div>
+        <div class="nb-tbl-grid">
+          <div class="nb-col">
+            <div class="nb-col-hdr pos">✓ Use Notebook For</div>
+            <div class="nb-row"><div class="nb-dot-pos"></div>Protocol deviations, environment notes, and event timelines.</div>
+            <div class="nb-row"><div class="nb-dot-pos"></div>Session-to-session reminders for investigators.</div>
+            <div class="nb-row"><div class="nb-dot-pos"></div>Context for interpreting unusual outliers during analysis.</div>
+          </div>
+          <div class="nb-col">
+            <div class="nb-col-hdr neg">✗ Avoid Using Notebook For</div>
+            <div class="nb-row"><div class="nb-dot-neg"></div>Primary measurement values that belong in Data Collection fields.</div>
+            <div class="nb-row"><div class="nb-dot-neg"></div>Temporary scratch notes you do not intend to preserve.</div>
+            <div class="nb-row"><div class="nb-dot-neg"></div>Replacing configured metadata such as group definitions or investigator list.</div>
+          </div>
+        </div>
+        <div class="note info" style="margin: 0 16px 16px; margin-top:12px;"><div class="note-ico">💡</div><div>Keep entries brief, date-stamped, and specific so they remain useful during later reviews and exports.</div></div>
+      </div>
+    </div>
+    <hr>
+
+    <!-- §07 MAP RFID -->
+    <div class="section" id="map-rfid">
+      <div class="section-hdr">
+        <div class="s-icon si-t">📡</div>
+        <div class="s-meta"><div class="s-num">Section 07</div><h2>Map RFID</h2></div>
+      </div>
+      <p>If your experiment uses RFID, you must link each animal to its tag <em>before</em> starting data collection. Open <strong>Map RFID</strong> from the Experiment Menu.</p>
+      <div class="card" style="margin-top:16px;">
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">Open Map RFID</div>
+              <div class="step-desc">Select <strong>Map RFID</strong> from the Experiment Menu to open the mapping interface.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">Start scanning</div>
+              <div class="step-desc">Begin with your serial RFID reader or HID keyboard-wedge reader, depending on your hardware setup.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">Map each animal</div>
+              <div class="step-desc">For each animal: select or confirm the target animal ID, scan its RFID tag, then verify the mapping appears in the table.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <div class="step-title">Save &amp; return</div>
+              <div class="step-desc">Once all animals are mapped, save and return to the Experiment Menu to begin data collection.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="note warn"><div class="note-ico">⚠️</div><div>Mouser will block or warn when starting Data Collection if any expected animals remain unmapped. Complete all RFID mappings first.</div></div>
+    </div>
+    <hr>
+
+    <!-- §08 DATA COLLECTION -->
+    <div class="section" id="data-collection">
+      <div class="section-hdr">
+        <div class="s-icon si-g">📋</div>
+        <div class="s-meta"><div class="s-num">Section 08</div><h2>Data Collection</h2></div>
+      </div>
+      <p>Use <strong>Data Collection</strong> to record measurements for today's session. Open it from the Experiment Menu.</p>
+      <div class="opt-grid" style="margin-top:16px;">
+        <div class="opt-card on">
+          <div class="opt-lbl g">📡 RFID Experiments</div>
+          <div class="opt-desc">Click <strong>Start scanning</strong>, then scan an animal's tag to pull it up automatically.</div>
+        </div>
+        <div class="opt-card">
+          <div class="opt-lbl b">⌨️ Non-RFID Experiments</div>
+          <div class="opt-desc">Click <strong>Start</strong> to step through animals in sequence using the auto-increment flow.</div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:12px;">
+        <div class="card-lbl">Animal status progression</div>
+        <div class="sf">
+          <span class="sp sp-p">⏳ Pending</span>
+          <span class="sa">→</span>
+          <span class="sp sp-i">🔄 In Progress</span>
+          <span class="sa">→</span>
+          <span class="sp sp-d">✅ Done</span>
+        </div>
+        <p style="margin-top:10px;font-size:12px;">The status column updates in real-time. Continue until every animal shows <strong>Done</strong>.</p>
+      </div>
+      <div class="card">
+        <div class="card-lbl">💾 Saving behaviour</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>File Type</th><th>How saving works</th></tr></thead>
+            <tbody>
+              <tr><td><span class="fc fc-m">📄 .mouser</span></td><td>Data commits as you collect. Mouser can also auto-save the open copy back to the original file during the session.</td></tr>
+              <tr><td><span class="fc fc-p">🔒 .pmouser</span></td><td>Saving is handled through the password-protected save flow at session end.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="note success"><div class="note-ico">📤</div><div>The Data Collection page includes an <strong>Export CSV</strong> button for a quick export of all current experiment data.</div></div>
+    </div>
+    <hr>
+
+    <!-- §09 DATA ANALYSIS -->
+    <div class="section" id="data-analysis">
+      <div class="section-hdr">
+        <div class="s-icon si-p">📊</div>
+        <div class="s-meta"><div class="s-num">Section 09</div><h2>Data Analysis &amp; Export</h2></div>
+      </div>
+      <p>Open <strong>Data Analysis</strong> from the Experiment Menu to explore results and export data to external tools.</p>
+      <div class="card-grid" style="margin-top:16px;">
+        <div class="card-sm">
+          <div style="font-size:24px;margin-bottom:10px;">📤</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Export Data</div>
+          <div style="font-size:12px;color:var(--text-muted);line-height:1.55;">Save results to a location of your choice — compatible with spreadsheets and statistics tools.</div>
+        </div>
+        <div class="card-sm">
+          <div style="font-size:24px;margin-bottom:10px;">📈</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Review Trends</div>
+          <div style="font-size:12px;color:var(--text-muted);line-height:1.55;">When available, view measurement trends over time to monitor changes across your experiment.</div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+    <!-- §10 GROUP CONFIG -->
+    <div class="section" id="group-config">
+      <div class="section-hdr">
+        <div class="s-icon si-b">👥</div>
+        <div class="s-meta"><div class="s-num">Section 10</div><h2>Group Configuration</h2></div>
+      </div>
+      <p>Use <strong>Group Configuration</strong> from the Experiment Menu when group names or the input workflow must be adjusted after experiment creation. It is not part of the core workflow — open it only when adjustments are needed.</p>
+      <div class="card" style="margin-top:16px;">
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">Open Group Configuration</div>
+              <div class="step-desc">From the Experiment Menu, click <strong>Group Configuration</strong> to open the settings panel.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">Rename or review groups</div>
+              <div class="step-desc">Update group labels to match your active protocol naming conventions.</div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">Confirm input mode</div>
+              <div class="step-desc">Verify whether this experiment should use <strong>Automatic</strong> or <strong>Manual</strong> entry going forward, and update if needed.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="note info"><div class="note-ico">💡</div><div>Group Configuration can be revisited at any point during the experiment — changes take effect immediately.</div></div>
+    </div>
+    <hr>
+
+    <!-- §11 CAGE CONFIG -->
+    <div class="section" id="cage-config">
+      <div class="section-hdr">
+        <div class="s-icon si-a">🏠</div>
+        <div class="s-meta"><div class="s-num">Section 11</div><h2>Cage Configuration</h2></div>
+      </div>
+      <p><strong>Cage Configuration</strong> lets you modify how animals are distributed across cages and groups. Open it from the Experiment Menu whenever reassignment is needed.</p>
+      <div class="card" style="margin-top:16px;">
+        <div class="card-lbl">Quick actions available</div>
+        <div class="ag">
+          <div class="ai"><div class="ai-icon">🔀</div><div><div class="ai-name">AutoSort</div><div class="ai-desc">Automatically distribute animals into cages based on defined criteria.</div></div></div>
+          <div class="ai"><div class="ai-icon">🎲</div><div><div class="ai-name">Randomize</div><div class="ai-desc">Randomly assign animals to cages to reduce selection bias.</div></div></div>
+          <div class="ai"><div class="ai-icon">↔️</div><div><div class="ai-name">Swap</div><div class="ai-desc">Swap two animals between their respective cages.</div></div></div>
+          <div class="ai"><div class="ai-icon">↗️</div><div><div class="ai-name">Move Selected</div><div class="ai-desc">Move a selected animal to a different cage or group.</div></div></div>
+        </div>
+      </div>
+      <div class="note info"><div class="note-ico">📡</div><div>If RFID is enabled, you can scan an animal's tag to select it quickly in Cage Configuration, depending on your device and input mode.</div></div>
+    </div>
+    <hr>
+
+    <!-- §12 INVESTIGATORS -->
+    <div class="section" id="investigators">
+      <div class="section-hdr">
+        <div class="s-icon si-g">👤</div>
+        <div class="s-meta"><div class="s-num">Section 12</div><h2>Investigators</h2></div>
+      </div>
+      <p>The <strong>Investigators</strong> page tracks who is responsible for the experiment and helps keep session records consistent. Open it from the Experiment Menu.</p>
+      <div class="card" style="margin-top:16px;">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Action</th><th>Why It Matters</th></tr></thead>
+            <tbody>
+              <tr><td>Add investigator names</td><td>Preserves attribution across data collection sessions, ensuring each session can be traced to responsible personnel.</td></tr>
+              <tr><td>Edit investigator list</td><td>Keeps records current when staff rotate or responsibilities change mid-experiment.</td></tr>
+              <tr><td>Review before export</td><td>Ensures final datasets include accurate personnel context — important for publication and auditing.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="note info"><div class="note-ico">💡</div><div>Review the investigator list before each major export to ensure personnel records accurately reflect who conducted each session.</div></div>
+    </div>
+    <hr>
+
+    <!-- §13 REVIEW SUMMARY -->
+    <div class="section" id="review-summary">
+      <div class="section-hdr">
+        <div class="s-icon si-b">🔍</div>
+        <div class="s-meta"><div class="s-num">Section 13</div><h2>Review Summary</h2></div>
+      </div>
+      <p>Open <strong>Review Summary</strong> from the Experiment Menu to quickly confirm core experiment settings before collecting or exporting data.</p>
+      <div class="card" style="margin-top:16px;">
+        <div class="card-lbl">Recommended Pre-Session Check</div>
+        <div class="check-list">
+          <div class="check-item">
+            <div class="check-n">1</div>
+            <div class="check-text">Confirm experiment name, species, and measurement items are correct and match the current protocol.</div>
+          </div>
+          <div class="check-item">
+            <div class="check-n">2</div>
+            <div class="check-text">Verify group setup and animal counts match the current session plan before starting Data Collection.</div>
+          </div>
+          <div class="check-item">
+            <div class="check-n">3</div>
+            <div class="check-text">Check RFID usage and mapping status — ensure all animals are mapped if RFID is enabled.</div>
+          </div>
+        </div>
+      </div>
+      <div class="note success"><div class="note-ico">✅</div><div>Running through the pre-session check before each collection session helps catch misconfiguration before it affects your data.</div></div>
+    </div>
+    <hr>
+
+    <!-- §14 TROUBLESHOOTING -->
+    <div class="section" id="troubleshoot">
+      <div class="section-hdr">
+        <div class="s-icon si-r">🔧</div>
+        <div class="s-meta"><div class="s-num">Section 14</div><h2>Troubleshooting</h2></div>
+      </div>
+      <p>Quick checks for the most common issues encountered in Mouser.</p>
+      <div style="margin-top:16px;">
+        <div class="tr">
+          <div class="tr-q"><span class="tr-badge">Issue</span>RFID tags are not being read</div>
+          <div class="tr-ans">
+            <div class="tr-a">Go to <strong>Home → Serial Port Testing</strong> and confirm the reader is detected and correctly configured.</div>
+            <div class="tr-a">If using a HID keyboard-wedge reader, verify the system is receiving keystrokes from the device — test in a plain text editor first.</div>
+          </div>
+        </div>
+        <div class="tr">
+          <div class="tr-q"><span class="tr-badge">Issue</span>Cannot start data collection</div>
+          <div class="tr-ans">
+            <div class="tr-a">If RFID is enabled, open <strong>Map RFID</strong> and complete the mapping for all animals before proceeding to data collection.</div>
+          </div>
+        </div>
+        <div class="tr">
+          <div class="tr-q"><span class="tr-badge">Issue</span>Device not recognized in Equipment Testing</div>
+          <div class="tr-ans">
+            <div class="tr-a">Ensure the device is physically connected and powered on before opening the Equipment Testing view.</div>
+            <div class="tr-a">Check that no other software is holding the COM port. Close competing applications and reopen Equipment Testing.</div>
+          </div>
+        </div>
+        <div class="tr">
+          <div class="tr-q"><span class="tr-badge">Issue</span>Data does not appear to be saving</div>
+          <div class="tr-ans">
+            <div class="tr-a">Confirm you have a valid experiment file open — data will not persist from a temporary or scratch state.</div>
+            <div class="tr-a">For <code>.pmouser</code> files, ensure you used the correct password and the file was closed normally at the end of the last session.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr>
+
+    <!-- §15 FILES -->
+    <div class="section" id="files">
+      <div class="section-hdr">
+        <div class="s-icon si-b">🗃️</div>
+        <div class="s-meta"><div class="s-num">Section 15</div><h2>File Types &amp; Safety Notes</h2></div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Format</th><th>Description</th><th>Access</th></tr></thead>
+            <tbody>
+              <tr><td><code>.mouser</code></td><td>Standard experiment database</td><td>Opens directly, no password required</td></tr>
+              <tr><td><code>.pmouser</code></td><td>Password-protected encrypted database</td><td>Correct password required every time</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="note warn"><div class="note-ico">⚠️</div><div>Keep experiment files on a <strong>stable local drive</strong>. Network drives and removable storage can be unreliable and risk data corruption or loss.</div></div>
+      <div class="note danger"><div class="note-ico">🚨</div><div><strong>Delete Experiment</strong> permanently removes the file from disk. There is no undo, no recycle bin, and no recovery option.</div></div>
+    </div>
+
+    <div class="footer">
+      <div class="footer-l">🐭 <span style="color:var(--text-muted);">Mouser — Animal Experiment Workflow Software</span></div>
+      <div class="footer-r">v1.0</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const items = document.querySelectorAll('.nav-item');
+const sections = document.querySelectorAll('.section');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id;
+      items.forEach(i => i.classList.toggle('active', i.getAttribute('href') === '#' + id));
+    }
+  });
+}, { rootMargin: '-15% 0px -75% 0px' });
+sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>

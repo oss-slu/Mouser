@@ -59,16 +59,11 @@ root.minsize(1100, 720)
 # Main layout setup
 main_frame = MouserPage(root, "Mouser")
 rfid_serial_port_controller = SerialPortController("reader")
+root.rfid_serial_port_controller = rfid_serial_port_controller
 experiments_frame = setup_welcome_screen(root, main_frame)
 
-# Menu bar setup
-build_menu(
-    root=root,
-    experiments_frame=experiments_frame,
-    rfid_serial_port_controller=rfid_serial_port_controller,
-)
-
 # Final grid configuration
+build_menu(root, experiments_frame)
 raise_frame(experiments_frame)
 root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)

@@ -85,20 +85,51 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
     '''Map RFID user interface and window.'''
     def __init__(self, database, parent: CTk, previous_page: CTkFrame = None, file_path = ""):
 
-        super().__init__(parent, "Map RFID", previous_page)
+        super().__init__(parent, "RFID Mapping", previous_page)
         ui = get_ui_metrics()
         self._ui = ui
         action_button_font = CTkFont("Segoe UI Semibold", ui["nav_font_size"])
-        self._active_button_style = {
-            "fg_color": "#2563eb",
-            "hover_color": "#1e40af",
-            "text_color": "white",
+        is_dark = get_appearance_mode().lower() == "dark"
+
+        def _pick(color_value):
+            if isinstance(color_value, (tuple, list)) and len(color_value) >= 2:
+                return color_value[1] if is_dark else color_value[0]
+            return color_value
+
+        self._palette = {
+            "page_bg": ("#eef2ff", "#0b1220"),
+            "card_bg": ("#ffffff", "#101827"),
+            "card_border": ("#c7d2fe", "#22304a"),
+            "text": ("#0f172a", "#e5e7eb"),
+            "muted_text": ("#334155", "#cbd5e1"),
+            "table_bg": ("#f0f9ff", "#0b1220"),
+            "table_alt_bg": ("#e0f2fe", "#0f172a"),
+            "table_header_bg": ("#0284c7", "#0369a1"),
+            "table_header_fg": ("#ffffff", "#ffffff"),
+            "table_selected_bg": ("#0ea5e9", "#0ea5e9"),
+            "table_selected_fg": ("#ffffff", "#ffffff"),
         }
-        self._inactive_button_style = {
-            "fg_color": "#93c5fd",
-            "hover_color": "#93c5fd",
-            "text_color": "#e5e7eb",
+        self.configure(fg_color=self._palette["page_bg"])
+
+        self._button_styles = {
+            "primary": {"fg_color": "#4f46e5", "hover_color": "#4338ca", "text_color": "white"},
+            "info": {"fg_color": "#0ea5e9", "hover_color": "#0284c7", "text_color": "white"},
+            "success": {"fg_color": "#16a34a", "hover_color": "#15803d", "text_color": "white"},
+            "warning": {"fg_color": "#f59e0b", "hover_color": "#d97706", "text_color": "#111827"},
+            "neutral": {"fg_color": "#64748b", "hover_color": "#475569", "text_color": "white"},
+            "danger": {"fg_color": "#ef4444", "hover_color": "#dc2626", "text_color": "white"},
         }
+        self._disabled_button_style = {
+            "fg_color": "#cbd5e1",
+            "hover_color": "#cbd5e1",
+            "text_color": "#64748b",
+        }
+        if is_dark:
+            self._disabled_button_style = {
+                "fg_color": "#1f2937",
+                "hover_color": "#1f2937",
+                "text_color": "#64748b",
+            }
 
         self.rfid_reader = None
         self.rfid_stop_event = threading.Event()  # Event to stop RFID listener
@@ -121,66 +152,197 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         
         self.animal_id_entry_text = StringVar(value="1")
 
-        # Simulate All RFID Button
-        simulate_all_rfid_button = CTkButton(self, text="Simulate ALL RFID", compound=TOP,
-                                      width=ui["action_width"], height=ui["action_height"],
-                                      font=action_button_font, command=self.simulate_all_rfid)
-        simulate_all_rfid_button.place(relx=0.80, rely=0.15, anchor=CENTER)
-        self._set_button_enabled(simulate_all_rfid_button, True)
+        self._scanning_active = False
 
+        title_font = CTkFont(family="Segoe UI Semibold", size=26)
+        stat_title_font = CTkFont("Segoe UI Semibold", max(10, ui["label_font_size"] - 3))
+        stat_value_font = CTkFont("Segoe UI Semibold", max(18, ui["label_font_size"] + 10))
 
-
-        self.start_rfid = CTkButton(self, text="Start Scanning", compound=TOP,
-                                         width=ui["action_width"], height=ui["action_height"],
-                                         font=action_button_font, command=self.rfid_listen)
-        self.start_rfid.place(relx=0.45, rely=0.15, anchor=CENTER)
-        if self.db.experiment_uses_rfid() == 0:
-            self.start_rfid.configure(state="disabled")
-            self._set_button_enabled(self.start_rfid, False)
-        else:
-            self._set_button_enabled(self.start_rfid, True)
-
-        self.reader_status_label = CTkLabel(
-            self,
-            text="Reader Status: Idle",
-            font=("Arial", max(14, ui["label_font_size"])),
-            text_color=("#1f2937", "#d1d5db")
+        # Header (match `new_experiment_ui.py` pattern: transparent frame + packed title/subtitle)
+        subtitle_font = CTkFont(family="Segoe UI", size=14)
+        header = CTkFrame(self, fg_color="transparent")
+        header.place(relx=0.0, rely=0.0, x=48, y=72, anchor="nw")
+        title_row = CTkFrame(header, fg_color="transparent")
+        title_row.pack(anchor="w")
+        self.page_title_icon = CTkLabel(
+            title_row,
+            # Avoid the emoji-variation selector (U+FE0F) here; Tk can measure it as extra width,
+            # which creates an oversized gap before the title label on some systems.
+            text="\U0001f3f7",
+            font=title_font,
+            text_color=self._palette["text"],
+            width=0,
         )
-        self.reader_status_label.place(relx=0.50, rely=0.26, anchor=CENTER)
+        self.page_title_icon.pack(side="left", padx=(0, 4))
+        self.page_title_label = CTkLabel(
+            title_row,
+            text="RFID Mapping",
+            font=title_font,
+            text_color=self._palette["text"],
+        )
+        self.page_title_label.pack(side="left")
+        self.page_subtitle_label = CTkLabel(
+            header,
+            text="Map animals to RFID tags ✨",
+            font=subtitle_font,
+            text_color=self._palette["muted_text"],
+        )
+        self.page_subtitle_label.pack(anchor="w", pady=(2, 0))
 
-        self.table_frame = CTkFrame(self)
-        self.table_frame.place(relx=0.15, rely=0.30, relheight=0.40, relwidth=0.80)
+        self.reader_status_chip = CTkFrame(
+            self,
+            fg_color=self._palette["card_bg"],
+            corner_radius=18,
+            border_width=1,
+            border_color=self._palette["card_border"],
+            width=300,
+        )
+        self.reader_status_chip.place(relx=0.95, rely=0.08, anchor="ne")
+        self.reader_status_chip_label = CTkLabel(
+            self.reader_status_chip,
+            text="Reader: Idle",
+            font=CTkFont("Segoe UI Semibold", max(12, ui["label_font_size"])),
+            text_color=self._palette["muted_text"],
+            wraplength=260,
+            justify="left",
+        )
+        self.reader_status_chip_label.pack(padx=14, pady=6)
+
+        # Summary cards
+        self.summary_frame = CTkFrame(self, fg_color="transparent")
+        self.summary_frame.place(relx=0.05, rely=0.23, relwidth=0.90, relheight=0.12, anchor="nw")
+
+        def _build_stat_card(relx, title_text, accent_color, bg_color):
+            card = CTkFrame(
+                self.summary_frame,
+                fg_color=bg_color,
+                corner_radius=14,
+                border_width=1,
+                border_color=self._palette["card_border"],
+            )
+            card.place(relx=relx, rely=0.0, relwidth=0.30, relheight=1.0, anchor="nw")
+            CTkFrame(card, height=6, corner_radius=14, fg_color=accent_color).pack(fill="x")
+            CTkLabel(
+                card,
+                text=title_text,
+                font=stat_title_font,
+                text_color=accent_color,
+            ).place(x=14, y=14, anchor="nw")
+            value_label = CTkLabel(
+                card,
+                text="0",
+                font=stat_value_font,
+                text_color=self._palette["text"],
+            )
+            value_label.place(x=14, y=46, anchor="nw")
+            return value_label
+
+        self.total_animals_value = _build_stat_card(0.00, "ANIMALS", "#3b82f6", ("#eff6ff", "#0b1b35"))
+        self.scanned_value = _build_stat_card(0.35, "SCANNED", "#22c55e", ("#ecfdf5", "#042f2e"))
+        self.pending_value = _build_stat_card(0.70, "PENDING", "#f59e0b", ("#fffbeb", "#2e1f0a"))
+
+        # Single Start/Stop scanning toggle button
+        self.scan_toggle_button = CTkButton(
+            self,
+            text="▶ Start scanning",
+            compound=TOP,
+            width=ui["action_width"] + 40,
+            height=ui["action_height"],
+            font=action_button_font,
+            command=self.toggle_scanning,
+        )
+        setattr(self.scan_toggle_button, "_mouser_variant", "success")
+        self.scan_toggle_button.place(relx=0.50, rely=0.42, anchor=CENTER)
+
+        self.table_frame = CTkFrame(
+            self,
+            fg_color=self._palette["card_bg"],
+            corner_radius=14,
+            border_width=1,
+            border_color=self._palette["card_border"],
+        )
+        self.table_frame.place(relx=0.05, rely=0.49, relheight=0.35, relwidth=0.90, anchor="nw")
         self.table_frame.grid_columnconfigure(0, weight= 1)
         self.table_frame.grid_rowconfigure(0, weight= 1)
 
         self.file_path = file_path
 
-        heading_style = Style()
-        heading_style.configure("Treeview.Heading", font=('Arial', ui["table_font_size"]))
+        table_style = Style()
+        # On Windows, the default ttk theme (vista/xpnative) can ignore heading background colors.
+        # Switch to a theme that honors `Treeview.Heading` styling so header colors apply.
+        try:
+            if table_style.theme_use() in {"vista", "xpnative"}:
+                table_style.theme_use("clam")
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
+        table_style.configure(
+            "MapRFID.Treeview",
+            background=_pick(self._palette["table_bg"]),
+            fieldbackground=_pick(self._palette["table_bg"]),
+            foreground=_pick(self._palette["text"]),
+            rowheight=ui["table_row_height"],
+            font=("Segoe UI", max(12, ui["table_font_size"])),
+            borderwidth=0,
+        )
+        table_style.configure(
+            "MapRFID.Treeview.Heading",
+            background=_pick(self._palette["table_header_bg"]),
+            foreground=_pick(self._palette["table_header_fg"]),
+            font=("Segoe UI Semibold", max(12, ui["table_font_size"])),
+            relief="flat",
+            padding=(10, 6),
+        )
+        table_style.map(
+            "MapRFID.Treeview",
+            background=[("selected", _pick(self._palette["table_selected_bg"]))],
+            foreground=[("selected", _pick(self._palette["table_selected_fg"]))],
+        )
+        table_style.map(
+            "MapRFID.Treeview.Heading",
+            background=[("active", _pick(self._palette["table_selected_bg"]))],
+            foreground=[("active", _pick(self._palette["table_selected_fg"]))],
+        )
 
         columns = ('animal_id', 'rfid')
         self.table = Treeview(
-            self.table_frame, columns=columns, show='headings', height=10, style='column.Treeview')
+            self.table_frame, columns=columns, show='headings', height=10, style='MapRFID.Treeview')
+        self.table.tag_configure("text_font", font=("Segoe UI", max(12, ui["table_font_size"])))
+        self.table.tag_configure("even_row", background=_pick(self._palette["table_bg"]))
+        self.table.tag_configure("odd_row", background=_pick(self._palette["table_alt_bg"]))
 
         self.table.heading('animal_id', text='Animal ID')
-        self.table.heading('rfid', text='RFID')
+        self.table.heading('rfid', text='RFID Tag')
         self.table.column('animal_id', anchor='center')
         self.table.column('rfid', anchor='center')
         self.table.heading('animal_id', anchor='center')
         self.table.heading('rfid', anchor='center')
 
-        self.table.grid(row=0, column=0, sticky='nsew')
+        self.table.grid(row=0, column=0, sticky='nsew', padx=(12, 0), pady=12)
         self.table.grid_columnconfigure(0, weight = 1)
         self.table.grid_rowconfigure(0, weight = 1)
 
 
         scrollbar = CTkScrollbar(self.table_frame, orientation=VERTICAL, command=self.table.yview)
         self.table.configure(yscroll=scrollbar.set)
-        scrollbar.grid(row=0, column=1, sticky='ns')
+        scrollbar.configure(
+            fg_color=_pick(self._palette["card_bg"]),
+            button_color=_pick(self._palette["card_border"]),
+            button_hover_color=_pick(self._palette["table_selected_bg"]),
+        )
+        scrollbar.grid(row=0, column=1, sticky='ns', padx=(0, 12), pady=12)
 
         self.table.bind('<<TreeviewSelect>>', self.item_selected)
 
         self.right_click = Menu(self, tearoff=0)
+        try:
+            self.right_click.configure(
+                background=_pick(self._palette["card_bg"]),
+                foreground=_pick(self._palette["text"]),
+                activebackground=_pick(self._palette["table_selected_bg"]),
+                activeforeground=_pick(self._palette["table_selected_fg"]),
+            )
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
         self.right_click.add_command(
             label="Remove Selection(s)", command=self.remove_selected_items)
         self.table.bind("<Button-3>", self.right_click_menu)
@@ -189,7 +351,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                                        width=ui["action_width"], height=ui["action_height"],
                                        font=action_button_font, command=self.remove_selected_items,
                                        state="normal")  # Initialize button as disabled
-        self.delete_button.place(relx=0.45, rely=0.80, anchor=CENTER)
+        setattr(self.delete_button, "_mouser_variant", "neutral")
+        self.delete_button.place(relx=0.20, rely=0.90, anchor=CENTER)
         self._set_button_enabled(self.delete_button, True)
 
         # Add Sacrifice button with normal state
@@ -197,32 +360,64 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                                       width=ui["action_width"], height=ui["action_height"],
                                       font=action_button_font, command=self.sacrifice_selected_items,
                                       state="normal")  # Initialize as enabled
-        self.sacrifice_button.place(relx=0.80, rely=0.80, anchor=CENTER)
+        setattr(self.sacrifice_button, "_mouser_variant", "danger")
+        self.sacrifice_button.place(relx=0.50, rely=0.90, anchor=CENTER)
         self._set_button_enabled(self.sacrifice_button, True)
 
-        self.stop_scanning_button = CTkButton(self, text="Stop Listening", compound=TOP,
-                                  width=ui["action_width"], height=ui["action_height"],
-                                  font=action_button_font, command=self.stop_listening)
-        self.stop_scanning_button.place(relx=0.10, rely=0.80, anchor=CENTER)
-        self._set_button_enabled(self.stop_scanning_button, True)
+        self.simulate_all_rfid_button = CTkButton(
+            self,
+            text="Simulate ALL RFID",
+            compound=TOP,
+            width=ui["action_width"],
+            height=ui["action_height"],
+            font=action_button_font,
+            command=self.simulate_all_rfid,
+        )
+        setattr(self.simulate_all_rfid_button, "_mouser_variant", "info")
+        self.simulate_all_rfid_button.place(relx=0.82, rely=0.90, anchor=CENTER)
+        self._set_button_enabled(self.simulate_all_rfid_button, True)
 
         self.item_selected(None)
 
         animals_setup = self.db.get_all_animal_ids()
-        for animal in animals_setup:
+        for row_index, animal in enumerate(animals_setup):
             rfid = self.db.get_animal_rfid(animal)
             value = (int(animal), rfid)
-            self.table.tag_configure('text_font', font=('Arial', ui["table_font_size"]))
-            self.table.insert('', END, values=value, tags='text_font')
+            row_tag = "even_row" if row_index % 2 == 0 else "odd_row"
+            self.table.insert('', END, values=value, tags=("text_font", row_tag))
             self.animals.append(value)
             self.animal_id_entry_text.set(animal)
 
+        self._refresh_summary_cards()
+        if self.db.experiment_uses_rfid() == 0:
+            self._set_button_enabled(self.scan_toggle_button, False)
+        else:
+            self._set_scanning_state(False)
+
         ##setting previous button behavior
-        self.menu_button = None
-        self.set_menu_button(previous_page)
         self.menu_page = previous_page
 
-        self.menu_button.configure(command = self.press_back_to_menu_button)
+        if not self.menu_button and previous_page:
+            self.set_menu_button(previous_page)
+
+        if self.menu_button:
+            self.menu_button.configure(command=self.press_back_to_menu_button)
+        # Match back-button styling from `new_experiment_ui.py` for visual consistency.
+        try:
+            if self.menu_button:
+                self.menu_button.configure(
+                corner_radius=12,
+                height=40,
+                width=54,
+                text="\u2B05",
+                font=("Segoe UI Semibold", 20),
+                text_color="white",
+                fg_color="#f59e0b",
+                hover_color="#d97706",
+                )
+                self.menu_button.place_configure(relx=0.0, rely=0.0, x=16, y=8, anchor="nw")
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
         self.scroll_to_latest_entry()
         if self.db.experiment_uses_rfid() == 0:
             self.set_reader_status("RFID disabled for this experiment.")
@@ -231,20 +426,74 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         """Update reader status text safely on the UI thread."""
         def _update():
             if hasattr(self, "reader_status_label") and self.reader_status_label.winfo_exists():
-                self.reader_status_label.configure(text=f"Reader Status: {status_text}")
+                self.reader_status_label.configure(text=str(status_text) if status_text else "")
+            if hasattr(self, "reader_status_chip_label") and self.reader_status_chip_label.winfo_exists():
+                self.reader_status_chip_label.configure(text=f"Reader: {self._status_chip_text(status_text)}")
 
         if self.winfo_exists():
             self.after(0, _update)
 
+    def _status_chip_text(self, status_text):
+        """Return the status text for the header chip."""
+        text = (status_text or "").strip()
+        if not text:
+            return "Idle"
+        return text
+
+    def _refresh_summary_cards(self):
+        """Update ANIMALS / SCANNED / PENDING cards."""
+        try:
+            total = int(self.db.get_total_number_animals() or 0)
+        except Exception:  # pylint: disable=broad-exception-caught
+            total = 0
+        try:
+            scanned = int(len(self.db.get_animals()))
+        except Exception:  # pylint: disable=broad-exception-caught
+            scanned = int(len(self.animals))
+        pending = max(total - scanned, 0)
+        if hasattr(self, "total_animals_value") and self.total_animals_value.winfo_exists():
+            self.total_animals_value.configure(text=str(total))
+        if hasattr(self, "scanned_value") and self.scanned_value.winfo_exists():
+            self.scanned_value.configure(text=str(scanned))
+        if hasattr(self, "pending_value") and self.pending_value.winfo_exists():
+            self.pending_value.configure(text=str(pending))
+
+    def _set_scanning_state(self, active: bool):
+        """Update scan toggle button UI state without altering scan logic."""
+        self._scanning_active = bool(active)
+        if not hasattr(self, "scan_toggle_button") or not self.scan_toggle_button.winfo_exists():
+            return
+        if self._scanning_active:
+            self.scan_toggle_button.configure(text="⏹ Stop scanning")
+            setattr(self.scan_toggle_button, "_mouser_variant", "warning")
+            self._set_button_enabled(self.scan_toggle_button, True)
+        else:
+            self.scan_toggle_button.configure(text="▶ Start scanning")
+            setattr(self.scan_toggle_button, "_mouser_variant", "success")
+            enabled = self.db.experiment_uses_rfid() != 0
+            self._set_button_enabled(self.scan_toggle_button, enabled)
+
+    def toggle_scanning(self):
+        """Single button to start/stop RFID scanning (only scan control behavior changes)."""
+        if getattr(self, "_scanning_active", False):
+            self.stop_listening()
+            self._set_scanning_state(False)
+            return
+        self._set_scanning_state(True)
+        self.rfid_listen()
+
     def _set_button_enabled(self, button, enabled):
         """Apply enabled/disabled visual style while preserving behavior."""
         if enabled:
-            button.configure(state="normal", **self._active_button_style)
+            variant = getattr(button, "_mouser_variant", "primary")
+            active_style = self._button_styles.get(variant, self._button_styles["primary"])
+            button.configure(state="normal", **active_style)
         else:
-            button.configure(state="disabled", **self._inactive_button_style)
+            button.configure(state="disabled", **self._disabled_button_style)
 
     def rfid_listen(self):
         """Starts RFID listener, ensuring the previous session is fully closed before restarting."""
+        self._set_scanning_state(True)
         self.set_reader_status("Starting scanner...")
 
         # Ensure old listener is properly stopped before starting a new one
@@ -280,7 +529,10 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self._start_hid_listener(show_flash=False)
         self.set_reader_status("Started scanning.")
 
+        switching_to_hid = False
+
         def listen():
+            nonlocal switching_to_hid
             try:
                 self.rfid_reader.start()
                 print("🔄 RFID Reader Started!")
@@ -293,12 +545,14 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                     serial_reader = getattr(self.rfid_reader, "reader", None)
                     serial_port = getattr(serial_reader, "ser", None)
                     if serial_port is None or not getattr(serial_port, "is_open", False):
+                        switching_to_hid = True
                         self.after(0, lambda: self._switch_to_hid_fallback("Serial connection lost."))
                         return
 
                     received_rfid = self.rfid_reader.get_stored_data()
                     elapsed = time.monotonic() - serial_start_time
                     if (not got_first_serial_data) and (not received_rfid) and elapsed > self._serial_first_data_timeout:
+                        switching_to_hid = True
                         self.after(0, lambda: self._switch_to_hid_fallback("No serial RFID data received."))
                         return
 
@@ -318,7 +572,9 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                     self.rfid_reader.stop()
                     self.rfid_reader.close()
                     self.rfid_reader = None
-                print("🛑 RFID listener thread ended.")
+                print("RFID listener thread ended.")
+                if (not switching_to_hid) and self.winfo_exists():
+                    self.after(0, lambda: self._set_scanning_state(False))
 
 
         self.rfid_thread = threading.Thread(target=listen, daemon=True)
@@ -347,6 +603,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
         time.sleep(0.5)  # Allow OS to release the port
         self.set_reader_status("Stopped listening.")
+        self._set_scanning_state(False)
 
     def _switch_to_hid_fallback(self, reason=""):
         """Stop serial reading and switch to HID fallback mode."""
@@ -379,7 +636,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.hid_listener = HIDWedgeListener(self, on_tag=on_tag, capture_all=True)
         self.hid_listener.start()
         self.parent.focus_force()
-        self.set_reader_status("HID fallback active. Scan tag + Enter.")
+        self.set_reader_status("Scan tag")
         if show_flash:
             FlashOverlay(
                 parent=self,
@@ -455,6 +712,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             self.save()
             AudioManager.play(SUCCESS_SOUND)
             self.set_reader_status("Simulation complete.")
+            self._refresh_summary_cards()
 
 
     def scroll_to_latest_entry(self):
@@ -545,12 +803,15 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             return False
 
         self.db._conn.commit()
-        self.table.insert('', END, values=(animal_id, rfid), tags='text_font')
+        row_index = len(self.table.get_children())
+        row_tag = "even_row" if row_index % 2 == 0 else "odd_row"
+        self.table.insert('', END, values=(animal_id, rfid), tags=("text_font", row_tag))
         self.animals.append((animal_id, rfid))
         if rfid not in self.animal_rfid_list:
             self.animal_rfid_list.append(rfid)
         self.change_entry_text()
         self.scroll_to_latest_entry()
+        self._refresh_summary_cards()
 
         if play_audio:
             AudioManager.play(SUCCESS_SOUND)
@@ -587,6 +848,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.save()
         self.change_entry_text()
         self.set_reader_status("Removed selected mapping(s).")
+        self._refresh_summary_cards()
 
     def change_entry_text(self):
         '''Changes entry text for the table.'''
@@ -657,11 +919,11 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         animals_setup = self.db.get_all_animal_ids()
 
         # Rebuild table with fresh data
-        for animal in animals_setup:
+        for row_index, animal in enumerate(animals_setup):
             rfid = self.db.get_animal_rfid(animal)
             value = (int(animal), rfid)
-            self.table.tag_configure('text_font', font=('Arial', self._ui["table_font_size"]))
-            self.table.insert('', END, values=value, tags='text_font')
+            row_tag = "even_row" if row_index % 2 == 0 else "odd_row"
+            self.table.insert('', END, values=value, tags=("text_font", row_tag))
             self.animals.append(value)
 
         # Update the animal ID entry text
@@ -675,28 +937,40 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
     def press_back_to_menu_button(self):
         '''Handles back to menu button press.'''
-        if len(self.db.get_all_animals_rfid()) != self.db.get_total_number_animals():
-            self.raise_warning('Not all animals have been mapped to RFIDs')
-        else:
-            try:
-                # Close threads first
-                self.stop_listening()
-                # Save database state to permanent file
-                self.save()
+        try:
+            # If another page closed the shared singleton connection, reopen it so this page can
+            # complete its checks and navigation without crashing.
+            if self.db is None or getattr(self.db, "_c", None) is None or getattr(self.db, "_conn", None) is None:
+                reopen_path = self.file_path or getattr(self.db, "db_file", None) or ":memory:"
+                self.db = ExperimentDatabase(reopen_path)
 
-                # Close the database connection
-                self.db.close()  # This will now handle the singleton cleanup
+            if len(self.db.get_all_animals_rfid()) != self.db.get_total_number_animals():
+                self.raise_warning('Not all animals have been mapped to RFIDs')
+                return
 
-                # Local import to avoid circular dependency
-                from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+            # Close threads first
+            self.stop_listening()
+            # Save database state to permanent file
+            self.save()
 
-                # Create new ExperimentMenuUI instance with the same file
-                new_page = ExperimentMenuUI(self.parent, self.file_path, self.menu_page)
-                new_page.raise_frame()
+            # Do not close the experiment database here: `ExperimentMenuUI` holds a reference to
+            # the shared singleton instance, and closing it would invalidate that reference.
 
-            except Exception as e:
-                self.raise_warning("An error occurred while saving or cleaning up.")
-                print(f"Error during save and cleanup: {e}")
+            # Return to the existing ExperimentMenuUI instead of creating a new instance.
+            if getattr(self, "menu_page", None) is not None:
+                self.menu_page.raise_frame()
+                return
+
+            # Fallback for legacy call-sites that didn't provide a menu_page.
+            from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
+            new_page = ExperimentMenuUI(self.parent, self.file_path, None)
+            new_page.raise_frame()
+
+        except Exception as e:
+            self.raise_warning("An error occurred while saving or cleaning up.")
+            print(f"Error during save and cleanup: {e}")
+            import traceback
+            print(f"Full traceback: {traceback.format_exc()}")
 
 
 
@@ -766,6 +1040,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.save()
         self.change_entry_text()
         self.set_reader_status("Updated sacrificed animal selection.")
+        self._refresh_summary_cards()
 
 class SerialPortSelection():
     '''Serial port selection user interface.'''

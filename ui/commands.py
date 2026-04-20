@@ -12,6 +12,8 @@ These handlers are now centralized here, replacing inline logic in main.py.
 """
 
 import os
+from pathlib import Path
+import webbrowser
 from tkinter.filedialog import askopenfilename
 from customtkinter import CTkLabel, CTkButton, CTkToplevel, CTkEntry
 from CTkMessagebox import CTkMessagebox
@@ -30,6 +32,21 @@ global_state = {
     "current_file_path": None,
     "password": None
 }
+
+
+def open_documentation_popup(root):
+    """Open the local HTML manual in the default browser."""
+    _ = root  # Callback signature kept for compatibility with existing menu wiring.
+    manual_path = Path(__file__).resolve().parent.parent / "docs" / "mouser_manual_v1.html"
+    if not manual_path.exists():
+        CTkMessagebox(
+            title="Documentation Not Found",
+            message=f"Could not find: {manual_path}",
+            icon="warning",
+        )
+        return
+
+    webbrowser.open(manual_path.resolve().as_uri())
 
 
 def open_file(root, experiments_frame):
@@ -69,7 +86,12 @@ def open_file(root, experiments_frame):
                     global_state["temp_file_path"] = temp_path_local
 
                     # Open Experiment Menu using the decrypted temp file
-                    page = ExperimentMenuUI(root, temp_path_local, experiments_frame)
+                    page = ExperimentMenuUI(
+                        root,
+                        temp_path_local,
+                        experiments_frame,
+                        original_file_path=file_path,
+                    )
                     page.raise_frame()
                     password_prompt.destroy()
                 else:
@@ -86,7 +108,12 @@ def open_file(root, experiments_frame):
         global_state["temp_file_path"] = temp_file
 
         # Open Experiment Menu using the temp copy
-        page = ExperimentMenuUI(root, temp_file, experiments_frame)
+        page = ExperimentMenuUI(
+            root,
+            temp_file,
+            experiments_frame,
+            original_file_path=file_path,
+        )
         page.raise_frame()
 
 
@@ -137,3 +164,4 @@ def save_file():
         file_utils.save_temp_to_file(temp_file, current_file)
     else:
         print("Save skipped — missing file path.")
+
