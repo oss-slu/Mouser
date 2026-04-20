@@ -3,7 +3,7 @@ Builds the application menu bar using CTkMenuBar.
 
 Required structure (applied across all UI pages):
 - File: New Experiment, Open Experiment
-- Info: Documentation (opens a popup; link content can be added later)
+- Info: User Manual (opens local HTML manual)
 """
 
 from CTkMenuBar import CTkMenuBar, CustomDropdownMenu
@@ -138,7 +138,7 @@ def build_menu(root, experiments_frame):
         text_color=("#0f172a", "#f9fafb"),
         hover_color=("#e2e8f0", "#1f2937"),
     )
-    info_dropdown.add_option("Documentation", lambda: open_documentation_popup(root))
+    info_dropdown.add_option("User Manual", lambda: open_documentation_popup(root))
 
     root._mouser_menu_bar = menu_bar
     sync_menu_background(root, experiments_frame)
