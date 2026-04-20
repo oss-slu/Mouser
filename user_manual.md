@@ -165,4 +165,4 @@ The system is able to track and arrange the gathered data since the scanned tags
 
 ## 9. Support
 
-Development team: The development team may be contacted via the project repository or by reaching out to the development team.
+Development team: The development team may be contacted via the project repository or by reaching out to the development team. 
