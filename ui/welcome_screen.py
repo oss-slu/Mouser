@@ -262,7 +262,7 @@ def setup_welcome_screen(root, main_frame):
         pass
 
     header = CTkFrame(content, fg_color="transparent")
-    header.grid(row=0, column=0, padx=20, pady=(22, 8), sticky="n")
+    header.grid(row=0, column=0, padx=20, pady=(4, 0), sticky="n")
 
     logo_path = get_resource_path("shared/images/MouseLogo.png")
     with Image.open(logo_path) as logo_pil:
@@ -285,7 +285,7 @@ def setup_welcome_screen(root, main_frame):
     ).pack(pady=(4, 10))
 
     cards_area = CTkFrame(content, fg_color="transparent")
-    cards_area.grid(row=1, column=0, padx=m["padx"], pady=(16, 10), sticky="nsew")
+    cards_area.grid(row=1, column=0, padx=m["padx"], pady=(0, 2), sticky="nsew")
     cards_area.grid_rowconfigure(0, weight=1)
     cards_area.grid_columnconfigure(0, weight=1)
 
