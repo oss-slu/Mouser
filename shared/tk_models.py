@@ -8,8 +8,8 @@ from customtkinter import *
 
 current_frame: CTkFrame = None
 
-# Shared default palette derived from experiment_pages/create_experiment/new_experiment_ui.py
-DEFAULT_PAGE_BG = ("#f8fafc", "#0b1220")
+# Fixed application background for all pages.
+DEFAULT_PAGE_BG = "#ccd7e8"
 DEFAULT_HEADER_COLOR = "#0f172a"
 DEFAULT_TEXT_MUTED = ("#64748b", "#94a3b8")
 DEFAULT_CARD_BORDER = ("#e2e8f0", "#223044")
@@ -86,6 +86,15 @@ def raise_frame(frame: CTkFrame): #pylint: disable= redefined-outer-name
         current_frame.pack_forget()
     current_frame = frame
     current_frame.pack()
+
+    # Keep the top menu bar background in sync with the active page.
+    try:
+        root = current_frame.winfo_toplevel()
+        from ui.menu_bar import sync_menu_background  # pylint: disable=import-outside-toplevel
+
+        sync_menu_background(root, current_frame)
+    except Exception:  # pylint: disable=broad-exception-caught
+        pass
    
 def create_nav_button(parent: CTkFrame, name: str, button_image: PhotoImage, frame: CTkFrame, relx: float, rely: float): #pylint: disable= line-too-long,redefined-outer-name
     '''Makes a navigation button to the various sub-menus of the program.'''

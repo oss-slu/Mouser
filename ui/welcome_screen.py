@@ -3,7 +3,7 @@ Modernized, responsive welcome screen (light, card-based).
 
 - Brand header (logo + title + subtitle)
 - 2x2 colorful action cards with hover affordance
-- No menu bar on this page
+- Menu bar shown on all pages
 - Functionality unchanged (callbacks preserved)
 """
 
@@ -232,8 +232,6 @@ def _make_action_card(
 
 def setup_welcome_screen(root, main_frame):
     """Builds a responsive welcome screen (functionality unchanged)."""
-    _hide_menu_bar(root)
-
     experiments_frame = ExperimentsUI(root, main_frame)
     experiments_frame.configure(fg_color="#f7f8ff")
 
