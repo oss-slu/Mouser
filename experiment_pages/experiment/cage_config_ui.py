@@ -72,6 +72,7 @@ class CageConfigurationUI(MouserPage):
                 text_color="white",
                 fg_color=palette["accent_amber"],
                 hover_color="#d97706",
+                command=self.press_back_to_menu_button,
             )
             self.menu_button.place_configure(relx=0.0, rely=0.0, x=16, y=12, anchor="nw")
 
@@ -288,10 +289,27 @@ class CageConfigurationUI(MouserPage):
             self._hid_listener = None
 
         def on_tag(tag: str):
+            # Ignore global key-capture tags unless this page currently owns focus.
+            # Prevents cross-page leakage when this frame remains in memory.
+            if not self._is_page_active_for_hid():
+                return
             self._handle_scan_value(tag, source="hid")
 
         self._hid_listener = HIDWedgeListener(self, on_tag=on_tag, capture_all=True)
         self.after(50, self._start_or_stop_hid_listener)
+
+    def _is_page_active_for_hid(self) -> bool:
+        """Return True only when focus is inside this page."""
+        try:
+            focus_widget = self.winfo_toplevel().focus_get()
+        except Exception:
+            return False
+        widget = focus_widget
+        while widget is not None:
+            if widget is self:
+                return True
+            widget = getattr(widget, "master", None)
+        return False
 
     def _on_toggle_rfid_enabled(self):
         self._start_or_stop_hid_listener()
@@ -317,6 +335,15 @@ class CageConfigurationUI(MouserPage):
                 self._set_rfid_status("RFID scanning disabled." if self._uses_rfid else "Scanning disabled.")
         except Exception as e:
             self._set_rfid_status(f"RFID listener error: {e}")
+
+    def _stop_hid_scan_listener(self):
+        """Stop HID listener safely when navigating away from this page."""
+        if not self._hid_listener:
+            return
+        try:
+            self._hid_listener.stop()
+        except Exception:
+            pass
 
     def _set_rfid_status(self, message: str):
         if not self._rfid_status_label or not self._rfid_status_label.winfo_exists():
@@ -390,12 +417,19 @@ class CageConfigurationUI(MouserPage):
         # Avoid stopping the listener for descendant widget destroys.
         if event is not None and getattr(event, "widget", None) is not self:
             return
-        if self._hid_listener:
-            try:
-                self._hid_listener.stop()
-            except Exception:
-                pass
-            self._hid_listener = None
+        self._stop_hid_scan_listener()
+        self._hid_listener = None
+
+    def press_back_to_menu_button(self):
+        """Stop HID scanning and navigate back to experiment menu."""
+        self._stop_hid_scan_listener()
+        if getattr(self, "prev_page", None) is not None:
+            self.prev_page.raise_frame()
+
+    def raise_frame(self):
+        """Resume page-scoped HID scanning only when this page is active."""
+        super().raise_frame()
+        self._start_or_stop_hid_listener()
 
     def update_config_frame(self):
         '''Updates the config frame to reflect new information.'''
@@ -675,6 +709,7 @@ class CageConfigurationUI(MouserPage):
         '''Saves updated values to database.'''
         if self.check_num_in_cage_allowed():
             self.db.update_experiment()
+            self._stop_hid_scan_listener()
             raise_frame(self.prev_page)
         else:
             self.raise_warning(f'Number of animals in a group must not exceed {self.db.get_cage_max()}')
