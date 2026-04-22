@@ -22,8 +22,6 @@ from shared.serial_handler import SerialDataHandler
 from shared.file_utils import save_temp_to_file
 import threading
 from shared.flash_overlay import FlashOverlay
-import platform
-import subprocess
 from shared.hid_wedge import HIDWedgeListener
 
 #pylint: disable= undefined-variable
@@ -70,9 +68,6 @@ class DataCollectionUI(MouserPage):
         self._hid_rfid_listener = None
         self._rfid_input_mode = None  # "serial" | "hid"
         self._device_poll_job = None
-        self._hid_keyboard_cache = {"snapshot": None, "checked_at": 0.0}
-        self._known_keyboard_ids = set()
-        self._suspected_hid_rfid_ids = set()
         self._last_hid_tag_time = 0.0
         self._serial_controllers = {"device": None, "reader": None}
         self._active_animal_id = None
@@ -80,6 +75,8 @@ class DataCollectionUI(MouserPage):
         self._measurement_serial_stop = threading.Event()
         self._activity_entries = deque(maxlen=200)
         self._last_device_status = {}
+        self._device_connected_until = {}
+        self._last_connected_port = {}
 
         self.current_file_path = file_path
         self.original_file_path = original_file_path or file_path
@@ -755,70 +752,6 @@ class DataCollectionUI(MouserPage):
                 devices.append({"name": "RFID reader", "kind": "reader"})
             return devices
 
-        def _hid_keyboard_snapshot_cached():
-            """Return a list of connected keyboard devices (Windows only, best-effort)."""
-            now = time.monotonic()
-            cached = self._hid_keyboard_cache
-            if cached["snapshot"] is not None and (now - float(cached["checked_at"] or 0.0)) < 1.0:
-                return cached["snapshot"]
-
-            if platform.system() != "Windows":
-                cached["snapshot"] = []
-                cached["checked_at"] = now
-                return []
-
-            try:
-                cmd = [
-                    "powershell",
-                    "-NoProfile",
-                    "-Command",
-                    "Get-PnpDevice -Class Keyboard -PresentOnly | Select-Object FriendlyName,InstanceId | ConvertTo-Json",
-                ]
-                out = subprocess.check_output(cmd, stderr=subprocess.DEVNULL, text=True, timeout=2)
-                if not out.strip():
-                    cached["snapshot"] = []
-                    cached["checked_at"] = now
-                    return []
-                import json  # local import
-                data = json.loads(out)
-                if isinstance(data, dict):
-                    data = [data]
-                snapshot = []
-                for item in data or []:
-                    snapshot.append(
-                        {
-                            "name": str(item.get("FriendlyName") or "").strip(),
-                            "id": str(item.get("InstanceId") or "").strip(),
-                        }
-                    )
-                cached["snapshot"] = snapshot
-                cached["checked_at"] = now
-                return snapshot
-            except Exception:
-                cached["snapshot"] = []
-                cached["checked_at"] = now
-                return []
-
-        def _update_hid_keyboard_state():
-            """Track added/removed keyboard devices to infer HID RFID attachment/removal."""
-            snapshot = _hid_keyboard_snapshot_cached()
-            current_ids = {item.get("id") for item in snapshot if item.get("id")}
-            if not self._known_keyboard_ids:
-                # Initialize baseline for this page session.
-                self._known_keyboard_ids = set(current_ids)
-                return
-
-            added = current_ids - self._known_keyboard_ids
-            removed = self._known_keyboard_ids - current_ids
-            self._known_keyboard_ids = set(current_ids)
-
-            # Heuristic: a HID wedge reader typically appears/disappears as a keyboard device.
-            for dev_id in added:
-                self._suspected_hid_rfid_ids.add(dev_id)
-            for dev_id in removed:
-                if dev_id in self._suspected_hid_rfid_ids:
-                    self._suspected_hid_rfid_ids.remove(dev_id)
-
         def _resolve_serial_port_for_device(device_name: str, kind: str):
             """Return (port, description, connected_bool, note)."""
             controller = self._serial_controllers.get("reader" if kind == "reader" else "device")
@@ -948,6 +881,7 @@ class DataCollectionUI(MouserPage):
             if not getattr(self, "_scan_is_running", False):
                 self._rfid_input_mode = self._detect_rfid_input_mode()
 
+            now = time.monotonic()
             connected = 0
             registered = len(self._selected_devices)
 
@@ -967,13 +901,11 @@ class DataCollectionUI(MouserPage):
 
             any_com_present = bool(device_ports or reader_ports)
 
-            # Update HID keyboard tracking (used for HID RFID connection status).
-            _update_hid_keyboard_state()
-
             for idx, device in enumerate(self._selected_devices):
                 widgets = self._device_row_widgets[idx]
                 name = device.get("name", "Device")
                 kind = device.get("kind", "device")
+                device_key = (str(name), str(kind))
 
                 port_text = ""
                 status_text = "Not found" if not any_com_present else "Not found"
@@ -991,33 +923,48 @@ class DataCollectionUI(MouserPage):
 
                 if kind == "reader" and self.database.experiment_uses_rfid() == 1 and self._rfid_input_mode == "hid":
                     port_text = "HID"
-                    # Connected only when we can infer an attached wedge device (or recently received a tag).
-                    now = time.monotonic()
-                    inferred_connected = bool(self._suspected_hid_rfid_ids)
-                    recent_scan = bool(self._last_hid_tag_time and (now - self._last_hid_tag_time) < 5.0)
-                    if inferred_connected or recent_scan:
+                    # In HID wedge mode, avoid OS keyboard probing subprocesses.
+                    # Treat an active listener (or recent tag) as connected to keep status stable.
+                    listener_active = bool(getattr(self, "_hid_rfid_listener", None))
+                    recent_scan = bool(self._last_hid_tag_time and (now - self._last_hid_tag_time) < 10.0)
+                    if listener_active or recent_scan:
                         status_text = "Connected"
+                        state = "ok"
+                        self._device_connected_until[device_key] = now + 3.0
+                        self._last_connected_port[device_key] = port_text
+                        connected += 1
+                    elif getattr(self, "_scan_is_running", False):
+                        status_text = "Listening"
                         state = "ok"
                         connected += 1
                     else:
-                        status_text = "Not found"
-                        state = "warn"
+                        status_text = "Ready"
+                        state = "idle"
                 else:
                     port, desc, is_connected, _note = _resolve_serial_port_for_device(name, kind)
                     if port and is_connected:
                         port_text = str(port)
                         status_text = "Connected"
                         state = "ok"
+                        self._device_connected_until[device_key] = now + 3.0
+                        self._last_connected_port[device_key] = port_text
                         connected += 1
                     else:
-                        # Requirement: when nothing connected, keep port blank but show "Port: ".
-                        port_text = ""
-                        status_text = "Not found"
-                        state = "warn" if any_com_present else "idle"
+                        grace_until = float(self._device_connected_until.get(device_key, 0.0) or 0.0)
+                        if now < grace_until:
+                            # Debounce transient port-drop reads to prevent connect/disconnect flapping.
+                            port_text = str(self._last_connected_port.get(device_key, "") or "")
+                            status_text = "Connected"
+                            state = "ok"
+                            connected += 1
+                        else:
+                            # Requirement: when nothing connected, keep port blank but show "Port: ".
+                            port_text = ""
+                            status_text = "Not found"
+                            state = "warn" if any_com_present else "idle"
 
                 # Activity: only log device state changes (avoid spam during polling).
                 try:
-                    device_key = (str(name), str(kind))
                     prev = self._last_device_status.get(device_key)
                     now_state = (status_text, port_text)
                     if prev != now_state:
