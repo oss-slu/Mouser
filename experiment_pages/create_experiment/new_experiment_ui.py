@@ -96,6 +96,7 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         self.menu_page = menu_page
         self.next_button = None
         self.added_invest: List[str] = []
+        self.added_custom_devices: List[str] = []
 
         # ----------------------------
         # Main Layout (with scrolling)
@@ -311,10 +312,14 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
             command=lambda: [self._sync_measurement_devices(), self.enable_next_button()],
         ).grid(row=0, column=2, sticky="w", padx=(0, 0), pady=0)
 
+        self.custom_device_row = CTkFrame(self.measurement_devices_frame, fg_color="transparent")
+        self.custom_device_row.grid(row=1, column=0, columnspan=3, sticky="ew", pady=(10, 0))
+        self.custom_device_row.grid_columnconfigure(0, weight=1)
+
         self.custom_device_type = CTkEntry(
-            self.measurement_devices_frame,
+            self.custom_device_row,
             font=entry_font,
-            placeholder_text="Enter custom device type (e.g., Thermometer)",
+            placeholder_text="Enter custom device (e.g., Thermometer)",
         )
         self.custom_device_type.configure(
             fg_color=palette["entry_bg"],
@@ -322,9 +327,33 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
             text_color=("black", "white"),
             placeholder_text_color=palette["text_muted"],
         )
-        self.custom_device_type.grid(row=1, column=0, columnspan=3, sticky="ew", pady=(10, 0))
-        self.custom_device_type.grid_remove()
+        self.custom_device_type.grid(row=0, column=0, sticky="ew", padx=(0, 8))
         self.custom_device_type.bind("<KeyRelease>", lambda _event: self.enable_next_button())
+        self.custom_device_type.bind(
+            "<Return>",
+            lambda _event: [self.add_custom_device(), self.custom_device_type.delete(0, END)],
+        )
+
+        self.add_custom_device_button = CTkButton(
+            self.custom_device_row,
+            text="Add",
+            width=72,
+            height=32,
+            corner_radius=10,
+            fg_color=palette["accent_violet"],
+            hover_color="#6d28d9",
+            text_color="white",
+            font=CTkFont(family="Segoe UI Semibold", size=13),
+            command=lambda: [self.add_custom_device(), self.custom_device_type.delete(0, END)],
+        )
+        self.add_custom_device_button.grid(row=0, column=1, sticky="e")
+
+        self.custom_devices_frame = CTkFrame(self.measurement_devices_frame, fg_color="transparent")
+        self.custom_devices_frame.grid(row=2, column=0, columnspan=3, sticky="ew", pady=(8, 0))
+        self.custom_devices_frame.grid_columnconfigure(0, weight=1)
+
+        self.custom_device_row.grid_remove()
+        self.custom_devices_frame.grid_remove()
 
         labeled_entry.row += 2
 
@@ -469,8 +498,9 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
             self.num_per_cage.get().strip(),
         ]
         if self._device_custom.get() and not self.custom_device_type.get().strip():
-            self.next_button.configure(state="disabled")
-            return
+            if not self._get_custom_devices(include_pending=False):
+                self.next_button.configure(state="disabled")
+                return
         if all(required) and self._allocation_valid:
             self.next_button.configure(state="normal")
         else:
@@ -480,23 +510,122 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
         """Show/hide custom device entry based on selection."""
         try:
             if self._device_custom.get():
-                self.custom_device_type.grid()
+                self.custom_device_row.grid()
+                self.custom_devices_frame.grid()
             else:
-                self.custom_device_type.grid_remove()
+                self.custom_device_row.grid_remove()
+                self.custom_devices_frame.grid_remove()
         except Exception:  # pylint: disable=broad-exception-caught
             return
+
+    def _normalize_custom_device_name(self, value: str) -> str:
+        """Normalize spacing in custom device names."""
+        return " ".join(str(value or "").strip().split())
+
+    def _get_custom_devices(self, *, include_pending: bool = True) -> List[str]:
+        """Return unique custom device names, optionally including current entry text."""
+        result: List[str] = []
+        seen = set()
+        for name in self.added_custom_devices:
+            clean = self._normalize_custom_device_name(name)
+            key = clean.lower()
+            if clean and key not in seen:
+                seen.add(key)
+                result.append(clean)
+
+        if include_pending and self._device_custom.get():
+            pending = self._normalize_custom_device_name(self.custom_device_type.get())
+            key = pending.lower()
+            if pending and key not in seen:
+                result.append(pending)
+        return result
+
+    def update_custom_devices_frame(self):
+        """Refresh the custom devices chip list."""
+        for widget in self.custom_devices_frame.winfo_children():
+            widget.destroy()
+
+        try:
+            self.custom_devices_frame.grid_columnconfigure(0, weight=1)
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
+
+        for i, device_name in enumerate(self._get_custom_devices(include_pending=False)):
+            chip = CTkFrame(
+                self.custom_devices_frame,
+                fg_color=("#f3f4f6", "#111827"),
+                corner_radius=999,
+                border_width=1,
+                border_color=("#e5e7eb", "#374151"),
+            )
+            chip.grid(row=i, column=0, sticky="ew", padx=(0, 10), pady=(0, 8))
+            chip.grid_columnconfigure(0, weight=1)
+
+            CTkLabel(
+                chip,
+                text=device_name,
+                font=CTkFont(family="Segoe UI", size=13),
+                justify="left",
+                anchor="w",
+                wraplength=260,
+            ).grid(row=0, column=0, sticky="w", padx=(12, 6), pady=6)
+
+            CTkButton(
+                chip,
+                text="X",
+                width=28,
+                height=28,
+                corner_radius=999,
+                fg_color="#ef4444",
+                hover_color="#b91c1c",
+                text_color="white",
+                font=CTkFont(family="Segoe UI Semibold", size=14),
+                command=lambda x=device_name: self.remove_custom_device(x),
+            ).grid(row=0, column=1, sticky="e", padx=(0, 8), pady=6)
+
+    def add_custom_device(self):
+        """Add current custom device text to the selected custom devices list."""
+        clean = self._normalize_custom_device_name(self.custom_device_type.get())
+        if not clean:
+            self.enable_next_button()
+            return
+
+        existing_keys = {name.lower() for name in self._get_custom_devices(include_pending=False)}
+        if clean.lower() not in existing_keys:
+            self.added_custom_devices.append(clean)
+        self.update_custom_devices_frame()
+        self.enable_next_button()
+
+    def remove_custom_device(self, device_name: str):
+        """Remove a custom device from the list."""
+        target = self._normalize_custom_device_name(device_name).lower()
+        self.added_custom_devices = [
+            name
+            for name in self.added_custom_devices
+            if self._normalize_custom_device_name(name).lower() != target
+        ]
+        self.update_custom_devices_frame()
+        self.enable_next_button()
 
     def _get_measurement_items_string(self) -> str:
         """Return a single string representing selected measurement devices."""
         parts: List[str] = []
+        seen = set()
+
+        def _append_unique(name: str):
+            clean = self._normalize_custom_device_name(name)
+            key = clean.lower()
+            if clean and key not in seen:
+                seen.add(key)
+                parts.append(clean)
 
         if self._device_balancer.get():
-            parts.append("Balancer")
+            _append_unique("Balancer")
         if self._device_caliper.get():
-            parts.append("Caliper")
+            _append_unique("Caliper")
         if self._device_custom.get():
-            custom = self.custom_device_type.get().strip()
-            parts.append(custom if custom else "Custom")
+            for custom_device in self._get_custom_devices(include_pending=True):
+                _append_unique(custom_device)
 
         if not parts:
             return "Balancer"
@@ -823,6 +952,9 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
 
     def _on_continue(self):
         """Validate the form and navigate only when valid."""
+        if self._device_custom.get():
+            self.add_custom_device()
+            self.custom_device_type.delete(0, END)
         # Ensure the latest live validation state is applied before continuing.
         self._validate_allocation_live()
         if self.check_animals_divisible():
