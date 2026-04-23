@@ -20,6 +20,7 @@ from CTkMessagebox import CTkMessagebox
 
 from shared.serial_port_settings import SerialPortSetting
 import shared.file_utils as file_utils
+from shared.file_utils import get_resource_path
 
 from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
@@ -37,7 +38,7 @@ global_state = {
 def open_documentation_popup(root):
     """Open the local HTML manual in the default browser."""
     _ = root  # Callback signature kept for compatibility with existing menu wiring.
-    manual_path = Path(__file__).resolve().parent.parent / "docs" / "mouser_manual_v1.html"
+    manual_path = Path(get_resource_path("docs/mouser_manual_v1.html")).resolve()
     if not manual_path.exists():
         CTkMessagebox(
             title="Documentation Not Found",

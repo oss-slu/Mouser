@@ -59,6 +59,7 @@ jobs:
             --add-data "experiment_pages;experiment_pages" `
             --add-data "ui;ui" `
             --add-data "settings;settings" `
+            --add-data "docs;docs" `
             --collect-all customtkinter `
             --hidden-import darkdetect `
             --name "Mouser_Windows"
@@ -78,6 +79,7 @@ jobs:
             --add-data "experiment_pages:experiment_pages" \
             --add-data "ui:ui" \
             --add-data "settings:settings" \
+            --add-data "docs:docs" \
             --collect-all customtkinter \
             --hidden-import darkdetect \
             --name "$APP_NAME"
