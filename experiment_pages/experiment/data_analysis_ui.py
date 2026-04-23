@@ -6,6 +6,9 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 from tkinter import filedialog
 from tkinter.ttk import Treeview, Style
+import csv
+from tkinter import dialog, filedialog
+import sqlite3
 from PIL import Image, ImageDraw
 
 from customtkinter import (
@@ -414,182 +417,85 @@ class DataAnalysisUI(MouserPage):
                 break
         self.refresh_analysis_view()
 
-    def _build_daily_comparison_card(self, parent):
-        card = CTkFrame(
-            parent,
-            fg_color=self._palette["card_bg"],
-            corner_radius=14,
-            border_width=1,
-            border_color=self._palette["card_border"],
-            height=420,
+    def showSaveFileDialog(self):
+        '''Opens a file dialog for the user to select where to save the CSV file.'''
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv")],
+            title="Save CSV"
         )
-        card.grid(row=2, column=0, sticky="ew", pady=(12, 0))
-        card.grid_propagate(False)
-        card.grid_columnconfigure(0, weight=1)
-        card.grid_rowconfigure(2, weight=1)
+        return file_path
+    
+    def get_measurement_names(self):
+        '''Retrieves measurement names from the database.'''
+        return self.database.get_measurement_name()
+    
+    def get_measurements_for_animal_today(self, animal_id):
+        '''Retrieves measurements for a specific animal for the current date.'''
+        today_date = str(date.today())
+        all_measurements_today = self.database.get_data_for_date(today_date)
+        measurement_names = self.get_measurement_names()
+        animal_measurements_dict = {}
 
-        header = CTkFrame(card, fg_color="transparent")
-        header.grid(row=0, column=0, sticky="ew", padx=14, pady=(12, 6))
-        header.grid_columnconfigure(0, weight=1)
+        for record in all_measurements_today:
+            record_animal_id = record[0]
+            measurement_name = record[1]  
+            measurement_value = record[2] 
 
-        CTkLabel(
-            header,
-            text="Animals",
-            font=CTkFont("Segoe UI Semibold", 14),
-            text_color=self._palette["text"],
-        ).grid(row=0, column=0, sticky="w")
+            if str(record_animal_id) == str(animal_id):
+                animal_measurements_dict[measurement_name] = measurement_value
 
-        self.daily_comparison_subtitle = CTkLabel(
-            header,
-            text="Latest vs previous day",
-            font=CTkFont("Segoe UI", 11),
-            text_color=self._palette["muted_text"],
-        )
-        self.daily_comparison_subtitle.grid(row=1, column=0, sticky="w", pady=(2, 0))
-
-        CTkFrame(card, fg_color=self._pick(self._palette["card_border"]), height=1).grid(
-            row=1, column=0, sticky="ew", padx=0, pady=(0, 6)
-        )
-
-        self.daily_comparison_frame = CTkScrollableFrame(
-            card,
-            fg_color="transparent",
-            corner_radius=0,
-            border_width=0,
-            height=240,
-        )
-        self.daily_comparison_frame.grid(row=2, column=0, sticky="nsew", padx=10, pady=(0, 10))
-        self.daily_comparison_frame.grid_columnconfigure(0, weight=1)
-
-    def _populate_daily_comparison_card(self, rows):
-        try:
-            frame = getattr(self, "daily_comparison_frame", None)
-            subtitle = getattr(self, "daily_comparison_subtitle", None)
-            if frame is None:
-                return
-            for child in frame.winfo_children():
-                child.destroy()
-        except Exception:
-            return
-
-        if not rows:
-            try:
-                if subtitle is not None:
-                    subtitle.configure(text="No measurements yet")
-            except Exception:
-                pass
-            CTkLabel(
-                frame,
-                text="No measurements available",
-                font=CTkFont("Segoe UI", 12),
-                text_color=self._pick(self._palette["muted_text"]),
-                anchor="w",
-            ).grid(row=0, column=0, sticky="ew", padx=4, pady=(6, 0))
-            return
-
-        try:
-            latest = max(datetime.strptime(str(d), "%Y-%m-%d").date() for d, _aid, _val in rows)
-        except Exception:
-            latest = None
-        if latest is None:
-            return
-        prev = latest - timedelta(days=1)
-        latest_s = latest.strftime("%Y-%m-%d")
-        prev_s = prev.strftime("%Y-%m-%d")
-
-        try:
-            label = str(getattr(self, "_selected_measurement_label", "") or "").strip()
-            key = str(getattr(self, "_selected_measurement_key", "") or "").strip().lower()
-            unit = self._infer_unit_for_measurement(key=key, label=label).strip()
-            if subtitle is not None:
-                subtitle.configure(text=f"{label or 'Measurement'}: {latest_s} vs {prev_s}")
-        except Exception:
-            unit = ""
-
-        lookup = {(d, aid): val for d, aid, val in rows}
-        animals = sorted({aid for _d, aid, _v in rows})
-        color_map = {
-            animal_id: self.chart_colors[idx % len(self.chart_colors)] for idx, animal_id in enumerate(animals)
-        }
-
-        current_by_animal = {aid: lookup.get((latest_s, aid)) for aid in animals}
-
-        def _sort_key(animal_id):
-            cur = current_by_animal.get(animal_id)
-            if cur is None:
-                return (1, 0.0, animal_id)
-            return (0, -float(cur), animal_id)
-
-        sorted_animals = sorted(animals, key=_sort_key)
-        text_color = self._pick(self._palette["text"])
-        muted = self._pick(self._palette["muted_text"])
-
-        for idx, animal_id in enumerate(sorted_animals):
-            cur = current_by_animal.get(animal_id)
-            prev_val = lookup.get((prev_s, animal_id))
-
-            delta = None
-            if cur is not None and prev_val is not None:
-                try:
-                    delta = float(cur) - float(prev_val)
-                except Exception:
-                    delta = None
-
-            value_text = "--" if cur is None else f"{self._format_stat_number(cur)}{unit}"
-            if delta is None:
-                delta_text = "--"
-                delta_color = muted
+        ordered_measurements = []
+        for name in measurement_names:
+            if name in animal_measurements_dict:
+                ordered_measurements.append(animal_measurements_dict[name])
             else:
-                prefix = "+" if delta > 0 else ""
-                delta_text = f"{prefix}{self._format_stat_number(delta)}{unit}"
-                if delta > 0:
-                    delta_color = "#16a34a"
-                elif delta < 0:
-                    delta_color = "#dc2626"
-                else:
-                    delta_color = text_color
+                ordered_measurements.append(None)  # placeholder if no measurement
 
-            row = CTkFrame(frame, fg_color="transparent")
-            row.grid(row=idx, column=0, sticky="ew", padx=2, pady=2)
-            row.grid_columnconfigure(1, weight=1)
+        return ordered_measurements
+    
+    def handle_export_csv(self):
+        '''Handles exporting the current data to a CSV file.'''
+        file_path = self.showSaveFileDialog()
+        if not file_path:
+            return  # User canceled export
+        
+        headers = ["Animal ID"] + self.get_measurement_names()
+        data_rows = [headers]
 
-            CTkLabel(
-                row,
-                text="●",
-                font=CTkFont("Segoe UI Semibold", 12),
-                text_color=color_map.get(animal_id, text_color),
-                width=0,
-            ).grid(row=0, column=0, sticky="w", padx=(2, 6))
+        for animal in self.database.get_animals():
+            animal_id = animal[0]
+            measurements = self.get_measurements_for_animal_today(animal_id)
+            row = [animal_id] + measurements
+            data_rows.append(row)
 
-            CTkLabel(
-                row,
-                text=f"Animal {animal_id}",
-                font=CTkFont("Segoe UI", 12),
-                text_color=text_color,
-                anchor="w",
-            ).grid(row=0, column=1, sticky="w")
+        try:
+            with open(file_path, 'w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerows(data_rows)
 
-            right = CTkFrame(row, fg_color="transparent")
-            right.grid(row=0, column=2, sticky="e")
-            right.grid_columnconfigure(0, weight=1)
+            self.export_notification.configure(
+                text="CSV exported successfully!",
+                text_color="green",
+                fg_color="#d1fae5",  
+                padx=12,
+                pady=6,
+                corner_radius=10
+            )
 
-            CTkLabel(
-                right,
-                text=value_text,
-                font=CTkFont("Segoe UI Semibold", 13),
-                text_color=text_color,
-                anchor="e",
-            ).grid(row=0, column=0, sticky="e")
+        except Exception as e:
+            print(f"Error exporting CSV: {e}")
+            self.export_notification.configure(
+                text="CSV export failed. Please try again.",
+                text_color="#b91c1c",  
+                fg_color="#fee2e2",    
+                padx=12,
+                pady=6,
+                corner_radius=10
+            )
 
-            CTkLabel(
-                right,
-                text=delta_text,
-                font=CTkFont("Segoe UI", 11),
-                text_color=delta_color,
-                anchor="e",
-            ).grid(row=1, column=0, sticky="e", pady=(0, 2))
 
-    def _build_table_section(self, parent):
+    def _build_table_section(self):
         table_card = CTkFrame(
             parent,
             fg_color=self._palette["card_bg"],
