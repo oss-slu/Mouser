@@ -177,6 +177,8 @@ class MouserPage(CTkFrame):
 
     def _lift_nav_widgets(self):
         """Keep navigation buttons clickable/visible above page content."""
+        if bool(getattr(self, "_nav_lift_suspended", False)):
+            return
         for widget in (self.menu_button, self.next_button, self.previous_button):
             if widget is None:
                 continue

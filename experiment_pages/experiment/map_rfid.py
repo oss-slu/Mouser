@@ -785,7 +785,7 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
                 parent=self,
                 message="Scan successful! All RFIDs scanned.",
                 duration=4000,
-                bg_color="#FFF700", #Yellow to indicate completion
+                bg_color="#00FF00", # Green to keep success feedback consistent
                 text_color="black"
             )
 
@@ -880,21 +880,8 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.serial_port_panel.open()
 
     def raise_warning(self, warning_message = 'Maximum number of animals reached'):
-        '''Raises an error window.'''
-
-        message = CTk()
-        message.title("WARNING")
-        message.geometry('320x100')
-        message.resizable(False, False)
-
-        label = CTkLabel(message, text= warning_message)
-        label.grid(row=0, column=0, padx=10, pady=10)
-
-
-        ok_button = CTkButton(message, text="OK", width=10,
-                        command= lambda: [message.destroy()])
-        ok_button.grid(row=2, column=0, padx=10, pady=10)
-
+        '''Show warning as non-blocking overlay only (no modal dialog).'''
+        self.set_reader_status(str(warning_message))
         FlashOverlay(
             parent=self,
             message=warning_message,
@@ -903,8 +890,6 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
             text_color="black"
         )
         AudioManager.play(ERROR_SOUND)
-
-        message.mainloop()
 
     def update(self):
         """Updates the table view to match the database state."""
