@@ -47,6 +47,7 @@ jobs:
             --add-data "shared/images/*:shared/images" \
             --add-data "shared/sounds/*:shared/sounds" \
             --add-data "settings:settings" \
+            --add-data "docs:docs" \
             main.py
         shell: bash
 
