@@ -1044,6 +1044,9 @@ class SerialPortSelection():
         self.root = CTkToplevel(self.parent)
         self.root.title("Serial Port Selection")
         self.root.geometry('400x400')
+        self.root.transient(self.parent)
+        self.root.attributes('-topmost', 1)
+
         columns = ('port', 'description')
         self.table = Treeview(self.root, columns=columns, show='headings')
 
@@ -1217,6 +1220,8 @@ class SerialSimulator():
         self.root = CTkToplevel(self.parent)
         self.root.title("Serial Port Selection")
         self.root.geometry('400x400')
+        self.root.transient(self.parent)
+        self.root.attributes('-topmost', 1)
 
         self.read_message = CTkTextbox(self.root, height=15, width = 40)
         self.read_message.place(relx=0.10, rely = 0.00)
