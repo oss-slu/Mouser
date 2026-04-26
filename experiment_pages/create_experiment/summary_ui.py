@@ -220,6 +220,9 @@ class SummaryUI(MouserPage):
             popup.title("Save Error")
             popup.geometry("360x180")
             popup.resizable(False, False)
+            popup.transient(self)
+            popup.attributes('-topmost', 1)
+            popup.grab_set()
 
             CTkLabel(
                 popup,
@@ -246,6 +249,8 @@ class SummaryUI(MouserPage):
         popup.title("Experiment Created")
         popup.geometry("320x160")
         popup.resizable(False, False)
+        popup.transient(self)
+        popup.attributes('-topmost', 1)
 
         def close_and_go_home():
             popup.destroy()

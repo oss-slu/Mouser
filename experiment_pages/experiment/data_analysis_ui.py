@@ -1287,4 +1287,5 @@ class DataAnalysisUI(MouserPage):
         ok_button.pack(pady=20)
 
         notification.transient(self)
+        notification.attributes('-topmost', 1)
         notification.grab_set()
