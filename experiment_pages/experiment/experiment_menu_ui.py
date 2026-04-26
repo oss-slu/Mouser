@@ -748,8 +748,9 @@ class ExperimentMenuUI(MouserPage):
             db = ExperimentDatabase(self.file_path)
         except sqlite3.DatabaseError:
             messagebox.showerror(
-                "Open Experiment Error",
-                "This experiment file could not be opened as a database.\n"
+                parent=self.root,
+                title="Open Experiment Error",
+                message="This experiment file could not be opened as a database.\n"
                 "If it is password protected, please use the appropriate "
                 "flow to unlock it.",
             )
@@ -802,8 +803,9 @@ class ExperimentMenuUI(MouserPage):
             db = ExperimentDatabase(self.file_path)
             if db.get_number_groups() == 0:
                 messagebox.showinfo(
-                    "Groups Required",
-                    "No groups are configured yet.\n\n"
+                    parent=self.root,
+                    title="Groups Required",
+                    message="No groups are configured yet.\n\n"
                     "Create groups in Group Configuration before assigning cages.",
                 )
                 self.open_group_config()
@@ -817,22 +819,25 @@ class ExperimentMenuUI(MouserPage):
             page.raise_frame()
         except sqlite3.DatabaseError as exc:
             messagebox.showerror(
-                "Cage Configuration Error",
-                "This experiment file could not be opened as a database.\n\n"
+                parent=self.root,
+                title="Cage Configuration Error",
+                message="This experiment file could not be opened as a database.\n\n"
                 f"{exc}",
             )
         except Exception as exc:  # pylint: disable=broad-exception-caught
             messagebox.showerror(
-                "Cage Configuration Error",
-                f"Failed to open Cage Configuration page.\n\n{exc}",
+                parent=self.root,
+                title="Cage Configuration Error",
+                message=f"Failed to open Cage Configuration page.\n\n{exc}",
             )
 
     def open_data_collection(self):
         """Open Data Collection Page."""
         if self.experiment_db.experiment_uses_rfid() == 1 and not self.all_rfid_mapped():
             messagebox.showinfo(
-                "RFID Mapping Required",
-                "This experiment uses RFID.\n\n"
+                parent=self.root,
+                title="RFID Mapping Required",
+                message="This experiment uses RFID.\n\n"
                 "Map RFID for all animals before starting Data Collection.",
             )
             return
@@ -851,7 +856,11 @@ class ExperimentMenuUI(MouserPage):
             )
             page.raise_frame()
         except Exception as e:  # pylint: disable=broad-exception-caught
-            messagebox.showerror("Data Collection Error", f"Failed to open Data Collection page.\n\n{e}")
+            messagebox.showerror(
+                parent=self.root,
+                title="Data Collection Error",
+                message=f"Failed to open Data Collection page.\n\n{e}",
+            )
 
     def open_data_analysis(self):
         """Open Data Analysis Page."""
@@ -924,11 +933,16 @@ class ExperimentMenuUI(MouserPage):
     def delete_warning(self):
         """Ask for confirmation before deleting the experiment file."""
         if not self.file_path:
-            messagebox.showerror("Delete Error", "No experiment file is currently loaded.")
+            messagebox.showerror(
+                parent=self.root,
+                title="Delete Error",
+                message="No experiment file is currently loaded.",
+            )
             return
         confirmed = messagebox.askyesno(
-            "Delete Experiment",
-            "This will delete the experiment file and all associated data.\n\n"
+            parent=self.root,
+            title="Delete Experiment",
+            message="This will delete the experiment file and all associated data.\n\n"
             "Are you sure you want to continue?",
         )
         if confirmed:
@@ -942,9 +956,17 @@ class ExperimentMenuUI(MouserPage):
             if os.path.exists(path):
                 os.remove(path)
             else:
-                messagebox.showwarning("Delete Warning", f"File not found:\n{path}")
+                messagebox.showwarning(
+                    parent=self.root,
+                    title="Delete Warning",
+                    message=f"File not found:\n{path}",
+                )
         except OSError as error:
-            messagebox.showerror("Delete Error", f"Failed to delete experiment:\n{error}")
+            messagebox.showerror(
+                parent=self.root,
+                title="Delete Error",
+                message=f"Failed to delete experiment:\n{error}",
+            )
             return
 
         if self.menu_page is not None and hasattr(self.menu_page, "raise_frame"):

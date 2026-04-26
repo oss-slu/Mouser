@@ -41,6 +41,8 @@ def open_documentation_popup(root):
     manual_path = Path(get_resource_path("docs/mouser_manual_v1.html")).resolve()
     if not manual_path.exists():
         CTkMessagebox(
+            master=root,
+            topmost=True,
             title="Documentation Not Found",
             message=f"Could not find: {manual_path}",
             icon="warning",
@@ -99,7 +101,13 @@ def open_file(root, experiments_frame):
                     raise FileNotFoundError("Temporary decrypted file not found.")
             except Exception as exc:  # pylint: disable=broad-exception-caught
                 print(f"Decryption error: {exc}")
-                CTkMessagebox(message="Incorrect password or file error.", title="Error", icon="cancel")
+                CTkMessagebox(
+                    master=root,
+                    topmost=True,
+                    message="Incorrect password or file error.",
+                    title="Error",
+                    icon="cancel",
+                )
 
         CTkButton(password_prompt, text="OK", command=handle_password).pack()
 
