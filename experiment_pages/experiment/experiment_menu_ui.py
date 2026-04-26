@@ -163,9 +163,9 @@ class ExperimentMenuUI(MouserPage):
             from ui.commands import save_file  # pylint: disable=import-outside-toplevel
 
             save_file()
-        except Exception:  # pylint: disable=broad-exception-caught
-            # If we can't persist (e.g., tests or non-standard entry), keep local temp state only.
-            pass
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            # Log the error so we can debug issues instead of silently failing.
+            print(f"Failed to persist temp to original: {e}")
 
     def _ensure_notebook_table(self):
         try:

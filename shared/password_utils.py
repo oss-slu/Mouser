@@ -17,6 +17,10 @@ class PasswordManager:
         self.key = base64.urlsafe_b64encode(self.kdf.derive(password.encode()))
         self.fernet = Fernet(self.key)
 
+    def encrypt(self, data: bytes) -> bytes:
+        '''Encrypts data and returns encrypted bytes without writing to file.'''
+        return self.fernet.encrypt(data)
+
     def encrypt_file(self,file_path):
         '''Encrypts passed file.'''
         with open(file_path, "rb") as dbfile:
