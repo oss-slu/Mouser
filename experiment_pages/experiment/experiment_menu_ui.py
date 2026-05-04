@@ -159,13 +159,42 @@ class ExperimentMenuUI(MouserPage):
         any notes saved into the temp DB would be lost when the experiment is reopened.
         """
         try:
+            # Commit any pending changes before saving
+            if hasattr(self, 'experiment_db') and self.experiment_db:
+                try:
+                    self.experiment_db._conn.commit()  # pylint: disable=protected-access
+                    print("DEBUG: Committed pending changes before save")
+                except Exception as commit_e:
+                    print(f"DEBUG: Error committing before save: {commit_e}")
+
+            # Commit any pending changes before saving
+            if hasattr(self, 'experiment_db') and self.experiment_db:
+                try:
+                    self.experiment_db._conn.commit()  # pylint: disable=protected-access
+                    print("DEBUG: Committed pending changes before save")
+                except Exception as commit_e:
+                    print(f"DEBUG: Error committing before save: {commit_e}")
+
             # Import lazily to avoid circular imports (ui.commands imports this module).
             from ui.commands import save_file  # pylint: disable=import-outside-toplevel
 
             save_file()
-        except Exception:  # pylint: disable=broad-exception-caught
-            # If we can't persist (e.g., tests or non-standard entry), keep local temp state only.
-            pass
+
+            # Refresh the database connection after save to ensure it's still valid
+            try:
+                if hasattr(self, 'experiment_db') and self.experiment_db:
+                    self.experiment_db.close()
+                    self.experiment_db = ExperimentDatabase(self.file_path)
+                    print("DEBUG: Refreshed experiment_db after save")
+            except Exception as refresh_e:
+                print(f"DEBUG: Error refreshing DB after save: {refresh_e}")
+                # Don't fail the save if refresh fails - the temp DB might still be usable
+
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            # Log the error so we can debug issues instead of silently failing.
+            print(f"Failed to persist temp to original: {e}")
+            import traceback
+            traceback.print_exc()
 
     def _ensure_notebook_table(self):
         try:
@@ -748,8 +777,9 @@ class ExperimentMenuUI(MouserPage):
             db = ExperimentDatabase(self.file_path)
         except sqlite3.DatabaseError:
             messagebox.showerror(
-                "Open Experiment Error",
-                "This experiment file could not be opened as a database.\n"
+                parent=self.root,
+                title="Open Experiment Error",
+                message="This experiment file could not be opened as a database.\n"
                 "If it is password protected, please use the appropriate "
                 "flow to unlock it.",
             )
@@ -799,11 +829,22 @@ class ExperimentMenuUI(MouserPage):
                 ExperimentDatabase,
             )
 
-            db = ExperimentDatabase(self.file_path)
-            if db.get_number_groups() == 0:
+            # Close existing connection and refresh to ensure valid DB
+            if hasattr(self, 'experiment_db') and self.experiment_db:
+                try:
+                    self.experiment_db.close()
+                except Exception:
+                    pass
+                self.experiment_db = None
+
+            # Recreate DB connection
+            self.experiment_db = ExperimentDatabase(self.file_path)
+
+            if self.experiment_db.get_number_groups() == 0:
                 messagebox.showinfo(
-                    "Groups Required",
-                    "No groups are configured yet.\n\n"
+                    parent=self.root,
+                    title="Groups Required",
+                    message="No groups are configured yet.\n\n"
                     "Create groups in Group Configuration before assigning cages.",
                 )
                 self.open_group_config()
@@ -817,22 +858,64 @@ class ExperimentMenuUI(MouserPage):
             page.raise_frame()
         except sqlite3.DatabaseError as exc:
             messagebox.showerror(
-                "Cage Configuration Error",
-                "This experiment file could not be opened as a database.\n\n"
+                parent=self.root,
+                title="Cage Configuration Error",
+                message="This experiment file could not be opened as a database.\n\n"
+                f"{exc}",
+            )
+            print(f"ERROR open_cage_config: {exc}")
+            import traceback
+            traceback.print_exc()
+            # Refresh the page to restore button functionality
+            self.disable_buttons_if_needed()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            messagebox.showerror(
+                parent=self.root,
+                title="Cage Configuration Error",
+                message=f"Failed to open Cage Configuration page.\n\n{exc}",
+            )
+            print(f"ERROR open_cage_config unexpected: {exc}")
+            import traceback
+            traceback.print_exc()
+
+            db = ExperimentDatabase(self.file_path)
+            if db.get_number_groups() == 0:
+                messagebox.showinfo(
+                    parent=self.root,
+                    title="Groups Required",
+                    message="No groups are configured yet.\n\n"
+                    "Create groups in Group Configuration before assigning cages.",
+                )
+                self.open_group_config()
+                return
+
+            from experiment_pages.experiment.cage_config_ui import (  # pylint: disable=import-error,import-outside-toplevel
+                CageConfigUI,
+            )
+
+            page = CageConfigUI(self.file_path, self.root, self, self.file_path)
+            page.raise_frame()
+        except sqlite3.DatabaseError as exc:
+            messagebox.showerror(
+                parent=self.root,
+                title="Cage Configuration Error",
+                message="This experiment file could not be opened as a database.\n\n"
                 f"{exc}",
             )
         except Exception as exc:  # pylint: disable=broad-exception-caught
             messagebox.showerror(
-                "Cage Configuration Error",
-                f"Failed to open Cage Configuration page.\n\n{exc}",
+                parent=self.root,
+                title="Cage Configuration Error",
+                message=f"Failed to open Cage Configuration page.\n\n{exc}",
             )
 
     def open_data_collection(self):
         """Open Data Collection Page."""
         if self.experiment_db.experiment_uses_rfid() == 1 and not self.all_rfid_mapped():
             messagebox.showinfo(
-                "RFID Mapping Required",
-                "This experiment uses RFID.\n\n"
+                parent=self.root,
+                title="RFID Mapping Required",
+                message="This experiment uses RFID.\n\n"
                 "Map RFID for all animals before starting Data Collection.",
             )
             return
@@ -851,7 +934,11 @@ class ExperimentMenuUI(MouserPage):
             )
             page.raise_frame()
         except Exception as e:  # pylint: disable=broad-exception-caught
-            messagebox.showerror("Data Collection Error", f"Failed to open Data Collection page.\n\n{e}")
+            messagebox.showerror(
+                parent=self.root,
+                title="Data Collection Error",
+                message=f"Failed to open Data Collection page.\n\n{e}",
+            )
 
     def open_data_analysis(self):
         """Open Data Analysis Page."""
@@ -864,12 +951,22 @@ class ExperimentMenuUI(MouserPage):
 
     def open_map_rfid(self):
         """Open Map RFID Page."""
-        from experiment_pages.experiment.map_rfid import (  # pylint: disable=import-error,import-outside-toplevel
-            MapRFIDPage,
-        )
-
-        page = MapRFIDPage(self.file_path, self.root, self, self.file_path)
-        page.raise_frame()
+        try:
+            from experiment_pages.experiment.map_rfid import (  # pylint: disable=import-error,import-outside-toplevel
+                MapRFIDPage,
+            )
+            page = MapRFIDPage(self.file_path, self.root, self, self.file_path)
+            page.raise_frame()
+        except Exception as e:
+            import traceback
+            error_msg = f"Failed to open Map RFID page:\n{e}"
+            try:
+                from CTkMessagebox import CTkMessagebox
+                CTkMessagebox(title="Error", message=error_msg, icon="cancel")
+            except ImportError:
+                pass
+            print(f"ERROR in open_map_rfid: {e}")
+            traceback.print_exc()
 
     def open_summary(self):
         """Open Experiment Summary Page."""
@@ -901,18 +998,25 @@ class ExperimentMenuUI(MouserPage):
             self.experiment_db = ExperimentDatabase(self.file_path)
         if hasattr(self, "group_tile"):
             self.group_tile.set_enabled(True)
-        if self.experiment_db.experiment_uses_rfid() == 1:
-            if not self.all_rfid_mapped():
+
+        uses_rfid = self.experiment_db.experiment_uses_rfid()
+        all_mapped = self.all_rfid_mapped() if uses_rfid == 1 else False
+        print(f"DEBUG disable_buttons_if_needed: uses_rfid={uses_rfid}, all_mapped={all_mapped}")
+
+        if uses_rfid == 1:
+            if not all_mapped:
                 self.collection_tile.set_enabled(False)
                 self.analysis_tile.set_enabled(False)
             else:
                 self.collection_tile.set_enabled(True)
                 self.analysis_tile.set_enabled(True)
             self.rfid_button.configure(state="normal")
+            print("DEBUG: RFID button ENABLED")
         else:
             self.collection_tile.set_enabled(True)
             self.analysis_tile.set_enabled(True)
             self.rfid_button.configure(state="disabled")
+            print("DEBUG: RFID button DISABLED (experiment_uses_rfid != 1)")
 
     def disconnect_database(self):
         """Close experiment DB connection if possible."""
@@ -924,11 +1028,16 @@ class ExperimentMenuUI(MouserPage):
     def delete_warning(self):
         """Ask for confirmation before deleting the experiment file."""
         if not self.file_path:
-            messagebox.showerror("Delete Error", "No experiment file is currently loaded.")
+            messagebox.showerror(
+                parent=self.root,
+                title="Delete Error",
+                message="No experiment file is currently loaded.",
+            )
             return
         confirmed = messagebox.askyesno(
-            "Delete Experiment",
-            "This will delete the experiment file and all associated data.\n\n"
+            parent=self.root,
+            title="Delete Experiment",
+            message="This will delete the experiment file and all associated data.\n\n"
             "Are you sure you want to continue?",
         )
         if confirmed:
@@ -942,9 +1051,17 @@ class ExperimentMenuUI(MouserPage):
             if os.path.exists(path):
                 os.remove(path)
             else:
-                messagebox.showwarning("Delete Warning", f"File not found:\n{path}")
+                messagebox.showwarning(
+                    parent=self.root,
+                    title="Delete Warning",
+                    message=f"File not found:\n{path}",
+                )
         except OSError as error:
-            messagebox.showerror("Delete Error", f"Failed to delete experiment:\n{error}")
+            messagebox.showerror(
+                parent=self.root,
+                title="Delete Error",
+                message=f"Failed to delete experiment:\n{error}",
+            )
             return
 
         if self.menu_page is not None and hasattr(self.menu_page, "raise_frame"):

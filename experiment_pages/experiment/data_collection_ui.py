@@ -1875,9 +1875,11 @@ class DataCollectionUI(MouserPage):
     def raise_warning(self, warning_message='An error occurred'):
         '''Raises a popup warning message.'''
         CTkMessagebox(
+            master=self.parent,
+            topmost=True,
             title="Warning",
             message=warning_message,
-            icon="warning"
+            icon="warning",
         )
         AudioManager.play(ERROR_SOUND)
 

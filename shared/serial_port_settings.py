@@ -285,7 +285,7 @@ class SerialPortSetting(SettingPage):
         configuration_name = self.configuration_name.get().strip()
 
         if not configuration_name:
-            messagebox.showerror("Error", "Configuration name cannot be empty.", parent=self)
+            messagebox.showerror(parent=self, title="Error", message="Configuration name cannot be empty.")
             return
 
         settings = [
@@ -310,10 +310,14 @@ class SerialPortSetting(SettingPage):
                 writer = csv.writer(file)
                 writer.writerow(settings)
             print(f"Settings saved for {configuration_name}")
-            messagebox.showinfo("Success", f"Configuration '{configuration_name}' saved successfully!\n Set it as a preffered device to use it.")
+            messagebox.showinfo(
+                parent=self,
+                title="Success",
+                message=f"Configuration '{configuration_name}' saved successfully!\n Set it as a preffered device to use it.",
+            )
         except Exception as e:
             print(f"Error saving settings: {e}")
-            messagebox.showerror("Error", f"Failed to save settings: {e}")
+            messagebox.showerror(parent=self, title="Error", message=f"Failed to save settings: {e}")
 
         self.destroy()
 

@@ -12,10 +12,9 @@ import threading
 import webbrowser
 from customtkinter import *
 from CTkMessagebox import CTkMessagebox
-from playsound import playsound
 from serial import serialutil
 from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
-from shared.tk_models import *
+from shared.tk_models import MouserPage, get_ui_metrics
 from shared.serial_port_controller import SerialPortController
 from shared.serial_handler import SerialDataHandler
 from shared.hid_wedge import HIDWedgeListener
@@ -84,6 +83,7 @@ def get_random_rfid():
 class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
     '''Map RFID user interface and window.'''
     def __init__(self, database, parent: CTk, previous_page: CTkFrame = None, file_path = ""):
+        print(f"DEBUG MapRFIDPage.__init__: database={database}, file_path={file_path}")
 
         super().__init__(parent, "RFID Mapping", previous_page)
         ui = get_ui_metrics()
@@ -144,7 +144,15 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.parent = parent
 
         file = database
-        self.db = ExperimentDatabase(file)
+        print(f"DEBUG MapRFIDPage: Creating ExperimentDatabase with file={file}")
+        try:
+            self.db = ExperimentDatabase(file)
+            print(f"DEBUG MapRFIDPage: ExperimentDatabase created successfully")
+        except Exception as db_e:
+            print(f"ERROR creating ExperimentDatabase: {db_e}")
+            import traceback
+            traceback.print_exc()
+            raise
 
         self.animal_rfid_list = self.db.get_all_animals_rfid()
         self.animals = []
@@ -682,10 +690,12 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
     def simulate_all_rfid(self):
         '''Simulates RFID for all remaining unmapped animals.'''
         confirm = CTkMessagebox(
-            title= "Confirm Simulate All",
-            message= "Are you sure you want to SimAll? \nThis should only be used in testing.",
+            master=self.parent,
+            topmost=True,
+            title="Confirm Simulate All",
+            message="Are you sure you want to SimAll? \nThis should only be used in testing.",
             option_1="No",
-            option_2="Yes"
+            option_2="Yes",
         )
         if confirm.get() == "Yes":
             self.set_reader_status("Simulating RFID mapping...")
@@ -961,7 +971,9 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
     def raise_frame(self):
         '''Raise the frame for this UI'''
+        print("DEBUG MapRFIDPage.raise_frame called")
         super().raise_frame()
+        print("DEBUG MapRFIDPage.raise_frame completed")
 
     def save(self):
         '''Saves current database state to permanent file'''
@@ -1184,29 +1196,37 @@ class SerialSimulator():
         if len(virtual_ports) == 0:
             if platform.system() in ("Darwin", "Linux"):
                 warning = CTkMessagebox(
+                    master=self.parent,
+                    topmost=True,
                     title="Warning",
                     message="No virtual serial ports detected. Create a temporary pair now?",
                     icon="warning",
                     option_1="Cancel",
-                    option_2="Create"
+                    option_2="Create",
                 )
                 if warning.get() == "Create":
                     virtual_ports = self._start_socat_pair()
                     if len(virtual_ports) < 2:
                         CTkMessagebox(
+                            master=self.parent,
+                            topmost=True,
                             title="Error",
                             message="Unable to create virtual ports. Install socat and try again.",
-                            icon="cancel"
+                            icon="cancel",
                         )
                         return
                 else:
                     return
             else:
-                warning = CTkMessagebox(title="Warning",
-                                        message="Virtual ports missing, would you like to download the virtual ports?",
-                                        icon="warning",
-                                        option_1="Cancel",
-                                        option_2="Download")
+                warning = CTkMessagebox(
+                    master=self.parent,
+                    topmost=True,
+                    title="Warning",
+                    message="Virtual ports missing, would you like to download the virtual ports?",
+                    icon="warning",
+                    option_1="Cancel",
+                    option_2="Download",
+                )
                 if warning.get() == "Download":
                     self.download_link()
                 return
@@ -1266,9 +1286,11 @@ class SerialSimulator():
 
         if len(available_port)==0:
             CTkMessagebox(
+                master=self.parent,
+                topmost=True,
                 message="There seems to be problem with the virtual port, please submit bug report.",
                 title="Warning",
-                icon="cancel"
+                icon="cancel",
             )
 
         else:

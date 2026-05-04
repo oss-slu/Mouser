@@ -190,13 +190,9 @@ class ExperimentDatabase:
         return result
 
     def close(self):
-        '''Closes database connection and cleans up singleton instance.'''
+        '''Close the database connection and clean up the instance.'''
         try:
             if self._conn is not None:
-                # Commit any pending transactions
-                self._conn.commit()
-
-                # Close the cursor if it exists
                 if self._c is not None:
                     self._c.close()
                     self._c = None
@@ -204,6 +200,12 @@ class ExperimentDatabase:
                 # Close the connection
                 self._conn.close()
                 self._conn = None
+
+                # Remove from singleton instances to allow reconnection
+                file_path = getattr(self, 'db_file', None)
+                if file_path and file_path in ExperimentDatabase._instances:
+                    del ExperimentDatabase._instances[file_path]
+                    print(f"DEBUG: Removed {file_path} from _instances")
 
                 return True
         except sqlite3.Error as e:

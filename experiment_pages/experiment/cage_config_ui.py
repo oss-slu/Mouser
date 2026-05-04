@@ -582,6 +582,7 @@ class CageConfigurationUI(MouserPage):
     def autosort(self):
         '''Calls database's autosort function after user confirmation.'''
         confirmed = messagebox.askyesno(
+            parent=self.parent,
             title="Confirm AutoSort",
             message="Are you sure you want to AutoSort?\nThis will remove measurements used to sort from the database.",
         )

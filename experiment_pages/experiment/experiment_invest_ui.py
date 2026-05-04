@@ -228,7 +228,7 @@ class InvestigatorsUI(MouserPage):
 
     def save_investigators(self):
         self.db.update_investigators(self.investigators)
-        messagebox.showinfo("Saved", "Investigators updated successfully.")
+        messagebox.showinfo(parent=self.parent, title="Saved", message="Investigators updated successfully.")
 
     def go_back(self):
         if hasattr(self, "menu_button") and self.menu_button:
