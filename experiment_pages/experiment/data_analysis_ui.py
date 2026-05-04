@@ -166,17 +166,20 @@ class DataAnalysisUI(MouserPage):
         self.left_panel.grid_rowconfigure(3, weight=0)  # table
         self.left_panel.grid_rowconfigure(4, weight=1)  # spacer
 
-        self.sidebar = CTkFrame(body, fg_color="transparent")
-        self.sidebar.grid(row=0, column=1, sticky="nsew")
+        # Sidebar with scrollable content to ensure all cards are visible
+        sidebar_outer = CTkFrame(body, fg_color="transparent")
+        sidebar_outer.grid(row=0, column=1, sticky="nsew")
+        sidebar_outer.grid_rowconfigure(0, weight=1)
+        sidebar_outer.grid_columnconfigure(0, weight=1)
+
+        self.sidebar = CTkScrollableFrame(
+            sidebar_outer,
+            fg_color="transparent",
+            corner_radius=0,
+            border_width=0,
+        )
+        self.sidebar.grid(row=0, column=0, sticky="nsew")
         self.sidebar.grid_columnconfigure(0, weight=1)
-        # Keep the sidebar content compact; use a spacer row to absorb extra height.
-        # Row 0: export/refresh controls, Row 1: device/measurement, Row 2: daily comparison,
-        # Row 3: LME card, Row 4: spacer
-        self.sidebar.grid_rowconfigure(0, weight=0)
-        self.sidebar.grid_rowconfigure(1, weight=0)
-        self.sidebar.grid_rowconfigure(2, weight=0)
-        self.sidebar.grid_rowconfigure(3, weight=0)
-        self.sidebar.grid_rowconfigure(4, weight=1)
 
         # Header
         left_header = CTkFrame(self.left_panel, fg_color="transparent")
@@ -375,8 +378,7 @@ class DataAnalysisUI(MouserPage):
         if LME_AVAILABLE:
             self._build_lme_card(parent=self.sidebar)
 
-        # Spacer to keep cards pinned to the top of the sidebar.
-        CTkFrame(self.sidebar, fg_color="transparent").grid(row=4, column=0, sticky="nsew")
+        # No spacer needed - scrollable frame handles overflow
 
         self._build_chart_section(parent=self.left_panel)
         self._build_table_section(parent=self.left_panel)
@@ -435,10 +437,8 @@ class DataAnalysisUI(MouserPage):
             corner_radius=14,
             border_width=1,
             border_color=self._palette["card_border"],
-            height=420,
         )
         card.grid(row=2, column=0, sticky="ew", pady=(12, 0))
-        card.grid_propagate(False)
         card.grid_columnconfigure(0, weight=1)
         card.grid_rowconfigure(2, weight=1)
 
@@ -614,7 +614,6 @@ class DataAnalysisUI(MouserPage):
         # Place after daily comparison card (row=2) and before spacer (row=4)
         card.grid(row=3, column=0, sticky="ew", pady=(12, 0))
         card.grid_columnconfigure(0, weight=1)
-        card.grid_propagate(False)  # Prevent card from resizing
 
         header = CTkFrame(card, fg_color="transparent")
         header.grid(row=0, column=0, sticky="ew", padx=14, pady=(12, 6))
