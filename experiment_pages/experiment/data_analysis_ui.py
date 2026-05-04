@@ -385,8 +385,7 @@ class DataAnalysisUI(MouserPage):
         try:
             db = ExperimentDatabase(self.db_file)
             measurement_name = db.get_measurement_items()
-            if isinstance(measurement_name, (list, tuple)):
-                measurement_name = measurement_name[0] if measurement_name else None
+            measurement_name = str(measurement_name or "")
         except Exception:
             measurement_name = None
 
@@ -1090,7 +1089,6 @@ class DataAnalysisUI(MouserPage):
         self.table["columns"] = ("animal_id", *date_list)
         lookup = {(measurement_date, animal_id): weight for measurement_date, animal_id, weight in rows}
 
-        self.table["columns"] = ()
         self.table["columns"] = ("animal_id", *date_list)     
         
         self.table.heading("animal_id", text="Animal ID", anchor="center")
