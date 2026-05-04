@@ -749,12 +749,30 @@ class DataAnalysisUI(MouserPage):
         import threading
         def _compute():
             try:
+                # Debug: Show what data we're working with
                 db = ExperimentDatabase(self.db_file)
+
+                # Check available groups
+                db._c.execute("SELECT DISTINCT name FROM groups ORDER BY group_id")
+                available_groups = [row[0] for row in db._c.fetchall() if row[0]]
+                print(f"[LME UI DEBUG] Available groups: {available_groups}")
+                print(f"[LME UI DEBUG] Comparing: {group1} vs {group2}")
+
+                # Check data
+                db._c.execute("SELECT COUNT(*) FROM animal_measurements")
+                count = db._c.fetchone()[0]
+                print(f"[LME UI DEBUG] Total measurements: {count}")
+
+                # Run LME
                 result = compare_groups_lme(db, group1, group2, include_time=True)
+                print(f"[LME UI DEBUG] Result: {result}")
 
                 # Update UI in main thread
                 self.after(0, lambda: self._display_lme_results(result))
             except Exception as e:
+                import traceback
+                print(f"[LME UI DEBUG] Error: {e}")
+                traceback.print_exc()
                 self.after(0, lambda: self._display_lme_error(str(e)[:40]))
 
         thread = threading.Thread(target=_compute, daemon=True)
@@ -772,9 +790,19 @@ class DataAnalysisUI(MouserPage):
             self.update_idletasks()
 
             if result is None:
+                # Show more detailed message
+                try:
+                    db = ExperimentDatabase(self.db_file)
+                    db._c.execute("SELECT COUNT(*) FROM animal_measurements")
+                    count = db._c.fetchone()[0]
+                    db._c.execute("SELECT DISTINCT group_id FROM animals WHERE active=1")
+                    groups = [row[0] for row in db._c.fetchall()]
+                    msg = f"Insufficient data\n{count} measurements, {len(groups)} active groups"
+                except Exception:
+                    msg = "Insufficient data"
                 CTkLabel(
-                    self._lme_results_frame, text="Insufficient data",
-                    font=CTkFont("Segoe UI Semibold", 11), text_color=self._palette["muted_text"],
+                    self._lme_results_frame, text=msg,
+                    font=CTkFont("Segoe UI", 10), text_color=self._palette["muted_text"],
                 ).grid(row=0, column=0, sticky="w")
                 return
 

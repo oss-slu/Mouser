@@ -104,9 +104,12 @@ def fit_lme(df: pd.DataFrame,
     try:
         from statsmodels.regression.mixed_linear_model import MixedLM
     except ImportError:
+        print("[LME DEBUG] statsmodels not available")
         return None, None
 
+    print(f"[LME DEBUG] fit_lme: df shape={df.shape}, columns={df.columns.tolist()}")
     if df.empty or "value" not in df.columns:
+        print(f"[LME DEBUG] Empty or missing value column, returning None")
         return None, None
 
     # Prepare model matrix - use pandas DataFrames to preserve column names
@@ -235,23 +238,34 @@ def compare_groups_lme(db, group1_name: str, group2_name: str,
     Returns a simplified comparison result focusing on the treatment effect
     between two groups, suitable for quick hypothesis testing.
     """
+    print(f"[LME DEBUG] Comparing {group1_name} vs {group2_name}")
     df = extract_lme_data(db)
+    print(f"[LME DEBUG] Extracted data shape: {df.shape}")
     if df.empty:
+        print("[LME DEBUG] DataFrame is empty, returning None")
         return None
 
     # Filter to the two groups
     df_filtered = df[df["group"].isin([group1_name, group2_name])].copy()
+    print(f"[LME DEBUG] Filtered data shape: {df_filtered.shape}")
+    print(f"[LME DEBUG] Groups in filtered data: {df_filtered['group'].unique()}")
     if len(df_filtered["group"].unique()) < 2:
+        print("[LME DEBUG] Less than 2 groups, returning None")
         return None
 
+    print("[LME DEBUG] Calling fit_lme...")
     result, formatted = fit_lme(df_filtered, fixed_effects="group",
                                  include_time=include_time)
     if result is None:
+        print("[LME DEBUG] fit_lme returned None")
         return None
+
+    print(f"[LME DEBUG] Model fitted. Fixed effects keys: {list(formatted.get('fixed_effects', {}).keys())}")
 
     # Extract the treatment effect (coefficient for group2 vs reference group1)
     group_col = f"group_{group2_name}"
     effect = formatted["fixed_effects"].get(group_col, {})
+    print(f"[LME DEBUG] Effect for {group_col}: {effect}")
 
     return {
         "comparison": f"{group2_name} vs {group1_name}",
