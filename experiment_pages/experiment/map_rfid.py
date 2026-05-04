@@ -12,7 +12,6 @@ import threading
 import webbrowser
 from customtkinter import *
 from CTkMessagebox import CTkMessagebox
-from playsound import playsound
 from serial import serialutil
 from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
 from shared.tk_models import *
@@ -84,6 +83,7 @@ def get_random_rfid():
 class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
     '''Map RFID user interface and window.'''
     def __init__(self, database, parent: CTk, previous_page: CTkFrame = None, file_path = ""):
+        print(f"DEBUG MapRFIDPage.__init__: database={database}, file_path={file_path}")
 
         super().__init__(parent, "RFID Mapping", previous_page)
         ui = get_ui_metrics()
@@ -144,7 +144,15 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
         self.parent = parent
 
         file = database
-        self.db = ExperimentDatabase(file)
+        print(f"DEBUG MapRFIDPage: Creating ExperimentDatabase with file={file}")
+        try:
+            self.db = ExperimentDatabase(file)
+            print(f"DEBUG MapRFIDPage: ExperimentDatabase created successfully")
+        except Exception as db_e:
+            print(f"ERROR creating ExperimentDatabase: {db_e}")
+            import traceback
+            traceback.print_exc()
+            raise
 
         self.animal_rfid_list = self.db.get_all_animals_rfid()
         self.animals = []
@@ -963,7 +971,9 @@ class MapRFIDPage(MouserPage):# pylint: disable= undefined-variable
 
     def raise_frame(self):
         '''Raise the frame for this UI'''
+        print("DEBUG MapRFIDPage.raise_frame called")
         super().raise_frame()
+        print("DEBUG MapRFIDPage.raise_frame completed")
 
     def save(self):
         '''Saves current database state to permanent file'''

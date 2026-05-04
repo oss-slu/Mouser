@@ -163,14 +163,32 @@ def save_file():
     print("Current file path:", current_file)
     print("Temp file path:", temp_file)
 
-    if current_file and current_file.endswith(".pmouser"):
-        file_utils.save_temp_to_encrypted(
-            temp_file,
-            current_file,
-            global_state.get("password")
-        )
-    elif current_file and temp_file:
-        file_utils.save_temp_to_file(temp_file, current_file)
-    else:
+    if not current_file or not temp_file:
         print("Save skipped — missing file path.")
+        return
+
+    # Close any open database connections to release the temp file
+    if temp_file and temp_file in ExperimentDatabase._instances:  # pylint: disable=protected-access
+        try:
+            print(f"DEBUG save_file: Closing DB connection for {temp_file}")
+            ExperimentDatabase._instances[temp_file].close()  # pylint: disable=protected-access
+            del ExperimentDatabase._instances[temp_file]  # pylint: disable=protected-access
+        except Exception as e:
+            print(f"DEBUG save_file: Error closing DB: {e}")
+
+    try:
+        if current_file.endswith(".pmouser"):
+            file_utils.save_temp_to_encrypted(
+                temp_file,
+                current_file,
+                global_state.get("password")
+            )
+        else:
+            file_utils.save_temp_to_file(temp_file, current_file)
+        print("DEBUG save_file: Save completed successfully")
+    except Exception as e:
+        print(f"DEBUG save_file: Error during save: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
 
