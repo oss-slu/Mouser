@@ -757,6 +757,7 @@ class DataAnalysisUI(MouserPage):
                 available_groups = [row[0] for row in db._c.fetchall() if row[0]]
                 print(f"[LME UI DEBUG] Available groups: {available_groups}")
                 print(f"[LME UI DEBUG] Comparing: {group1} vs {group2}")
+                print(f"[LME UI DEBUG] Using db_file: {self.db_file}")
 
                 # Check data
                 db._c.execute("SELECT COUNT(*) FROM animal_measurements")

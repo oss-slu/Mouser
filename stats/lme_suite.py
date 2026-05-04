@@ -239,6 +239,7 @@ def compare_groups_lme(db, group1_name: str, group2_name: str,
     between two groups, suitable for quick hypothesis testing.
     """
     print(f"[LME DEBUG] Comparing {group1_name} vs {group2_name}")
+    print(f"[LME DEBUG] Using db_file: {getattr(db, 'db_file', 'unknown')}")
     df = extract_lme_data(db)
     print(f"[LME DEBUG] Extracted data shape: {df.shape}")
     if df.empty:
