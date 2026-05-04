@@ -27,6 +27,11 @@ from shared.tk_models import MouserPage, get_ui_metrics
 from databases.experiment_database import ExperimentDatabase
 from shared.audio import AudioManager
 from shared.file_utils import SUCCESS_SOUND
+try:
+    from stats.lme_suite import extract_lme_data, fit_lme, compare_groups_lme
+    LME_AVAILABLE = True
+except ImportError:
+    LME_AVAILABLE = False
 
 
 class DataAnalysisUI(MouserPage):
@@ -361,6 +366,10 @@ class DataAnalysisUI(MouserPage):
 
         self._build_daily_comparison_card(parent=self.sidebar)
 
+        # LME Statistical Analysis card (if statsmodels available)
+        if LME_AVAILABLE:
+            self._build_lme_card(parent=self.sidebar)
+
         # Spacer to keep cards pinned to the top of the sidebar.
         CTkFrame(self.sidebar, fg_color="transparent").grid(row=3, column=0, sticky="nsew")
 
@@ -588,6 +597,189 @@ class DataAnalysisUI(MouserPage):
                 text_color=delta_color,
                 anchor="e",
             ).grid(row=1, column=0, sticky="e", pady=(0, 2))
+
+    def _build_lme_card(self, parent):
+        card = CTkFrame(
+            parent,
+            fg_color=self._palette["card_bg"],
+            corner_radius=14,
+            border_width=1,
+            border_color=self._palette["card_border"],
+        )
+        card.grid(row=3 if hasattr(self, '_build_daily_comparison_card') else 2, column=0, sticky="ew", pady=(12, 0))
+        card.grid_columnconfigure(0, weight=1)
+
+        header = CTkFrame(card, fg_color="transparent")
+        header.grid(row=0, column=0, sticky="ew", padx=14, pady=(12, 6))
+        header.grid_columnconfigure(0, weight=1)
+
+        CTkLabel(
+            header,
+            text="LME Analysis",
+            font=CTkFont("Segoe UI Semibold", 14),
+            text_color=self._palette["text"],
+        ).grid(row=0, column=0, sticky="w")
+
+        CTkLabel(
+            header,
+            text="Mixed-Effects Model",
+            font=CTkFont("Segoe UI", 10),
+            text_color=self._palette["muted_text"],
+        ).grid(row=1, column=0, sticky="w")
+
+        # Group selection
+        groups = self._get_group_names()
+        if len(groups) < 2:
+            CTkLabel(
+                card,
+                text="Need 2+ groups for LME",
+                font=CTkFont("Segoe UI", 11),
+                text_color=self._palette["muted_text"],
+            ).grid(row=1, column=0, padx=14, pady=(0, 12))
+            return
+
+        self._lme_group1_var = groups[0]
+        self._lme_group2_var = groups[1] if len(groups) > 1 else groups[0]
+
+        # Group 1 selector
+        CTkLabel(card, text="Group 1 (reference):", font=CTkFont("Segoe UI", 11),
+                 text_color=self._palette["muted_text"]).grid(row=2, column=0, sticky="w", padx=14)
+        self._lme_group1_menu = CTkOptionMenu(
+            card, values=groups, command=lambda g: setattr(self, '_lme_group1_var', g),
+            fg_color=self._palette["card_bg"], text_color=self._palette["text"],
+            button_color=self._pick(self._palette["table_alt_bg"]),
+            button_hover_color=self._pick(self._palette["table_selected_bg"]),
+            dropdown_fg_color=self._palette["card_bg"],
+            dropdown_text_color=self._palette["text"],
+            font=CTkFont("Segoe UI", 11),
+        )
+        self._lme_group1_menu.grid(row=3, column=0, sticky="ew", padx=14, pady=(2, 8))
+        self._lme_group1_menu.set(groups[0])
+
+        # Group 2 selector
+        CTkLabel(card, text="Group 2 (treatment):", font=CTkFont("Segoe UI", 11),
+                 text_color=self._palette["muted_text"]).grid(row=4, column=0, sticky="w", padx=14)
+        self._lme_group2_menu = CTkOptionMenu(
+            card, values=groups, command=lambda g: setattr(self, '_lme_group2_var', g),
+            fg_color=self._palette["card_bg"], text_color=self._palette["text"],
+            button_color=self._pick(self._palette["table_alt_bg"]),
+            button_hover_color=self._pick(self._palette["table_selected_bg"]),
+            dropdown_fg_color=self._palette["card_bg"],
+            dropdown_text_color=self._palette["text"],
+            font=CTkFont("Segoe UI", 11),
+        )
+        self._lme_group2_menu.grid(row=5, column=0, sticky="ew", padx=14, pady=(2, 8))
+        self._lme_group2_menu.set(groups[1] if len(groups) > 1 else groups[0])
+
+        # Run button
+        self._lme_run_button = CTkButton(
+            card, text="▶  Run LME", height=38, corner_radius=10,
+            fg_color="#7c3aed", hover_color="#5b21b6",
+            text_color="white", font=CTkFont("Segoe UI Semibold", 13),
+            command=self._run_lme_analysis,
+        )
+        self._lme_run_button.grid(row=6, column=0, sticky="ew", padx=14, pady=(8, 0))
+
+        # Results area
+        self._lme_results_frame = CTkFrame(card, fg_color="transparent")
+        self._lme_results_frame.grid(row=7, column=0, sticky="ew", padx=14, pady=(10, 12))
+        self._lme_results_frame.grid_columnconfigure(0, weight=1)
+
+    def _get_group_names(self):
+        try:
+            if not self.db_file or not os.path.exists(self.db_file):
+                return []
+            db = ExperimentDatabase(self.db_file)
+            db._c.execute("SELECT DISTINCT name FROM groups ORDER BY group_id")
+            return [row[0] for row in db._c.fetchall() if row[0]]
+        except Exception:
+            return []
+
+    def _run_lme_analysis(self):
+        if not LME_AVAILABLE:
+            return
+        group1 = getattr(self, '_lme_group1_var', None)
+        group2 = getattr(self, '_lme_group2_var', None)
+        if not group1 or not group2 or group1 == group2:
+            return
+
+        self._lme_run_button.configure(text="⏳ Running...", state="disabled")
+        self.update_idletasks()
+
+        try:
+            db = ExperimentDatabase(self.db_file)
+            result = compare_groups_lme(db, group1, group2, include_time=True)
+
+            # Clear previous results
+            for child in self._lme_results_frame.winfo_children():
+                child.destroy()
+
+            if result is None:
+                CTkLabel(
+                    self._lme_results_frame, text="Insufficient data",
+                    font=CTkFont("Segoe UI", 11), text_color=self._palette["muted_text"],
+                ).grid(row=0, column=0, sticky="w")
+                return
+
+            # Coefficient
+            coef = result.get("coefficient")
+            p_val = result.get("p_value")
+            ci_low = result.get("ci_lower")
+            ci_high = result.get("ci_upper")
+            sig = result.get("significant", False)
+            n_obs = result.get("n_observations", 0)
+
+            coef_text = f"{coef:.4f}" if coef is not None else "N/A"
+            p_text = f"{p_val:.4f}" if p_val is not None else "N/A"
+            ci_text = f"[{ci_low:.2f}, {ci_high:.2f}]" if ci_low is not None else ""
+
+            color = "#16a34a" if sig else self._palette["text"]
+            sig_text = "✓ Sig. (p<0.05)" if sig else "Not sig."
+
+            CTkLabel(
+                self._lme_results_frame,
+                text=f"Effect: {coef_text}",
+                font=CTkFont("Segoe UI Semibold", 12),
+                text_color=color,
+            ).grid(row=0, column=0, sticky="w", pady=(0, 2))
+
+            CTkLabel(
+                self._lme_results_frame,
+                text=f"95% CI: {ci_text}",
+                font=CTkFont("Segoe UI", 10),
+                text_color=self._palette["muted_text"],
+            ).grid(row=1, column=0, sticky="w")
+
+            CTkLabel(
+                self._lme_results_frame,
+                text=f"p-value: {p_text}",
+                font=CTkFont("Segoe UI", 10),
+                text_color=color,
+            ).grid(row=2, column=0, sticky="w", pady=(2, 0))
+
+            CTkLabel(
+                self._lme_results_frame,
+                text=sig_text,
+                font=CTkFont("Segoe UI", 10),
+                text_color=color,
+            ).grid(row=3, column=0, sticky="w", pady=(2, 0))
+
+            CTkLabel(
+                self._lme_results_frame,
+                text=f"N={n_obs} observations",
+                font=CTkFont("Segoe UI", 9),
+                text_color=self._palette["muted_text"],
+            ).grid(row=4, column=0, sticky="w", pady=(4, 0))
+
+        except Exception as e:
+            for child in self._lme_results_frame.winfo_children():
+                child.destroy()
+            CTkLabel(
+                self._lme_results_frame, text=f"Error: {str(e)[:40]}",
+                font=CTkFont("Segoe UI", 10), text_color="#dc2626",
+            ).grid(row=0, column=0, sticky="w")
+        finally:
+            self._lme_run_button.configure(text="▶  Run LME", state="normal")
 
     def _build_table_section(self, parent):
         table_card = CTkFrame(

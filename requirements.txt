@@ -11,3 +11,4 @@ CTkMessagebox
 CTkMenuBar
 playsound==1.2.2
 requests
+statsmodels
