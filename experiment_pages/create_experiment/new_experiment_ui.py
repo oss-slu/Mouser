@@ -481,30 +481,48 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
             ],
         )
 
+    def has_required_fields(self):
+        """Check if all required fields are filled (without validating allocation)."""
+        return all(
+            [
+                self.exper_name.get().strip(),
+                self.species.get().strip(),
+                self.animal_num.get().strip(),
+                self.group_num.get().strip(),
+                self.num_per_cage.get().strip(),
+            ]
+        )
+    
+    def has_selected_devices(self):
+        """Check if at least one measurement device is selected."""
+        return (self._device_balancer.get() 
+                or self._device_caliper.get() 
+                or self._device_custom.get())
+    
+    def is_custom_device_valid(self):
+        """Check if custom device entry is valid when Custom is selected."""
+        if self._device_custom.get():
+            return bool(self._get_custom_devices(include_pending=True))
+        return True
+    
+    def is_form_valid(self):
+        """Check overall form validity for enabling Next button."""
+        return (self.has_required_fields() 
+            and self.has_selected_devices() 
+            and self.is_custom_device_valid() 
+            and self._allocation_valid)
+
     def enable_next_button(self):
         """Enable Next only when all required fields are filled."""
         if not self.next_button:
             return
-
-        if not (self._device_balancer.get() or self._device_caliper.get() or self._device_custom.get()):
-            self.next_button.configure(state="disabled")
-            return
-
-        required = [
-            self.exper_name.get().strip(),
-            self.species.get().strip(),
-            self.animal_num.get().strip(),
-            self.group_num.get().strip(),
-            self.num_per_cage.get().strip(),
-        ]
-        if self._device_custom.get() and not self.custom_device_type.get().strip():
-            if not self._get_custom_devices(include_pending=False):
-                self.next_button.configure(state="disabled")
-                return
-        if all(required) and self._allocation_valid:
+        
+        if self.is_form_valid():
             self.next_button.configure(state="normal")
         else:
             self.next_button.configure(state="disabled")
+
+        
 
     def _sync_measurement_devices(self):
         """Show/hide custom device entry based on selection."""
@@ -956,6 +974,5 @@ class NewExperimentUI(  # pylint: disable=too-many-instance-attributes
             self.add_custom_device()
             self.custom_device_type.delete(0, END)
         # Ensure the latest live validation state is applied before continuing.
-        self._validate_allocation_live()
         if self.check_animals_divisible():
             self._go_next()
