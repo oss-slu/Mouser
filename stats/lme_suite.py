@@ -10,6 +10,14 @@ import numpy as np
 from datetime import datetime
 from typing import Optional, Dict, Any, Tuple
 
+# Import statsmodels at module level to avoid thread import issues
+try:
+    from statsmodels.regression.mixed_linear_model import MixedLM
+    STATSMODELS_AVAILABLE = True
+except ImportError:
+    MixedLM = None
+    STATSMODELS_AVAILABLE = False
+
 
 def _parse_timestamp(ts: str) -> datetime:
     """Parse SQLite timestamp string to datetime."""
@@ -101,9 +109,7 @@ def fit_lme(df: pd.DataFrame,
     Returns:
         Tuple of (fitted_model, results_dict). Returns (None, None) on failure.
     """
-    try:
-        from statsmodels.regression.mixed_linear_model import MixedLM
-    except ImportError:
+    if not STATSMODELS_AVAILABLE or MixedLM is None:
         print("[LME DEBUG] statsmodels not available")
         return None, None
 
@@ -149,8 +155,10 @@ def fit_lme(df: pd.DataFrame,
         return None, None
 
     try:
+        print(f"[LME DEBUG] Fitting model with {len(endog)} observations...")
         model = MixedLM(endog, exog, groups=groups)
         result = model.fit()
+        print(f"[LME DEBUG] Model fitted successfully")
         return result, _format_results(result, fixed_effects, include_time)
     except Exception as e:
         import traceback
