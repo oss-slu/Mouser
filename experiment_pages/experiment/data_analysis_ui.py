@@ -407,7 +407,7 @@ class DataAnalysisUI(MouserPage):
 
     def _on_device_selected(self, selected_label):
         for choice in self._measurement_choices:
-            if choice["label"] == selected_label:
+            if choice["label"] == str(selected_label):
                 self._selected_measurement_key = choice["key"]
                 self._selected_measurement_id = choice["id"]
                 self._selected_measurement_label = choice["label"]
@@ -774,6 +774,7 @@ class DataAnalysisUI(MouserPage):
         if not self.db_file or not os.path.exists(self.db_file):
             return []
         db = ExperimentDatabase(self.db_file)
+        
         if int(measurement_id or 1) == 1:
             db._c.execute(
                 """
@@ -796,14 +797,20 @@ class DataAnalysisUI(MouserPage):
                 (int(measurement_id),),
             )
         rows = db._c.fetchall()
-        return [(str(d), int(aid), float(val)) for d, aid, val in rows]
-
+        return [
+                (datetime.strptime(str(d), "%Y-%m-%d").date(), int(aid), float(val))
+                for d, aid, val in rows
+            ]
+    
     def _set_range(self, days):
         self._range_days = days
         try:
             if hasattr(self, "_range_buttons") and self._range_buttons:
                 for key, btn in self._range_buttons.items():
-                    selected = (key == "all" and days is None) or (key == str(days))
+                    if key == "all":
+                        selected = days is None
+                    else:
+                        selected = (days is not None and key.isdigit() and days == int(key))
                     btn.configure(
                         fg_color="#2563eb" if selected else self._pick(self._palette["card_bg"]),
                         text_color="white" if selected else self._pick(self._palette["text"]),
@@ -835,7 +842,10 @@ class DataAnalysisUI(MouserPage):
         filtered = []
         for d, aid, val in rows:
             try:
-                row_date = datetime.strptime(d, "%Y-%m-%d").date()
+                if isinstance(d, datetime):
+                    row_date = d.date()
+                else:
+                    row_date = d
             except Exception:
                 continue
             if min_date <= row_date <= today:
@@ -1034,11 +1044,13 @@ class DataAnalysisUI(MouserPage):
         return ""
 
     def _populate_legend(self, rows):
+        if not rows:
+            return
         try:
             if not hasattr(self, "legend_frame") or self.legend_frame is None:
                 return
-            for child in self.legend_frame.winfo_children():
-                child.destroy()
+            if not getattr(self, "legend_frame", None):
+                return
         except Exception:
             return
 
@@ -1046,7 +1058,9 @@ class DataAnalysisUI(MouserPage):
         text_color = self._pick(self._palette["text"])
 
         # Legend only (no per-animal stats shown here).
-
+        for child in self.legend_frame.winfo_children():
+            child.destroy()
+            
         for idx, animal_id in enumerate(animals):
             color = self.chart_colors[idx % len(self.chart_colors)]
             row = CTkFrame(self.legend_frame, fg_color="transparent")
@@ -1072,10 +1086,13 @@ class DataAnalysisUI(MouserPage):
     def _populate_table(self, rows):
         date_list = sorted({measurement_date for measurement_date, _animal_id, _weight in rows})
         animal_ids = sorted({animal_id for _measurement_date, animal_id, _weight in rows})
+
+        self.table["columns"] = ("animal_id", *date_list)
         lookup = {(measurement_date, animal_id): weight for measurement_date, animal_id, weight in rows}
 
-        columns = ("animal_id", *date_list)
-        self.table.configure(columns=columns)
+        self.table["columns"] = ()
+        self.table["columns"] = ("animal_id", *date_list)     
+        
         self.table.heading("animal_id", text="Animal ID", anchor="center")
         self.table.column("animal_id", width=130, anchor="center", stretch=False)
         for measurement_date in date_list:
@@ -1095,8 +1112,8 @@ class DataAnalysisUI(MouserPage):
     def _draw_trend_chart(self, rows):
         canvas = self.chart_canvas
         canvas.delete("all")
-        width = max(canvas.winfo_width(), 200)
-        height = max(canvas.winfo_height(), 180)
+        width = max(canvas.winfo_width() or 200, 200)
+        height = max(canvas.winfo_height() or 180, 180)
         left, right, top, bottom = 96, 40, 18, 64
         plot_w = max(width - left - right, 50)
         plot_h = max(height - top - bottom, 50)
@@ -1126,9 +1143,15 @@ class DataAnalysisUI(MouserPage):
         dates = sorted({row[0] for row in rows})
         date_index = {d: idx for idx, d in enumerate(dates)}
         by_animal = defaultdict(list)
-        min_w = min(row[2] for row in rows)
-        max_w = max(row[2] for row in rows)
-        if min_w == max_w:
+        weights = [float(r[2]) for r in rows if r[2] is not None]
+
+        if not weights:
+            canvas.create_text(width / 2, height / 2, text="No data available yet.", fill=muted_text)
+            return
+
+        min_w = min(weights)
+        max_w = max(weights)
+        if min_w is None or max_w is None or min_w == max_w:
             min_w -= 1
             max_w += 1
 
