@@ -167,6 +167,14 @@ class ExperimentMenuUI(MouserPage):
                 except Exception as commit_e:
                     print(f"DEBUG: Error committing before save: {commit_e}")
 
+            # Commit any pending changes before saving
+            if hasattr(self, 'experiment_db') and self.experiment_db:
+                try:
+                    self.experiment_db._conn.commit()  # pylint: disable=protected-access
+                    print("DEBUG: Committed pending changes before save")
+                except Exception as commit_e:
+                    print(f"DEBUG: Error committing before save: {commit_e}")
+
             # Import lazily to avoid circular imports (ui.commands imports this module).
             from ui.commands import save_file  # pylint: disable=import-outside-toplevel
 
@@ -183,11 +191,10 @@ class ExperimentMenuUI(MouserPage):
                 # Don't fail the save if refresh fails - the temp DB might still be usable
 
         except Exception as e:  # pylint: disable=broad-exception-caught
-            print(f"DEBUG: Error in _persist_temp_to_original_if_available: {e}")
+            # Log the error so we can debug issues instead of silently failing.
+            print(f"Failed to persist temp to original: {e}")
             import traceback
             traceback.print_exc()
-            # If we can't persist (e.g., tests or non-standard entry), keep local temp state only.
-            pass
 
     def _ensure_notebook_table(self):
         try:

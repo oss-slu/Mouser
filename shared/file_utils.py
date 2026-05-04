@@ -68,14 +68,14 @@ def save_temp_to_encrypted(temp_file_path: str, permanent_file_path: str, passwo
     temp_file_path = os.path.abspath(temp_file_path)
     permanent_file_path = os.path.abspath(permanent_file_path)
 
-    manager = PasswordManager(password)
+    with open(temp_file_path, 'rb') as temp_file:
+        plaintext_data = temp_file.read()
 
-    manager.encrypt_file(temp_file_path)
-    with open(temp_file_path, 'rb') as encrypted:
-        data = encrypted.read()
+    manager = PasswordManager(password)
+    encrypted_data = manager.encrypt(plaintext_data)
 
     with open(permanent_file_path, 'wb') as file:
-        file.write(data)
+        file.write(encrypted_data)
 
 def get_resource_path(relative_path):
     ''' Get the absolute path to a resource. Works for development and PyInstaller executables. '''
