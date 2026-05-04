@@ -375,6 +375,16 @@ class DataAnalysisUI(MouserPage):
         self._build_daily_comparison_card(parent=self.sidebar)
 
         # LME Statistical Analysis card (if statsmodels available)
+        # Show availability status
+        status_text = "LME Ready" if LME_AVAILABLE else "LME: statsmodels not installed"
+        status_color = "#16a34a" if LME_AVAILABLE else "#dc2626"
+        CTkLabel(
+            self.sidebar,
+            text=status_text,
+            font=CTkFont("Segoe UI", 9),
+            text_color=status_color,
+        ).grid(row=5, column=0, sticky="w", padx=14, pady=(4, 0))
+
         if LME_AVAILABLE:
             self._build_lme_card(parent=self.sidebar)
 
@@ -712,8 +722,10 @@ class DataAnalysisUI(MouserPage):
     def _run_lme_analysis(self):
         if not LME_AVAILABLE:
             return
+
         group1 = getattr(self, '_lme_group1_var', None)
         group2 = getattr(self, '_lme_group2_var', None)
+
         if not group1 or not group2 or group1 == group2:
             return
 
@@ -750,73 +762,86 @@ class DataAnalysisUI(MouserPage):
 
     def _display_lme_results(self, result):
         """Display LME results in the UI (called from main thread)."""
-        # Clear previous results and spinner
-        for child in self._lme_results_frame.winfo_children():
-            child.destroy()
+        try:
+            # Clear previous results and spinner
+            for child in self._lme_results_frame.winfo_children():
+                child.destroy()
 
-        # Re-enable button
-        self._lme_run_button.configure(text="▶  Run LME", state="normal")
-        self.update_idletasks()
+            # Re-enable button
+            self._lme_run_button.configure(text="▶  Run LME", state="normal")
+            self.update_idletasks()
 
-        if result is None:
+            if result is None:
+                CTkLabel(
+                    self._lme_results_frame, text="Insufficient data",
+                    font=CTkFont("Segoe UI Semibold", 11), text_color=self._palette["muted_text"],
+                ).grid(row=0, column=0, sticky="w")
+                return
+
+            # Extract results from compare_groups_lme output
+            coef = result.get("coefficient")
+            p_val = result.get("p_value")
+            ci_low = result.get("ci_lower")
+            ci_high = result.get("ci_upper")
+            sig = result.get("significant", False)
+            n_obs = result.get("n_observations", 0)
+
+            coef_text = f"{coef:.4f}" if coef is not None else "N/A"
+            p_text = f"{p_val:.4f}" if p_val is not None else "N/A"
+            ci_text = f"[{ci_low:.2f}, {ci_high:.2f}]" if ci_low is not None else ""
+
+            color = "#16a34a" if sig else self._palette["text"]
+            sig_text = "✓ Sig. (p<0.05)" if sig else "Not sig."
+
             CTkLabel(
-                self._lme_results_frame, text="Insufficient data",
-                font=CTkFont("Segoe UI", 11), text_color=self._palette["muted_text"],
+                self._lme_results_frame,
+                text=f"Effect: {coef_text}",
+                font=CTkFont("Segoe UI Semibold", 12),
+                text_color=color,
+            ).grid(row=0, column=0, sticky="w", pady=(0, 2))
+
+            CTkLabel(
+                self._lme_results_frame,
+                text=f"95% CI: {ci_text}",
+                font=CTkFont("Segoe UI", 10),
+                text_color=self._palette["muted_text"],
+            ).grid(row=1, column=0, sticky="w")
+
+            CTkLabel(
+                self._lme_results_frame,
+                text=f"p-value: {p_text}",
+                font=CTkFont("Segoe UI", 10),
+                text_color=color,
+            ).grid(row=2, column=0, sticky="w", pady=(2, 0))
+
+            CTkLabel(
+                self._lme_results_frame,
+                text=sig_text,
+                font=CTkFont("Segoe UI", 10),
+                text_color=color,
+            ).grid(row=3, column=0, sticky="w", pady=(2, 0))
+
+            CTkLabel(
+                self._lme_results_frame,
+                text=f"N={n_obs} observations",
+                font=CTkFont("Segoe UI", 9),
+                text_color=self._palette["muted_text"],
+            ).grid(row=4, column=0, sticky="w", pady=(4, 0))
+        except Exception as e:
+            print(f"LME Display Error: {e}")
+            import traceback
+            traceback.print_exc()
+            # Show error in UI
+            for child in self._lme_results_frame.winfo_children():
+                child.destroy()
+            CTkLabel(
+                self._lme_results_frame, text=f"Error displaying results: {str(e)[:40]}",
+                font=CTkFont("Segoe UI", 10), text_color="#dc2626",
             ).grid(row=0, column=0, sticky="w")
-            return
-
-        # Extract results from compare_groups_lme output
-        coef = result.get("coefficient")
-        p_val = result.get("p_value")
-        ci_low = result.get("ci_lower")
-        ci_high = result.get("ci_upper")
-        sig = result.get("significant", False)
-        n_obs = result.get("n_observations", 0)
-
-        coef_text = f"{coef:.4f}" if coef is not None else "N/A"
-        p_text = f"{p_val:.4f}" if p_val is not None else "N/A"
-        ci_text = f"[{ci_low:.2f}, {ci_high:.2f}]" if ci_low is not None else ""
-
-        color = "#16a34a" if sig else self._palette["text"]
-        sig_text = "✓ Sig. (p<0.05)" if sig else "Not sig."
-
-        CTkLabel(
-            self._lme_results_frame,
-            text=f"Effect: {coef_text}",
-            font=CTkFont("Segoe UI Semibold", 12),
-            text_color=color,
-        ).grid(row=0, column=0, sticky="w", pady=(0, 2))
-
-        CTkLabel(
-            self._lme_results_frame,
-            text=f"95% CI: {ci_text}",
-            font=CTkFont("Segoe UI", 10),
-            text_color=self._palette["muted_text"],
-        ).grid(row=1, column=0, sticky="w")
-
-        CTkLabel(
-            self._lme_results_frame,
-            text=f"p-value: {p_text}",
-            font=CTkFont("Segoe UI", 10),
-            text_color=color,
-        ).grid(row=2, column=0, sticky="w", pady=(2, 0))
-
-        CTkLabel(
-            self._lme_results_frame,
-            text=sig_text,
-            font=CTkFont("Segoe UI", 10),
-            text_color=color,
-        ).grid(row=3, column=0, sticky="w", pady=(2, 0))
-
-        CTkLabel(
-            self._lme_results_frame,
-            text=f"N={n_obs} observations",
-            font=CTkFont("Segoe UI", 9),
-            text_color=self._palette["muted_text"],
-        ).grid(row=4, column=0, sticky="w", pady=(4, 0))
 
     def _display_lme_error(self, error_msg):
         """Display LME error in the UI (called from main thread)."""
+        print(f"LME: Displaying error: {error_msg}")
         # Clear previous results and spinner
         for child in self._lme_results_frame.winfo_children():
             child.destroy()
@@ -829,6 +854,13 @@ class DataAnalysisUI(MouserPage):
             self._lme_results_frame, text=f"Error: {error_msg}",
             font=CTkFont("Segoe UI", 10), text_color="#dc2626",
         ).grid(row=0, column=0, sticky="w")
+
+        # Also show popup for visibility
+        try:
+            from CTkMessagebox import CTkMessagebox
+            CTkMessagebox(title="LME Error", message=f"LME Analysis Error:\n{error_msg}", icon="cancel")
+        except Exception:
+            pass
 
     def _build_table_section(self, parent):
         table_card = CTkFrame(
