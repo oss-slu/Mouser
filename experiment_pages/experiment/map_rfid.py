@@ -14,7 +14,7 @@ from customtkinter import *
 from CTkMessagebox import CTkMessagebox
 from serial import serialutil
 from shared.file_utils import SUCCESS_SOUND, ERROR_SOUND
-from shared.tk_models import *
+from shared.tk_models import MouserPage, get_ui_metrics
 from shared.serial_port_controller import SerialPortController
 from shared.serial_handler import SerialDataHandler
 from shared.hid_wedge import HIDWedgeListener

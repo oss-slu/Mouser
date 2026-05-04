@@ -22,6 +22,7 @@ from shared.serial_port_settings import SerialPortSetting
 import shared.file_utils as file_utils
 from shared.file_utils import get_resource_path
 
+from databases.experiment_database import ExperimentDatabase
 from experiment_pages.experiment.experiment_menu_ui import ExperimentMenuUI
 from experiment_pages.create_experiment.new_experiment_ui import NewExperimentUI
 from experiment_pages.experiment.test_screen import TestScreen
@@ -59,8 +60,6 @@ def open_file(root, experiments_frame):
 
     if not file_path:
         return
-
-    from databases.experiment_database import ExperimentDatabase  # import here to avoid cycles
 
     # Close existing database connection if open
     temp_path = global_state["temp_file_path"]
@@ -129,8 +128,6 @@ def open_file(root, experiments_frame):
 
 def create_file(root, experiments_frame):
     """Handles the 'New Experiment' menu action."""
-    from databases.experiment_database import ExperimentDatabase  # pylint: disable=import-outside-toplevel
-
     temp_path = global_state["temp_file_path"]
     if temp_path and temp_path in ExperimentDatabase._instances:  # pylint: disable=protected-access
         ExperimentDatabase._instances[temp_path].close()  # pylint: disable=protected-access
@@ -191,4 +188,3 @@ def save_file():
         import traceback
         traceback.print_exc()
         raise
-
