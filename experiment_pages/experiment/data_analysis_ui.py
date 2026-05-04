@@ -170,8 +170,13 @@ class DataAnalysisUI(MouserPage):
         self.sidebar.grid(row=0, column=1, sticky="nsew")
         self.sidebar.grid_columnconfigure(0, weight=1)
         # Keep the sidebar content compact; use a spacer row to absorb extra height.
+        # Row 0: export/refresh controls, Row 1: device/measurement, Row 2: daily comparison,
+        # Row 3: LME card, Row 4: spacer
+        self.sidebar.grid_rowconfigure(0, weight=0)
+        self.sidebar.grid_rowconfigure(1, weight=0)
         self.sidebar.grid_rowconfigure(2, weight=0)
-        self.sidebar.grid_rowconfigure(3, weight=1)
+        self.sidebar.grid_rowconfigure(3, weight=0)
+        self.sidebar.grid_rowconfigure(4, weight=1)
 
         # Header
         left_header = CTkFrame(self.left_panel, fg_color="transparent")
@@ -371,7 +376,7 @@ class DataAnalysisUI(MouserPage):
             self._build_lme_card(parent=self.sidebar)
 
         # Spacer to keep cards pinned to the top of the sidebar.
-        CTkFrame(self.sidebar, fg_color="transparent").grid(row=3, column=0, sticky="nsew")
+        CTkFrame(self.sidebar, fg_color="transparent").grid(row=4, column=0, sticky="nsew")
 
         self._build_chart_section(parent=self.left_panel)
         self._build_table_section(parent=self.left_panel)
@@ -606,8 +611,10 @@ class DataAnalysisUI(MouserPage):
             border_width=1,
             border_color=self._palette["card_border"],
         )
-        card.grid(row=3 if hasattr(self, '_build_daily_comparison_card') else 2, column=0, sticky="ew", pady=(12, 0))
+        # Place after daily comparison card (row=2) and before spacer (row=4)
+        card.grid(row=3, column=0, sticky="ew", pady=(12, 0))
         card.grid_columnconfigure(0, weight=1)
+        card.grid_propagate(False)  # Prevent card from resizing
 
         header = CTkFrame(card, fg_color="transparent")
         header.grid(row=0, column=0, sticky="ew", padx=14, pady=(12, 6))
@@ -632,10 +639,17 @@ class DataAnalysisUI(MouserPage):
         if len(groups) < 2:
             CTkLabel(
                 card,
-                text="Need 2+ groups for LME",
+                text="Need 2+ groups for LME\n(Current: " + str(len(groups)) + ")",
                 font=CTkFont("Segoe UI", 11),
                 text_color=self._palette["muted_text"],
             ).grid(row=1, column=0, padx=14, pady=(0, 12))
+            # Still show card with instructions
+            CTkLabel(
+                card,
+                text="Create an experiment with 2+ groups\nto enable LME analysis",
+                font=CTkFont("Segoe UI", 10),
+                text_color=self._palette["muted_text"],
+            ).grid(row=2, column=0, padx=14, pady=(0, 12))
             return
 
         self._lme_group1_var = groups[0]
@@ -691,7 +705,8 @@ class DataAnalysisUI(MouserPage):
                 return []
             db = ExperimentDatabase(self.db_file)
             db._c.execute("SELECT DISTINCT name FROM groups ORDER BY group_id")
-            return [row[0] for row in db._c.fetchall() if row[0]]
+            groups = [row[0] for row in db._c.fetchall() if row[0]]
+            return groups
         except Exception:
             return []
 
