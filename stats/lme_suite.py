@@ -122,6 +122,9 @@ def fit_lme(df: pd.DataFrame,
     endog = df["value"].astype(float)  # Keep as Series to preserve index
     exog_df = pd.DataFrame(index=df.index)
 
+    # Always add intercept first (required for proper AIC/BIC calculation)
+    exog_df["intercept"] = 1.0
+
     # Add time variable
     if include_time and "days" in df.columns:
         exog_df["days"] = df["days"].astype(float)
@@ -141,10 +144,6 @@ def fit_lme(df: pd.DataFrame,
             is_grp = (df[fixed_effects] == grp).astype(float)
             exog_df[col_name] = is_grp * df["days"]
 
-    # If no exogenous variables, add intercept
-    if exog_df.shape[1] == 0:
-        exog_df["intercept"] = 1.0
-
     # Convert to appropriate types for statsmodels
     # Note: MixedLM can accept DataFrames directly (preserves column names for summary)
     exog = exog_df.astype(float)
@@ -155,11 +154,9 @@ def fit_lme(df: pd.DataFrame,
         return None, None
 
     try:
-        print(f"[LME DEBUG] Fitting model with {len(endog)} observations...")
         model = MixedLM(endog, exog, groups=groups)
         result = model.fit()
-        print(f"[LME DEBUG] Model fitted successfully")
-        return result, _format_results(result, fixed_effects, include_time)
+        return result, _format_results(result, fixed_effects, include_time, groups_array=groups)
     except Exception as e:
         import traceback
         print(f"LME fitting error: {e}")
@@ -167,7 +164,7 @@ def fit_lme(df: pd.DataFrame,
         return None, None
 
 
-def _format_results(result, fixed_effects: str, include_time: bool) -> Dict[str, Any]:
+def _format_results(result, fixed_effects: str, include_time: bool, groups_array=None) -> Dict[str, Any]:
     """Format LME results into publication-ready dictionary."""
     # Extract model info from summary table 0 (which is a DataFrame)
     summary = result.summary()
@@ -219,15 +216,35 @@ def _format_results(result, fixed_effects: str, include_time: bool) -> Dict[str,
     except Exception:
         pass
 
+    # Compute AIC/BIC, handling NaN values
+    aic = float(result.aic)
+    bic = float(result.bic)
+    if np.isnan(aic):
+        # Fallback: AIC = -2*log_likelihood + 2*k
+        k = result.k_fe + result.k_re2
+        aic = -2 * float(result.llf) + 2 * k
+    if np.isnan(bic):
+        # Fallback: BIC = -2*log_likelihood + k*log(n)
+        k = result.k_fe + result.k_re2
+        bic = -2 * float(result.llf) + k * np.log(float(result.nobs))
+
+    # Compute actual number of groups (animals), not parameters
+    n_groups = int(result.k_re2 + result.k_fe)  # fallback
+    if groups_array is not None:
+        try:
+            n_groups = len(np.unique(groups_array))
+        except Exception:
+            pass
+
     return {
         "model_info": {
             "method": model_info.get("Method", "REML"),
             "dependent_var": model_info.get("Dependent Variable", "value"),
             "nobs": int(result.nobs),
-            "groups": int(result.k_re2 + result.k_fe),
+            "groups": n_groups,
             "log_likelihood": float(result.llf),
-            "aic": float(result.aic),
-            "bic": float(result.bic),
+            "aic": aic,
+            "bic": bic,
         },
         "fixed_effects": fixed_effects_dict,
         "random_effects_variance": float(re_var) if not np.isnan(re_var) else None,
@@ -240,35 +257,75 @@ def _format_results(result, fixed_effects: str, include_time: bool) -> Dict[str,
 
 
 def compare_groups_lme(db, group1_name: str, group2_name: str,
-                       include_time: bool = True) -> Optional[Dict[str, Any]]:
+                       include_time: bool = True, exclude_outliers: bool = False) -> Optional[Dict[str, Any]]:
     """Compare two specific groups using LME.
 
-    Returns a simplified comparison result focusing on the treatment effect
-    between two groups, suitable for quick hypothesis testing.
+    Args:
+        db: Database connection
+        group1_name: Reference group name
+        group2_name: Treatment group name
+        include_time: Whether to include time (days) as fixed effect
+        exclude_outliers: If True, exclude values beyond 3 standard deviations from group mean
+
+    Returns:
+        Dictionary with comparison results or None if insufficient data.
     """
-    print(f"[LME DEBUG] Comparing {group1_name} vs {group2_name}")
-    print(f"[LME DEBUG] Using db_file: {getattr(db, 'db_file', 'unknown')}")
-    print(f"[LME DEBUG] STATSMODELS_AVAILABLE: {STATSMODELS_AVAILABLE}")
-    print(f"[LME DEBUG] MixedLM: {MixedLM}")
     df = extract_lme_data(db)
-    print(f"[LME DEBUG] Extracted data shape: {df.shape}")
     if df.empty:
-        print("[LME DEBUG] DataFrame is empty, returning None")
         return None
 
     # Filter to the two groups
     df_filtered = df[df["group"].isin([group1_name, group2_name])].copy()
-    print(f"[LME DEBUG] Filtered data shape: {df_filtered.shape}")
-    print(f"[LME DEBUG] Groups in filtered data: {df_filtered['group'].unique()}")
     if len(df_filtered["group"].unique()) < 2:
-        print("[LME DEBUG] Less than 2 groups, returning None")
         return None
 
-    print("[LME DEBUG] Calling fit_lme...")
+    # Optionally exclude outliers (3 sigma rule)
+    if exclude_outliers:
+        rows_to_drop = []
+        for grp in df_filtered["group"].unique():
+            grp_data = df_filtered[df_filtered["group"] == grp]
+            values = [float(v) for v in grp_data["value"].tolist()]
+            if len(values) < 2:
+                continue
+            mean = float(np.mean(values))
+            std = float(np.std(values))
+            if std <= 0:
+                continue
+            lower = mean - 3 * std
+            upper = mean + 3 * std
+            for idx in grp_data.index:
+                val = float(grp_data.loc[idx, "value"])
+                if val < lower or val > upper:
+                    rows_to_drop.append(idx)
+                    print(f"[LME DEBUG] Group '{grp}': excluded outlier {val} (3-sigma rule)")
+
+        if rows_to_drop:
+            df_filtered = df_filtered.drop(index=rows_to_drop)
+
+        if len(df_filtered) < 4:
+            print("[LME DEBUG] Too few observations after outlier exclusion")
+            return None
+
+    # Compute per-animal statistics
+    per_animal_stats = []
+    for animal_id, group_name in df_filtered[["animal_id", "group"]].drop_duplicates().itertuples(index=False):
+        animal_data = df_filtered[df_filtered["animal_id"] == animal_id]["value"]
+        if len(animal_data) > 0:
+            per_animal_stats.append({
+                "animal_id": int(animal_id),
+                "group": group_name,
+                "n_obs": len(animal_data),
+                "mean": float(animal_data.mean()),
+                "median": float(animal_data.median()),
+                "std_dev": float(animal_data.std()) if len(animal_data) > 1 else 0.0,
+                "min_val": float(animal_data.min()),
+                "max_val": float(animal_data.max()),
+            })
+    per_animal_stats.sort(key=lambda x: (x["group"], x["animal_id"]))
+
     result, formatted = fit_lme(df_filtered, fixed_effects="group",
                                  include_time=include_time)
     if result is None:
-        print("[LME DEBUG] fit_lme returned None")
         return None
 
     print(f"[LME DEBUG] Model fitted. Fixed effects keys: {list(formatted.get('fixed_effects', {}).keys())}")
@@ -286,5 +343,14 @@ def compare_groups_lme(db, group1_name: str, group2_name: str,
         "ci_upper": effect.get("ci_upper"),
         "significant": effect.get("p_value", 1.0) < 0.05,
         "n_observations": int(result.nobs),
+        "n_groups": formatted["model_info"]["groups"],
         "model_aic": formatted["model_info"]["aic"],
+        "model_bic": formatted["model_info"]["bic"],
+        "log_likelihood": formatted["model_info"]["log_likelihood"],
+        "method": formatted["model_info"]["method"],
+        "converged": formatted["converged"],
+        "random_effects_variance": formatted["random_effects_variance"],
+        "all_fixed_effects": formatted["fixed_effects"],
+        "model_info": formatted["model_info"],
+        "per_animal_stats": per_animal_stats,
     }
