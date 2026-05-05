@@ -10,14 +10,14 @@ Tests validate:
 
 import os
 import sys
-import tempfile
 import sqlite3
 from datetime import datetime, timedelta
-from pathlib import Path
 import pytest
 import numpy as np
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+)
 
 from stats.lme_suite import extract_lme_data, fit_lme, compare_groups_lme
 
@@ -80,7 +80,10 @@ def setup_test_db():
     conn.commit()
 
     class MockDB:
+        """Mock database object for testing."""
+
         def __init__(self, conn):
+            """Initialize with SQLite connection."""
             self._conn = conn
             self._c = conn.cursor()
             self.db_file = ":memory:"
@@ -92,11 +95,18 @@ class TestExtractLMEData:
     """Test data extraction for LME analysis."""
 
     def test_extract_returns_dataframe(self, setup_test_db):
+        """Verify extract_lme_data returns a pandas DataFrame."""
+        db = setup_test_db
+        df = extract_lme_data(db)
+        assert isinstance(df, __import__('pandas').DataFrame)
+
+    def test_extract_returns_dataframe(self, setup_test_db):
         db = setup_test_db
         df = extract_lme_data(db)
         assert isinstance(df, __import__('pandas').DataFrame)
 
     def test_extract_has_required_columns(self, setup_test_db):
+        """Verify extracted DataFrame has required columns."""
         db = setup_test_db
         df = extract_lme_data(db)
         required_cols = ["animal_id", "group", "days", "value"]
@@ -104,6 +114,7 @@ class TestExtractLMEData:
             assert col in df.columns, f"Missing column: {col}"
 
     def test_extract_computes_days_correctly(self, setup_test_db):
+        """Verify days column is computed correctly."""
         db = setup_test_db
         df = extract_lme_data(db)
         assert "days" in df.columns
@@ -112,6 +123,7 @@ class TestExtractLMEData:
         assert all(first_days == 0.0), "First measurement should have days=0"
 
     def test_extract_filters_inactive_animals(self, setup_test_db):
+        """Verify inactive animals are excluded."""
         db = setup_test_db
         # Deactivate an animal
         db._c.execute("UPDATE animals SET active=0 WHERE animal_id=1")
@@ -120,17 +132,28 @@ class TestExtractLMEData:
         assert 1 not in df["animal_id"].values, "Inactive animals should be excluded"
 
     def test_extract_empty_db(self):
+        """Verify empty database returns empty DataFrame."""
         conn = sqlite3.connect(":memory:", check_same_thread=False)
         c = conn.cursor()
         c.execute('''CREATE TABLE experiment (name TEXT)''')
-        c.execute('''CREATE TABLE animals (animal_id INTEGER, group_id INTEGER, rfid TEXT, remarks TEXT, active INTEGER)''')
-        c.execute('''CREATE TABLE groups (group_id INTEGER, name TEXT, num_animals INTEGER, cage_capacity INTEGER)''')
-        c.execute('''CREATE TABLE animal_measurements (measurement_id INTEGER, animal_id INTEGER, timestamp TEXT, value REAL)''')
+        c.execute('''CREATE TABLE animals (animal_id INTEGER, '''
+                 '''group_id INTEGER, rfid TEXT, remarks TEXT, '''
+                 '''active INTEGER)''')
+        c.execute('''CREATE TABLE groups (group_id INTEGER, name '''
+                 '''TEXT, num_animals INTEGER, cage_capacity '''
+                 '''INTEGER)''')
+        c.execute('''CREATE TABLE animal_measurements '''
+                 '''(measurement_id INTEGER, animal_id INTEGER, '''
+                 '''timestamp TEXT, value REAL)''')
 
         class MockDB:
+            """Mock database object for testing."""
+
             def __init__(self, conn):
+                """Initialize with SQLite connection."""
                 self._conn = conn
                 self._c = conn.cursor()
+
         df = extract_lme_data(MockDB(conn))
         assert df.empty
 
