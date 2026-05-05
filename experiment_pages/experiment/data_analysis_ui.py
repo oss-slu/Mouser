@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw
 from customtkinter import (
     CTkButton,
     CTkCanvas,
+    CTkCheckBox,
     CTkFrame,
     CTkLabel,
     CTkScrollbar,
@@ -27,6 +28,11 @@ from shared.tk_models import MouserPage, get_ui_metrics
 from databases.experiment_database import ExperimentDatabase
 from shared.audio import AudioManager
 from shared.file_utils import SUCCESS_SOUND
+try:
+    from stats.lme_suite import extract_lme_data, fit_lme, compare_groups_lme
+    LME_AVAILABLE = True
+except ImportError:
+    LME_AVAILABLE = False
 
 
 class DataAnalysisUI(MouserPage):
@@ -161,12 +167,20 @@ class DataAnalysisUI(MouserPage):
         self.left_panel.grid_rowconfigure(3, weight=0)  # table
         self.left_panel.grid_rowconfigure(4, weight=1)  # spacer
 
-        self.sidebar = CTkFrame(body, fg_color="transparent")
-        self.sidebar.grid(row=0, column=1, sticky="nsew")
+        # Sidebar with scrollable content to ensure all cards are visible
+        sidebar_outer = CTkFrame(body, fg_color="transparent")
+        sidebar_outer.grid(row=0, column=1, sticky="nsew")
+        sidebar_outer.grid_rowconfigure(0, weight=1)
+        sidebar_outer.grid_columnconfigure(0, weight=1)
+
+        self.sidebar = CTkScrollableFrame(
+            sidebar_outer,
+            fg_color="transparent",
+            corner_radius=0,
+            border_width=0,
+        )
+        self.sidebar.grid(row=0, column=0, sticky="nsew")
         self.sidebar.grid_columnconfigure(0, weight=1)
-        # Keep the sidebar content compact; use a spacer row to absorb extra height.
-        self.sidebar.grid_rowconfigure(2, weight=0)
-        self.sidebar.grid_rowconfigure(3, weight=1)
 
         # Header
         left_header = CTkFrame(self.left_panel, fg_color="transparent")
@@ -361,8 +375,21 @@ class DataAnalysisUI(MouserPage):
 
         self._build_daily_comparison_card(parent=self.sidebar)
 
-        # Spacer to keep cards pinned to the top of the sidebar.
-        CTkFrame(self.sidebar, fg_color="transparent").grid(row=3, column=0, sticky="nsew")
+        # LME Statistical Analysis card (if statsmodels available)
+        # Show availability status
+        status_text = "LME Ready" if LME_AVAILABLE else "LME: statsmodels not installed"
+        status_color = "#16a34a" if LME_AVAILABLE else "#dc2626"
+        CTkLabel(
+            self.sidebar,
+            text=status_text,
+            font=CTkFont("Segoe UI", 9),
+            text_color=status_color,
+        ).grid(row=5, column=0, sticky="w", padx=14, pady=(4, 0))
+
+        if LME_AVAILABLE:
+            self._build_lme_card(parent=self.sidebar)
+
+        # No spacer needed - scrollable frame handles overflow
 
         self._build_chart_section(parent=self.left_panel)
         self._build_table_section(parent=self.left_panel)
@@ -421,10 +448,8 @@ class DataAnalysisUI(MouserPage):
             corner_radius=14,
             border_width=1,
             border_color=self._palette["card_border"],
-            height=420,
         )
         card.grid(row=2, column=0, sticky="ew", pady=(12, 0))
-        card.grid_propagate(False)
         card.grid_columnconfigure(0, weight=1)
         card.grid_rowconfigure(2, weight=1)
 
@@ -588,6 +613,559 @@ class DataAnalysisUI(MouserPage):
                 text_color=delta_color,
                 anchor="e",
             ).grid(row=1, column=0, sticky="e", pady=(0, 2))
+
+    def _build_lme_card(self, parent):
+        card = CTkFrame(
+            parent,
+            fg_color=self._palette["card_bg"],
+            corner_radius=14,
+            border_width=1,
+            border_color=self._palette["card_border"],
+        )
+        # Place after daily comparison card (row=2) and before spacer (row=4)
+        card.grid(row=3, column=0, sticky="ew", pady=(12, 0))
+        card.grid_columnconfigure(0, weight=1)
+
+        header = CTkFrame(card, fg_color="transparent")
+        header.grid(row=0, column=0, sticky="ew", padx=14, pady=(12, 6))
+        header.grid_columnconfigure(0, weight=1)
+
+        CTkLabel(
+            header,
+            text="LME Analysis",
+            font=CTkFont("Segoe UI Semibold", 14),
+            text_color=self._palette["text"],
+        ).grid(row=0, column=0, sticky="w")
+
+        CTkLabel(
+            header,
+            text="Mixed-Effects Model",
+            font=CTkFont("Segoe UI", 10),
+            text_color=self._palette["muted_text"],
+        ).grid(row=1, column=0, sticky="w")
+
+        # Group selection
+        groups = self._get_group_names()
+        if len(groups) < 2:
+            CTkLabel(
+                card,
+                text="Need 2+ groups for LME\n(Current: " + str(len(groups)) + ")",
+                font=CTkFont("Segoe UI", 11),
+                text_color=self._palette["muted_text"],
+            ).grid(row=1, column=0, padx=14, pady=(0, 12))
+            # Still show card with instructions
+            CTkLabel(
+                card,
+                text="Create an experiment with 2+ groups\nto enable LME analysis",
+                font=CTkFont("Segoe UI", 10),
+                text_color=self._palette["muted_text"],
+            ).grid(row=2, column=0, padx=14, pady=(0, 12))
+            return
+
+        self._lme_group1_var = groups[0]
+        self._lme_group2_var = groups[1] if len(groups) > 1 else groups[0]
+
+        # Group 1 selector
+        CTkLabel(card, text="Group 1 (reference):", font=CTkFont("Segoe UI", 11),
+                 text_color=self._palette["muted_text"]).grid(row=2, column=0, sticky="w", padx=14)
+        self._lme_group1_menu = CTkOptionMenu(
+            card, values=groups, command=lambda g: setattr(self, '_lme_group1_var', g),
+            fg_color=self._palette["card_bg"], text_color=self._palette["text"],
+            button_color=self._pick(self._palette["table_alt_bg"]),
+            button_hover_color=self._pick(self._palette["table_selected_bg"]),
+            dropdown_fg_color=self._palette["card_bg"],
+            dropdown_text_color=self._palette["text"],
+            font=CTkFont("Segoe UI", 11),
+        )
+        self._lme_group1_menu.grid(row=3, column=0, sticky="ew", padx=14, pady=(2, 8))
+        self._lme_group1_menu.set(groups[0])
+
+        # Group 2 selector
+        CTkLabel(card, text="Group 2 (treatment):", font=CTkFont("Segoe UI", 11),
+                 text_color=self._palette["muted_text"]).grid(row=4, column=0, sticky="w", padx=14)
+        self._lme_group2_menu = CTkOptionMenu(
+            card, values=groups, command=lambda g: setattr(self, '_lme_group2_var', g),
+            fg_color=self._palette["card_bg"], text_color=self._palette["text"],
+            button_color=self._pick(self._palette["table_alt_bg"]),
+            button_hover_color=self._pick(self._palette["table_selected_bg"]),
+            dropdown_fg_color=self._palette["card_bg"],
+            dropdown_text_color=self._palette["text"],
+            font=CTkFont("Segoe UI", 11),
+        )
+        self._lme_group2_menu.grid(row=5, column=0, sticky="ew", padx=14, pady=(2, 8))
+        self._lme_group2_menu.set(groups[1] if len(groups) > 1 else groups[0])
+
+        # Run button
+        self._lme_run_button = CTkButton(
+            card, text="▶  Run LME", height=38, corner_radius=10,
+            fg_color="#7c3aed", hover_color="#5b21b6",
+            text_color="white", font=CTkFont("Segoe UI Semibold", 13),
+            command=self._run_lme_analysis,
+        )
+        self._lme_run_button.grid(row=6, column=0, sticky="ew", padx=14, pady=(8, 0))
+
+        # Outlier exclusion checkbox
+        self._lme_exclude_outliers = False
+        self._lme_outlier_checkbox = CTkCheckBox(
+            card, text="Exclude outliers (3σ)",
+            font=CTkFont("Segoe UI", 10),
+            text_color=self._palette["muted_text"],
+            fg_color="#7c3aed",
+            hover_color="#5b21b6",
+            command=self._on_outlier_checkbox_toggle,
+        )
+        self._lme_outlier_checkbox.grid(row=7, column=0, sticky="w", padx=14, pady=(4, 0))
+
+        # Results area (scrollable) - row 8 now (was 7, +1 for checkbox)
+        self._lme_results_frame = CTkScrollableFrame(card, fg_color="transparent", corner_radius=0, border_width=0)
+        self._lme_results_frame.grid(row=8, column=0, sticky="ew", padx=14, pady=(10, 12))
+        self._lme_results_frame.grid_columnconfigure(0, weight=1)
+
+    def _on_outlier_checkbox_toggle(self):
+        """Update outlier exclusion setting from checkbox state."""
+        self._lme_exclude_outliers = self._lme_outlier_checkbox.get() > 0
+
+    def _get_group_names(self):
+        try:
+            if not self.db_file or not os.path.exists(self.db_file):
+                return []
+            db = ExperimentDatabase(self.db_file)
+            db._c.execute("SELECT DISTINCT name FROM groups ORDER BY group_id")
+            groups = [row[0] for row in db._c.fetchall() if row[0]]
+            return groups
+        except Exception:
+            return []
+
+    def _run_lme_analysis(self):
+        if not LME_AVAILABLE:
+            return
+
+        group1 = getattr(self, '_lme_group1_var', None)
+        group2 = getattr(self, '_lme_group2_var', None)
+
+        if not group1 or not group2 or group1 == group2:
+            return
+
+        # Disable button and show running state immediately
+        self._lme_run_button.configure(text="⏳ Running...", state="disabled")
+        self.update_idletasks()  # Force UI update
+
+        # Clear previous results and show spinner
+        for child in self._lme_results_frame.winfo_children():
+            child.destroy()
+        spinner = CTkLabel(
+            self._lme_results_frame,
+            text="Computing LME model...",
+            font=CTkFont("Segoe UI", 10),
+            text_color=self._palette["muted_text"],
+        )
+        spinner.grid(row=0, column=0, sticky="w")
+        self.update_idletasks()
+
+        # Run LME in background thread to avoid blocking UI
+        import threading
+        def _compute():
+            try:
+                # Run LME
+                db = ExperimentDatabase(self.db_file)
+                exclude_outliers = getattr(self, '_lme_exclude_outliers', False)
+                result = compare_groups_lme(db, group1, group2, include_time=True, exclude_outliers=exclude_outliers)
+
+                # Update UI in main thread
+                self.after(0, lambda res=result: self._display_lme_results(res))
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                error_msg = str(e)[:40]
+                self.after(0, lambda msg=error_msg: self._display_lme_error(msg))
+
+        thread = threading.Thread(target=_compute, daemon=True)
+        thread.start()
+
+    @staticmethod
+    def _p_value_stars(p_val):
+        """Return significance stars based on p-value."""
+        if p_val is None:
+            return ""
+        if p_val < 0.001:
+            return " ***"
+        elif p_val < 0.01:
+            return " **"
+        elif p_val < 0.05:
+            return " *"
+        else:
+            return ""
+
+    def _display_lme_results(self, result):
+        """Display LME results in the UI (called from main thread)."""
+        try:
+            # Clear previous results and spinner
+            for child in self._lme_results_frame.winfo_children():
+                child.destroy()
+
+            # Re-enable button
+            self._lme_run_button.configure(text="▶  Run LME", state="normal")
+            self.update_idletasks()
+
+            if result is None:
+                # Show more detailed message
+                try:
+                    db = ExperimentDatabase(self.db_file)
+                    db._c.execute("SELECT COUNT(*) FROM animal_measurements")
+                    count = db._c.fetchone()[0]
+                    db._c.execute("SELECT DISTINCT group_id FROM animals WHERE active=1")
+                    groups = [row[0] for row in db._c.fetchall()]
+                    msg = f"Insufficient data\n{count} measurements, {len(groups)} active groups"
+                except Exception:
+                    msg = "Insufficient data"
+                CTkLabel(
+                    self._lme_results_frame, text=msg,
+                    font=CTkFont("Segoe UI", 10), text_color=self._palette["muted_text"],
+                ).grid(row=0, column=0, sticky="w")
+                return
+
+            # Extract results from compare_groups_lme output
+            comparison = result.get("comparison", "Unknown")
+            coef = result.get("coefficient")
+            p_val = result.get("p_value")
+            ci_low = result.get("ci_lower")
+            ci_high = result.get("ci_upper")
+            sig = result.get("significant", False)
+            n_obs = result.get("n_observations", 0)
+            n_groups = result.get("n_groups", 0)
+            aic = result.get("model_aic")
+            bic = result.get("model_bic")
+            log_lik = result.get("log_likelihood")
+            method = result.get("method", "REML")
+            converged = result.get("converged", False)
+            re_var = result.get("random_effects_variance")
+            all_fixed = result.get("all_fixed_effects", {})
+
+            text_color = self._palette["text"]
+            muted = self._palette["muted_text"]
+            green = "#16a34a"
+            red = "#dc2626"
+
+            row_idx = 0
+
+            # === Header: Comparison + Significance ===
+            header_text = f"{comparison}"
+            header_label = CTkLabel(
+                self._lme_results_frame, text=header_text,
+                font=CTkFont("Segoe UI Semibold", 13),
+                text_color=text_color,
+            )
+            header_label.grid(row=row_idx, column=0, sticky="w", pady=(0, 2))
+            row_idx += 1
+
+            # Significance badge
+            if sig:
+                badge_text = "✓ Statistically significant (p<0.05)"
+                badge_color = green
+            else:
+                badge_text = "⚠ Not statistically significant"
+                badge_color = "#d97706"
+            CTkLabel(
+                self._lme_results_frame, text=badge_text,
+                font=CTkFont("Segoe UI", 10),
+                text_color=badge_color,
+            ).grid(row=row_idx, column=0, sticky="w", pady=(0, 6))
+            row_idx += 1
+
+            # === Model Summary Section ===
+            CTkLabel(
+                self._lme_results_frame, text="MODEL SUMMARY",
+                font=CTkFont("Segoe UI Semibold", 10),
+                text_color=muted,
+            ).grid(row=row_idx, column=0, sticky="w", pady=(6, 2))
+            row_idx += 1
+
+            # AIC/BIC row
+            model_text = f"AIC: {aic:.2f}" if aic is not None else "AIC: N/A"
+            if bic is not None:
+                model_text += f"  BIC: {bic:.2f}"
+            CTkLabel(
+                self._lme_results_frame, text=model_text,
+                font=CTkFont("Segoe UI", 10),
+                text_color=text_color,
+            ).grid(row=row_idx, column=0, sticky="w")
+            row_idx += 1
+
+            # Observations/Animals row
+            obs_text = f"Observations: {n_obs}"
+            if n_groups:
+                obs_text += f"  Animals: {n_groups}"
+            if log_lik is not None:
+                obs_text += f"  Log-lik: {log_lik:.2f}"
+            CTkLabel(
+                self._lme_results_frame, text=obs_text,
+                font=CTkFont("Segoe UI", 10),
+                text_color=text_color,
+            ).grid(row=row_idx, column=0, sticky="w")
+            row_idx += 1
+
+            # Method + Convergence
+            conv_text = "✓ Converged" if converged else "⚠ Not converged"
+            conv_color = green if converged else red
+            method_text = f"Method: {method}  {conv_text}"
+            CTkLabel(
+                self._lme_results_frame, text=method_text,
+                font=CTkFont("Segoe UI", 10),
+                text_color=conv_color,
+            ).grid(row=row_idx, column=0, sticky="w", pady=(0, 6))
+            row_idx += 1
+
+            # === Treatment Effect Section ===
+            CTkLabel(
+                self._lme_results_frame, text="TREATMENT EFFECT",
+                font=CTkFont("Segoe UI Semibold", 10),
+                text_color=muted,
+            ).grid(row=row_idx, column=0, sticky="w", pady=(6, 2))
+            row_idx += 1
+
+            # Coefficient with stars
+            coef_color = green if sig else text_color
+            stars = self._p_value_stars(p_val)
+            coef_text = f"Coefficient: {coef:.4f}{stars}" if coef is not None else "Coefficient: N/A"
+            CTkLabel(
+                self._lme_results_frame, text=coef_text,
+                font=CTkFont("Segoe UI Semibold", 12),
+                text_color=coef_color,
+            ).grid(row=row_idx, column=0, sticky="w", pady=(0, 2))
+            row_idx += 1
+
+            # CI and p-value
+            ci_text = f"95% CI: [{ci_low:.2f}, {ci_high:.2f}]" if ci_low is not None else "95% CI: N/A"
+            p_text = f"p-value: {p_val:.4f}" if p_val is not None else "p-value: N/A"
+            CTkLabel(
+                self._lme_results_frame, text=f"{ci_text}  {p_text}",
+                font=CTkFont("Segoe UI", 10),
+                text_color=muted,
+            ).grid(row=row_idx, column=0, sticky="w", pady=(0, 6))
+            row_idx += 1
+
+            # === All Fixed Effects Table ===
+            if all_fixed:
+                CTkLabel(
+                    self._lme_results_frame, text="FIXED EFFECTS",
+                    font=CTkFont("Segoe UI Semibold", 10),
+                    text_color=muted,
+                ).grid(row=row_idx, column=0, sticky="w", pady=(6, 2))
+                row_idx += 1
+
+                # Headers
+                header_frame = CTkFrame(self._lme_results_frame, fg_color="transparent")
+                header_frame.grid(row=row_idx, column=0, sticky="ew", pady=(0, 2))
+                header_frame.grid_columnconfigure(0, weight=3)
+                header_frame.grid_columnconfigure(1, weight=2)
+                header_frame.grid_columnconfigure(2, weight=2)
+                header_frame.grid_columnconfigure(3, weight=1)
+                CTkLabel(header_frame, text="Variable", font=CTkFont("Segoe UI", 9),
+                         text_color=muted).grid(row=0, column=0, sticky="w")
+                CTkLabel(header_frame, text="Coef (±SE)", font=CTkFont("Segoe UI", 9),
+                         text_color=muted).grid(row=0, column=1, sticky="w")
+                CTkLabel(header_frame, text="p-value", font=CTkFont("Segoe UI", 9),
+                         text_color=muted).grid(row=0, column=2, sticky="w")
+                CTkLabel(header_frame, text="95% CI", font=CTkFont("Segoe UI", 9),
+                         text_color=muted).grid(row=0, column=3, sticky="w")
+                row_idx += 1
+
+                # Rows
+                for var_name, vals in all_fixed.items():
+                    row_frame = CTkFrame(self._lme_results_frame, fg_color="transparent")
+                    row_frame.grid(row=row_idx, column=0, sticky="ew", pady=1)
+                    row_frame.grid_columnconfigure(0, weight=3)
+                    row_frame.grid_columnconfigure(1, weight=2)
+                    row_frame.grid_columnconfigure(2, weight=2)
+                    row_frame.grid_columnconfigure(3, weight=1)
+
+                    coef_val = vals.get("coef")
+                    std_err = vals.get("std_err")
+                    p_v = vals.get("p_value")
+                    ci_l = vals.get("ci_lower")
+                    ci_h = vals.get("ci_upper")
+                    stars = self._p_value_stars(p_v)
+                    var_color = green if p_v is not None and p_v < 0.05 else text_color
+
+                    # Variable name (shorten if needed)
+                    display_name = var_name.replace("group_", "").replace("_", " ")
+                    CTkLabel(row_frame, text=display_name, font=CTkFont("Segoe UI", 10),
+                             text_color=var_color).grid(row=0, column=0, sticky="w")
+
+                    # Coef ± SE
+                    if coef_val is not None and std_err is not None:
+                        coef_str = f"{coef_val:.3f} ± {std_err:.3f}{stars}"
+                    elif coef_val is not None:
+                        coef_str = f"{coef_val:.3f}{stars}"
+                    else:
+                        coef_str = "N/A"
+                    CTkLabel(row_frame, text=coef_str, font=CTkFont("Segoe UI", 10),
+                             text_color=var_color).grid(row=0, column=1, sticky="w")
+
+                    # p-value
+                    p_str = f"{p_v:.4f}" if p_v is not None else "N/A"
+                    CTkLabel(row_frame, text=p_str, font=CTkFont("Segoe UI", 10),
+                             text_color=var_color).grid(row=0, column=2, sticky="w")
+
+                    # CI
+                    if ci_l is not None and ci_h is not None:
+                        ci_str = f"[{ci_l:.2f}, {ci_h:.2f}]"
+                    else:
+                        ci_str = "N/A"
+                    CTkLabel(row_frame, text=ci_str, font=CTkFont("Segoe UI", 9),
+                             text_color=muted).grid(row=0, column=3, sticky="w")
+
+                    row_idx += 1
+
+            # === Random Effects ===
+            if re_var is not None:
+                CTkLabel(
+                    self._lme_results_frame, text="RANDOM EFFECTS",
+                    font=CTkFont("Segoe UI Semibold", 10),
+                    text_color=muted,
+                ).grid(row=row_idx, column=0, sticky="w", pady=(6, 2))
+                row_idx += 1
+
+                CTkLabel(
+                    self._lme_results_frame, text=f"Animal variance: {re_var:.4f}",
+                    font=CTkFont("Segoe UI", 10),
+                    text_color=text_color,
+                ).grid(row=row_idx, column=0, sticky="w", pady=(0, 4))
+                row_idx += 1
+
+            # === Per-Animal Statistics ===
+            per_animal = result.get("per_animal_stats", [])
+            if per_animal:
+                CTkLabel(
+                    self._lme_results_frame, text="PER-ANIMAL STATS",
+                    font=CTkFont("Segoe UI Semibold", 10),
+                    text_color=muted,
+                ).grid(row=row_idx, column=0, sticky="w", pady=(6, 2))
+                row_idx += 1
+
+                # Headers
+                header_frame = CTkFrame(self._lme_results_frame, fg_color="transparent")
+                header_frame.grid(row=row_idx, column=0, sticky="ew", pady=(0, 2))
+                header_frame.grid_columnconfigure(0, weight=1)
+                header_frame.grid_columnconfigure(1, weight=1)
+                header_frame.grid_columnconfigure(2, weight=1)
+                header_frame.grid_columnconfigure(3, weight=1)
+                header_frame.grid_columnconfigure(4, weight=1)
+                CTkLabel(header_frame, text="ID", font=CTkFont("Segoe UI", 9),
+                         text_color=muted).grid(row=0, column=0, sticky="w")
+                CTkLabel(header_frame, text="Group", font=CTkFont("Segoe UI", 9),
+                         text_color=muted).grid(row=0, column=1, sticky="w")
+                CTkLabel(header_frame, text="N", font=CTkFont("Segoe UI", 9),
+                         text_color=muted).grid(row=0, column=2, sticky="w")
+                CTkLabel(header_frame, text="Mean", font=CTkFont("Segoe UI", 9),
+                         text_color=muted).grid(row=0, column=3, sticky="w")
+                CTkLabel(header_frame, text="Std", font=CTkFont("Segoe UI", 9),
+                         text_color=muted).grid(row=0, column=4, sticky="w")
+                row_idx += 1
+
+                # Rows
+                for animal_stat in per_animal:
+                    row_frame = CTkFrame(self._lme_results_frame, fg_color="transparent")
+                    row_frame.grid(row=row_idx, column=0, sticky="ew", pady=1)
+                    row_frame.grid_columnconfigure(0, weight=1)
+                    row_frame.grid_columnconfigure(1, weight=1)
+                    row_frame.grid_columnconfigure(2, weight=1)
+                    row_frame.grid_columnconfigure(3, weight=1)
+                    row_frame.grid_columnconfigure(4, weight=1)
+
+                    aid = animal_stat.get("animal_id", "?")
+                    grp = animal_stat.get("group", "?")
+                    n = animal_stat.get("n_obs", 0)
+                    mean = animal_stat.get("mean", 0)
+                    std = animal_stat.get("std_dev", 0)
+
+                    CTkLabel(row_frame, text=str(aid), font=CTkFont("Segoe UI", 10),
+                             text_color=text_color).grid(row=0, column=0, sticky="w")
+                    CTkLabel(row_frame, text=str(grp), font=CTkFont("Segoe UI", 10),
+                             text_color=text_color).grid(row=0, column=1, sticky="w")
+                    CTkLabel(row_frame, text=str(n), font=CTkFont("Segoe UI", 10),
+                             text_color=text_color).grid(row=0, column=2, sticky="w")
+                    CTkLabel(row_frame, text=f"{mean:.1f}", font=CTkFont("Segoe UI", 10),
+                             text_color=text_color).grid(row=0, column=3, sticky="w")
+                    CTkLabel(row_frame, text=f"{std:.1f}", font=CTkFont("Segoe UI", 10),
+                             text_color=text_color).grid(row=0, column=4, sticky="w")
+                    row_idx += 1
+
+            # === Interpretation (plain English) ===
+            CTkLabel(
+                self._lme_results_frame, text="INTERPRETATION",
+                font=CTkFont("Segoe UI Semibold", 10),
+                text_color=muted,
+            ).grid(row=row_idx, column=0, sticky="w", pady=(6, 2))
+            row_idx += 1
+
+            interp_parts = []
+            if p_val is not None:
+                if p_val < 0.05:
+                    interp_parts.append(f"• Groups are significantly different (p={p_val:.4f})")
+                else:
+                    interp_parts.append(f"• No significant difference between groups (p={p_val:.4f})")
+
+            # Check time effect
+            days_effect = all_fixed.get("days", {})
+            if days_effect and days_effect.get("p_value") is not None:
+                days_p = days_effect["p_value"]
+                if days_p < 0.05:
+                    interp_parts.append(f"• Measurements change significantly over time (p={days_p:.4f})")
+                else:
+                    interp_parts.append(f"• No significant change over time (p={days_p:.4f})")
+
+            if re_var is not None:
+                if re_var > 100:
+                    interp_parts.append(f"• High between-animal variability (σ²={re_var:.1f})")
+                    interp_parts.append(f"  ⚠ Check for outliers in measurement data")
+                elif re_var > 10:
+                    interp_parts.append(f"• Moderate between-animal variability (σ²={re_var:.1f})")
+                else:
+                    interp_parts.append(f"• Low between-animal variability (σ²={re_var:.1f})")
+
+            for part in interp_parts:
+                CTkLabel(
+                    self._lme_results_frame, text=part,
+                    font=CTkFont("Segoe UI", 9),
+                    text_color=muted,
+                ).grid(row=row_idx, column=0, sticky="w")
+                row_idx += 1
+
+        except Exception as e:
+            print(f"LME Display Error: {e}")
+            import traceback
+            traceback.print_exc()
+            # Show error in UI
+            for child in self._lme_results_frame.winfo_children():
+                child.destroy()
+            CTkLabel(
+                self._lme_results_frame, text=f"Error displaying results: {str(e)[:40]}",
+                font=CTkFont("Segoe UI", 10), text_color="#dc2626",
+            ).grid(row=0, column=0, sticky="w")
+
+    def _display_lme_error(self, error_msg):
+        """Display LME error in the UI (called from main thread)."""
+        print(f"LME: Displaying error: {error_msg}")
+        # Clear previous results and spinner
+        for child in self._lme_results_frame.winfo_children():
+            child.destroy()
+
+        # Re-enable button
+        self._lme_run_button.configure(text="▶  Run LME", state="normal")
+        self.update_idletasks()
+
+        CTkLabel(
+            self._lme_results_frame, text=f"Error: {error_msg}",
+            font=CTkFont("Segoe UI", 10), text_color="#dc2626",
+        ).grid(row=0, column=0, sticky="w")
+
+        # Also show popup for visibility
+        try:
+            from CTkMessagebox import CTkMessagebox
+            CTkMessagebox(title="LME Error", message=f"LME Analysis Error:\n{error_msg}", icon="cancel")
+        except Exception:
+            pass
 
     def _build_table_section(self, parent):
         table_card = CTkFrame(
