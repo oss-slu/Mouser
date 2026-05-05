@@ -2692,6 +2692,8 @@ class ChangeMeasurementsDialog():
         root.title(f"Modify Measurements for: {animal_id}")
         root.geometry("520x520")
         root.resizable(False, False)
+        root.transient(self.parent)
+        root.attributes('-topmost', 1)
         root.grid_columnconfigure(0, weight=1)
 
         CTkLabel(

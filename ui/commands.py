@@ -73,6 +73,8 @@ def open_file(root, experiments_frame):
         password_prompt = CTkToplevel(root)
         password_prompt.title("Enter Password")
         password_prompt.geometry("300x150")
+        password_prompt.transient(root)
+        password_prompt.grab_set()
 
         CTkLabel(password_prompt, text="Enter password:").pack(pady=10)
         password_entry = CTkEntry(password_prompt, show="*")

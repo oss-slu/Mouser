@@ -15,10 +15,12 @@ class SerialSimulator():
         root = CTkToplevel(self.parent) #pylint: disable= redefined-outer-name
         root.title("Serial Port Selection")
         root.geometry('400x700')
+        root.transient(self.parent)
+        root.attributes('-topmost', 1)
 
-        self.input_entry = CTkEntry(self, width=40)
+        self.input_entry = CTkEntry(root, width=40)
         self.input_entry.place(relx=0.50, rely=0.90, anchor=CENTER)
-        self.sent_button = CTkButton(self, text = "sent", width = 15)
+        self.sent_button = CTkButton(root, text = "sent", width = 15)
         self.sent_button.place(relx=0.80, rely = 0.90, anchor=CENTER)
 
 

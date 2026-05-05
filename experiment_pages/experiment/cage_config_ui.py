@@ -679,6 +679,9 @@ class CageConfigurationUI(MouserPage):
         message_window.geometry('360x140')
         message_window.resizable(False, False)
         message_window.configure(fg_color=palette["bg"])
+        message_window.transient(self)
+        message_window.attributes('-topmost', 1)
+        message_window.grab_set()
 
         CTkLabel(
             message_window,
